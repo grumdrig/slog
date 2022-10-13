@@ -1,7 +1,7 @@
-// opcodes are 16 bits but only the upper 6 bits (values 0x00 to 0x3F) are
+// opcodes are 16 bits but only the upper 6 bits (values 0x00 to 0x3F=63) are
 // opcode, the other 10 are immediate values so that's 64 instructions, and
-// immediate values range from -0x3FF to 0x3FF, with 0x400 indicating stack
-// addressing mode
+// immediate values range from -0x3FF to 0x3FF (-1023 to 1023), with 0x400
+// indicating stack addressing mode
 
 // Probably should have stack grow downward since mem size is to be fixed
 // (so SP should be descending in the below)
@@ -127,10 +127,9 @@ const SPECIAL_RESOURCE_QTY = 0x13;
 // Nearby mob
 const SPECIAL_MOB_SPECIES = 0x20;  // from some list.
 const SPECIAL_MOB_LEVEL = 0x21;
-const SPECIAL_MOB_AGGRO = 0x;  // -8 = friendly, 0 = neutral, 8 = hostile
-const SPECIAL_MOB_HEALTH = 0x;  // as %
-const SPECIAL_MOB_JOB = 0x;  // for NPC, and more generally
-const SPECIAL_MOB_ = 0x;
+const SPECIAL_MOB_AGGRO = 0x22;  // -8 = friendly, 0 = neutral, 8 = hostile
+const SPECIAL_MOB_HEALTH = 0x23;  // as %
+const SPECIAL_MOB_JOB = 0x24;  // for NPC, and more generally
 
 // Character sheet
 
@@ -213,6 +212,7 @@ class VirtualMachine {
     for (let i = 0; i < program.length; ++i) {
       this.memory[i] = program[i];
     }
+    this.sp = this.memory.length - 1;
   }
 
   step() {
@@ -238,7 +238,7 @@ class VirtualMachine {
     } else if (mnemonic === 'fetch') {
       this.push(this.fetch(argument));
 
-    } else if (mnemonic: 'store' ) {
+    } else if (mnemonic === 'store' ) {
       let value = pop();
       let address = argument;
       if (address >= 0 ||
@@ -374,6 +374,15 @@ class VirtualMachine {
 let MNEMONICS = {};
 for (let op of opcodes) {
   MNEMONICS[op.mnemonic] = op.opcode;
+  MNEMONICS[op.opcode] = op.mnemonic;
+}
+
+function is_identifier(id) {
+  return id.match(/^[a-zA-Z_][0-9a-zA-Z_]*$/);
+}
+
+function is_numeric(s) {
+  return !Number.isNaN(parseInt(s));
 }
 
 
@@ -383,9 +392,15 @@ class Assembler {
   macros = {};
   labels = {};
   forwardReferences = {};
-  code = new Int16Array();
+  code = new Int16Array(4096);
   macroInProgress;
   pc = 0;
+
+  assert(truth, message) {
+    if (!truth) {
+      throw `ASSEMBLY ERROR AT LINE ${pc}: ${message}`;
+    }
+  }
 
   lex(code) {
     let result = [];
@@ -397,6 +412,7 @@ class Assembler {
       result.push(line.match(Assembler.tokenre) || [])
       // TODO: this doesn't watch for syntax errors. frankly it's pretty terrible.
     }
+    return result;
   }
 
   parse(code, symbols) {
@@ -404,7 +420,7 @@ class Assembler {
     for (let line_no = 0; line_no < lines.length; ++line_no) {
       let tokens = lines[line_no];
 
-      if (macroInProgress) {
+      if (this.macroInProgress) {
         if (tokens.length === 1 && token[0] === 'end') {
           macroInProgress = null;
         } else {
@@ -413,8 +429,8 @@ class Assembler {
       }
 
       else if (tokens.length > 0) {
-        if (tokens.length === 2 && is_identifier(token[0]) && token[1] === ':') {
-          labels[token[0]] = pc
+        if (tokens.length === 2 && is_identifier(tokens[0]) && tokens[1] === ':') {
+          labels[tokens[0]] = pc
 
         } else if (tokens.length >= 2 && tokens[0] === 'macro') {
           let name = tokens[1];
@@ -428,10 +444,10 @@ class Assembler {
           this.assert(tokens.length <= 2, "unexpected characters following instruction");
 
           if (tokens.length === 1) {
-            emit(MNEMONICS[tokens[0]], 0x400);
+            this.emit(MNEMONICS[tokens[0]], 0x400);
 
           } else if (is_numeric(tokens[1])) {
-            emit(MNEMONICS[tokens[0]], parseValue(tokens[1]));
+            this.emit(MNEMONICS[tokens[0]], parseInt(tokens[1]));
 
           } else {
             assert(is_identifier(tokens[1]), "identifier or something expected");
@@ -439,7 +455,7 @@ class Assembler {
             if (typeof value === 'undefined') {
               forwardReferences[this.pc] = tokens[1];
             }
-            emit(MNEMONICS[tokens[0]], value || 0);
+            this.emit(MNEMONICS[tokens[0]], value || 0);
 
           }
 
@@ -478,4 +494,18 @@ class Assembler {
     this.code[pc] = opcode || (parameter << 6);
   }
 
+  disassemble() {
+    let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) => `${num}: ${inst} $${inst.toString(16)} ${MNEMONICS[inst & 0x3f]} ${inst >> 6}`);
+    console.log(result);
+    return result.join('\n');
+  }
+
 }
+
+let a = new Assembler();
+a.parse("sub 3");
+console.log(a.disassemble());
+console.log(a.pc);
+// a.code.push(3);
+console.log(is_numeric('3'))
+

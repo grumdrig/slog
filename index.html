@@ -1,0 +1,23 @@
+<!doctype html>
+<head>
+<meta charset="utf-8"/>
+<title>PQ Chasm</title>
+<script src="vm.js"></script>
+</head>
+<body>
+<textarea id=asm></textarea>
+<textarea id=machine></textarea>
+<button onclick="assemble()">Assemble</button>
+
+<script>
+
+function $(s) { return document.querySelector(s) }
+
+function assemble() {
+	let asm = new Assembler();
+	asm.parse($("#asm").value);
+	asm.link();
+	$("#machine").value = asm.disassemble();
+}
+
+</script>
