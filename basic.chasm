@@ -1,0 +1,91 @@
+macro face {
+  store FACING
+}
+
+macro face angle {
+  const angle
+  store FACING
+}
+
+macro face_east {
+  face 90
+}
+
+macro branch_if_greater label {
+  sub
+  min 0
+  branch label
+}
+
+macro not {
+  unary NOT
+}
+
+raid:
+
+face_east
+
+head_to_killing_fields:
+fetch LONGITUDE
+fetch LEVEL
+sub
+min 0
+branch_if_greater battle_loop
+walk
+jump head_to_killing_fields
+
+battle_loop:
+
+fetch HEALTH
+div 2
+not
+branch dying
+
+hunt
+act HUNT
+fetch MOB_LEVEL
+not
+branch hunt
+
+fight:
+
+fetch MOB_LEVEL
+not
+branch killed
+act FIGHT
+jump fight
+
+killed:
+
+fetch RESOURCE_TYPE
+sub MOB_DROPS
+not
+branch battle_loop
+act GATHER
+jump killed
+
+dying:
+
+face -90
+fetch LONGITUDE
+max 0
+not
+branch rest
+walk
+jump dying
+
+rest:
+
+ACT rest
+fetch HP
+fetch HP_MAX
+sub
+branch rest
+
+sell:
+
+act SELL
+fetch MOB_DROPS
+branch sell
+
+jump raid
