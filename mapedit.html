@@ -10,6 +10,7 @@
 <canvas></canvas>
 <span id=pen>FOREGROUND COLOR</span>
 <span id=palette></span>
+<pre id=coded></pre>
 
 <script>
 
@@ -39,7 +40,9 @@ const colors = {
 	TOWN: 'fuchsia',
 	TUNDRA: 'silver',
 	MARSH: 'teal',
-}
+};
+
+const CODES = "Ww._#mM@ftFT=^H~v";
 
 const terrains = Object.keys(colors);
 const NUM_TERRAINS = terrains.length;
@@ -68,17 +71,21 @@ function setPen(value) {
 
 
 function draw() {
+	let coded = "";
 	let zoom = can.width / D;
 	let ctx = can.getContext('2d');
-	for (let long = 0; long < D; ++long) {
-		for (let lat = 0; lat < D; ++lat) {
+	for (let lat = 0; lat < D; ++lat) {
+		for (let long = 0; long < D; ++long) {
 			let index = lat * D + long;
 			let x = zoom * long;
 			let y = zoom * lat;
 			ctx.fillStyle = colors[data[index]];
 			ctx.fillRect(x, y, zoom, zoom);
+			coded += CODES[data[index]];
 		}
+		coded += "\n";
 	}
+	$("#coded").innerText = coded;
 }
 
 can.addEventListener('mousedown', paint);

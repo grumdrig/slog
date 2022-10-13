@@ -7,29 +7,37 @@
 // (so SP should be descending in the below)
 
 const opcodes = [
-  { opcode: 0xC, mnemonic: 'const' },
+  { opcode: 0xC, mnemonic: 'push' },
   // put a value on the stack
   // const X
   // ... => ... X ; SP += 1
+
   { opcode: 0xD, mnemonic: 'sethi' },
   // set high 8 bits of top of stack
   // sethi X
   // ... S => ... ((X << 8) | (S & 0xFF))
 
 
-  { opcode: 0x9, mnemonic: 'pop' },
-  // remove values from the stack
-  // pop N
+  { opcode: 0x9, mnemonic: 'adjust' },
+  // remove/reserve values on the stack
+  // adjust N
   // ... XN ... X1 => ... ; SP -= N, PP = XN
-  // pop
+  // adjust
   // ... XN ... X1 N => ... ; SP -= N+1, PP = XN
 
-  { opcode: 0xF, mnemonic: 'fetch' },
-  // fetch a value at a memory location
-  // fetch A
+  { opcode: 0xE, mnemonic: 'load' },
+  // load a value at a memory location
+  // load A
   // ... => ... [A] ; SP += 1
-  // fetch
+  // load
   // ... A => ... [A]
+
+  { opcode: 0xF, mnemonic: 'fetch' },
+  // fetch a value at a [distant] memory location
+  // fetch A
+  // ... => ... [DS + A] ; SP += 1
+  // fetch
+  // ... A => ... [DS + A]
 
   { opcode: 0x5, mnemonic: 'store' },
   // store a value in memory
@@ -38,12 +46,23 @@ const opcodes = [
   // store
   // ... X A => ... ; [A] = X, SP -= 2
 
+  { opcode: 0x6, mnemonic: 'stash' },
+  // stash a value in [distant] memory
+  // stash A
+  // ... X => ... ; [DS + A] = X, SP -= 1
+  // stash
+  // ... X A => ... ; [DS + A] = X, SP -= 2
+
+
   { opcode: 0xB, mnemonic: 'branch' },
   // branch if nonzero
   // branch
   // ... V A => ... ; SP -= 2, if V != 0 then PC = A
   // branch D
   // ... V => ... ; SP -= 1, if V != 0 the PC += D
+
+  { opcode: 0x2, mnemonic: 'jump' },
+  // Unconditional branch, which we *could* handle by just setting PC
 
   { opcode: 0xA, mnemonic: 'bury' },
   // rotate stack
@@ -68,7 +87,10 @@ const opcodes = [
   { opcode: 0x23, mnemonic: 'sub' },
   { opcode: 0x24, mnemonic: 'mul' },
   { opcode: 0x25, mnemonic: 'atan2' },
-  { opcode: 0x26, mnemonic: 'nand' },  // etc
+  { opcode: 0x26, mnemonic: 'or' },
+  { opcode: 0x27, mnemonic: 'and' },
+  { opcode: 0x28, mnemonic: 'xor' },
+  { opcode: 0x29, mnemonic: 'shift' },
   // similar for these binary ops
 
   { opcode: 0x10, mnemonic: 'unary' },
@@ -103,9 +125,12 @@ const opcodes = [
 const UNARY_OPERATORS = {
   0x5: { mnemonic: 'sin', operation: x => Math.sin(x) },
   0x7: { mnemonic: 'log', operation: x => Math.log(x) },
+  0xE: { mnemonic: 'exp', operation: x => Math.exp(x) },
   0x1: { mnemonic: 'not', operation: x => x ? 0 : 1 },
   0xA: { mnemonic: 'abs', operation: x => Math.abs(x) },
   0x9: { mnemonic: 'neg', operation: x => -x },
+  0xC: { mnemonic: 'complement', operation: x => ~x },
+  0x6: { mnemonic: 'inverse', operation: x => x === 0 ? 0 : 0x7fff/x },
 };
 
 let UNARY_SYMBOLS = {};
@@ -113,25 +138,30 @@ for (let u in UNARY_OPERATORS) UNARY_SYMBOLS[UNARY_OPERATORS[u].mnemonic] = pars
 
 // Machine registers
 const SPECIAL = {
-  PC: 0x1,   // Program counter register
-  SP: 0x2,   // Stack pointer register
-  AUX: 0x3,  // Auxilliary register, gets some results
-  CLOCK: 0x4,  // Counts clock cycles from startup
+  PC: 0x1,    // Program counter register
+  SP: 0x2,    // Stack pointer register
+  AUX: 0x3,   // Auxilliary register, gets some results
+  DS: 0x4,    // Data segment register
+  CLOCK: 0x5, // Counts clock cycles from startup
 
-// Environment
+  // Environment
   TERRAIN: 0x10,
   SURROUNDINGS: 0x11,
   RESOURCE_TYPE: 0x12,  // type of visible lootable thing
   RESOURCE_QTY: 0x13,
+  TIME_OF_DAY: 0x14,
+  DAY_OF_YEAR: 0x15,
+  YEAR: 0x16,
+  WEATHER: 0x17,
 
-// Nearby mob
+  // Nearby mob
   MOB_SPECIES: 0x20,  // from some list.
   MOB_LEVEL: 0x21,
   MOB_AGGRO: 0x22,  // -8 = friendly, 0 = neutral, 8 = hostile
   MOB_HEALTH: 0x23,  // as %
   MOB_JOB: 0x24,  // for NPC, and more generally
 
-// Character sheet
+  // Character sheet
 
   LEVEL: 0x30,
   STR: 0x31,
@@ -140,29 +170,30 @@ const SPECIAL = {
   INT: 0x34,
   WIS: 0x35,
   CHA: 0x36,
+  AGE: 0x37,
 
-  HP: 0x40,
-  HP_MAX: 0x41,
-  MP: 0x42,
-  MP_MAX: 0x43,
+  DAMAGE: 0x40,
+  HEALTH: 0x41,
+  FATIGUE: 0x42,
+  ENERGY: 0x43,
   ENCUMBRANCE: 0x44,
-  ENCUMBRANCE_MAX: 0x45,
+  CAPACITY: 0x45,
 
-  INVENTORY0: 0x50, // Gold
-  INVENTORY1: 0x51, // Reagents
-  INVENTORY2: 0x52, // Mob drops
-  INVENTORY3: 0x53, // Health potions
-  INVENTORY4: 0x54, // Mana potions
-  INVENTORY5: 0x55, // Keys
-// ...
+  INVENTORY_GOLD: 0x50,
+  INVENTORY_REAGENTS: 0x51,
+  INVENTORY_DROPS: 0x52,
+  INVENTORY_HEALING_POTIONS: 0x53,
+  INVENTORY_ENERGY_POTIONS: 0x54,
+  INVENTORY_KEYS: 0x55,
+  // ...
   INVENTORY15: 0x5F,
 
   EQUIP_WEAPON: 0x60,  // Level of puissance
-// ...
+  // ...
   EQUIP_SHOES: 0x6F,
 
   SPELL0: 0x70,  // spell level
-// ...
+  // ...
   SPELL15: 0x7F,
 
   LONGITUDE: 0x80,  // as fixed point?
@@ -177,7 +208,17 @@ const SPECIAL = {
   TONE_FREQUENCY: 0xA0,
   TONE_VOLUME: 0xA1,
   // Room for polyphony
-}
+};
+
+const ACTIONS = {
+  TALK: 0x5A,
+  HUNT: 0x40,
+  BUY: 0xB1,
+  SELL: 0x5E,
+  ATTACK: 0xA7,
+  REST: 0x22,
+  FORAGE: 0xF0,
+};
 
 class VirtualMachine {
   memory = new Array[4096].fill(0);
@@ -193,7 +234,7 @@ class VirtualMachine {
   get aux() { return special[SPECIAL.AUX] }
   set aux_fractional(f) { special[SPECIAL.AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
-  get top() { return this.fetch(this.sp) }
+  get top() { return this.load(this.sp) }
   set top(v) { this.store(this.sp, v) }
 
   store(a, v) {
@@ -203,7 +244,7 @@ class VirtualMachine {
     else this.special[-a] = v;
   }
 
-  fetch(a) { return (a < 0) ? this.special[-a] : this.memory[a] }  // TODO: and watch limits
+  load(a) { return (a < 0) ? this.special[-a] : this.memory[a] }  // TODO: and watch limits
 
   pop() { this.sp += 1; return this.memory[this.sp - 1] }
   push(v) { this.memory[this.sp -= 1] = v }
@@ -226,7 +267,7 @@ class VirtualMachine {
       argument = this.pop();
     }
 
-    if (mnemonic === 'const') {
+    if (mnemonic === 'push') {
       this.push(argument);
 
     } else if (mnemonic === 'sethi') {
@@ -235,14 +276,17 @@ class VirtualMachine {
     } else if (mnemonic === 'adjust') {
       this.sp += argument;
 
-    } else if (mnemonic === 'fetch') {
-      this.push(this.fetch(argument));
+    } else if (mnemonic === 'load' || mnemonic === 'fetch') {
+      let address = argument;
+      if (mnemonic === 'fetch') address += this.special[SPECIAL.DS];
+      this.push(this.load(argument));
 
-    } else if (mnemonic === 'store' ) {
+    } else if (mnemonic === 'store' || mnemonic === 'stash') {
       let value = pop();
       let address = argument;
+      if (mnemonic === 'stash') address += this.special[SPECIAL.DS];
       if (address >= 0 ||
-         [SPECIAL.PC, SPECIAL.SP, SPECIAL.AUX, SPECIAL.FACING].includes(-address)) {
+         [SPECIAL.PC, SPECIAL.SP, SPECIAL.AUX, SPECIAL.DS].includes(-address)) {
         this.store(address, pop());
       } // else illegal
 
@@ -304,38 +348,59 @@ class VirtualMachine {
       this.push(argument ^ this.pop());
 
     } else if (mnemonic === 'shift') {
-      // TODO stash the overflow in aux register
-      let distance = this.pop();
-      this.push(distance < 0 ? argument << distance : argument >> distance);
+      let value = this.pop();
+      if (argument < 0) {
+        this.push(value << argument);
+        this.aux = value >> (16 - argument);
+      } else {
+        this.push(value >> argument);
+        this.aux = value << (16 - argument);
+      }
 
     // Unary operators
 
     } else if (mnemonic === 'unary') {
       let value = pop();
-      let operator = UNARY_OPS[argument];
+      let operator = UNARY_OPERATORS[argument];
       if (operator) {
-        this.push(operator.operation(value));
+        let result = operator.operation(value);
+        this.push(Math.floor(result));
+        this.aux_fractional = result - Math.floor(result);
       } else {
         this.push(0xBAD);
       }
 
+    // "Real"-world instructions, all of which advance character age and store
+    //  a boolean value in AUX indication if the instruction completed
+
     } else if (mnemonic === 'walk') {
-      let a = this.special[STAT_FACING] * Math.PI / 180;
-      let speed = this.special[STAT_SPEED] * argument / 100; // TODO limits etc
-      this.special[STAT_LATIUDE] += Math.sin(a) * speed;
-      this.special[STAT_LONGITUDE] += Math.cos(a) * speed;
+      this.special[SPECIAL.AGE] += 1;
+      if (this.special[SPECIAL.FATIGUE] >= this.special[SPECIAL.ENERGY]
+          || Math.abs(argument) > 150) {
+        // Unable to walk
+        this.special[SPECIAL.AUX] = 0;
+      } else {
+        if (Math.random() < (Math.abs(argument) - 75) / 50)
+          this.special[SPECIAL.FATIGUE] += 1;
+        let a = this.special[SPECIAL.FACING] * Math.PI / 180;
+        let speed = this.special[SPECIAL.SPEED] * argument / 100; // TODO limits etc
+        if (argument < 0) speed *= 0.5;  // walking backwards is half as fast
+        this.special[SPECIAL.LATIUDE] += Math.sin(a) * speed;
+        this.special[SPECIAL.LONGITUDE] += Math.cos(a) * speed;
+        this.special[SPECIAL.AUX] = 1;
+      }
 
     } else if (mnemonic === 'face') {
-      this.special[STAT_FACING] = argument;
+      this.special[SPECIAL.FACING] = argument;
+      this.special[SPECIAL.AGE] += 1;
+      this.special[SPECIAL.AUX] = 1;
 
     } else if (mnemonic === 'act') {
-      const ACTIONS = {
-        0x5A1: { mnemonic: 'talk', operation: x => "complicated" },
-      };
       let action = ACTIONS[argument];
-      let result = 0xBAD;
-      if (action) result = action.action();
-      // Do something with result?
+      let result = 0;
+      if (action) result = action.action() ? 1 : 0;
+      this.special[SPECIAL.AGE] += 1;
+      this.special[SPECIAL.AUX] = result;
 
     } else if (mnemonic === 'cast') {
       const SPELLS = {
@@ -347,19 +412,23 @@ class VirtualMachine {
       // TODO check for availabliltiy of spell
       // TODO check mana requirements
       let spell = SPELLS[argument];
-      let result = 0xBAD;
-      if (spell) result = spell.effect();
-      // TODO: do something with result?
+      let result = 0;
+      if (spell) result = spell.effect() ? 1 : 0;
+      this.special[SPECIAL.AGE] += 1;
+      this.special[SPECIAL.AUX] = result;
 
     } else if (mnemonic === 'log') {
       this.log.push(argument);
+      this.special[SPECIAL.AGE] += 1;
+      this.special[SPECIAL.AUX] = 1;
+
     }
 
     this.special[SPECIAL.CLOCK] += 1;
   }
 
   alive() {
-    return this.special[SPECIAL.HP] > 0 &&
+    return this.special[SPECIAL.HEALTH] > 0 &&
            this.special[SPECIAL.CLOCK] < 0x7FFF;
   }
 
@@ -409,7 +478,7 @@ class Assembler {
 
   assemble(text) {
     let lines = this.lex(text);
-    this.parse(lines, clone(SPECIAL, MNEMONICS, UNARY_SYMBOLS));
+    this.parse(lines, clone(SPECIAL, MNEMONICS, UNARY_SYMBOLS, ACTIONS));
     this.link();
   }
 
@@ -478,7 +547,7 @@ class Assembler {
           let m = this.macros[inst];
           this.assert(m.parameters.length == tokens.slice(1).length, "mismatch in macro parameter count");
 
-          let ss = {}
+          let ss = clone(symbols);
           for (let i = 0; i < m.parameters.length; ++i) {
             ss[m.parameters[i]] = tokens[i + 1];
           }
@@ -538,21 +607,97 @@ class Assembler {
 
 let a = new Assembler();
 a.assemble(`
-  sub 3
-  pi = 314
-  macro fish
-    cast
-    cast
-  end
-  worm:
-  mul -2
-  unary abs
-  branch worm
-  branch bird
-  add pi
-  bird:
-  cast
-  fish
+macro face
+  store FACING
+end
+
+macro faceangle angle
+  push angle
+  store FACING
+end
+
+macro face_east
+  faceangle 90
+end
+
+macro branch_if_greater label
+  sub
+  min 0
+  branch label
+end
+
+macro not
+  unary NOT
+end
+
+raid:
+
+face_east
+
+head_to_killing_fields:
+fetch LONGITUDE
+fetch LEVEL
+sub
+min 0
+branch_if_greater battle_loop
+walk
+jump head_to_killing_fields
+
+battle_loop:
+
+fetch HEALTH
+div 2
+not
+branch dying
+
+hunt:
+act HUNT
+fetch MOB_LEVEL
+not
+branch hunt
+
+fight:
+
+fetch MOB_LEVEL
+not
+branch killed
+act FIGHT
+jump fight
+
+killed:
+
+fetch RESOURCE_TYPE
+sub MOB_DROPS
+not
+branch battle_loop
+act GATHER
+jump killed
+
+dying:
+
+faceangle -90
+fetch LONGITUDE
+max 0
+not
+branch rest
+walk
+jump dying
+
+rest:
+
+act REST
+fetch HP
+fetch HP_MAX
+sub
+branch rest
+
+sell:
+
+act SELL
+fetch MOB_DROPS
+branch sell
+
+jump raid
   `);
 console.log(a.disassemble());
 console.log('PC', a.pc);

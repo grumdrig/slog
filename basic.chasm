@@ -1,3 +1,7 @@
+macro pop
+  adjust -1
+end
+
 macro face
   store FACING
 end
@@ -26,8 +30,8 @@ raid:
 face_east
 
 head_to_killing_fields:
-fetch LONGITUDE
-fetch LEVEL
+load LONGITUDE
+load LEVEL
 sub
 min 0
 branch_if_greater battle_loop
@@ -36,20 +40,20 @@ jump head_to_killing_fields
 
 battle_loop:
 
-fetch HEALTH
+load HEALTH
 div 2
 not
 branch dying
 
-hunt
+hunt:
 act HUNT
-fetch MOB_LEVEL
+load MOB_LEVEL
 not
 branch hunt
 
 fight:
 
-fetch MOB_LEVEL
+load MOB_LEVEL
 not
 branch killed
 act FIGHT
@@ -57,7 +61,7 @@ jump fight
 
 killed:
 
-fetch RESOURCE_TYPE
+load RESOURCE_TYPE
 sub MOB_DROPS
 not
 branch battle_loop
@@ -67,7 +71,7 @@ jump killed
 dying:
 
 face -90
-fetch LONGITUDE
+load LONGITUDE
 max 0
 not
 branch rest
@@ -77,15 +81,13 @@ jump dying
 rest:
 
 act REST
-fetch HP
-fetch HP_MAX
-sub
+load DAMAGE
 branch rest
 
 sell:
 
 act SELL
-fetch MOB_DROPS
+load MOB_DROPS
 branch sell
 
 jump raid
