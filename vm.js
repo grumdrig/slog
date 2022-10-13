@@ -1,6 +1,6 @@
 // opcodes are 16 bits but only the upper 6 bits (values 0x00 to 0x3F=63) are
 // opcode, the other 10 are immediate values so that's 64 instructions, and
-// immediate values range from -0x3FF to 0x3FF (-1023 to 1023), with 0x400
+// immediate values range from -0x1FF to 0x1FF (-511 to 511), with 0x200
 // indicating stack addressing mode
 
 // Probably should have stack grow downward since mem size is to be fixed
@@ -71,13 +71,9 @@ const opcodes = [
   { opcode: 0x26, mnemonic: 'nand' },  // etc
   // similar for these binary ops
 
-  { opcode: 0x10, mnemonic: 'sin' },
-  // sin X
-  // ... => ... sin(X degrees)
-  { opcode: 0x11, mnemonic: 'log' },
-  { opcode: 0x12, mnemonic: 'not' },
-  { opcode: 0x13, mnemonic: 'abs' }, // maybe
-  // similarly for these unary ops
+  { opcode: 0x10, mnemonic: 'unary' },
+  // unary OP
+  // ... X => ... OP(X)
 
   { opcode: 0x27, mnemonic: 'div' },
   // div Y
@@ -105,93 +101,97 @@ const opcodes = [
 ];
 
 const UNARY_OPERATORS = {
-  0x514: { mnemonic: 'sin', operation: x => Math.sin(x) },
-  0x709: { mnemonic: 'log', operation: x => Math.log(x) },
-  0x000: { mnemonic: 'not', operation: x => x ? 0 : 1 },
-  0xAB5: { mnemonic: 'abs', operation: x => Math.abs(x) },
-  0x4E9: { mnemonic: 'neg', operation: x => -x },
+  0x5: { mnemonic: 'sin', operation: x => Math.sin(x) },
+  0x7: { mnemonic: 'log', operation: x => Math.log(x) },
+  0x1: { mnemonic: 'not', operation: x => x ? 0 : 1 },
+  0xA: { mnemonic: 'abs', operation: x => Math.abs(x) },
+  0x9: { mnemonic: 'neg', operation: x => -x },
 };
 
+let UNARY_SYMBOLS = {};
+for (let u in UNARY_OPERATORS) UNARY_SYMBOLS[UNARY_OPERATORS[u].mnemonic] = parseInt(u);
+
 // Machine registers
-const SPECIAL_PC = 0x1;   // Program counter register
-const SPECIAL_SP = 0x2;   // Stack pointer register
-const SPECIAL_AUX = 0x3;  // Auxilliary register, gets some results
-const SPECIAL_CLOCK = 0x4;  // Counts clock cycles from startup
+const SPECIAL = {
+  PC: 0x1,   // Program counter register
+  SP: 0x2,   // Stack pointer register
+  AUX: 0x3,  // Auxilliary register, gets some results
+  CLOCK: 0x4,  // Counts clock cycles from startup
 
 // Environment
-const SPECIAL_TERRAIN = 0x10;
-const SPECIAL_SURROUNDINGS = 0x11;
-const SPECIAL_RESOURCE_TYPE = 0x12;  // type of visible lootable thing
-const SPECIAL_RESOURCE_QTY = 0x13;
+  TERRAIN: 0x10,
+  SURROUNDINGS: 0x11,
+  RESOURCE_TYPE: 0x12,  // type of visible lootable thing
+  RESOURCE_QTY: 0x13,
 
 // Nearby mob
-const SPECIAL_MOB_SPECIES = 0x20;  // from some list.
-const SPECIAL_MOB_LEVEL = 0x21;
-const SPECIAL_MOB_AGGRO = 0x22;  // -8 = friendly, 0 = neutral, 8 = hostile
-const SPECIAL_MOB_HEALTH = 0x23;  // as %
-const SPECIAL_MOB_JOB = 0x24;  // for NPC, and more generally
+  MOB_SPECIES: 0x20,  // from some list.
+  MOB_LEVEL: 0x21,
+  MOB_AGGRO: 0x22,  // -8 = friendly, 0 = neutral, 8 = hostile
+  MOB_HEALTH: 0x23,  // as %
+  MOB_JOB: 0x24,  // for NPC, and more generally
 
 // Character sheet
 
-const SPECIAL_LEVEL = 0x30;
-const SPECIAL_STR = 0x31;
-const SPECIAL_DEX = 0x32;
-const SPECIAL_CON = 0x33;
-const SPECIAL_INT = 0x34;
-const SPECIAL_WIS = 0x35;
-const SPECIAL_CHA = 0x36;
+  LEVEL: 0x30,
+  STR: 0x31,
+  DEX: 0x32,
+  CON: 0x33,
+  INT: 0x34,
+  WIS: 0x35,
+  CHA: 0x36,
 
-const SPECIAL_HP = 0x40;
-const SPECIAL_HP_MAX = 0x41;
-const SPECIAL_MP = 0x42;
-const SPECIAL_MP_MAX = 0x43;
-const SPECIAL_ENCUMBRANCE = 0x44;
-const SPECIAL_ENCUMBRANCE_MAX = 0x45;
+  HP: 0x40,
+  HP_MAX: 0x41,
+  MP: 0x42,
+  MP_MAX: 0x43,
+  ENCUMBRANCE: 0x44,
+  ENCUMBRANCE_MAX: 0x45,
 
-const SPECIAL_INVENTORY0 = 0x50; // Gold
-const SPECIAL_INVENTORY1 = 0x51; // Reagents
-const SPECIAL_INVENTORY2 = 0x52; // Mob drops
-const SPECIAL_INVENTORY3 = 0x53; // Health potions
-const SPECIAL_INVENTORY4 = 0x54; // Mana potions
-const SPECIAL_INVENTORY5 = 0x55; // Keys
+  INVENTORY0: 0x50, // Gold
+  INVENTORY1: 0x51, // Reagents
+  INVENTORY2: 0x52, // Mob drops
+  INVENTORY3: 0x53, // Health potions
+  INVENTORY4: 0x54, // Mana potions
+  INVENTORY5: 0x55, // Keys
 // ...
-const SPECIAL_INVENTORY15 = 0x5F;
+  INVENTORY15: 0x5F,
 
-const SPECIAL_EQUIP_WEAPON = 0x60;  // Level of puissance
+  EQUIP_WEAPON: 0x60,  // Level of puissance
 // ...
-const SPECIAL_EQUIP_SHOES = 0x6F;
+  EQUIP_SHOES: 0x6F,
 
-const SPECIAL_SPELL0 = 0x70;  // spell level
+  SPELL0: 0x70,  // spell level
 // ...
-const SPECIAL_SPELL15 = 0x7F;
+  SPELL15: 0x7F,
 
-const SPECIAL_LONGITUDE = 0x80;  // as fixed point?
-const SPECIAL_LATITUDE = 0x81;
-const SPECIAL_ALTITUDE = 0x82;  // 0 = on land, -1 underground, 1 flying
-const SPECIAL_FACING = 0x83;  // degrees on compass
+  LONGITUDE: 0x80,  // as fixed point?
+  LATITUDE: 0x81,
+  ALTITUDE: 0x82,  // 0 = on land, -1 underground, 1 flying
+  FACING: 0x83,  // degrees on compass
 
-const SPECIAL_ALLEGIANCE0 = 0x90;  // ASCII codes of some arbitrary shit
-// ...
-const SPECIAL_ALLEGIANCE15 = 0x9F;
+  ALLEGIANCE0: 0x90,  // ASCII codes of some arbitrary blabber
+  // ...
+  ALLEGIANCE15: 0x9F,
 
-const SPECIAL_TONE_FREQUENCY = 0xA0;
-const SPECIAL_TONE_VOLUME = 0xA1;
-// Room for polyphony
-
+  TONE_FREQUENCY: 0xA0,
+  TONE_VOLUME: 0xA1,
+  // Room for polyphony
+}
 
 class VirtualMachine {
   memory = new Array[4096].fill(0);
   special = new Array[256].fill(0);  // negative memory
 
-  get pc() { return special[SPECIAL_PC] }
-  set pc(v) { special[SPECIAL_PC] = v }
+  get pc() { return special[SPECIAL.PC] }
+  set pc(v) { special[SPECIAL.PC] = v }
 
-  get sp() { return special[SPECIAL_SP] }
-  set sp(v) { special[SPECIAL_SP] = v }
+  get sp() { return special[SPECIAL.SP] }
+  set sp(v) { special[SPECIAL.SP] = v }
 
-  get aux() { return special[SPECIAL_AUX] }
-  get aux() { return special[SPECIAL_AUX] }
-  set aux_fractional(f) { special[SPECIAL_AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
+  get aux() { return special[SPECIAL.AUX] }
+  get aux() { return special[SPECIAL.AUX] }
+  set aux_fractional(f) { special[SPECIAL.AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
   get top() { return this.fetch(this.sp) }
   set top(v) { this.store(this.sp, v) }
@@ -221,7 +221,7 @@ class VirtualMachine {
     const opcode = (instruction >> 6) & 0x3F;
     const mnemonic = OPCODES[opcode].mnemonic;
     let argument = instruction & 0x3ff;
-    const immediate = (argument !== 0x400);
+    const immediate = (argument !== 0x200);
     if (!immediate) {
       argument = this.pop();
     }
@@ -242,7 +242,7 @@ class VirtualMachine {
       let value = pop();
       let address = argument;
       if (address >= 0 ||
-         [SPECIAL_PC, SPECIAL_SP, SPECIAL_AUX, SPECIAL_FACING].includes(-address)) {
+         [SPECIAL.PC, SPECIAL.SP, SPECIAL.AUX, SPECIAL.FACING].includes(-address)) {
         this.store(address, pop());
       } // else illegal
 
@@ -355,12 +355,12 @@ class VirtualMachine {
       this.log.push(argument);
     }
 
-    this.special[SPECIAL_CLOCK] += 1;
+    this.special[SPECIAL.CLOCK] += 1;
   }
 
   alive() {
-    return this.special[SPECIAL_HP] > 0 &&
-           this.special[SPECIAL_CLOCK] < 0x7FFF;
+    return this.special[SPECIAL.HP] > 0 &&
+           this.special[SPECIAL.CLOCK] < 0x7FFF;
   }
 
   run() {
@@ -381,13 +381,18 @@ function is_identifier(id) {
   return id.match(/^[a-zA-Z_][0-9a-zA-Z_]*$/);
 }
 
-function is_numeric(s) {
-  return !Number.isNaN(parseInt(s));
+function clone(...objs) {
+  // shallow is all I need
+  let result = {};
+  for (let obj of objs)
+    for (let i in obj)
+      result[i] = obj[i];
+  return result;
 }
 
 
 class Assembler {
-  static tokenre = /[a-zA-Z_][0-9a-zA-Z_]*|[:]|[-+]?(0x)?[0-9]+/g;
+  static tokenre = /[a-zA-Z_][0-9a-zA-Z_]*|[:=]|[-+]?(0x)?[0-9]+/g;
 
   macros = {};
   labels = {};
@@ -398,70 +403,79 @@ class Assembler {
 
   assert(truth, message) {
     if (!truth) {
-      throw `ASSEMBLY ERROR AT LINE ${pc}: ${message}`;
+      throw `ASSEMBLY ERROR AT LINE ${this.pc + 1}: ${message}`;
     }
   }
 
-  lex(code) {
+  assemble(text) {
+    let lines = this.lex(text);
+    this.parse(lines, clone(SPECIAL, MNEMONICS, UNARY_SYMBOLS));
+    this.link();
+  }
+
+  lex(text) {
     let result = [];
-    let lines = code.split('\n');
+    let lines = text.split('\n');
     for (let line_no = 0; line_no < lines.length; ++line_no) {
       let line = lines[line_no];
       line = line.split(';')[0];
       line = line.trim();
-      result.push(line.match(Assembler.tokenre) || [])
+      line = line.match(Assembler.tokenre) || [];
       // TODO: this doesn't watch for syntax errors. frankly it's pretty terrible.
+      line = line.map(t => Number.isNaN(parseInt(t)) ? t : parseInt(t));
+      result.push(line);
     }
     return result;
   }
 
-  parse(code, symbols) {
-    let lines = this.lex(code);
+  parse(lines, symbols) {
+    symbols = clone(symbols);
     for (let line_no = 0; line_no < lines.length; ++line_no) {
       let tokens = lines[line_no];
 
+      tokens = tokens.map(t => typeof symbols[t] === 'undefined' ? t : symbols[t]);
+
+      let inst = tokens[0];   // though it may also not be an actual inst
+      let arg = tokens[1];    // though it may also be an operator
+      let third = tokens[2];  // though there may not be a third
+
       if (this.macroInProgress) {
-        if (tokens.length === 1 && token[0] === 'end') {
-          macroInProgress = null;
+        if (inst === 'end') {
+          this.assert(tokens.length === 1, "unexpected junk after 'end'");
+          this.macroInProgress = null;
         } else {
-          macros[macroInProgress].body.push(tokens);
+          this.macros[this.macroInProgress].body.push(tokens);
         }
       }
 
       else if (tokens.length > 0) {
-        if (tokens.length === 2 && is_identifier(tokens[0]) && tokens[1] === ':') {
-          labels[tokens[0]] = pc
 
-        } else if (tokens.length >= 2 && tokens[0] === 'macro') {
-          let name = tokens[1];
-          macros[name] = {
-            name,
+        if (tokens.length === 2 && arg === ':') {
+          // LABEL:
+          this.assert(is_identifier(inst), "identifier expected");
+          this.assert(!this.labels[inst], "label already defined");
+          this.labels[inst] = this.pc
+
+        } else if (arg === '=') {
+          // NAME = VALUE ;  symbolic constant
+          this.assert(tokens.length === 3, "invalid constant definition");
+          this.assert(typeof third === 'number', "numeric value expected");
+          symbols[inst] = third;
+
+        } else if (inst === 'macro') {
+          this.assert(tokens.length >= 2, "macro name expected");
+
+          // macro NAME [ARGS...]
+          this.macroInProgress = arg;
+          this.macros[arg] = {
+            name: arg,
             parameters: tokens.slice(2),
             body: []
           }
 
-        } else if (MNEMONICS[tokens[0]]) {
-          this.assert(tokens.length <= 2, "unexpected characters following instruction");
+        } else if (this.macros[inst]) {
 
-          if (tokens.length === 1) {
-            this.emit(MNEMONICS[tokens[0]], 0x400);
-
-          } else if (is_numeric(tokens[1])) {
-            this.emit(MNEMONICS[tokens[0]], parseInt(tokens[1]));
-
-          } else {
-            assert(is_identifier(tokens[1]), "identifier or something expected");
-            let value = symbol[tokens[1]];
-            if (typeof value === 'undefined') {
-              forwardReferences[this.pc] = tokens[1];
-            }
-            this.emit(MNEMONICS[tokens[0]], value || 0);
-
-          }
-
-        } else if (this.macros[tokens[0]]) {
-
-          let m = this.macros[tokens[0]];
+          let m = this.macros[inst];
           this.assert(m.parameters.length == tokens.slice(1).length, "mismatch in macro parameter count");
 
           let ss = {}
@@ -471,8 +485,28 @@ class Assembler {
 
           this.parse(m.body, ss);
 
+        } else if (typeof inst === 'number') {
+          // INST [ARG]
+          this.assert(tokens.length <= 2, "unexpected characters following instruction");
+
+          if (tokens.length === 1) {
+            // INST  ; instruction in stack addressing mode
+            this.emit(inst, 0x200);
+
+          } else {
+            // INST ARG  ; instruction with immediate argument
+
+            if (typeof arg === 'number') {
+              this.emit(inst, arg);
+            } else {
+              this.forwardReferences[this.pc] = arg;
+              this.emit(inst, 0);
+            }
+
+          }
+
         } else {
-          this.assert(false, "parse error");
+          this.assert(false, "parse error: " + tokens.join(' '));
         }
       }
     }
@@ -482,30 +516,44 @@ class Assembler {
     for (let pc of Object.keys(this.forwardReferences)) {
       let symbol = this.forwardReferences[pc];
       this.assert(typeof this.labels[symbol] !== 'undefined', "undefined label: " + symbol);
-      reemit(pc, this.code[pc] & 0x3f, this.labels[symbol]);
+      this.reemit(pc, this.code[pc] & 0x3f, this.labels[symbol]);
     }
   }
 
-  emit(opcode, parameter = 0x400) {
+  emit(opcode, parameter = 0x200) {
     this.reemit(this.pc++, opcode, parameter);
   }
 
-  reemit(pc, opcode, parameter = 0x400) {
-    this.code[pc] = opcode || (parameter << 6);
+  reemit(pc, opcode, parameter = 0x200) {
+    this.code[pc] = opcode | (parameter << 6);
   }
 
   disassemble() {
-    let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) => `${num}: ${inst} $${inst.toString(16)} ${MNEMONICS[inst & 0x3f]} ${inst >> 6}`);
-    console.log(result);
+    let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
+      `${num}:  ${inst} $${('0000' + (inst & 0xffff).toString(16)).substr(-4)}  $${(inst & 0x3f).toString(16)} ${(inst >> 6)}  ${MNEMONICS[inst & 0x3f]} ${inst >> 6 === -0x200 ? '' : inst >> 6}`);
     return result.join('\n');
   }
 
 }
 
 let a = new Assembler();
-a.parse("sub 3");
+a.assemble(`
+  sub 3
+  pi = 314
+  macro fish
+    cast
+    cast
+  end
+  worm:
+  mul -2
+  unary abs
+  branch worm
+  branch bird
+  add pi
+  bird:
+  cast
+  fish
+  `);
 console.log(a.disassemble());
-console.log(a.pc);
+console.log('PC', a.pc);
 // a.code.push(3);
-console.log(is_numeric('3'))
-

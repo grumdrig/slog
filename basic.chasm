@@ -30,7 +30,7 @@ fetch LONGITUDE
 fetch LEVEL
 sub
 min 0
-branch_if_greater :battle_loop
+branch_if_greater battle_loop
 walk
 jump head_to_killing_fields
 
@@ -39,7 +39,7 @@ battle_loop:
 fetch HEALTH
 div 2
 not
-branch :dying
+branch dying
 
 hunt
 act HUNT
