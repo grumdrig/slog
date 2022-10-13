@@ -1,25 +1,25 @@
-macro face {
+macro face
   store FACING
-}
+end
 
-macro face angle {
+macro face angle
   const angle
   store FACING
-}
+end
 
-macro face_east {
+macro face_east
   face 90
-}
+end
 
-macro branch_if_greater label {
+macro branch_if_greater label
   sub
   min 0
   branch label
-}
+end
 
-macro not {
+macro not
   unary NOT
-}
+end
 
 raid:
 
@@ -30,7 +30,7 @@ fetch LONGITUDE
 fetch LEVEL
 sub
 min 0
-branch_if_greater battle_loop
+branch_if_greater :battle_loop
 walk
 jump head_to_killing_fields
 
@@ -39,7 +39,7 @@ battle_loop:
 fetch HEALTH
 div 2
 not
-branch dying
+branch :dying
 
 hunt
 act HUNT
@@ -76,7 +76,7 @@ jump dying
 
 rest:
 
-ACT rest
+act REST
 fetch HP
 fetch HP_MAX
 sub

@@ -369,3 +369,113 @@ class VirtualMachine {
     }
   }
 }
+
+
+let MNEMONICS = {};
+for (let op of opcodes) {
+  MNEMONICS[op.mnemonic] = op.opcode;
+}
+
+
+class Assembler {
+  static tokenre = /[a-zA-Z_][0-9a-zA-Z_]*|[:]|[-+]?(0x)?[0-9]+/g;
+
+  macros = {};
+  labels = {};
+  forwardReferences = {};
+  code = new Int16Array();
+  macroInProgress;
+  pc = 0;
+
+  lex(code) {
+    let result = [];
+    let lines = code.split('\n');
+    for (let line_no = 0; line_no < lines.length; ++line_no) {
+      let line = lines[line_no];
+      line = line.split(';')[0];
+      line = line.trim();
+      result.push(line.match(Assembler.tokenre) || [])
+      // TODO: this doesn't watch for syntax errors. frankly it's pretty terrible.
+    }
+  }
+
+  parse(code, symbols) {
+    let lines = this.lex(code);
+    for (let line_no = 0; line_no < lines.length; ++line_no) {
+      let tokens = lines[line_no];
+
+      if (macroInProgress) {
+        if (tokens.length === 1 && token[0] === 'end') {
+          macroInProgress = null;
+        } else {
+          macros[macroInProgress].body.push(tokens);
+        }
+      }
+
+      else if (tokens.length > 0) {
+        if (tokens.length === 2 && is_identifier(token[0]) && token[1] === ':') {
+          labels[token[0]] = pc
+
+        } else if (tokens.length >= 2 && tokens[0] === 'macro') {
+          let name = tokens[1];
+          macros[name] = {
+            name,
+            parameters: tokens.slice(2),
+            body: []
+          }
+
+        } else if (MNEMONICS[tokens[0]]) {
+          this.assert(tokens.length <= 2, "unexpected characters following instruction");
+
+          if (tokens.length === 1) {
+            emit(MNEMONICS[tokens[0]], 0x400);
+
+          } else if (is_numeric(tokens[1])) {
+            emit(MNEMONICS[tokens[0]], parseValue(tokens[1]));
+
+          } else {
+            assert(is_identifier(tokens[1]), "identifier or something expected");
+            let value = symbol[tokens[1]];
+            if (typeof value === 'undefined') {
+              forwardReferences[this.pc] = tokens[1];
+            }
+            emit(MNEMONICS[tokens[0]], value || 0);
+
+          }
+
+        } else if (this.macros[tokens[0]]) {
+
+          let m = this.macros[tokens[0]];
+          this.assert(m.parameters.length == tokens.slice(1).length, "mismatch in macro parameter count");
+
+          let ss = {}
+          for (let i = 0; i < m.parameters.length; ++i) {
+            ss[m.parameters[i]] = tokens[i + 1];
+          }
+
+          this.parse(m.body, ss);
+
+        } else {
+          this.assert(false, "parse error");
+        }
+      }
+    }
+  }
+
+  link() {
+    for (let pc of Object.keys(this.forwardReferences)) {
+      let symbol = this.forwardReferences[pc];
+      this.assert(typeof this.labels[symbol] !== 'undefined', "undefined label: " + symbol);
+      reemit(pc, this.code[pc] & 0x3f, this.labels[symbol]);
+    }
+  }
+
+  emit(opcode, parameter = 0x400) {
+    this.reemit(this.pc++, opcode, parameter);
+  }
+
+  reemit(pc, opcode, parameter = 0x400) {
+    this.code[pc] = opcode || (parameter << 6);
+  }
+
+}
