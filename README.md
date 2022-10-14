@@ -259,3 +259,20 @@ Maybe a testing ground on client side with a known map?
 
 Probably provide nothing to players but the ability to run games on the server
 and get a result back.
+
+
+LOGGING
+=======
+
+Idea: Instead of generating a log from anywhere, have an NPC who is a
+biographer. When you come and TALK to him, your ALLEGIANCE text gets written
+into some record. This way information gathered abroad needs to be brought
+back to get to the player. This could still be done by not letting the player
+see the log unless they player returns home.
+
+Perhaps ALLEGIANCE should be a longer statement. But perhaps not. Or maybe it
+should just be called "statement" or something.
+
+
+
+

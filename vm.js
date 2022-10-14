@@ -25,11 +25,11 @@ const opcodes = [
   // adjust
   // ... XN ... X1 N => ... ; SP -= N+1, PP = XN
 
-  { opcode: 0xE, mnemonic: 'load' },
-  // load a value at a memory location
-  // load A
+  { opcode: 0xE, mnemonic: 'get' },
+  // get a value at a memory location
+  // get A
   // ... => ... [A] ; SP += 1
-  // load
+  // get
   // ... A => ... [A]
 
   { opcode: 0xF, mnemonic: 'fetch' },
@@ -39,11 +39,11 @@ const opcodes = [
   // fetch
   // ... A => ... [DS + A]
 
-  { opcode: 0x5, mnemonic: 'store' },
-  // store a value in memory
-  // store A
+  { opcode: 0x5, mnemonic: 'set' },
+  // set a value in memory
+  // set A
   // ... X => ... ; [A] = X, SP -= 1
-  // store
+  // set
   // ... X A => ... ; [A] = X, SP -= 2
 
   { opcode: 0x6, mnemonic: 'stash' },
@@ -123,14 +123,14 @@ const opcodes = [
 ];
 
 const UNARY_OPERATORS = {
-  0x5: { mnemonic: 'sin', operation: x => Math.sin(x) },
-  0x7: { mnemonic: 'log', operation: x => Math.log(x) },
-  0xE: { mnemonic: 'exp', operation: x => Math.exp(x) },
-  0x1: { mnemonic: 'not', operation: x => x ? 0 : 1 },
-  0xA: { mnemonic: 'abs', operation: x => Math.abs(x) },
-  0x9: { mnemonic: 'neg', operation: x => -x },
-  0xC: { mnemonic: 'complement', operation: x => ~x },
-  0x6: { mnemonic: 'inverse', operation: x => x === 0 ? 0 : 0x7fff/x },
+  0x5: { mnemonic: 'SIN', operation: x => Math.sin(x) },
+  0x7: { mnemonic: 'LOG', operation: x => Math.log(x) },
+  0xE: { mnemonic: 'EXP', operation: x => Math.exp(x) },
+  0x1: { mnemonic: 'NOT', operation: x => x ? 0 : 1 },
+  0xA: { mnemonic: 'ABS', operation: x => Math.abs(x) },
+  0x9: { mnemonic: 'NEG', operation: x => -x },
+  0xC: { mnemonic: 'COMPLEMENT', operation: x => ~x },
+  0x6: { mnemonic: 'INVERSE', operation: x => x === 0 ? 0 : 0x7fff/x },
 };
 
 let UNARY_SYMBOLS = {};
@@ -201,9 +201,9 @@ const SPECIAL = {
   ALTITUDE: 0x82,  // 0 = on land, -1 underground, 1 flying
   FACING: 0x83,  // degrees on compass
 
-  ALLEGIANCE0: 0x90,  // ASCII codes of some arbitrary blabber
+  STATEMENT0: 0x90,  // ASCII codes of some arbitrary blabber
   // ...
-  ALLEGIANCE15: 0x9F,
+  STATEMENT15: 0x9F,
 
   TONE_FREQUENCY: 0xA0,
   TONE_VOLUME: 0xA1,
@@ -215,9 +215,9 @@ const ACTIONS = {
   HUNT: 0x40,
   BUY: 0xB1,
   SELL: 0x5E,
-  ATTACK: 0xA7,
+  FIGHT: 0xA7,
   REST: 0x22,
-  FORAGE: 0xF0,
+  GATHER: 0xF0,
 };
 
 class VirtualMachine {
@@ -234,17 +234,29 @@ class VirtualMachine {
   get aux() { return special[SPECIAL.AUX] }
   set aux_fractional(f) { special[SPECIAL.AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
-  get top() { return this.load(this.sp) }
-  set top(v) { this.store(this.sp, v) }
+  get top() { return this.get(this.sp) }
+  set top(v) { this.set(this.sp, v) }
 
-  store(a, v) {
-    // TODO: get bit size and signs of v right
-    // TODO: don't allow setting of most specials
-    if (a >= 0) this.memory[a] = v;
-    else this.special[-a] = v;
+  set(a, v) {
+    if (a < 0) {
+      a = -a;
+      if (a < this.special.length)
+        this.special[a] = v;
+    } else if (a < this.memory.length) {
+        this.memory[a] = v;
+    }
   }
 
-  load(a) { return (a < 0) ? this.special[-a] : this.memory[a] }  // TODO: and watch limits
+  get(a) {
+    if (a < 0) {
+      a = -a;
+      if (a >= this.special.length) return 0;
+      return this.special[a];
+    } else {
+      if (a >= this.memory.length) return 0;
+      return this.memory[a];
+    }
+  }
 
   pop() { this.sp += 1; return this.memory[this.sp - 1] }
   push(v) { this.memory[this.sp -= 1] = v }
@@ -276,18 +288,18 @@ class VirtualMachine {
     } else if (mnemonic === 'adjust') {
       this.sp += argument;
 
-    } else if (mnemonic === 'load' || mnemonic === 'fetch') {
+    } else if (mnemonic === 'get' || mnemonic === 'fetch') {
       let address = argument;
       if (mnemonic === 'fetch') address += this.special[SPECIAL.DS];
-      this.push(this.load(argument));
+      this.push(this.get(argument));
 
-    } else if (mnemonic === 'store' || mnemonic === 'stash') {
+    } else if (mnemonic === 'set' || mnemonic === 'stash') {
       let value = pop();
       let address = argument;
       if (mnemonic === 'stash') address += this.special[SPECIAL.DS];
       if (address >= 0 ||
          [SPECIAL.PC, SPECIAL.SP, SPECIAL.AUX, SPECIAL.DS].includes(-address)) {
-        this.store(address, pop());
+        this.set(address, pop());
       } // else illegal
 
     } else if (mnemonic === 'branch') {
@@ -303,8 +315,8 @@ class VirtualMachine {
         let a1 = this.sp + i;
         let a2 = this.sp + (i + offset + depth) % depth
         let tmp = this.fetch(a1);
-        this.store(this.a1, this.fetch(this.a2));
-        this.store(this.a2, tmp);
+        this.set(this.a1, this.fetch(this.a2));
+        this.set(this.a2, tmp);
       }
 
     // Binary arithmetic
@@ -370,7 +382,7 @@ class VirtualMachine {
         this.push(0xBAD);
       }
 
-    // "Real"-world instructions, all of which advance character age and store
+    // "Real"-world instructions, all of which advance character age and set
     //  a boolean value in AUX indication if the instruction completed
 
     } else if (mnemonic === 'walk') {
@@ -441,9 +453,10 @@ class VirtualMachine {
 
 
 let MNEMONICS = {};
+let OPCODES = {}
 for (let op of opcodes) {
   MNEMONICS[op.mnemonic] = op.opcode;
-  MNEMONICS[op.opcode] = op.mnemonic;
+  OPCODES[op.opcode] = op.mnemonic;
 }
 
 function is_identifier(id) {
@@ -461,7 +474,7 @@ function clone(...objs) {
 
 
 class Assembler {
-  static tokenre = /[a-zA-Z_][0-9a-zA-Z_]*|[:=]|[-+]?(0x)?[0-9]+/g;
+  static tokenre = /[a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!@#$%^&*]|[-+]?(0x)?[0-9]+|"[^"]*"|'./g;
 
   macros = {};
   labels = {};
@@ -472,7 +485,7 @@ class Assembler {
 
   assert(truth, message) {
     if (!truth) {
-      throw `ASSEMBLY ERROR AT LINE ${this.pc + 1}: ${message}`;
+      throw this.line + `\nASSEMBLY ERROR AT LINE ${this.line_no + 1}: ${message}`;
     }
   }
 
@@ -483,24 +496,32 @@ class Assembler {
   }
 
   lex(text) {
+    // TODO: this doesn't watch well for syntax errors. frankly it's pretty terrible.
     let result = [];
     let lines = text.split('\n');
+    function resolve(t) {
+      if (!Number.isNaN(parseInt(t))) return [parseInt(t)];
+      if (t[0] === "'") return [ord(t.slice(1))];
+      if (t[0] === '"') return t.slice(1, t.length - 1).split('').map(ord);
+      return [t];
+    }
     for (let line_no = 0; line_no < lines.length; ++line_no) {
       let line = lines[line_no];
-      line = line.split(';')[0];
-      line = line.trim();
-      line = line.match(Assembler.tokenre) || [];
-      // TODO: this doesn't watch for syntax errors. frankly it's pretty terrible.
-      line = line.map(t => Number.isNaN(parseInt(t)) ? t : parseInt(t));
-      result.push(line);
+      let tokens = line.split(';')[0];
+      tokens = tokens.trim();
+      tokens = tokens.match(Assembler.tokenre) || [];
+      tokens = tokens.reduce((l, t) => l.concat(resolve(t)), []);
+      result.push({ line_no, line, tokens });
     }
     return result;
   }
 
   parse(lines, symbols) {
     symbols = clone(symbols);
-    for (let line_no = 0; line_no < lines.length; ++line_no) {
-      let tokens = lines[line_no];
+    for (let line of lines) {
+      this.line_no = line.line_no;
+      this.line = line.line;
+      let tokens = line.tokens;
 
       tokens = tokens.map(t => typeof symbols[t] === 'undefined' ? t : symbols[t]);
 
@@ -513,28 +534,28 @@ class Assembler {
           this.assert(tokens.length === 1, "unexpected junk after 'end'");
           this.macroInProgress = null;
         } else {
-          this.macros[this.macroInProgress].body.push(tokens);
+          this.macros[this.macroInProgress].body.push(line);
         }
       }
 
       else if (tokens.length > 0) {
 
         if (tokens.length === 2 && arg === ':') {
-          // LABEL:
+          "LABEL:"
           this.assert(is_identifier(inst), "identifier expected");
           this.assert(!this.labels[inst], "label already defined");
           this.labels[inst] = this.pc
 
         } else if (arg === '=') {
-          // NAME = VALUE ;  symbolic constant
+          "NAME = VALUE ;  symbolic constant"
           this.assert(tokens.length === 3, "invalid constant definition");
-          this.assert(typeof third === 'number', "numeric value expected");
+          this.assert(typeof third === 'number', "numeric value expected: " + third);
           symbols[inst] = third;
 
         } else if (inst === 'macro') {
           this.assert(tokens.length >= 2, "macro name expected");
 
-          // macro NAME [ARGS...]
+          "macro NAME [ARGS...]  ; begin macro definition"
           this.macroInProgress = arg;
           this.macros[arg] = {
             name: arg,
@@ -542,8 +563,28 @@ class Assembler {
             body: []
           }
 
+        } else if (inst === 'data') {
+          let last;
+          let multiply = false;
+          for (let t of tokens.slice(1)) {
+            if (t === '*') {
+              multiply = true;
+            } else {
+              this.assert(typeof t === 'number', `numeric value expected <${typeof t} ${t}>`);
+              if (multiply) {
+                this.assert(t > 0, "positive value expected");
+                for (let i = 1; i < t; ++i) this.data(last);
+                multiply = false;
+              } else {
+                last = t;
+                this.data(t);
+              }
+            }
+          }
+
         } else if (this.macros[inst]) {
 
+          "MACRO [ARGS...]  ; expand a macro"
           let m = this.macros[inst];
           this.assert(m.parameters.length == tokens.slice(1).length, "mismatch in macro parameter count");
 
@@ -555,15 +596,15 @@ class Assembler {
           this.parse(m.body, ss);
 
         } else if (typeof inst === 'number') {
-          // INST [ARG]
+          "INST [ARG]  ; a regular instruction"
           this.assert(tokens.length <= 2, "unexpected characters following instruction");
 
           if (tokens.length === 1) {
-            // INST  ; instruction in stack addressing mode
+            "INST  ; instruction in stack addressing mode"
             this.emit(inst, 0x200);
 
           } else {
-            // INST ARG  ; instruction with immediate argument
+            "INST ARG  ; instruction with an immediate argument"
 
             if (typeof arg === 'number') {
               this.emit(inst, arg);
@@ -597,23 +638,110 @@ class Assembler {
     this.code[pc] = opcode | (parameter << 6);
   }
 
+  data(value) {
+    this.code[this.pc++] = value;
+  }
+
   disassemble() {
     let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
-      `${num}:  ${inst} $${('0000' + (inst & 0xffff).toString(16)).substr(-4)}  $${(inst & 0x3f).toString(16)} ${(inst >> 6)}  ${MNEMONICS[inst & 0x3f]} ${inst >> 6 === -0x200 ? '' : inst >> 6}`);
+        ('000' + num).substr(-4)
+      + ' ' + ('     ' + inst).substr(-6)
+      + ' $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
+      + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}'` : '   ')
+      + ' $' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
+      + ' ' + ('  ' + (inst >> 6)).substr(-2)
+      + ' ' + OPCODES[inst & 0x3f]
+      + ' ' + ((inst >> 6 === -0x200) ? '' : inst >> 6)
+      );
     return result.join('\n');
   }
 
 }
 
+// Testing:
+
+
+function ord(c) { return c.charCodeAt(0) }
+
+const SHOPKEEPER = 0x5;
+const ORC = 0xC;
+
+class World {
+  // assumed to be rectangular
+  height;
+  width;
+  tiles = [];
+
+  constructor(map) {
+    let rows = map.trim().split('/n').map(l => l.trim());
+    this.height = rows.length;
+    this.width = rows[0].length;
+
+    for (let row of rows) {
+      for (let tile of row) {
+        let index = this.tiles.length;
+        let latitude = Math.floor(index / this.width);
+        let longitude = index % this.width;
+        let remoteness = Math.sqrt(Math.pow(2*latitude/this.height - 1, 2) +
+                                   Math.pow(2*longitude/this.width - 1, 2));
+        let friendly = tile === '!';
+        this.tiles.push({
+          terrain: ord(tile),
+          level: Math.round(2 / 2 - remoteness), // badessness of beasts
+          mobtype: friendly ? SHOPKEEPER : ORC,
+          mob_aggro: friendly ? -8 : 8,
+        });
+      }
+    }
+  }
+}
+
+let world = new World(`
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWWWWWWWWWWWWW~~~~~~~~WWWWWW
+WWWWWWWWWWWWWWW~~~~~F~~~~~~~WWWW
+WWWWWWWWWWWWWWW~FFFFFTTTTTTTTwWW
+WWWWWWWWWWWWWWFFFF!FTTTTTTTTTwwW
+WWWWWWWwWWWWWWWFFFFFvvTTTTTTTwwW
+WWWWWm_wWWww______FFvvvvvv_TTwwW
+WWWW_m_wwww__________==vv__TTwwW
+WWW_mmmwwww_________==vvvvv_wwWW
+WW_mmm_wwww________==_v__W_WwwWW
+WW_MMm_wWWw______===__Mm____wwwW
+WWmMmm_wWW.___=^==TT_MMm___.wwwW
+WWmmm__wWW.__==TTTTTmM@mm_..wwwW
+WW_____wWW._==TTTTTmm!@Mm_..wwwW
+WW__!_fwWW===!!__T_mMM@Mmm..wwwW
+WW___ffwWW.__!!___mMM@MMmm_wwwwW
+WWw_fffWWW_______mMM@Mmmm_wwwwwW
+WWw_fffWWW______mmM@MMm___wwWWwW
+WWwwwfWWWWW_____mMMMMmmT_wwWWWWW
+WWWWwwWWWW_______MMmmmTTTTwWWWWW
+WWWWWWWWWW_____#___TTTTTTTwwWWWW
+WWWWWWWwW___####___TTTTTTTTwWWWW
+WWWWWWww___!##_______TTTTTwwWWWW
+WWWWWWw######______WWWWTTT_wWWWW
+WWWWWww######_WWWWWWWWWWww_wwWWW
+WWWWWw######WWWWWWWWWWWWWw_wwWWW
+WWWWww##WWWWWWWWWw__mWWWWwwwwWWW
+WWWWwwWWWWWWWWWWww_!mwWWWWWWwWWW
+WWWWwWWWWWWWWWWWw____wwWWWWWWWWW
+WWWWwWWWWWWWWWwwwwwwwwwwWWWWWWWW
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+`);
+
+
+
 let a = new Assembler();
 a.assemble(`
 macro face
-  store FACING
+  set FACING
 end
 
 macro faceangle angle
   push angle
-  store FACING
+  set FACING
 end
 
 macro face_east
@@ -630,13 +758,19 @@ macro not
   unary NOT
 end
 
+jump raid
+
+data 0 1 2 3 4*10
+
+data "hello"
+
 raid:
 
 face_east
 
 head_to_killing_fields:
-fetch LONGITUDE
-fetch LEVEL
+get LONGITUDE
+get LEVEL
 sub
 min 0
 branch_if_greater battle_loop
@@ -645,20 +779,20 @@ jump head_to_killing_fields
 
 battle_loop:
 
-fetch HEALTH
+get HEALTH
 div 2
 not
 branch dying
 
 hunt:
 act HUNT
-fetch MOB_LEVEL
+get MOB_LEVEL
 not
 branch hunt
 
 fight:
 
-fetch MOB_LEVEL
+get MOB_LEVEL
 not
 branch killed
 act FIGHT
@@ -666,8 +800,8 @@ jump fight
 
 killed:
 
-fetch RESOURCE_TYPE
-sub MOB_DROPS
+get RESOURCE_TYPE
+sub INVENTORY_DROPS
 not
 branch battle_loop
 act GATHER
@@ -676,7 +810,7 @@ jump killed
 dying:
 
 faceangle -90
-fetch LONGITUDE
+get LONGITUDE
 max 0
 not
 branch rest
@@ -686,15 +820,13 @@ jump dying
 rest:
 
 act REST
-fetch HP
-fetch HP_MAX
-sub
+get DAMAGE
 branch rest
 
 sell:
 
 act SELL
-fetch MOB_DROPS
+get INVENTORY_DROPS
 branch sell
 
 jump raid
