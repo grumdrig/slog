@@ -645,13 +645,13 @@ class Assembler {
   disassemble() {
     let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
         ('000' + num).substr(-4)
-      + ' ' + ('     ' + inst).substr(-6)
       + ' $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
-      + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}'` : '   ')
+      + ' ' + ('     ' + inst).substr(-6)
+      + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}` : '  ')
       + ' $' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
-      + ' ' + ('  ' + (inst >> 6)).substr(-2)
+      + ' $' + ('00' + (inst >> 6).toString(16)).substr(-2)
       + ' ' + OPCODES[inst & 0x3f]
-      + ' ' + ((inst >> 6 === -0x200) ? '' : inst >> 6)
+      + ' ' + ((inst >> 6 === -0x200) ? '' : (inst >> 6))
       );
     return result.join('\n');
   }
