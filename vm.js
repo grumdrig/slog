@@ -7,6 +7,9 @@
 // (so SP should be descending in the below)
 
 const opcodes = [
+  { opcode: 0x0, mnemonic: 'halt' },
+  // halt execution, parameter ignored I guess
+
   { opcode: 0xC, mnemonic: 'push' },
   // put a value on the stack
   // const X
@@ -21,9 +24,9 @@ const opcodes = [
   { opcode: 0x9, mnemonic: 'adjust' },
   // remove/reserve values on the stack
   // adjust N
-  // ... XN ... X1 => ... ; SP -= N, PP = XN
+  // ... XN ... X1 => ... ; SP -= N
   // adjust
-  // ... XN ... X1 N => ... ; SP -= N+1, PP = XN
+  // ... XN ... X1 N => ... ; SP -= N+1
 
   { opcode: 0xE, mnemonic: 'get' },
   // get a value at a memory location
@@ -185,6 +188,7 @@ const SPECIAL = {
   INVENTORY_HEALING_POTIONS: 0x53,
   INVENTORY_ENERGY_POTIONS: 0x54,
   INVENTORY_KEYS: 0x55,
+  INVENTORY_FOOD: 0x56,
   // ...
   INVENTORY15: 0x5F,
 
@@ -218,6 +222,7 @@ const ACTIONS = {
   FIGHT: 0xA7,
   REST: 0x22,
   GATHER: 0xF0,
+  SEARCH: 0x70,
 };
 
 class VirtualMachine {
@@ -663,8 +668,21 @@ class Assembler {
 
 function ord(c) { return c.charCodeAt(0) }
 
-const SHOPKEEPER = 0x5;
-const ORC = 0xC;
+const SHOPKEEPER = {
+  type: 0x5,
+  aggro: -8,
+  responses: {
+    hello: "Welcome to my shop!",
+  },
+};
+
+const ORC = {
+  type: 0xC,
+  aggro: 8,
+  responses: {
+    hello: "Ash nazg durbatulûk",
+  }
+}
 
 class World {
   // assumed to be rectangular
@@ -687,9 +705,8 @@ class World {
         let friendly = tile === '!';
         this.tiles.push({
           terrain: ord(tile),
-          level: Math.round(2 / 2 - remoteness), // badessness of beasts
-          mobtype: friendly ? SHOPKEEPER : ORC,
-          mob_aggro: friendly ? -8 : 8,
+          level: Math.round(2 / 2 - remoteness), // badassness of beasts
+          mob: friendly ? SHOPKEEPER : ORC,
         });
       }
     }

@@ -1,18 +1,14 @@
-macro pop
-  adjust -1
-end
-
 macro face
-  store FACING
+  set FACING
 end
 
-macro face angle
-  const angle
-  store FACING
+macro faceangle angle
+  push angle
+  set FACING
 end
 
 macro face_east
-  face 90
+  faceangle 90
 end
 
 macro branch_if_greater label
@@ -25,13 +21,52 @@ macro not
   unary NOT
 end
 
+macro return
+  jump
+end
+
+
+jump raid
+
+make_statment: ; arg: source
+  push 0 ; i = 0
+  ms1:
+  ; if i == 15 break
+  push
+  sub 15
+  not
+  branch ms_done
+  ; read next source char
+  peek 2
+  peek 2
+  add
+  get
+  ; set next dest char
+  const STATEMENT0
+  peek 3
+  add
+  set
+  ; loop
+  jump ms1
+adjust 2
+set PC
+; done
+
+
+
+
+data 0 1 2 3 4*10
+
+hello:
+data "hello"
+
 raid:
 
 face_east
 
 head_to_killing_fields:
-load LONGITUDE
-load LEVEL
+get LONGITUDE
+get LEVEL
 sub
 min 0
 branch_if_greater battle_loop
@@ -40,20 +75,20 @@ jump head_to_killing_fields
 
 battle_loop:
 
-load HEALTH
+get HEALTH
 div 2
 not
 branch dying
 
 hunt:
 act HUNT
-load MOB_LEVEL
+get MOB_LEVEL
 not
 branch hunt
 
 fight:
 
-load MOB_LEVEL
+get MOB_LEVEL
 not
 branch killed
 act FIGHT
@@ -61,8 +96,8 @@ jump fight
 
 killed:
 
-load RESOURCE_TYPE
-sub MOB_DROPS
+get RESOURCE_TYPE
+sub INVENTORY_DROPS
 not
 branch battle_loop
 act GATHER
@@ -70,8 +105,8 @@ jump killed
 
 dying:
 
-face -90
-load LONGITUDE
+faceangle -90
+get LONGITUDE
 max 0
 not
 branch rest
@@ -80,14 +115,19 @@ jump dying
 
 rest:
 
+get PC
+push hello
+jump make_statement
+act TALK
+
 act REST
-load DAMAGE
+get DAMAGE
 branch rest
 
 sell:
 
 act SELL
-load MOB_DROPS
+get INVENTORY_DROPS
 branch sell
 
 jump raid
