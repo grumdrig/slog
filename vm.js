@@ -28,33 +28,47 @@ const opcodes = [
   // adjust
   // ... XN ... X1 N => ... ; SP -= N+1
 
-  { opcode: 0xE, mnemonic: 'get' },
-  // get a value at a memory location
-  // get A
+  { opcode: 0xE, mnemonic: 'fetch' },
+  // fetch a value at a memory location
+  // fetch A
   // ... => ... [A] ; SP += 1
-  // get
+  // fetch
   // ... A => ... [A]
 
-  { opcode: 0xF, mnemonic: 'fetch' },
-  // fetch a value at a [distant] memory location
-  // fetch A
+  { opcode: 0xF, mnemonic: 'fetchdata' },
+  // fetchdata a value at a [distant] memory location
+  // fetchdata A
   // ... => ... [DS + A] ; SP += 1
-  // fetch
+  // fetchdata
   // ... A => ... [DS + A]
 
-  { opcode: 0x5, mnemonic: 'set' },
+  { opcode: 0x1F, mnemonic: 'peek' },
+  // peek on the stack
+  // peek A
+  // ... => ... [SP + A] ; SP += 1
+  // peek
+  // ... A => ... [SP + A]
+
+  { opcode: 0x5, mnemonic: 'store' },
   // set a value in memory
   // set A
   // ... X => ... ; [A] = X, SP -= 1
   // set
   // ... X A => ... ; [A] = X, SP -= 2
 
-  { opcode: 0x6, mnemonic: 'stash' },
-  // stash a value in [distant] memory
-  // stash A
+  { opcode: 0x6, mnemonic: 'storedata' },
+  // storedata a value in [distant] memory
+  // storedata A
   // ... X => ... ; [DS + A] = X, SP -= 1
-  // stash
+  // storedata
   // ... X A => ... ; [DS + A] = X, SP -= 2
+
+  { opcode: 0x15, mnemonic: 'poke' },
+  // poke a value in [distant] memory
+  // poke A
+  // ... X => ... ; [SP + A] = X, SP -= 1
+  // poke
+  // ... X A => ... ; [SP + A] = X, SP -= 2
 
 
   { opcode: 0xB, mnemonic: 'branch' },
@@ -67,7 +81,7 @@ const opcodes = [
   { opcode: 0x2, mnemonic: 'jump' },
   // Unconditional branch, which we *could* handle by just setting PC
 
-  { opcode: 0xA, mnemonic: 'bury' },
+  { opcode: 0xA, mnemonic: 'bury' },  // TODO: not so sure this is useful
   // rotate stack
   // bury N (N > 0)
   // ... X1 ... XN => ... XN X1 ... X(N-1), PP?
@@ -125,6 +139,13 @@ const opcodes = [
   // add ascii character to log/journal
 ];
 
+let MNEMONICS = {};
+let OPCODES = []
+for (let op of opcodes) {
+  MNEMONICS[op.mnemonic] = op.opcode;
+  OPCODES[parseInt(op.opcode)] = op.mnemonic;
+}
+
 const UNARY_OPERATORS = {
   0x5: { mnemonic: 'SIN', operation: x => Math.sin(x) },
   0x7: { mnemonic: 'LOG', operation: x => Math.log(x) },
@@ -138,6 +159,37 @@ const UNARY_OPERATORS = {
 
 let UNARY_SYMBOLS = {};
 for (let u in UNARY_OPERATORS) UNARY_SYMBOLS[UNARY_OPERATORS[u].mnemonic] = parseInt(u);
+
+
+/* having second thoughts about this
+const BINARY_OPERATORS = {
+    max: (a, b) => Math.max(a, b),
+    min: (a, b) => Math.min(a, b),
+    add: (a, b) => a + b,
+    sub: (a, b) => a - b,
+    mul: (a, b) => a * b,
+    exp: (a, b) => Math.pow(a, b),
+    atan2: (a, b) => {
+      let a = Math.atan2(a, b) * 180 / Math.PI,
+      return [ Math.floor(a), fractional(a - this.top);
+    }
+    div: (a, b) => const divisor = b,
+      return Math.floor(a / divisor));
+      // TODO make sure to use mathematical modulus
+      this.aux = a % divisor;
+    or: (a, b) => return a | b),
+    and: (a, b) => return a & b),
+    xor: (a, b) => return a ^ b),
+    shift: (a, b) => let value = b,
+      if (a < 0) {
+        return value << a);
+        this.aux = value >> (16 - a);
+      } else {
+        return value >> a);
+        this.aux = value << (16 - a);
+      }
+*/
+
 
 // Machine registers
 const SPECIAL = {
@@ -226,23 +278,24 @@ const ACTIONS = {
 };
 
 class VirtualMachine {
-  memory = new Array[4096].fill(0);
-  special = new Array[256].fill(0);  // negative memory
+  memory = new Array(4096).fill(0);
+  special = new Array(256).fill(0);  // negative memory
+  running = true;
 
-  get pc() { return special[SPECIAL.PC] }
-  set pc(v) { special[SPECIAL.PC] = v }
+  get pc() { return this.special[SPECIAL.PC] }
+  set pc(v) { this.special[SPECIAL.PC] = v }
 
-  get sp() { return special[SPECIAL.SP] }
-  set sp(v) { special[SPECIAL.SP] = v }
+  get sp() { return this.special[SPECIAL.SP] }
+  set sp(v) { this.special[SPECIAL.SP] = v }
 
-  get aux() { return special[SPECIAL.AUX] }
-  get aux() { return special[SPECIAL.AUX] }
-  set aux_fractional(f) { special[SPECIAL.AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
+  get aux() { return this.special[SPECIAL.AUX] }
+  set aux(v) { this.special[SPECIAL.AUX] = v }
+  set aux_fractional(f) { this.special[SPECIAL.AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
-  get top() { return this.get(this.sp) }
+  get top() { return this.fetch(this.sp) }
   set top(v) { this.set(this.sp, v) }
 
-  set(a, v) {
+  store(a, v) {
     if (a < 0) {
       a = -a;
       if (a < this.special.length)
@@ -252,7 +305,7 @@ class VirtualMachine {
     }
   }
 
-  get(a) {
+  fetch(a) {
     if (a < 0) {
       a = -a;
       if (a >= this.special.length) return 0;
@@ -270,21 +323,27 @@ class VirtualMachine {
     for (let i = 0; i < program.length; ++i) {
       this.memory[i] = program[i];
     }
-    this.sp = this.memory.length - 1;
+    this.sp = this.memory.length;  // stack size is 0
+    this.special[SPECIAL.HEALTH] = 6; // TODO I dunno
   }
 
   step() {
-    const instruction = memory[pc()];
-    pc = pc + 1
-    const opcode = (instruction >> 6) & 0x3F;
-    const mnemonic = OPCODES[opcode].mnemonic;
-    let argument = instruction & 0x3ff;
+    const instruction = this.memory[this.pc];
+    const opcode = instruction & 0x3F;
+    console.log(opcode, this.pc, this.top, this.memory.slice(this.sp));
+    this.pc += 1
+    const mnemonic = OPCODES[opcode];
+    let argument = (instruction >> 6) & 0x3ff;
     const immediate = (argument !== 0x200);
     if (!immediate) {
       argument = this.pop();
     }
 
-    if (mnemonic === 'push') {
+    if (mnemonic === 'halt') {
+      this.running = false;
+      this.special[SPECIAL.AUX] = argument;
+
+    } else if (mnemonic === 'push') {
       this.push(argument);
 
     } else if (mnemonic === 'sethi') {
@@ -293,15 +352,17 @@ class VirtualMachine {
     } else if (mnemonic === 'adjust') {
       this.sp += argument;
 
-    } else if (mnemonic === 'get' || mnemonic === 'fetch') {
+    } else if (mnemonic === 'fetch' || mnemonic === 'fetchdata' || mnemonic == 'peek') {
       let address = argument;
-      if (mnemonic === 'fetch') address += this.special[SPECIAL.DS];
-      this.push(this.get(argument));
+      if (mnemonic === 'fetchdata') address += this.special[SPECIAL.DS];
+      if (mnemonic === 'peek')  address += this.special[SPECIAL.SP];
+      this.push(this.fetch(address));
 
-    } else if (mnemonic === 'set' || mnemonic === 'stash') {
+    } else if (mnemonic === 'set' || mnemonic === 'storedata' || mnemonic === 'poke') {
       let value = pop();
       let address = argument;
-      if (mnemonic === 'stash') address += this.special[SPECIAL.DS];
+      if (mnemonic === 'storedata') address += this.special[SPECIAL.DS];
+      if (mnemonic === 'poke')  address += this.special[SPECIAL.SP];
       if (address >= 0 ||
          [SPECIAL.PC, SPECIAL.SP, SPECIAL.AUX, SPECIAL.DS].includes(-address)) {
         this.set(address, pop());
@@ -310,7 +371,7 @@ class VirtualMachine {
     } else if (mnemonic === 'branch') {
       // with immediate addressing mode, the value is an offset not an absolute
       if (immediate) argument += this.pc;
-      if (pop()) this.pc = argument;
+      if (this.pop()) this.pc = argument;
 
     } else if (mnemonic === 'bury') {
       // TODO might be backwards
@@ -326,43 +387,44 @@ class VirtualMachine {
 
     // Binary arithmetic
     } else if (mnemonic === 'max') {
-      this.push(Math.max(argument, this.pop()));
+      this.push(Math.max(this.pop(), argument));
 
     } else if (mnemonic === 'min') {
-      this.push(Math.min(argument, this.pop()));
+      this.push(Math.min(this.pop(), argument));
 
     } else if (mnemonic === 'add') {
-      this.push(argument + this.pop());
+      this.push(this.pop() + argument);
 
     } else if (mnemonic === 'sub') {
-      this.push(argument - this.pop());
+      this.push(this.pop() - argument);
 
     } else if (mnemonic === 'mul') {
-      this.push(argument * this.pop());
+      this.push(this.pop() * argument);
 
     } else if (mnemonic === 'exp') {
-      this.push(Math.pow(argument, this.pop()));
+      this.push(Math.pow(this.pop(), argument));
 
     } else if (mnemonic === 'atan2') {
-      let a = Math.atan2(argument, this.pop()) * 180 / Math.PI;
+      let a = Math.atan2(this.pop(), argument) * 180 / Math.PI;
       this.push(Math.floor(a));
       this.aux_fractional = a - this.top;
 
     } else if (mnemonic === 'div') {
-      const divisor = this.pop();
-      this.push(Math.floor(argument / divisor));
+      const divident = this.pop();
+      const divisor = argument;
+      this.push(Math.floor(divident / divisor));
       // TODO make sure to use mathematical modulus
-      this.aux = argument % divisor;
+      this.aux = dividend % divisor;
 
     // Binary bitwise
     } else if (mnemonic === 'or') {
-      this.push(argument | this.pop());
+      this.push(this.pop() | argument);
 
     } else if (mnemonic === 'and') {
-      this.push(argument & this.pop());
+      this.push(this.pop() & argument);
 
     } else if (mnemonic === 'xor') {
-      this.push(argument ^ this.pop());
+      this.push(this.pop() ^ argument);
 
     } else if (mnemonic === 'shift') {
       let value = this.pop();
@@ -445,24 +507,19 @@ class VirtualMachine {
   }
 
   alive() {
-    return this.special[SPECIAL.HEALTH] > 0 &&
-           this.special[SPECIAL.CLOCK] < 0x7FFF;
+    return this.running &&
+           this.special[SPECIAL.DAMAGE] < this.special[SPECIAL.HEALTH] &&
+           this.special[SPECIAL.CLOCK] < 30;
+           this.special[SPECIAL.AGE] < 0x7FFF;
   }
 
   run() {
     while (this.alive()) {
-      step();
+      this.step();
     }
   }
 }
 
-
-let MNEMONICS = {};
-let OPCODES = {}
-for (let op of opcodes) {
-  MNEMONICS[op.mnemonic] = op.opcode;
-  OPCODES[op.opcode] = op.mnemonic;
-}
 
 function is_identifier(id) {
   return id.match(/^[a-zA-Z_][0-9a-zA-Z_]*$/);
@@ -474,6 +531,14 @@ function clone(...objs) {
   for (let obj of objs)
     for (let i in obj)
       result[i] = obj[i];
+  return result;
+}
+
+
+function negate(dict) {
+  let result = {};
+  for (let i in dict)
+    result[i] = -dict[i];
   return result;
 }
 
@@ -496,7 +561,7 @@ class Assembler {
 
   assemble(text) {
     let lines = this.lex(text);
-    this.parse(lines, clone(SPECIAL, MNEMONICS, UNARY_SYMBOLS, ACTIONS));
+    this.parse(lines, clone(negate(SPECIAL), MNEMONICS, UNARY_SYMBOLS, ACTIONS));
     this.link();
   }
 
@@ -653,8 +718,8 @@ class Assembler {
       + ' $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
       + ' ' + ('     ' + inst).substr(-6)
       + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}` : '  ')
-      + ' $' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
-      + ' $' + ('00' + (inst >> 6).toString(16)).substr(-2)
+      + '  $' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
+      + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-2)
       + ' ' + OPCODES[inst & 0x3f]
       + ' ' + ((inst >> 6 === -0x200) ? '' : (inst >> 6))
       );
@@ -752,102 +817,31 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
 let a = new Assembler();
 a.assemble(`
-macro face
-  set FACING
-end
+push 2
+push 3
+add ; 5
+add 3 ; 8
+sub 1 ; 7
+mul 3 ; 21
+shift 1 ; 10
+or 1 ; 11
+or 0x2 ; 11
+shift 1 ; 5
+fetch AUX ; 5 1   PROBLEM
+add ; 6
+peek 0 ; 6 6
+sub 6 ; 6 0
+branch err ; 6
+div 2 ; 3
+shift -1 ; 6
+halt 1
 
-macro faceangle angle
-  push angle
-  set FACING
-end
-
-macro face_east
-  faceangle 90
-end
-
-macro branch_if_greater label
-  sub
-  min 0
-  branch label
-end
-
-macro not
-  unary NOT
-end
-
-jump raid
-
-data 0 1 2 3 4*10
-
-data "hello"
-
-raid:
-
-face_east
-
-head_to_killing_fields:
-get LONGITUDE
-get LEVEL
-sub
-min 0
-branch_if_greater battle_loop
-walk
-jump head_to_killing_fields
-
-battle_loop:
-
-get HEALTH
-div 2
-not
-branch dying
-
-hunt:
-act HUNT
-get MOB_LEVEL
-not
-branch hunt
-
-fight:
-
-get MOB_LEVEL
-not
-branch killed
-act FIGHT
-jump fight
-
-killed:
-
-get RESOURCE_TYPE
-sub INVENTORY_DROPS
-not
-branch battle_loop
-act GATHER
-jump killed
-
-dying:
-
-faceangle -90
-get LONGITUDE
-max 0
-not
-branch rest
-walk
-jump dying
-
-rest:
-
-act REST
-get DAMAGE
-branch rest
-
-sell:
-
-act SELL
-get INVENTORY_DROPS
-branch sell
-
-jump raid
-  `);
+err:
+halt 66
+`);
 console.log(a.disassemble());
 console.log('PC', a.pc);
+let vm = new VirtualMachine(a.code);
+vm.run();
+console.log(vm.aux, vm.pc, vm.alive());
 // a.code.push(3);

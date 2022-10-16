@@ -1,10 +1,10 @@
 macro face
-  set FACING
+  store FACING
 end
 
 macro faceangle angle
   push angle
-  set FACING
+  store FACING
 end
 
 macro face_east
@@ -40,16 +40,16 @@ make_statment: ; arg: source
   peek 2
   peek 2
   add
-  get
-  ; set next dest char
+  fetch
+  ; write next dest char
   const STATEMENT0
   peek 3
   add
-  set
+  store
   ; loop
   jump ms1
 adjust 2
-set PC
+store PC
 ; done
 
 
@@ -65,8 +65,8 @@ raid:
 face_east
 
 head_to_killing_fields:
-get LONGITUDE
-get LEVEL
+fetch LONGITUDE
+fetch LEVEL
 sub
 min 0
 branch_if_greater battle_loop
@@ -75,20 +75,20 @@ jump head_to_killing_fields
 
 battle_loop:
 
-get HEALTH
+fetch HEALTH
 div 2
 not
 branch dying
 
 hunt:
 act HUNT
-get MOB_LEVEL
+fetch MOB_LEVEL
 not
 branch hunt
 
 fight:
 
-get MOB_LEVEL
+fetch MOB_LEVEL
 not
 branch killed
 act FIGHT
@@ -96,7 +96,7 @@ jump fight
 
 killed:
 
-get RESOURCE_TYPE
+fetch RESOURCE_TYPE
 sub INVENTORY_DROPS
 not
 branch battle_loop
@@ -106,7 +106,7 @@ jump killed
 dying:
 
 faceangle -90
-get LONGITUDE
+fetch LONGITUDE
 max 0
 not
 branch rest
@@ -115,19 +115,19 @@ jump dying
 
 rest:
 
-get PC
+fetch PC
 push hello
 jump make_statement
 act TALK
 
 act REST
-get DAMAGE
+fetch DAMAGE
 branch rest
 
 sell:
 
 act SELL
-get INVENTORY_DROPS
+fetch INVENTORY_DROPS
 branch sell
 
 jump raid
