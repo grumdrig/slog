@@ -216,6 +216,9 @@ const SPECIAL = {
   WIND_DIRECTION: 0x1A,
   WEATHER: 0x1B,
   TIDE: 0x1C,
+  //
+  //
+  //
 
   // Nearby mob
   MOB_SPECIES: 0x20,  // from some list.
@@ -273,10 +276,24 @@ const SPECIAL = {
   TONE_VOLUME: 0xA1,
   // Room for polyphony
 
+  MAP_NW: 0xB0,
+  MAP_N:  0xB1,
+  MAP_NE: 0xB2,
+  MAP_W:  0xB3,
+  MAP_X:  0xB4,
+  MAP_E:  0xB5,
+  MAP_SW: 0xB6,
+  MAP_S:  0xB7,
+  MAP_SE: 0xB8,
+
   // Character name
-  NAME0: 0xB0,
+  NAME0: 0xC0,
   /// ...
-  NAME15: 0xBF,
+  NAME15: 0xCF,
+
+  ATTITUDE_0: 0xD0,  // reserved for game-specific attitudes / stances /
+  // ...
+  ATTITUDE_2: 0xDF,  // strategies / behaviors
 };
 
 const ACTIONS = {
