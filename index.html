@@ -6,7 +6,7 @@
 <style>
 	#sheet {
 		display: grid;
-		grid-template-columns: repeat(3, 300px);
+		grid-template-columns: repeat(3, 190px);
 		gap: 4px;
 	}
 
@@ -22,9 +22,12 @@
 	#col3 { grid-column: 3; }
 	#col1 div, #col2 div, #col3 div {
 		display: grid;
-		grid-template-columns: 200px 80px;
+		grid-template-columns: 120px 60px;
 	}
 	#col3 #log { grid-template-columns: 1fr; }
+	#col2 #equipment {
+		grid-template-columns: 80px 80px;
+	}
 
 	div {
 		font: 14px "helvetica";
@@ -42,9 +45,6 @@
 		border: solid 5px;
 		border-image-slice: 5;
 		border-color: red;
-	/*	border-image-source: url('data:image/svg+xml,<svg version="1.1" width="300" height="300" xmlns="http://www.w3.org/2000/svg"><line x1="3.40" y1="2.91" x2="49.95" y2="1.31" stroke="black" stroke-width="1.51px"></line><line x1="49.95" y1="1.31" x2="100.45" y2="1.72" stroke="black" stroke-width="1.55px"></line><line x1="100.45" y1="1.72" x2="149.48" y2="2.24" stroke="black" stroke-width="1.55px"></line><line x1="149.48" y1="2.24" x2="198.83" y2="1.95" stroke="black" stroke-width="1.68px"></line><line x1="198.83" y1="1.95" x2="247.74" y2="1.72" stroke="black" stroke-width="1.60px"></line><line x1="247.74" y1="1.72" x2="295.73" y2="0.36" stroke="black" stroke-width="1.30px"></line><line x1="1.69" y1="1.54" x2="3.04" y2="52.12" stroke="black" stroke-width="1.66px"></line><line x1="3.04" y1="52.12" x2="1.99" y2="101.19" stroke="black" stroke-width="1.45px"></line><line x1="1.99" y1="101.19" x2="2.72" y2="149.63" stroke="black" stroke-width="1.47px"></line><line x1="2.72" y1="149.63" x2="1.89" y2="199.08" stroke="black" stroke-width="1.62px"></line><line x1="1.89" y1="199.08" x2="2.08" y2="247.49" stroke="black" stroke-width="1.66px"></line><line x1="2.08" y1="247.49" x2="1.52" y2="295.80" stroke="black" stroke-width="1.30px"></line><line x1="1.77" y1="296.46" x2="50.84" y2="297.66" stroke="black" stroke-width="1.38px"></line><line x1="50.84" y1="297.66" x2="99.96" y2="298.57" stroke="black" stroke-width="1.44px"></line><line x1="99.96" y1="298.57" x2="150.13" y2="296.66" stroke="black" stroke-width="1.59px"></line><line x1="150.13" y1="296.66" x2="199.31" y2="298.05" stroke="black" stroke-width="1.61px"></line><line x1="199.31" y1="298.05" x2="246.79" y2="297.30" stroke="black" stroke-width="1.28px"></line><line x1="246.79" y1="297.30" x2="296.14" y2="296.75" stroke="black" stroke-width="1.68px"></line><line x1="295.66" y1="2.00" x2="296.80" y2="50.83" stroke="black" stroke-width="1.30px"></line><line x1="296.80" y1="50.83" x2="296.16" y2="101.29" stroke="black" stroke-width="1.62px"></line><line x1="296.16" y1="101.29" x2="296.82" y2="148.99" stroke="black" stroke-width="1.58px"></line><line x1="296.82" y1="148.99" x2="297.76" y2="198.69" stroke="black" stroke-width="1.47px"></line><line x1="297.76" y1="198.69" x2="297.57" y2="248.71" stroke="black" stroke-width="1.65px"></line><line x1="297.57" y1="248.71" x2="296.38" y2="297.50" stroke="black" stroke-width="1.69px"></line></svg>');*/
-/*	border-image: url('data:image/svg+xml,<svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><rect width="30" height="30" rx="10" fill="red"/></svg>');
-*/
 	}
 
 </style>
@@ -58,27 +58,27 @@
 	<div id=col1>
 		<div id=vitals class=boxy>
 			<div class=head>Character Sheet</div>
-			<div>Level</div> <div>1</div>
-			<div>XP</div>    <div>0</div>
-			<div>Health</div> <div>1</div>
-			<div>Energy</div> <div>1</div>
+			<div>Level</div> <div id="level">1</div>
+			<div>XP</div>    <div id="xp">0</div>
+			<div>Health</div> <div id="health">1</div>
+			<div>Energy</div> <div id="energy">1</div>
 		</div>
 
 		<div id=stats class=boxy>
-			<div>Strength</div> <div>1</div>
-			<div>Agility</div> <div>1</div>
-			<div>Constitution</div> <div>1</div>
-			<div>Intelligence</div> <div>1</div>
-			<div>Wisdom</div> <div>1</div>
-			<div>Charisma</div> <div>1</div>
+			<div>Strength</div> <div id="c38">1</div>
+			<div>Agility</div> <div id="c39">1</div>
+			<div>Constitution</div> <div id="c3A">1</div>
+			<div>Intelligence</div> <div id="c3B">1</div>
+			<div>Wisdom</div> <div id="c3C">1</div>
+			<div>Charisma</div> <div id="c3D">1</div>
 		</div>
 
 		<div id=spells class=boxy>
 			<div class=head>Spell Book</div>
-			<div>Heal</div> <div>I</div>
-			<div>Fireball</div> <div>I</div>
-			<div>Dig</div> <div>I</div>
-			<div>Fly</div> <div>I</div>
+			<div>Heal</div> <div id="s0">I</div>
+			<div>Fireball</div> <div id="s1">I</div>
+			<div>Dig</div> <div id="s2">I</div>
+			<div>Fly</div> <div id="s3">I</div>
 		</div>
 	</div>
 	<div id=col2>
@@ -115,11 +115,10 @@
 	</div>
 </div>
 
-<svg viewBox="0 0 300 300" version="1.1" width="300" height="200" xmlns="http://www.w3.org/2000/svg"></svg>
-
 <script>
 
 function $(s) { return document.querySelector(s) }
+function $$(s) { return document.querySelectorAll(s) }
 
 function assemble() {
 	let asm = new Assembler();
@@ -131,52 +130,60 @@ function assemble() {
 function rand(m) { return Math.floor(Math.random() * m) }
 function crand(s) { return s * (Math.random() - Math.random()) }
 
-let W = 300, H = 300;
-let b = $("svg");
-let IN = 2;
-b.setAttribute('width', W);
-b.setAttribute('height', H);
-
-function handline(X1, Y1, X2, Y2) {
+function handline(svg, wiggle, X1, Y1, X2, Y2) {
 	let x1, y1;
 	let length = Math.sqrt(Math.pow(X2-X1, 2) + Math.pow(Y2-Y1, 2));
 	let n = Math.round(length / 50);
 	for (let i = 0; i <= n; i += 1) {
-		x2 = (X1 + i/n * (X2-X1) + crand(IN)).toFixed(1);
-		y2 = (Y1 + i/n * (Y2-Y1) + crand(IN)).toFixed(1);
+		x2 = (X1 + i/n * (X2-X1) + crand(wiggle)).toFixed(1);
+		y2 = (Y1 + i/n * (Y2-Y1) + crand(wiggle)).toFixed(1);
 		if (typeof x1 !== 'undefined') {
-			let line = b.appendChild(
+			let line = svg.appendChild(
 						document.createElementNS('http://www.w3.org/2000/svg', 'line'));
 			line.setAttribute('x1', x1);
 			line.setAttribute('y1', y1);
 			line.setAttribute('x2', x2);
 			line.setAttribute('y2', y2);
 			line.setAttribute('stroke', "black");
-			line.setAttribute('stroke-width', (1.5 + crand(0.25)).toFixed(1) + "px");
+			line.setAttribute('stroke-width', (1.0 + crand(0.25)).toFixed(1) + "px");
 		}
 		x1 = x2;
 		y1 = y2;
 	}
 }
 
-handline(IN, IN, W-1-IN, IN);
-handline(IN, IN, IN, H-1-IN);
-handline(IN, H-1-IN, W-1-IN, H-1-IN);
-handline(W-1-IN, IN, W-1-IN, H-1-IN);
+function boxIn(div) {
+	let IN = 2;
+	let W = div.offsetWidth;
+	let H = div.offsetHeight;
+	let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	svg.setAttribute('version', '1.1');
+	svg.setAttribute('width',  W);
+	svg.setAttribute('height', H);
+	svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 
+	let wiggle = IN * 0.75;
 
-// var cssStyle = document.createElement('style');
-// cssStyle.type = 'text/css';
-var rules = document.createTextNode(`.boxy {
-	border-image-source: url('data:image/svg+xml,${b.outerHTML}');
+	handline(svg, wiggle, IN-1,   IN,     W-0-IN, IN    ); // N
+	handline(svg, wiggle, IN,     IN-1,   IN,     H-0-IN); // W
+	handline(svg, wiggle, IN-1,   H-1-IN, W-0-IN, H-1-IN); // S
+	handline(svg, wiggle, W-1-IN, IN-1,   W-1-IN, H-0-IN); // E
 
-/*	border-image-source: url('data:image/svg+xml,<svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><rect width="30" height="30" rx="10" fill="red"/></svg>');*/
+	div.style.borderImageSource = `url('data:image/svg+xml,${svg.outerHTML}'`;
+}
 
-}`);
-// cssStyle.appendChild(rules);
-if (true) $('style').appendChild(rules);
-// document.getElementsByTagName("head")[0].appendChild(cssStyle);
+$$(".boxy").forEach(div => boxIn(div));
 
-/*	border-image: url('data:image/svg+xml,<svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><rect width="30" height="30" rx="10" fill="red"/></svg>');*/
+let asm = new Assembler();
+asm.assemble('');
+let world = new World(`
+WWWWWW
+W__t_W
+WWWWWW`);
+let vm = new VirtualMachine(asm.code, world);
+$('#level').innerText = vm.special[SPECIAL.LEVEL];
+$('#xp').innerText = vm.special[SPECIAL.EXPERIENCE];
+$('#health').innerText = vm.special[SPECIAL.HEALTH];
+$('#energy').innerText = vm.special[SPECIAL.ENERGY];
 
 </script>

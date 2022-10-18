@@ -98,26 +98,23 @@ const opcodes = [
   // ... X => ... max(X, Y)
   // max
   // ... X Y => ... max(X, Y) ; SP -= 1
-
   { opcode: 0x21, mnemonic: 'min' },
   { opcode: 0x22, mnemonic: 'add' },
   { opcode: 0x23, mnemonic: 'sub' },
   { opcode: 0x24, mnemonic: 'mul' },
   { opcode: 0x25, mnemonic: 'atan2' },
-  { opcode: 0x26, mnemonic: 'or' },
-  { opcode: 0x27, mnemonic: 'and' },
-  { opcode: 0x28, mnemonic: 'xor' },
-  { opcode: 0x29, mnemonic: 'shift' },
+  { opcode: 0x26, mnemonic: 'pow' },
+  { opcode: 0x27, mnemonic: 'div' },  // AUX = mod(X,Y)
+  // bitwise
+  { opcode: 0x28, mnemonic: 'or' },
+  { opcode: 0x29, mnemonic: 'and' },
+  { opcode: 0x2A, mnemonic: 'xor' },
+  { opcode: 0x2B, mnemonic: 'shift' },
   // similar for these binary ops
 
   { opcode: 0x10, mnemonic: 'unary' },
   // unary OP
   // ... X => ... OP(X)
-
-  { opcode: 0x27, mnemonic: 'div' },
-  // div Y
-  // ... X => ... floor(X/Y) mod(X, Y) ; SP += 1
-
 
   { opcode: 0x30, mnemonic: 'walk' },
   // Walk at the given speed, as a percentage
@@ -230,13 +227,15 @@ const SPECIAL = {
   // Character sheet
 
   LEVEL: 0x30,
-  STR: 0x31,
-  DEX: 0x32,
-  CON: 0x33,
-  INT: 0x34,
-  WIS: 0x35,
-  CHA: 0x36,
-  AGE: 0x37,
+  EXPERIENCE: 0x31,
+  AGE: 0x32,
+  //
+  STR: 0x38,
+  DEX: 0x39,
+  CON: 0x3A,
+  INT: 0x3B,
+  WIS: 0x3C,
+  CHA: 0x3D,
 
   DAMAGE: 0x40,
   HEALTH: 0x41,
@@ -293,7 +292,13 @@ const SPECIAL = {
 
   ATTITUDE_0: 0xD0,  // reserved for game-specific attitudes / stances /
   // ...
-  ATTITUDE_2: 0xDF,  // strategies / behaviors
+  ATTITUDE_2: 0xDF,  // strategies / behaviors set by player
+
+  // Game rules
+  // Leveling: xp(level) = A + pow(level - 1, E/100) * M
+  LEVELING_ADDEND: 0xE0,
+  LEVELING_EXPONENT: 0xE1,
+  LEVELING_MULTIPLIER: 0xE2,
 };
 
 const ACTIONS = {
@@ -303,8 +308,11 @@ const ACTIONS = {
   SELL: 0x5E,
   FIGHT: 0xA7,
   REST: 0x22,
-  GATHER: 0xF0,
+  CAMP: 0xCA,
+  FORAGE: 0xF0,
+  GATHER: 0xF1,  // don't know what the difference might be
   SEARCH: 0x70,
+  LEVEL_UP: 0x77,
 };
 
 class VirtualMachine {
@@ -349,12 +357,13 @@ class VirtualMachine {
   pop() { this.sp += 1; return this.memory[this.sp - 1] }
   push(v) { this.memory[this.sp -= 1] = v }
 
-  constructor(program) {
+  constructor(program, world) {
+    this.world = world;
     for (let i = 0; i < program.length; ++i) {
       this.memory[i] = program[i];
     }
     this.sp = this.memory.length;  // stack size is 0
-    this.special[SPECIAL.HEALTH] = 6; // TODO I dunno
+    world.initialize(this);
   }
 
   step() {
@@ -431,7 +440,7 @@ class VirtualMachine {
     } else if (mnemonic === 'mul') {
       this.push(this.pop() * argument);
 
-    } else if (mnemonic === 'exp') {
+    } else if (mnemonic === 'pow') {
       this.push(Math.pow(this.pop(), argument));
 
     } else if (mnemonic === 'atan2') {
@@ -943,6 +952,15 @@ class World {
     }
   }
 
+  initialize(vm) {
+    vm.special[SPECIAL.LEVEL] = 1;
+    vm.special[SPECIAL.HEALTH] = 6;
+    vm.special[SPECIAL.ENERGY] = 10;
+    vm.special[SPECIAL.LEVELING_EXPONENT] = 160;
+    vm.special[SPECIAL.LEVELING_ADDEND] = 0;
+    vm.special[SPECIAL.LEVELING_MULTIPLIER] = 200;
+  }
+
   walk(latitude, longitude, direction) {
     if (direction === 0) {
       latitude -= 1;
@@ -962,88 +980,59 @@ class World {
     let index = latitude * this.width + longitude;
     return this.tiles[index];
   }
+
+  passTime(vm, hours, days) {
+    const HOURS_PER_DAY = 32;
+    const DAYS_PER_MONTH = 32;
+    const MONTHS_PER_YEAR = 16;
+    if (days) hours += HOURS_PER_DAY * days;
+    vm.specials[SPECIALS.TIME_OF_DAY] += hours;
+    while (vm.specials[SPECIALS.TIME_OF_DAY] >= HOURS_PER_DAY) {
+      vm.specials[SPECIALS.TIME_OF_DAY] -= 32;
+      vm.specials[SPECIALS.DAY_OF_MONTH] += 1;
+      if (vm.specials[SPECIALS.DAY_OF_MONTH] >= DAYS_PER_MONTH) {
+        vm.specials[SPECIALS.DAY_OF_MONTH] -= DAYS_PER_MONTH;
+        vm.specials[SPECIALS.MONTH_OF_YEAR] += 1;
+        if (vm.specials[SPECIALS.MONTH_OF_YEAR] >= MONTHS_PER_YEAR) {
+          vm.specials[SPECIALS.MONTH_OF_YEAR] -= MONTHS_PER_YEAR;
+          vm.specials[SPECIALS.YEAR] += 1;
+        }
+      }
+    }
+  }
+
+  action(vm, code) {
+    let result = 0;
+    if (code === ACTIONS.TALK) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.HUNT) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.BUY) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.SELL) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.FIGHT) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.REST) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.CAMP) {
+      this.passTime(vm, 0, 1);
+    } else if (code === ACTIONS.FORAGE) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.GATHER) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.SEARCH) {
+      this.passTime(vm, 1);
+    } else if (code === ACTIONS.LEVEL_UP) {
+      this.passTime(vm, 1);
+    } else {  // invalid/unknown
+    }
+    return result;
+  }
 }
 
-let world = new World(`
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWW~~~~~~~~WWWWWW
-WWWWWWWWWWWWWWW~~~~~F~~~~~~~WWWW
-WWWWWWWWWWWWWWW~FFFFFTTTTTTTTwWW
-WWWWWWWWWWWWWWFFFF!FTTTTTTTTTwwW
-WWWWWWWwWWWWWWWFFFFFvvTTTTTTTwwW
-WWWWWm_wWWww______FFvvvvvv_TTwwW
-WWWW_m_wwww__________==vv__TTwwW
-WWW_mmmwwww_________==vvvvv_wwWW
-WW_mmm_wwww________==_v__W_WwwWW
-WW_MMm_wWWw______===__Mm____wwwW
-WWmMmm_wWW.___=^==TT_MMm___.wwwW
-WWmmm__wWW.__==TTTTTmM@mm_..wwwW
-WW_____wWW._==TTTTTmm!@Mm_..wwwW
-WW__!_fwWW===!!__T_mMM@Mmm..wwwW
-WW___ffwWW.__!!___mMM@MMmm_wwwwW
-WWw_fffWWW_______mMM@Mmmm_wwwwwW
-WWw_fffWWW______mmM@MMm___wwWWwW
-WWwwwfWWWWW_____mMMMMmmT_wwWWWWW
-WWWWwwWWWW_______MMmmmTTTTwWWWWW
-WWWWWWWWWW_____#___TTTTTTTwwWWWW
-WWWWWWWwW___####___TTTTTTTTwWWWW
-WWWWWWww___!##_______TTTTTwwWWWW
-WWWWWWw######______WWWWTTT_wWWWW
-WWWWWww######_WWWWWWWWWWww_wwWWW
-WWWWWw######WWWWWWWWWWWWWw_wwWWW
-WWWWww##WWWWWWWWWw__mWWWWwwwwWWW
-WWWWwwWWWWWWWWWWww_!mwWWWWWWwWWW
-WWWWwWWWWWWWWWWWw____wwWWWWWWWWW
-WWWWwWWWWWWWWWwwwwwwwwwwWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-`);
-
-
-
-let a = new Assembler();
-a.assemble(`
-push 2
-assert 2
-push 3
-assert 3
-add ; 5
-assert 5
-add 3 ; 8
-assert 8
-sub 1 ; 7
-assert 7
-mul 3 ; 21
-assert 21
-shift 1 ; 10
-assert 10
-or 1 ; 11
-assert 11
-or 0x2 ; 11
-assert 11
-shift 1 ; 5
-assert 5
-fetch AUX ; 5 1
-assert 1
-add ; 6
-assert 6
-peek 0 ; 6 6
-assert 6
-sub 6 ; 6 0
-assert 0
-branch err ; 6
-div 2 ; 3
-assert 3
-shift -1 ; 6
-assert 6
-halt 1
-
-err:
-halt 66
-`);
-console.log(a.disassemble());
-console.log('PC', a.pc);
-let vm = new VirtualMachine(a.code);
-vm.run();
-console.log(vm.aux, vm.pc, vm.alive());
-// a.code.push(3);
+if (typeof exports !== 'undefined') {
+  exports.VirtualMachine = VirtualMachine;
+  exports.World = World;
+  exports.Assembler = Assembler;
+}
