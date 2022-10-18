@@ -137,6 +137,9 @@ const opcodes = [
 
   { opcode: 0x34, mnemonic: 'log' },
   // add ascii character to log/journal
+
+  { opcode: 0x3F, mnemonic: 'assert' },
+  // assertion of equality or else throw exception
 ];
 
 let MNEMONICS = {};
@@ -207,7 +210,12 @@ const SPECIAL = {
   TIME_OF_DAY: 0x14,
   DAY_OF_YEAR: 0x15,
   YEAR: 0x16,
-  WEATHER: 0x17,
+  MONTH: 0x17,
+  MOON_PHASE: 0x18,
+  WIND_SPEED: 0x19,
+  WIND_DIRECTION: 0x1A,
+  WEATHER: 0x1B,
+  TIDE: 0x1C,
 
   // Nearby mob
   MOB_SPECIES: 0x20,  // from some list.
@@ -254,7 +262,7 @@ const SPECIAL = {
 
   LONGITUDE: 0x80,  // as fixed point?
   LATITUDE: 0x81,
-  ALTITUDE: 0x82,  // 0 = on land, -1 underground, 1 flying
+  LEVEL: 0x82,  // 0 = on land, -1 underground, 1 flying
   FACING: 0x83,  // degrees on compass
 
   STATEMENT0: 0x90,  // ASCII codes of some arbitrary blabber
@@ -264,6 +272,11 @@ const SPECIAL = {
   TONE_FREQUENCY: 0xA0,
   TONE_VOLUME: 0xA1,
   // Room for polyphony
+
+  // Character name
+  NAME0: 0xB0,
+  /// ...
+  NAME15: 0xBF,
 };
 
 const ACTIONS = {
@@ -330,11 +343,11 @@ class VirtualMachine {
   step() {
     const instruction = this.memory[this.pc];
     const opcode = instruction & 0x3F;
-    console.log(opcode, this.pc, this.top, this.memory.slice(this.sp));
-    this.pc += 1
     const mnemonic = OPCODES[opcode];
-    let argument = (instruction >> 6) & 0x3ff;
-    const immediate = (argument !== 0x200);
+    let argument = (instruction >> 6);// & 0x3ff;
+    // console.log(opcode, argument, this.pc, this.top, this.memory.slice(this.sp));
+    this.pc += 1
+    const immediate = (argument !== -0x200);
     if (!immediate) {
       argument = this.pop();
     }
@@ -358,7 +371,7 @@ class VirtualMachine {
       if (mnemonic === 'peek')  address += this.special[SPECIAL.SP];
       this.push(this.fetch(address));
 
-    } else if (mnemonic === 'set' || mnemonic === 'storedata' || mnemonic === 'poke') {
+    } else if (mnemonic === 'store' || mnemonic === 'storedata' || mnemonic === 'poke') {
       let value = pop();
       let address = argument;
       if (mnemonic === 'storedata') address += this.special[SPECIAL.DS];
@@ -410,9 +423,9 @@ class VirtualMachine {
       this.aux_fractional = a - this.top;
 
     } else if (mnemonic === 'div') {
-      const divident = this.pop();
+      const dividend = this.pop();
       const divisor = argument;
-      this.push(Math.floor(divident / divisor));
+      this.push(Math.floor(dividend / divisor));
       // TODO make sure to use mathematical modulus
       this.aux = dividend % divisor;
 
@@ -430,11 +443,12 @@ class VirtualMachine {
       let value = this.pop();
       if (argument < 0) {
         this.push(value << argument);
-        this.aux = value >> (16 - argument);
+        this.aux = value >> (15 + argument);
       } else {
         this.push(value >> argument);
-        this.aux = value << (16 - argument);
+        this.aux = value & ((1 << argument) - 1);
       }
+      // console.log(this.aux, this.fetch(-SPECIAL.AUX), this.special[SPECIAL.AUX]);
 
     // Unary operators
 
@@ -500,6 +514,12 @@ class VirtualMachine {
       this.log.push(argument);
       this.special[SPECIAL.AGE] += 1;
       this.special[SPECIAL.AUX] = 1;
+
+    } else if (mnemonic === 'assert') {
+      if(this.top !== argument) {
+        console.log("ASSERTION FAILURE at", this.pc, this.top, argument);
+        throw "assertion failure";
+      }
 
     }
 
@@ -749,6 +769,132 @@ const ORC = {
   }
 }
 
+
+const terrains =  [
+  {
+    code: 'W',
+    name: "deeps",
+    passable: false,
+    color: 'darkblue',
+  },
+
+  {
+    code: 'w',
+    name: "shallows",
+    passable: "when the tide is low",
+    color: 'blue',
+  },
+
+  {
+    code: '.',
+    name: "beach",
+    passable: true,
+    color: 'cornsilk',
+  },
+
+  {
+    code: '_',
+    name: "plain",
+    passable: true,
+    color: 'lawngreen',
+  },
+
+  {
+    code: '#',
+    name: "desert",
+    passable: true,
+    color: 'sandybrown',
+  },
+
+  {
+    code: 'm',
+    name: "hills",
+    passable: true,
+    color: 'chocolate',
+  },
+
+  {
+    code: 'M',
+    name: "mountains",
+    passable: true,
+    color: 'brown',
+  },
+
+  {
+    code: '@',
+    name: "glacier",
+    passable: false,
+    color: 'lightcyan',
+  },
+
+  {
+    code: 'f',
+    name: "mixed forest",
+    passable: true,
+    color: 'forestgreen',
+  },
+
+  {
+    code: 't',
+    name: "scrub forest",
+    passable: true,
+    color: 'yellowgreen',
+  },
+
+  {
+    code: 'F',
+    name: "evergreen forest",
+    passable: true,
+    color: 'darkgreen',
+  },
+
+  {
+    code: 'T',
+    name: "deciduous forest",
+    passable: true,
+    color: 'olive',
+  },
+
+  {
+    code: '=',
+    name: "river",
+    passable: false,
+    color: 'turquoise',
+  },
+
+  {
+    code: '^',
+    name: "bridge",
+    passable: true,
+    color: 'purple',
+  },
+
+  {
+    code: '!',
+    name: "town",
+    passable: true,
+    color: 'fuchsia',
+  },
+
+  {
+    code: '~',
+    name: "tundra",
+    passable: true,
+    color: 'silver',
+  },
+
+  {
+    code: 'v',
+    name: "marsh",
+    passable: true,
+    color: 'teal',
+  },
+
+];
+
+let TERR = {};
+for (let t of terrains) TERR[t.code] = t;
+
 class World {
   // assumed to be rectangular
   height;
@@ -756,7 +902,7 @@ class World {
   tiles = [];
 
   constructor(map) {
-    let rows = map.trim().split('/n').map(l => l.trim());
+    let rows = map.trim().split('\n').map(l => l.trim());
     this.height = rows.length;
     this.width = rows[0].length;
 
@@ -772,9 +918,32 @@ class World {
           terrain: ord(tile),
           level: Math.round(2 / 2 - remoteness), // badassness of beasts
           mob: friendly ? SHOPKEEPER : ORC,
+          passable: TERR[tile].passable,
+          latitude,
+          longitude,
         });
       }
     }
+  }
+
+  walk(latitude, longitude, direction) {
+    if (direction === 0) {
+      latitude -= 1;
+      if (latitude < 0) return null;
+    } else if (direction === 90) {
+      longitude += 1;
+      if (longitude => this.width) return null;
+    } else if (direction === 180) {
+      latitude += 1;
+      if (latitude => this.height) return null;
+    } else if (direction === 270) {
+      longitude -= 1;
+      if (longitude < 0) return null;
+    } else {
+      return null;
+    }
+    let index = latitude * this.width + longitude;
+    return this.tiles[index];
   }
 }
 
@@ -818,22 +987,38 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 let a = new Assembler();
 a.assemble(`
 push 2
+assert 2
 push 3
+assert 3
 add ; 5
+assert 5
 add 3 ; 8
+assert 8
 sub 1 ; 7
+assert 7
 mul 3 ; 21
+assert 21
 shift 1 ; 10
+assert 10
 or 1 ; 11
+assert 11
 or 0x2 ; 11
+assert 11
 shift 1 ; 5
-fetch AUX ; 5 1   PROBLEM
+assert 5
+fetch AUX ; 5 1
+assert 1
 add ; 6
+assert 6
 peek 0 ; 6 6
+assert 6
 sub 6 ; 6 0
+assert 0
 branch err ; 6
 div 2 ; 3
+assert 3
 shift -1 ; 6
+assert 6
 halt 1
 
 err:

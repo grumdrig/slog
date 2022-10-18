@@ -3,11 +3,94 @@
 <meta charset="utf-8"/>
 <title>PQ Chasm</title>
 <script src="vm.js"></script>
+<style>
+	#sheet {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 4px;
+	}
+
+	#col1, #col2, #col3 {
+		grid-row: 1;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 4px;
+	}
+	#col1 {	grid-column: 1;	}
+	#col2 {	grid-column: 2;	}
+	#col3 {	grid-column: 3;
+		/*grid-template-columns: 1fr;*/
+	}
+
+	div {
+		font: 14px "helvetica";
+		font-weight: 100;
+	}
+
+	.boxy {
+		border: solid 5px;
+		border-image-slice: 5;
+		border-color: red;
+	/*	border-image-source: url('data:image/svg+xml,<svg version="1.1" width="300" height="300" xmlns="http://www.w3.org/2000/svg"><line x1="3.40" y1="2.91" x2="49.95" y2="1.31" stroke="black" stroke-width="1.51px"></line><line x1="49.95" y1="1.31" x2="100.45" y2="1.72" stroke="black" stroke-width="1.55px"></line><line x1="100.45" y1="1.72" x2="149.48" y2="2.24" stroke="black" stroke-width="1.55px"></line><line x1="149.48" y1="2.24" x2="198.83" y2="1.95" stroke="black" stroke-width="1.68px"></line><line x1="198.83" y1="1.95" x2="247.74" y2="1.72" stroke="black" stroke-width="1.60px"></line><line x1="247.74" y1="1.72" x2="295.73" y2="0.36" stroke="black" stroke-width="1.30px"></line><line x1="1.69" y1="1.54" x2="3.04" y2="52.12" stroke="black" stroke-width="1.66px"></line><line x1="3.04" y1="52.12" x2="1.99" y2="101.19" stroke="black" stroke-width="1.45px"></line><line x1="1.99" y1="101.19" x2="2.72" y2="149.63" stroke="black" stroke-width="1.47px"></line><line x1="2.72" y1="149.63" x2="1.89" y2="199.08" stroke="black" stroke-width="1.62px"></line><line x1="1.89" y1="199.08" x2="2.08" y2="247.49" stroke="black" stroke-width="1.66px"></line><line x1="2.08" y1="247.49" x2="1.52" y2="295.80" stroke="black" stroke-width="1.30px"></line><line x1="1.77" y1="296.46" x2="50.84" y2="297.66" stroke="black" stroke-width="1.38px"></line><line x1="50.84" y1="297.66" x2="99.96" y2="298.57" stroke="black" stroke-width="1.44px"></line><line x1="99.96" y1="298.57" x2="150.13" y2="296.66" stroke="black" stroke-width="1.59px"></line><line x1="150.13" y1="296.66" x2="199.31" y2="298.05" stroke="black" stroke-width="1.61px"></line><line x1="199.31" y1="298.05" x2="246.79" y2="297.30" stroke="black" stroke-width="1.28px"></line><line x1="246.79" y1="297.30" x2="296.14" y2="296.75" stroke="black" stroke-width="1.68px"></line><line x1="295.66" y1="2.00" x2="296.80" y2="50.83" stroke="black" stroke-width="1.30px"></line><line x1="296.80" y1="50.83" x2="296.16" y2="101.29" stroke="black" stroke-width="1.62px"></line><line x1="296.16" y1="101.29" x2="296.82" y2="148.99" stroke="black" stroke-width="1.58px"></line><line x1="296.82" y1="148.99" x2="297.76" y2="198.69" stroke="black" stroke-width="1.47px"></line><line x1="297.76" y1="198.69" x2="297.57" y2="248.71" stroke="black" stroke-width="1.65px"></line><line x1="297.57" y1="248.71" x2="296.38" y2="297.50" stroke="black" stroke-width="1.69px"></line></svg>');*/
+/*	border-image: url('data:image/svg+xml,<svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><rect width="30" height="30" rx="10" fill="red"/></svg>');
+*/
+	}
+
+</style>
 </head>
 <body>
 <textarea id=asm></textarea>
 <textarea id=machine></textarea>
 <button onclick="assemble()">Assemble</button>
+
+<div id=sheet>
+	<div id=col1 class=boxy>
+		<div>Level</div> <div>1</div>
+		<div>XP</div>    <div>0</div>
+		<div>Health</div> <div>1</div>
+		<div>Energy</div> <div>1</div>
+
+		<div>Strength</div> <div>1</div>
+		<div>Agility</div> <div>1</div>
+		<div>Constitution</div> <div>1</div>
+		<div>Intelligence</div> <div>1</div>
+		<div>Wisdom</div> <div>1</div>
+		<div>Charisma</div> <div>1</div>
+
+		<div>Spell Book</div><div></div>
+		<div>Heal</div> <div>I</div>
+		<div>Fireball</div> <div>I</div>
+		<div>Dig</div> <div>I</div>
+		<div>Fly</div> <div>I</div>
+	</div>
+	<div id=col2 class=boxy>
+		<div>Equipment</div> <div></div>
+		<div>Weapon</div> <div>+1 Dagger</div>
+		<div>Armor</div> <div>+1 Dagger</div>
+		<div>Shield</div> <div>+1 Dagger</div>
+		<div>Backpack</div> <div>+1 Dagger</div>
+		<div>Footwear</div> <div>+1 Dagger</div>
+		<div>Ring</div> <div>+1 Dagger</div>
+		<div>Amulet</div> <div>+1 Dagger</div>
+		<div>Boat</div> <div>+1 Dagger</div>
+
+		<div>Invetory</div> <div></div>
+		<div>Gold</div> <div>10</div>
+		<div>Drops</div> <div>10</div>
+		<div>Reagents</div> <div>10</div>
+		<div>Healing potions</div> <div>10</div>
+		<div>Energy potions</div> <div>10</div>
+		<div>Rations</div> <div>10</div>
+		<div>Gems</div> <div>10</div>
+	</div>
+	<div id=col3 class=boxy>
+		<div>Location</div><div>&lt;23,45&gt;</div>
+		<div>Log</div><div></div>
+		<div>Stardate 2022</div><div></div>
+	</div>
+</div>
+
+<svg viewBox="0 0 300 300" version="1.1" width="300" height="200" xmlns="http://www.w3.org/2000/svg"></svg>
 
 <script>
 
@@ -19,5 +102,56 @@ function assemble() {
 	asm.link();
 	$("#machine").value = asm.disassemble();
 }
+
+function rand(m) { return Math.floor(Math.random() * m) }
+function crand(s) { return s * (Math.random() - Math.random()) }
+
+let W = 300, H = 300;
+let b = $("svg");
+let IN = 2;
+b.setAttribute('width', W);
+b.setAttribute('height', H);
+
+function handline(X1, Y1, X2, Y2) {
+	let x1, y1;
+	let length = Math.sqrt(Math.pow(X2-X1, 2) + Math.pow(Y2-Y1, 2));
+	let n = Math.round(length / 50);
+	for (let i = 0; i <= n; i += 1) {
+		x2 = (X1 + i/n * (X2-X1) + crand(IN)).toFixed(1);
+		y2 = (Y1 + i/n * (Y2-Y1) + crand(IN)).toFixed(1);
+		if (typeof x1 !== 'undefined') {
+			let line = b.appendChild(
+						document.createElementNS('http://www.w3.org/2000/svg', 'line'));
+			line.setAttribute('x1', x1);
+			line.setAttribute('y1', y1);
+			line.setAttribute('x2', x2);
+			line.setAttribute('y2', y2);
+			line.setAttribute('stroke', "black");
+			line.setAttribute('stroke-width', (1.5 + crand(0.25)).toFixed(1) + "px");
+		}
+		x1 = x2;
+		y1 = y2;
+	}
+}
+
+handline(IN, IN, W-1-IN, IN);
+handline(IN, IN, IN, H-1-IN);
+handline(IN, H-1-IN, W-1-IN, H-1-IN);
+handline(W-1-IN, IN, W-1-IN, H-1-IN);
+
+
+// var cssStyle = document.createElement('style');
+// cssStyle.type = 'text/css';
+var rules = document.createTextNode(`.boxy {
+	border-image-source: url('data:image/svg+xml,${b.outerHTML}');
+
+/*	border-image-source: url('data:image/svg+xml,<svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><rect width="30" height="30" rx="10" fill="red"/></svg>');*/
+
+}`);
+// cssStyle.appendChild(rules);
+if (true) $('style').appendChild(rules);
+// document.getElementsByTagName("head")[0].appendChild(cssStyle);
+
+/*	border-image: url('data:image/svg+xml,<svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg"><rect width="30" height="30" rx="10" fill="red"/></svg>');*/
 
 </script>
