@@ -65,9 +65,10 @@ assert
 shift -1
 .stack $fffe
 assert
+pop
 fetch AUX
 assert 1
-
+pop
 
 .macro fun one
   push one
