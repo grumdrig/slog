@@ -145,7 +145,7 @@ When a number is given after the instruction mnemonic, that means immediate mode
 	... X1 ... XN -N => ... X2 ... XN X1
 
 
-	Math:
+Math:
 
 	MAX: maximum
 	... X Y => max(X,Y)
@@ -163,9 +163,6 @@ When a number is given after the instruction mnemonic, that means immediate mode
 	ADD, SUB, MUL, DIV: aritmetic operators, like you think
 
 	ATAN2, SIN, LOG, maybe others: more math ops
-
-I *could* combine all unary operators into a single opcode since theres no
-important use case for immediate mode for these.
 
 
 Physical world:
@@ -246,7 +243,7 @@ If tiled, no bigger than 32K square of course
 
 High mountains block progress
 
-Deep mountains cause you to drown
+Deep waters cause you to drown
 
 
 
@@ -260,9 +257,13 @@ Maybe a testing ground on client side with a known map?
 Probably provide nothing to players but the ability to run games on the server
 and get a result back.
 
+Since the game as I envision it will have lots of stuff to discover, the
+player will have to run a zillion games. Maybe that means the game should be
+a client-side executable.
 
-LOGGING
-=======
+
+CONVERSING
+==========
 
 Idea: Instead of generating a log from anywhere, have an NPC who is a
 biographer. When you come and TALK to him, your ALLEGIANCE text gets written
@@ -273,6 +274,8 @@ see the log unless they player returns home.
 Perhaps ALLEGIANCE should be a longer statement. But perhaps not. Or maybe it
 should just be called "statement" or something.
 
+Interrupt address for responses or any time a beast says anything. Set an
+address in INT_R and execution goes there with PC on the stack until JUMP
+(as a return).
 
-
-
+Perhaps there should be other interrupts.

@@ -41,6 +41,25 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
 let a = new Assembler();
 a.assemble(`
+
+.macro pop
+  adjust -1
+.end
+
+.macro fun one
+  push one
+  pop
+  push
+  pop
+.end
+
+fun 4
+jump test
+
+.data "Hello!"
+
+test:
+
 push 2
 assert 2
 push 3
@@ -86,6 +105,7 @@ vm.run();
 console.log(vm.aux, vm.pc, vm.alive());
 // a.code.push(3);
 
+/*
 console.log('levelling');
 let last = 0;
 for (let l = 1; l <= 50; ++l) {
@@ -93,3 +113,4 @@ for (let l = 1; l <= 50; ++l) {
   console.log(l, xp, xp-last);
   last = xp;
 }
+*/

@@ -1,29 +1,29 @@
-macro face
+.macro face
   store FACING
-end
+.end
 
-macro faceangle angle
+.macro faceangle angle
   push angle
   store FACING
-end
+.end
 
-macro face_east
+.macro face_east
   faceangle 90
-end
+.end
 
-macro branch_if_greater label
+.macro branch_if_greater label
   sub
   min 0
   branch label
-end
+.end
 
-macro not
+.macro not
   unary NOT
-end
+.end
 
-macro return
+.macro return
   jump
-end
+.end
 
 
 jump raid
@@ -55,10 +55,10 @@ store PC
 
 
 
-data 0 1 2 3 4*10
+.data 0 1 2 3 4*10
 
 hello:
-data "hello"
+.data "hello"
 
 raid:
 

@@ -197,7 +197,8 @@ const SPECIAL = {
   SP: 0x2,    // Stack pointer register
   AUX: 0x3,   // Auxilliary register, gets some results
   DS: 0x4,    // Data segment register
-  CLOCK: 0x5, // Counts clock cycles from startup
+  INT_R: 0x5, // Spoken response interrupt vector (or 0)
+  CLOCK: 0xF, // Counts clock cycles from startup
 
   // Environment
   TERRAIN: 0x10,
@@ -270,13 +271,16 @@ const SPECIAL = {
   LEVEL: 0x82,  // 0 = on land, -1 underground, 1 flying
   FACING: 0x83,  // degrees on compass
 
-  STATEMENT0: 0x90,  // ASCII codes of some arbitrary blabber
+  STATEMENT_0: 0x90,  // ASCII codes of some arbitrary blabber
   // ...
-  STATEMENT15: 0x9F,
+  STATEMENT_15: 0x9F,
 
-  TONE_FREQUENCY: 0xA0,
-  TONE_VOLUME: 0xA1,
-  // Room for polyphony
+  // When TALK or other stuff is used, responses might go here. Not sure if
+  // this is enough characters. Then this might leave logging, if any, to the
+  // player.
+  RESPONSE_0: 0xA0,
+  // ...
+  RESPONSE_15: 0xAF,
 
   MAP_NW: 0xB0,
   MAP_N:  0xB1,
@@ -288,10 +292,10 @@ const SPECIAL = {
   MAP_S:  0xB7,
   MAP_SE: 0xB8,
 
-  // Character name
-  NAME0: 0xC0,
+  // Character name (not at all sure this needs inclusion)
+  NAME_0: 0xC0,
   /// ...
-  NAME15: 0xCF,
+  NAME_15: 0xCF,
 
   ATTITUDE_0: 0xD0,  // reserved for game-specific attitudes / stances /
   // ...
@@ -302,6 +306,11 @@ const SPECIAL = {
   LEVELING_ADDEND: 0xE0,
   LEVELING_EXPONENT: 0xE1,
   LEVELING_MULTIPLIER: 0xE2,
+
+  TONE_FREQUENCY: 0xF0,
+  TONE_VOLUME: 0xF1,
+  // Room for polyphony
+
 };
 
 const ACTIONS = {
@@ -593,7 +602,7 @@ function negate(dict) {
 
 
 class Assembler {
-  static tokenre = /[a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!@#$%^&*]|[-+]?(0x)?[0-9]+|"[^"]*"|'./g;
+  static tokenre = /[.][a-z]+|[a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!@#$%^&*]|[-+]?(0x)?[0-9]+|"[^"]*"|'./g;
 
   macros = {};
   labels = {};
@@ -649,8 +658,8 @@ class Assembler {
       let third = tokens[2];  // though there may not be a third
 
       if (this.macroInProgress) {
-        if (inst === 'end') {
-          this.assert(tokens.length === 1, "unexpected junk after 'end'");
+        if (inst === '.end') {
+          this.assert(tokens.length === 1, "unexpected junk after '.end'");
           this.macroInProgress = null;
         } else {
           this.macros[this.macroInProgress].body.push(line);
@@ -671,10 +680,10 @@ class Assembler {
           this.assert(typeof third === 'number', "numeric value expected: " + third);
           symbols[inst] = third;
 
-        } else if (inst === 'macro') {
+        } else if (inst === '.macro') {
           this.assert(tokens.length >= 2, "macro name expected");
 
-          "macro NAME [ARGS...]  ; begin macro definition"
+          ".macro NAME [ARGS...]  ; begin macro definition"
           this.macroInProgress = arg;
           this.macros[arg] = {
             name: arg,
@@ -682,7 +691,7 @@ class Assembler {
             body: []
           }
 
-        } else if (inst === 'data') {
+        } else if (inst === '.data') {
           let last;
           let multiply = false;
           for (let t of tokens.slice(1)) {
@@ -769,7 +778,7 @@ class Assembler {
       + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}` : '  ')
       + '  $' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
       + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-2)
-      + ' ' + OPCODES[inst & 0x3f]
+      + ' ' + (OPCODES[inst & 0x3f] || '??')
       + ' ' + ((inst >> 6 === -0x200) ? '' : (inst >> 6))
       );
     return result.join('\n');
