@@ -1,6 +1,5 @@
 let { VirtualMachine, World, Assembler } = require('./vm');
 // let World = require('./vm').World;
-console.log('lkjd', VirtualMachine, World);
 
 let world = new World(`
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
@@ -41,10 +40,34 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 
 let a = new Assembler();
 a.assemble(`
+.line 43
 
 .macro pop
   adjust -1
 .end
+
+push 5
+sub 1
+assert 4
+
+push 7
+shift 1
+assert 3
+fetch AUX
+push $00
+sethi -$80
+assert
+pop
+
+push -1
+.stack $ffff
+assert
+shift -1
+.stack $fffe
+assert
+fetch AUX
+assert 1
+
 
 .macro fun one
   push one
@@ -54,7 +77,8 @@ a.assemble(`
 .end
 
 fun 4
-jump test
+.stack test
+jump
 
 .data "Hello!"
 
@@ -76,7 +100,7 @@ shift 1 ; 10
 assert 10
 or 1 ; 11
 assert 11
-or 0x2 ; 11
+or $2 ; 11
 assert 11
 shift 1 ; 5
 assert 5
@@ -101,6 +125,7 @@ halt 66
 console.log(a.disassemble());
 console.log('PC', a.pc);
 let vm = new VirtualMachine(a.code, world);
+vm.trace = true;
 vm.run();
 console.log(vm.aux, vm.pc, vm.alive());
 // a.code.push(3);

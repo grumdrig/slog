@@ -12,8 +12,14 @@ const opcodes = [
 
   { opcode: 0xC, mnemonic: 'push' },
   // put a value on the stack
-  // const X
+  // push X
   // ... => ... X ; SP += 1
+
+  { opcode: 0x1C, mnemonic: 'stack' },
+  // push the ensuing data on the stack
+  // .stack D1 D2 ... DN
+  // stack N .data D1 D2 ... DN
+  // ... => DN ... D1 ...
 
   { opcode: 0xD, mnemonic: 'sethi' },
   // set high 8 bits of top of stack
@@ -93,6 +99,10 @@ const opcodes = [
   // ... X1 ... XN -N => ... X2 ... XN X1
   // bury 0 is a noop
 
+  { opcode: 0x10, mnemonic: 'unary' },
+  // unary OP
+  // ... X => ... OP(X)
+
   { opcode: 0x20, mnemonic: 'max' },
   // max Y
   // ... X => ... max(X, Y)
@@ -112,10 +122,6 @@ const opcodes = [
   { opcode: 0x2B, mnemonic: 'shift' },
   // similar for these binary ops
 
-  { opcode: 0x10, mnemonic: 'unary' },
-  // unary OP
-  // ... X => ... OP(X)
-
   { opcode: 0x30, mnemonic: 'walk' },
   // Walk at the given speed, as a percentage
   // walk X : ... => ...
@@ -123,17 +129,28 @@ const opcodes = [
 
   { opcode: 0x31, mnemonic: 'face' },
   // Face a direction, given an angle in degrees
-  // This COULD just be done by setting the special value
 
   { opcode: 0x32, mnemonic: 'act' },
   // Do an action with argument giving action type
 
   { opcode: 0x33, mnemonic: 'cast' },
   // cast N : ... => ...
+  // Parameter is the special index for the spell
+  // Potentially a magic equipment slot could be specified
   // This may affect some memory location(s)
 
-  { opcode: 0x34, mnemonic: 'log' },
+  // { opcode: 0x34, mnemonic: 'log' },
   // add ascii character to log/journal
+
+  { opcode: 0x35, mnemonic: 'buy' },
+  // Buy something from NPC, category speced by parameter
+  // Result code shows quantitiy purchased (0 or 1 probably)
+  // buy : ... => ... result ; gold and inventory or equipment affected
+
+  { opcode: 0x36, mnemonic: 'sell' },
+  // Sell something to an NPC, category speced by parameter
+  // Result code shows quantitiy sold (0 or 1 probably)
+  // sell : ... => ... result ; gold and inventory or equipment affected
 
   { opcode: 0x3F, mnemonic: 'assert' },
   // assertion of equality or else throw exception
@@ -147,7 +164,9 @@ for (let op of opcodes) {
 }
 
 const UNARY_OPERATORS = {
-  0x5: { mnemonic: 'SIN', operation: x => Math.sin(x) },
+  0x5: { mnemonic: 'SIN', operation: x => Math.sin(Math.PI * x / 180) },
+  0x4: { mnemonic: 'COS', operation: x => Math.cos(Math.PI * x / 180) },
+  0x3: { mnemonic: 'TAN', operation: x => Math.tan(Math.PI * x / 180) },
   0x7: { mnemonic: 'LOG', operation: x => Math.log(x) },
   0xE: { mnemonic: 'EXP', operation: x => Math.exp(x) },
   0x1: { mnemonic: 'NOT', operation: x => x ? 0 : 1 },
@@ -161,7 +180,7 @@ let UNARY_SYMBOLS = {};
 for (let u in UNARY_OPERATORS) UNARY_SYMBOLS[UNARY_OPERATORS[u].mnemonic] = parseInt(u);
 
 
-/* having second thoughts about this
+// having second thoughts about this
 const BINARY_OPERATORS = {
     max: (a, b) => Math.max(a, b),
     min: (a, b) => Math.min(a, b),
@@ -170,25 +189,17 @@ const BINARY_OPERATORS = {
     mul: (a, b) => a * b,
     exp: (a, b) => Math.pow(a, b),
     atan2: (a, b) => {
-      let a = Math.atan2(a, b) * 180 / Math.PI,
-      return [ Math.floor(a), fractional(a - this.top);
-    }
-    div: (a, b) => const divisor = b,
-      return Math.floor(a / divisor));
-      // TODO make sure to use mathematical modulus
-      this.aux = a % divisor;
-    or: (a, b) => return a | b),
-    and: (a, b) => return a & b),
-    xor: (a, b) => return a ^ b),
-    shift: (a, b) => let value = b,
-      if (a < 0) {
-        return value << a);
-        this.aux = value >> (16 - a);
-      } else {
-        return value >> a);
-        this.aux = value << (16 - a);
-      }
-*/
+      let t = Math.atan2(a, b) * 180 / Math.PI;
+      return [ Math.floor(t), fractional(t - Math.floor(t)) ];
+    },
+    div: (a, b) => [ Math.floor(a / b), a % b ],
+    or: (a, b) => a | b,
+    and: (a, b) => a & b,
+    xor: (a, b) => a ^ b,
+    shift: (a, b) => (b < 0) ?
+      [ a << -b, ((1 << -b) - 1) & (a >> (16 - b)) ] :
+      [ a >> b, 0xffff & (a << (16 - b)) ],
+};
 
 
 // Machine registers
@@ -316,8 +327,8 @@ const SPECIAL = {
 const ACTIONS = {
   TALK: 0x5A,
   HUNT: 0x40,
-  BUY: 0xB1,
-  SELL: 0x5E,
+  // BUY: 0xB1,
+  // SELL: 0x5E,
   FIGHT: 0xA7,
   REST: 0x22,
   CAMP: 0xCA,
@@ -327,9 +338,13 @@ const ACTIONS = {
   LEVEL_UP: 0x77,
 };
 
+
+function fractional(f) { return (f << 16) & 0xffff }
+
+
 class VirtualMachine {
-  memory = new Array(4096).fill(0);
-  special = new Array(256).fill(0);  // negative memory
+  memory = new Int16Array(4096);//.fill(0);
+  special = new Int16Array(256);//.fill(0);  // negative memory
   running = true;
 
   get pc() { return this.special[SPECIAL.PC] }
@@ -343,7 +358,7 @@ class VirtualMachine {
   set aux_fractional(f) { this.special[SPECIAL.AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
   get top() { return this.fetch(this.sp) }
-  set top(v) { this.set(this.sp, v) }
+  set top(v) { this.store(this.sp, v) }
 
   store(a, v) {
     if (a < 0) {
@@ -383,12 +398,12 @@ class VirtualMachine {
     const opcode = instruction & 0x3F;
     const mnemonic = OPCODES[opcode];
     let argument = (instruction >> 6);// & 0x3ff;
-    // console.log(opcode, argument, this.pc, this.top, this.memory.slice(this.sp));
-    this.pc += 1
     const immediate = (argument !== -0x200);
     if (!immediate) {
       argument = this.pop();
     }
+    if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediate ? argument : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] aux=${this.aux}=${this.aux.toString(16)}`);
+    this.pc += 1
 
     if (mnemonic === 'halt') {
       this.running = false;
@@ -396,6 +411,10 @@ class VirtualMachine {
 
     } else if (mnemonic === 'push') {
       this.push(argument);
+
+    } else if (mnemonic === 'stack') {
+      for (let i = 0; i < argument; i += 1)
+        this.push(this.memory[this.pc++]);
 
     } else if (mnemonic === 'sethi') {
       this.top = (this.top & 0xff) | (argument << 8);
@@ -416,8 +435,11 @@ class VirtualMachine {
       if (mnemonic === 'poke')  address += this.special[SPECIAL.SP];
       if (address >= 0 ||
          [SPECIAL.PC, SPECIAL.SP, SPECIAL.AUX, SPECIAL.DS].includes(-address)) {
-        this.set(address, pop());
+        this.store(address, this.pop());
       } // else illegal
+
+    } else if (mnemonic === 'jump') {
+      this.pc = argument;
 
     } else if (mnemonic === 'branch') {
       // with immediate addressing mode, the value is an offset not an absolute
@@ -432,11 +454,21 @@ class VirtualMachine {
         let a1 = this.sp + i;
         let a2 = this.sp + (i + offset + depth) % depth
         let tmp = this.fetch(a1);
-        this.set(this.a1, this.fetch(this.a2));
-        this.set(this.a2, tmp);
+        this.store(this.a1, this.fetch(this.a2));
+        this.store(this.a2, tmp);
       }
 
     // Binary arithmetic
+    } else if (BINARY_OPERATORS[mnemonic]) {
+      let result = BINARY_OPERATORS[mnemonic](this.pop(), argument);
+      if (typeof result === 'number') {
+        this.push(result);
+      } else {
+        this.push(result[0]);
+        this.aux = result[1];
+      }
+
+      /*
     } else if (mnemonic === 'max') {
       this.push(Math.max(this.pop(), argument));
 
@@ -487,6 +519,7 @@ class VirtualMachine {
         this.aux = value & ((1 << argument) - 1);
       }
       // console.log(this.aux, this.fetch(-SPECIAL.AUX), this.special[SPECIAL.AUX]);
+      */
 
     // Unary operators
 
@@ -533,6 +566,14 @@ class VirtualMachine {
       this.special[SPECIAL.AGE] += 1;
       this.special[SPECIAL.AUX] = result;
 
+    } else  if (mnemonic === 'buy') {
+      // argument is an equipment or inventory category
+      this.push(this.world.buy(this, parameter));
+
+    } else  if (mnemonic === 'sell') {
+      // argument is an equipment or inventory category
+      this.push(this.world.sell(this, parameter));
+
     } else if (mnemonic === 'cast') {
       const SPELLS = {
         0x911: { mnemonic: 'heal', effect: _ => {
@@ -555,10 +596,12 @@ class VirtualMachine {
 
     } else if (mnemonic === 'assert') {
       if(this.top !== argument) {
-        console.log("ASSERTION FAILURE at", this.pc, this.top, argument);
+        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != arg ${argument}`);
         throw "assertion failure";
       }
 
+    } else {
+      throw `${this.pc}: invalid opcode ${opcode} ${mnemonic}`;
     }
 
     this.special[SPECIAL.CLOCK] += 1;
@@ -600,20 +643,25 @@ function negate(dict) {
   return result;
 }
 
+function toLowerCase(s) {
+  return s.toLowerCase ? s.toLowerCase() : s;
+}
 
 class Assembler {
-  static tokenre = /[.][a-z]+|[a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!@#$%^&*]|[-+]?(0x)?[0-9]+|"[^"]*"|'./g;
+  static tokenre = /[.][a-z]+|[a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!@#%^&*]|[-+]?[0-9]+|[-+]?[$][a-fA-F0-9]+|"[^"]*"|'./g;
 
   macros = {};
   labels = {};
-  forwardReferences = {};
+  forwardCodeReferences = {};
+  forwardDataReferences = {};
   code = new Int16Array(4096);
   macroInProgress;
   pc = 0;
+  line_no_adjustment = 1;
 
   assert(truth, message) {
     if (!truth) {
-      throw this.line + `\nASSEMBLY ERROR AT LINE ${this.line_no + 1}: ${message}`;
+      throw this.line + `\nASSEMBLY ERROR AT LINE ${this.line_no + this.line_no_adjustment}: ${message}`;
     }
   }
 
@@ -628,7 +676,8 @@ class Assembler {
     let result = [];
     let lines = text.split('\n');
     function resolve(t) {
-      if (!Number.isNaN(parseInt(t))) return [parseInt(t)];
+      let n = parseInt(t.replace('$','0x'));
+      if (!Number.isNaN(n)) return [n];
       if (t[0] === "'") return [ord(t.slice(1))];
       if (t[0] === '"') return t.slice(1, t.length - 1).split('').map(ord);
       return [t];
@@ -658,7 +707,7 @@ class Assembler {
       let third = tokens[2];  // though there may not be a third
 
       if (this.macroInProgress) {
-        if (inst === '.end') {
+        if (inst === toLowerCase('.end')) {
           this.assert(tokens.length === 1, "unexpected junk after '.end'");
           this.macroInProgress = null;
         } else {
@@ -680,7 +729,7 @@ class Assembler {
           this.assert(typeof third === 'number', "numeric value expected: " + third);
           symbols[inst] = third;
 
-        } else if (inst === '.macro') {
+        } else if (inst === toLowerCase('.macro')) {
           this.assert(tokens.length >= 2, "macro name expected");
 
           ".macro NAME [ARGS...]  ; begin macro definition"
@@ -691,7 +740,7 @@ class Assembler {
             body: []
           }
 
-        } else if (inst === '.data') {
+        } else if (inst === toLowerCase('.data')) {
           let last;
           let multiply = false;
           for (let t of tokens.slice(1)) {
@@ -709,6 +758,17 @@ class Assembler {
               }
             }
           }
+
+        } else if (inst === toLowerCase('.stack')) {
+          this.emit(MNEMONICS.stack, tokens.length - 1);
+          for (let t of tokens.slice(1)) {
+            this.data(t);
+          }
+
+        } else if (inst === toLowerCase('.line')) {
+          this.assert(tokens.length === 2, "expected '.line LINE_NUMBER'");
+          this.assert(typeof arg === 'number', "numeric value expected");
+          this.line_no_adjustment = arg - this.line_no;
 
         } else if (this.macros[inst]) {
 
@@ -737,7 +797,7 @@ class Assembler {
             if (typeof arg === 'number') {
               this.emit(inst, arg);
             } else {
-              this.forwardReferences[this.pc] = arg;
+              this.forwardCodeReferences[this.pc] = arg;
               this.emit(inst, 0);
             }
 
@@ -751,23 +811,40 @@ class Assembler {
   }
 
   link() {
-    for (let pc of Object.keys(this.forwardReferences)) {
-      let symbol = this.forwardReferences[pc];
+    for (let pc of Object.keys(this.forwardCodeReferences)) {
+      let symbol = this.forwardCodeReferences[pc];
       this.assert(typeof this.labels[symbol] !== 'undefined', "undefined label: " + symbol);
       this.reemit(pc, this.code[pc] & 0x3f, this.labels[symbol]);
     }
+    for (let pc of Object.keys(this.forwardDataReferences)) {
+      let symbol = this.forwardDataReferences[pc];
+      this.assert(typeof this.labels[symbol] !== 'undefined', "undefined label: " + symbol);
+      this.redata(pc, this.labels[symbol]);
+    }
   }
 
-  emit(opcode, parameter = 0x200) {
+  emit(opcode, parameter) {
     this.reemit(this.pc++, opcode, parameter);
   }
 
-  reemit(pc, opcode, parameter = 0x200) {
+  reemit(pc, opcode, parameter) {
+    this.assert(-0x200 <= parameter && parameter <= 0x200, `immediate parameter (${parameter}) out of range`);
+    this.assert(0 <= opcode && opcode <= 0x3f, `opcode (${opcode}) out of range`);
     this.code[pc] = opcode | (parameter << 6);
   }
 
   data(value) {
-    this.code[this.pc++] = value;
+    if (typeof value === 'string') {
+      this.forwardDataReferences[this.pc] = value;
+      value = 0x70D0;  // placeholder
+    }
+    this.redata(this.pc++, value);
+  }
+
+  redata(pc, value) {
+    // this.assert(-0x8000 <= value && value <= 0x7FFF, `value <${value}> out of range`);
+    this.assert(-0xffff <= value && value <= 0xffff, `value <${value}> out of range`);
+    this.code[pc] = value;
   }
 
   disassemble() {

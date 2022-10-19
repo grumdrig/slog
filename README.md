@@ -279,3 +279,33 @@ address in INT_R and execution goes there with PC on the stack until JUMP
 (as a return).
 
 Perhaps there should be other interrupts.
+
+
+GAME-SPECIFIC INFO
+==================
+
+Various things are, or could be, game-specific. For example:
+
+* Leveling schedule (xp for a given level)
+* Spell names and effects
+* Terrain types and how they work
+* Victory conditions
+* Equipment descriptions
+* NPCs and their info
+
+Not clear, in each case, if they should be:
+
+* Shared as meta-info about the game
+* Set in the VM special area
+* Left to puzzle out empyrically
+* Mentioned/described in in-game dialogues
+* Fixed for all games
+
+but the first seems best in most cases at the moment.
+
+
+INFORMATION RETURNED
+====================
+
+Can you watch the whole game? Or just see the final state?
+
