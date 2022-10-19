@@ -230,6 +230,7 @@ const SPECIAL = {
   EXPERIENCE: 0x31,
   AGE: 0x32,
   //
+  STAT_0: 0x38,
   STR: 0x38,
   DEX: 0x39,
   CON: 0x3A,
@@ -244,6 +245,7 @@ const SPECIAL = {
   ENCUMBRANCE: 0x44,
   CAPACITY: 0x45,
 
+  INVENTORY_0: 0x50,
   INVENTORY_GOLD: 0x50,
   INVENTORY_REAGENTS: 0x51,
   INVENTORY_DROPS: 0x52,
@@ -254,13 +256,14 @@ const SPECIAL = {
   // ...
   INVENTORY15: 0x5F,
 
+  EQUIPMENT_0: 0x60,
   EQUIP_WEAPON: 0x60,  // Level of puissance
   // ...
   EQUIP_SHOES: 0x6F,
 
-  SPELL0: 0x70,  // spell level
+  SPELL_0: 0x70,  // spell level
   // ...
-  SPELL15: 0x7F,
+  SPELL_15: 0x7F,
 
   LONGITUDE: 0x80,  // as fixed point?
   LATITUDE: 0x81,

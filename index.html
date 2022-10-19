@@ -20,12 +20,12 @@
 	#col1 { grid-column: 1; }
 	#col2 { grid-column: 2; }
 	#col3 { grid-column: 3; }
-	#col1 div, #col2 div, #col3 div {
+	#col1 > div, #col2 > div, #col3 > div {
 		display: grid;
 		grid-template-columns: 120px 60px;
 	}
-	#col3 #log { grid-template-columns: 1fr; }
-	#col2 #equipment {
+	#col3 > #log { grid-template-columns: 1fr; }
+	#col2 > #equipment {
 		grid-template-columns: 80px 80px;
 	}
 
@@ -65,48 +65,50 @@
 		</div>
 
 		<div id=stats class=boxy>
-			<div>Strength</div> <div id="c38">1</div>
-			<div>Agility</div> <div id="c39">1</div>
-			<div>Constitution</div> <div id="c3A">1</div>
-			<div>Intelligence</div> <div id="c3B">1</div>
-			<div>Wisdom</div> <div id="c3C">1</div>
-			<div>Charisma</div> <div id="c3D">1</div>
+			<div class=head>Stats</div>
+			<div>Strength</div>     <div id="s0">1</div>
+			<div>Agility</div>      <div id="s1">1</div>
+			<div>Constitution</div> <div id="s2">1</div>
+			<div>Intelligence</div> <div id="s3">1</div>
+			<div>Wisdom</div>       <div id="s4">1</div>
+			<div>Charisma</div>     <div id="s5">1</div>
 		</div>
 
 		<div id=spells class=boxy>
 			<div class=head>Spell Book</div>
-			<div>Heal</div> <div id="s0">I</div>
-			<div>Fireball</div> <div id="s1">I</div>
-			<div>Dig</div> <div id="s2">I</div>
-			<div>Fly</div> <div id="s3">I</div>
+			<div id=bt0>(none)</div> <div id="b0"></div>
+			<div id=bt1>(none)</div> <div id="b1"></div>
+			<div id=bt2>(none)</div> <div id="b2"></div>
+			<div id=bt3>(none)</div> <div id="b3"></div>
 		</div>
 	</div>
 	<div id=col2>
 		<div id=equipment class=boxy>
 			<div class=head>Equipment</div>
-			<div>Weapon</div> <div>+1 Dagger</div>
-			<div>Armor</div> <div>+1 Dagger</div>
-			<div>Shield</div> <div>+1 Dagger</div>
-			<div>Backpack</div> <div>+1 Dagger</div>
-			<div>Footwear</div> <div>+1 Dagger</div>
-			<div>Ring</div> <div>+1 Dagger</div>
-			<div>Amulet</div> <div>+1 Dagger</div>
-			<div>Boat</div> <div>+1 Dagger</div>
+			<div>Weapon</div>   <div id=e0></div>
+			<div>Armor</div>    <div id=e1></div>
+			<div>Shield</div>   <div id=e2></div>
+			<div>Backpack</div> <div id=e3></div>
+			<div>Footwear</div> <div id=e4></div>
+			<div>Ring</div>     <div id=e5></div>
+			<div>Amulet</div>   <div id=e6></div>
+			<div>Mount</div>    <div id=e7></div>
 		</div>
 		<div id=inventory class=boxy>
 			<div class=head>Inventory</div>
-			<div>Gold</div> <div>10</div>
-			<div>Drops</div> <div>10</div>
-			<div>Reagents</div> <div>10</div>
-			<div>Healing potions</div> <div>10</div>
-			<div>Energy potions</div> <div>10</div>
-			<div>Rations</div> <div>10</div>
-			<div>Gems</div> <div>10</div>
+			<div>Gold</div>            <div id=i0>10</div>
+			<div>Drops</div>           <div id=i1>10</div>
+			<div>Reagents</div>        <div id=i2>10</div>
+			<div>Healing potions</div> <div id=i3>10</div>
+			<div>Energy potions</div>  <div id=i4>10</div>
+			<div>Rations</div>         <div id=i5>10</div>
+			<div>Gems</div>            <div id=i6>10</div>
+			<div>Sand</div>            <div id=i7>10</div>
 		</div>
 	</div>
 	<div id=col3>
 		<div id=environment class=boxy>
-			<div>Location</div><div>&lt;23,45&gt;</div>
+			<div>Location</div><div>&lt;<span id=longitude>23</span>,<span id=latitude>45</span>&gt;</div>
 		</div>
 		<div id=log class=boxy>
 			<div class=head>Log</div>
@@ -176,14 +178,32 @@ $$(".boxy").forEach(div => boxIn(div));
 
 let asm = new Assembler();
 asm.assemble('');
-let world = new World(`
-WWWWWW
-W__t_W
-WWWWWW`);
-let vm = new VirtualMachine(asm.code, world);
+let vm = new VirtualMachine(asm.code, new World(`
+  WWWWWW
+  W__t_W
+  WWWWWW`));
 $('#level').innerText = vm.special[SPECIAL.LEVEL];
 $('#xp').innerText = vm.special[SPECIAL.EXPERIENCE];
-$('#health').innerText = vm.special[SPECIAL.HEALTH];
-$('#energy').innerText = vm.special[SPECIAL.ENERGY];
-
+$('#health').innerText = `${vm.special[SPECIAL.HEALTH]-vm.special[SPECIAL.DAMAGE]} / ${vm.special[SPECIAL.HEALTH]}`;
+$('#energy').innerText = `${vm.special[SPECIAL.ENERGY]-vm.special[SPECIAL.FATIGUE]} / ${vm.special[SPECIAL.ENERGY]}`;
+for (let i = 0; i < 6; ++i) {
+	$("#s" + i).innerText = vm.special[SPECIAL.STAT_0 + i];
+}
+let n_spells = 0;
+for (let i = 0; i < 16; ++i) {
+	let l = vm.special[SPECIAL.SPELL_0 + i];
+	if (l) {
+		$("#bt" + n_spells).innerText = `Spell #${i}`;
+		$("#b" + n_spells).innerText = l;
+		n_spells += 1;
+	}
+}
+for (let i = 0; i < 8; ++i) {
+	$("#e" + i).innerText = `+${vm.special[SPECIAL.EQUIPMENT_0 + i]} dagger`;
+}
+for (let i = 0; i < 8; ++i) {
+	$("#i" + i).innerText = vm.special[SPECIAL.INVENTORY_0 + i];
+}
+$("#longitude").innerText = vm.special[SPECIAL.LONGITUDE];
+$("#latitude").innerText = vm.special[SPECIAL.LATITUDE];
 </script>
