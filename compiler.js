@@ -276,6 +276,10 @@ class LiteralExpression {
 	}
 
 	simplify(context) { return this }
+
+	generate(context) {
+		context.emit('.stack ' + this.literal);
+	}
 }
 
 class IdentifierExpression {
@@ -292,6 +296,17 @@ class IdentifierExpression {
 		let l = context.resolveConstant(this.identifier);
 		return l ? new LiteralExpression(l) : this;
 	}
+
+	generate(context) {
+		let a = context.addressOf(this.identifier);
+		if (!a) context.error('undefined identifier ' + this.identifier);
+		if (immediateEligible(a)) {
+			context.emit('fetch ' + a);
+		} else {
+			context.emit('.stack ' + a);
+			context.emit('fetch');
+		}
+	}
 }
 
 class PrefixExpression {
@@ -299,11 +314,25 @@ class PrefixExpression {
 	rhs;
 
 	static operators = {
-		'+': { precompute: x => x },
-		'-': { precompute: x => -x },
-		'~': { precompute: x => ~x },
-		'!': { precompute: x => !x },
-		'*': { }
+		'+': {
+			precompute: x => x,
+			generate: context => null,
+			},
+		'-': {
+			precompute: x => -x,
+			generate: context => context.emit('unary NEGATE'),
+			},
+		'~': {
+			precompute: x => ~x,
+			generate: context => context.emit('unary COMPLEMENT'),
+			},
+		'!': {
+			precompute: x => !x,
+			generate: context => context.emit('unary NOT'),
+			},
+		'*': {
+			generate: context => context.emit('fetch'),
+			}
 	};
 
 	static tryParse(source) {
@@ -321,6 +350,12 @@ class PrefixExpression {
 		else
 			return this;
 	}
+
+	generate(context) {
+		rhs.generate(context);
+		this.operator.generate(context);
+	}
+
 }
 
 class BinaryExpression {
@@ -334,107 +369,305 @@ class BinaryExpression {
 		'*': {
 			precedence: 3,
 			precompute: (x,y) => x * y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('mul');
+			},
 		},
 		'/': {
 			precedence: 3,
 			precompute: (x,y) => x / y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('div');
+			},
 		},
 		'%': {
 			precedence: 3,
 			precompute: (x,y) => x % y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('mod');
+			},
 		},
 		'+': {
 			precedence: 4,
 			precompute: (x,y) => x + y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('add');
+			},
 		},
 		'-': {
 			precedence: 4,
 			precompute: (x,y) => x - y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('sub');
+			},
 		},
 		'<<': {
 			precedence: 5,
 			precompute: (x,y) => x << y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('unary NEGATE');
+				context.emit('shift');
+			},
 		},
 		'>>': {
 			precedence: 5,
 			precompute: (x,y) => x >> y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('shift');
+			},
 		},
 		'<': {
 			precedence: 6,
 			precompute: (x,y) => x < y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('sub');
+				context.emit('min 0');
+			},
 		},
 		'<=': {
 			precedence: 6,
 			precompute: (x,y) => x <= y,
+			generate: (context, lhs, rhs) => {
+				rhs.generate(context);
+				lhs.generate(context);
+				context.emit('sub');
+				context.emit('max 0');
+			},
 		},
 		'>': {
 			precedence: 6,
 			precompute: (x,y) => x > y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('sub');
+				context.emit('max 0');
+			},
 		},
 		'>=': {
 			precedence: 6,
 			precompute: (x,y) => x >= y,
+			generate: (context, lhs, rhs) => {
+				rhs.generate(context);
+				lhs.generate(context);
+				context.emit('sub');
+				context.emit('min 0');
+			},
 		},
 		'==': {
 			precedence: 7,
 			precompute: (x,y) => x == y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('sub');
+				context.emit('unary NOT');
+			},
 		},
 		'!=': {
 			precedence: 7,
 			precompute: (x,y) => x != y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('sub');
+				context.emit('unary BOOL');
+			},
 		},
 		'&': {
 			precedence: 8,
 			precompute: (x,y) => x & y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('unary AND');
+			},
 		},
 		'^': {
 			precedence: 9,
 			precompute: (x,y) => x ^ y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('unary XOR');
+			},
 		},
 		'|': {
 			precedence: 10,
 			precompute: (x,y) => x | y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('unary OR');
+			},
 		},
 		'&&': {
 			precedence: 11,
 			precompute: (x,y) => x && y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				context.emit('unary BOOL');
+				rhs.generate(context);
+				context.emit('unary BOOL');
+				context.emit('and');
+			},
 		},
-		'||': {
+		'^^': {
 			precedence: 12,
 			precompute: (x,y) => x || y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				context.emit('unary BOOL');
+				rhs.generate(context);
+				context.emit('unary BOOL');
+				context.emit('xor');
+			},
+		},
+		'||': {
+			precedence: 13,
+			precompute: (x,y) => x || y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				context.emit('unary BOOL');
+				rhs.generate(context);
+				context.emit('unary BOOL');
+				context.emit('or');
+			},
 		},
 		'=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				rhs.generate(context);
+				context.emit('store');
+			},
 		},
 		'+=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('add');
+				context.emit('store');
+			},
 		},
 		'-=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('sub');
+				context.emit('store');
+			},
 		},
 		'*=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('mul');
+				context.emit('store');
+			},
 		},
 		'/=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('div');
+				context.emit('store');
+			},
 		},
 		'%=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('mod');
+				context.emit('store');
+			},
 		},
 		'<<=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('unary NEGATE');
+				context.emit('shift');
+				context.emit('store');
+			},
 		},
 		'>>=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('shift');
+				context.emit('store');
+			},
 		},
 		'&=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('and');
+				context.emit('store');
+			},
 		},
 		'^=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('xor');
+				context.emit('store');
+			},
 		},
 		'|=': {
 			precedence: 14,
+			generate: (context, lhs, rhs) => {
+				lhs.generateExpressionAddress(context);
+				context.emit('push');
+				context.emit('fetch');
+				rhs.generate(context);
+				context.emit('or');
+				context.emit('store');
+			},
 		},
 	};
 
@@ -481,6 +714,9 @@ class PostfixExpression {
 		return lhs;
 	}
 
+	generate(context) {
+		this.operator.generate(context, this.lhs, this.rhs);
+	}
 }
 
 function compile(text) {

@@ -169,6 +169,7 @@ const UNARY_OPERATORS = {
   0x7: { mnemonic: 'LOG', operation: x => Math.log(x) },
   0xE: { mnemonic: 'EXP', operation: x => Math.exp(x) },
   0x1: { mnemonic: 'NOT', operation: x => x ? 0 : 1 },
+  0xB: { mnemonic: 'BOOL', operation: x => x ? 1 : 0 },
   0xA: { mnemonic: 'ABS', operation: x => Math.abs(x) },
   0x9: { mnemonic: 'NEG', operation: x => -x },
   0xC: { mnemonic: 'COMPLEMENT', operation: x => ~x },
