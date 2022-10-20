@@ -414,6 +414,12 @@ class VirtualMachine {
       this.running = false;
       this.special[SPECIAL.AUX] = argument;
 
+    } else if (mnemonic === 'assert') {
+      if(this.top !== argument) {
+        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != arg ${argument}`);
+        throw "assertion failure";
+      }
+
     } else if (mnemonic === 'push') {
       this.push(argument);
 
@@ -463,16 +469,6 @@ class VirtualMachine {
         this.store(this.a2, tmp);
       }
 
-    // Binary operators
-    } else if (BINARY_OPERATORS[mnemonic]) {
-      let result = BINARY_OPERATORS[mnemonic](this.pop(), argument);
-      if (typeof result === 'number') {
-        this.push(result);
-      } else {
-        this.push(result[0]);
-        this.aux = result[1];
-      }
-
     // Unary operators
     } else if (mnemonic === 'unary') {
       let value = pop();
@@ -482,7 +478,18 @@ class VirtualMachine {
         this.push(Math.floor(result));
         this.aux_fractional = result - Math.floor(result);
       } else {
+        throw "invalid unary operator"
         this.push(0xBAD);
+      }
+
+    // Binary operators
+    } else if (BINARY_OPERATORS[mnemonic]) {
+      let result = BINARY_OPERATORS[mnemonic](this.top, argument);
+      if (typeof result === 'number') {
+        this.top = result;
+      } else {
+        this.top = result[0];
+        this.aux = result[1];
       }
 
     // "Real"-world instructions, all of which advance character age and set
@@ -490,12 +497,6 @@ class VirtualMachine {
 
     } else if (opcode >= 0x30) {
       this.top = this.world.handleInstruction(this.special, this.top, argument);
-
-    } else if (mnemonic === 'assert') {
-      if(this.top !== argument) {
-        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != arg ${argument}`);
-        throw "assertion failure";
-      }
 
     } else {
       throw `${this.pc}: invalid opcode ${opcode} ${mnemonic}`;
@@ -521,6 +522,11 @@ class VirtualMachine {
 
 function is_identifier(id) {
   return id.match(/^[a-zA-Z_][0-9a-zA-Z_]*$/);
+}
+
+function isInt10(v) {
+  // Return true if the value can be represented in 10-bits
+  return typeof v === 'number' && -0x200 < v && v < 0x200;
 }
 
 function clone(...objs) {
@@ -657,9 +663,14 @@ class Assembler {
           }
 
         } else if (inst === toLowerCase('.stack')) {
-          this.emit(MNEMONICS.stack, tokens.length - 1);
-          for (let t of tokens.slice(1)) {
-            this.data(t);
+          this.assert(tokens.length > 1, "data expected following '.stack'");
+          if (tokens.length === 2 && isInt10(tokens[1])) {
+            this.emit(MNEMONICS.push, tokens[1]);
+          } else {
+            this.emit(MNEMONICS.stack, tokens.length - 1);
+            for (let t of tokens.slice(1)) {
+              this.data(t);
+            }
           }
 
         } else if (inst === toLowerCase('.line')) {
@@ -907,7 +918,7 @@ const terrains =  [
 let TERR = {};
 for (let t of terrains) TERR[t.code] = t;
 
-function reverseMapToArray(m) {
+function reverseMapIntoArray(m) {
   let result = [];
   for (let i in m) result[m[i]] = i;
  return result;
@@ -961,7 +972,7 @@ class World {
     cast: 0x34,
   }
 
-  static mnemonics = reverseMapToArray(World.opcodes);
+  static mnemonics = reverseMapIntoArray(World.opcodes);
 
 
   handleInstruction(special, opcode, top, argument) {
@@ -1005,6 +1016,8 @@ class World {
 
       return 1;
       /*
+      this fatigue dynamic could be cool but let's start simple
+
         if (Math.random() < (Math.abs(argument) - 75) / 50)
           special[SPECIAL.FATIGUE] += 1;
         let a = special[SPECIAL.FACING] * Math.PI / 180;

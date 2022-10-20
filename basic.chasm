@@ -1,3 +1,18 @@
+.macro jmp address
+  .stack address
+  store PC
+.end
+
+.macro jsr address
+  fetch PC
+  .stack address
+  store PC
+.end
+
+.macro return
+  store PC
+.end
+
 .macro face
   store FACING
 .end

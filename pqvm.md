@@ -135,26 +135,34 @@ Unconditional branch. PC takes on the value of argument.
 
 	PC = argument
 
+This is equivalent to
+
+	.stack argument
+	store PC
+
+which is, yes, 2 or 3 words rather than 1 or 3, but seems like a job for a
+macro, so maybe get rid of this.
+
 
 ### $B branch
 
-Branch if pop is nonzero.
+Branch if popped value is nonzero.
 
-	if pop != 0 {
+	if MEMORY[SP++] != 0 {
 		PC = argument
 	}
 
 If the value removed from the top of the stack is not equial to zero, move program execution the the address supplied by the parameter.
 
 
-### $3F assert
+### $1A assert
 
 Assertion of expected equality.
 
 If the value on the top of the stack does not equal the parameter, throw an
 exception.
 
-	if pop != argument {
+	if MEMORY[SP++] != argument {
 		throw
 	}
 
@@ -167,7 +175,7 @@ Stack and Memory Instructions
 
 Push a value onto the stack.
 
-	push(argument)
+	MEMORY[--SP] = argument
 
 
 ### $D sethi
@@ -176,17 +184,20 @@ Set the high 8 bits of top of stack
 
 	MEMORY[SP] = (MEMORY[SP] & 0xFF) | (argument << 8)
 
-This is useful for values outside the range that can be represented in an immediate argument, but it's not as useful as `stack`, so I'll probably get rid of it.
+This is useful for values outside the range that can be represented in an
+immediate argument, but it's not as useful as `stack`, and takes no more
+instuctions, so I'll probably get rid of it.
 
 
 ### $1C stack
 
-Push the ensuing data on the stack. This instruction behaves somewhat differently from most others. It's useful especially for values outside the range of what can be represented as an immediate argument.
+Push the ensuing data onto the stack. This instruction behaves somewhat
+differently from most others as it inserts for non-instruction data to be
+inlined in the code. It's useful especially for values outside the range of
+what can be represented as an immediate argument.
 
 	repeat `argument` times {
-		SP = SP - 1
-		MEMORY[SP] = MEMORY[PC]
-		PC = PC + 1
+		MEMORY[--SP] = MEMORY[PC++]
 	}
 
 
@@ -196,37 +207,49 @@ Remove or reserve values on the stack
 
 	SP = SP - argument
 
+Equivalent to
+
+	fetch SP
+	add argument
+	store SP
+
+which is kind of wordy, so it seems worth keeping, but maybe better to have an
+inc and dec instruction, e.g.
+
+	inc SP ; add one to SP
+
+or else an addmem instruction
+
+	push addend
+	addmem SP
+
 
 ### $E fetch
 
 Fetch a value at a memory location and store it in the stack.
 
-	SP = SP - 1
-	MEMORY[SP] = MEMORY[argument]
+	MEMORY[--SP] = MEMORY[argument]
 
 
 ### $F fetchdata
 
 Fetch a value at a [distant] memory location and store it in the stack.
 
-	SP = SP - 1
-	MEMORY[SP] = MEMORY[DS + argument]
+	MEMORY[--SP] = MEMORY[DS + argument]
 
 
 ### $5 store
 
 Set a value in memory to a value removed from the stack.
 
-	MEMORY[argument] = MEMORY[SP]
-	SP = SP + 1
+	MEMORY[argument] = MEMORY[SP++]
 
 
 ### $6 storedata
 
 Store a value in [distant] memory.
 
-	MEMORY[DS + arguments] = MEMORY[SP]
-	SP = SP + 1
+	MEMORY[DS + arguments] = MEMORY[SP++]
 
 
 ### $1F peek
@@ -234,7 +257,7 @@ Store a value in [distant] memory.
 Peek on the stack.
 
 	MEMORY[SP] = MEMORY[SP + argument]
-	SP = SP - 1
+	SP--
 
 
 ### $15 poke
@@ -242,7 +265,7 @@ Peek on the stack.
 Set a value stored on the stack to the value popped from the stack.
 
 	MEMORY[SP + argument] = MEMORY[SP]
-	SP = SP + 1
+	SP++
 
 
 Mathematical Instructions
@@ -257,23 +280,10 @@ determined by the value of argument.
 
 A list of unary operations is forthcoming.
 
-
-### $20 max
-### $21 min
-### $22 add
-### $23 sub
-### $24 mul
-### $25 atan2
-### $26 pow
-### $27 div
-### $28 or
-### $29 and
-### $2A xor
-### $2B shift
-
-All the binary operations use a value popped from the stack as their first
-argument, and `argument` as their second argument. The result is returned to
-the stack. So to clarify, in the assembly code snippet:
+All other math instructions are binary operations. All use a value popped from
+the stack as their first argument, and `argument` as their second argument.
+The result is returned to the stack. So to clarify, in the assembly code
+snippet:
 
 	push 5
 	push 3
@@ -284,14 +294,81 @@ it is 3 that is subtracted from 5, not the other way around, and likewise in
 	push 5
 	sub 3
 
-In the case of `div`, additionally, the remainder (e.g. the modulus of the two
-parameters) is placed in AUX:
 
-	MEMORY[SP] = MEMORY[SP] / argument
+### $20 max
+
+	MEMORY[SP] = max(MEMORY[SP], argument)
+
+### $21 min
+
+	MEMORY[SP] = min(MEMORY[SP], argument)
+
+### $22 add
+
+	MEMORY[SP] += argument
+
+### $23 sub
+
+	MEMORY[SP] -= argument
+
+### $24 mul
+
+	MEMORY[SP] *= argument
+
+### $27 div
+
+Divide the top stack value in place by the argument. Additionally, the
+remainder (e.g. the modulus of the two parameters) is placed in AUX:
+
+	MEMORY[SP] /= argument
 	AUX = MEMORY[SP] % argument
 
-In the case of shift, the shifted-off bits are placed in AUX, but at the
-opposite end, such that the rotation by the same amount may be computed as
+
+### $25 atan2
+
+Calculates the arctangent of top/argument. Result is in degrees. The fractional part is stored in AUX.
+
+	fractional(t - Math.floor(t))
+	var degress = atan2(MEMORY[SP], argument) * 180/π
+	MEMORY[SP] = floor(degrees)
+	AUX = frac(degrees)
+
+### $26 pow
+
+	MEMORY[SP] = MEMORY[SP] ^ argument
+
+### $28 or
+
+Bitwise or
+
+	MEMORY[SP] |= argument
+
+### $29 and
+
+Bitwise and
+
+	MEMORY[SP] &= argument
+
+### $2A xor
+
+Bitwise exclusive or
+
+	MEMORY[SP] ^= argument
+
+### $2B shift
+
+Shift the bits of item on the top of the stack left (if argument is negative) or right (if it is positive). Additionally, the shifted-off bits are placed in AUX, but at the
+opposite end, as if they were rotated off of the top-of-stack value.
+
+	MEMORY[SP] = MEMORY[SP] << -argument  ; if argument is negative
+	AUX = <a slightly complicated expression>
+
+Or
+
+	MEMORY[SP] = MEMORY[SP] >> argument  ; if argument is positive
+	AUX = <a slightly complicated expression>
+
+The bit rotation by the same amount may thus be computed after bit shifting as:
 
 	MEMORY[SP] | AUX
 

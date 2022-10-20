@@ -16,7 +16,7 @@ not be a numeral.
 Decimal numeric literals are an optional `+` or `-` sign, followed by one or
 more numerals.
 
-Hexadecimal numeric literals are an option sign, followed by the `$`
+Hexadecimal numeric literals consist of: an optional sign, followed by the `$`
 character, followed by one or more hexadecimal numerals (`0`-`9`, `a`-`f`,
 and `A`-`F`).
 
@@ -26,7 +26,7 @@ described below. Each line may contain no more than one of these, and
 whitespace must separate numeric literals and identifiers, but whitespace is
 not otherwise significant.
 
-A semicolon `;` begins a comment; it and the characters following it are
+A semicolon `;` begins a comment; it, and the characters following it, are
 ignored by the assembler.
 
 
@@ -174,4 +174,6 @@ So for example the following are equivalent:
 	stack 3
 	.data 10 20 30
 
-
+In the case that *data* is a single value, which in turn is representable as
+an immediate, or in other words, if possible, the directive is implemented as
+a `push` instruction.

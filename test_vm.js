@@ -54,8 +54,7 @@ push 7
 shift 1
 assert 3
 fetch AUX
-push $00
-sethi -$80
+.stack -$8000
 assert
 pop
 
