@@ -10,6 +10,9 @@ const opcodes = [
   { opcode: 0x0, mnemonic: 'halt' },
   // halt execution, parameter ignored I guess
 
+  { opcode: 0x10, mnemonic: 'assert' },
+  // assertion of equality or else throw exception
+
   { opcode: 0xC, mnemonic: 'push' },
   // put a value on the stack
   // push X
@@ -99,7 +102,7 @@ const opcodes = [
   // ... X1 ... XN -N => ... X2 ... XN X1
   // bury 0 is a noop
 
-  { opcode: 0x10, mnemonic: 'unary' },
+  { opcode: 0x11, mnemonic: 'unary' },
   // unary OP
   // ... X => ... OP(X)
 
@@ -121,6 +124,11 @@ const opcodes = [
   { opcode: 0x2A, mnemonic: 'xor' },
   { opcode: 0x2B, mnemonic: 'shift' },
   // similar for these binary ops
+
+
+
+
+  // Move these to world/game
 
   { opcode: 0x30, mnemonic: 'walk' },
   // Walk at the given speed, as a percentage
@@ -151,9 +159,6 @@ const opcodes = [
   // Sell something to an NPC, category speced by parameter
   // Result code shows quantitiy sold (0 or 1 probably)
   // sell : ... => ... result ; gold and inventory or equipment affected
-
-  { opcode: 0x3F, mnemonic: 'assert' },
-  // assertion of equality or else throw exception
 ];
 
 let MNEMONICS = {};
@@ -458,7 +463,7 @@ class VirtualMachine {
         this.store(this.a2, tmp);
       }
 
-    // Binary arithmetic
+    // Binary operators
     } else if (BINARY_OPERATORS[mnemonic]) {
       let result = BINARY_OPERATORS[mnemonic](this.pop(), argument);
       if (typeof result === 'number') {
@@ -468,61 +473,7 @@ class VirtualMachine {
         this.aux = result[1];
       }
 
-      /*
-    } else if (mnemonic === 'max') {
-      this.push(Math.max(this.pop(), argument));
-
-    } else if (mnemonic === 'min') {
-      this.push(Math.min(this.pop(), argument));
-
-    } else if (mnemonic === 'add') {
-      this.push(this.pop() + argument);
-
-    } else if (mnemonic === 'sub') {
-      this.push(this.pop() - argument);
-
-    } else if (mnemonic === 'mul') {
-      this.push(this.pop() * argument);
-
-    } else if (mnemonic === 'pow') {
-      this.push(Math.pow(this.pop(), argument));
-
-    } else if (mnemonic === 'atan2') {
-      let a = Math.atan2(this.pop(), argument) * 180 / Math.PI;
-      this.push(Math.floor(a));
-      this.aux_fractional = a - this.top;
-
-    } else if (mnemonic === 'div') {
-      const dividend = this.pop();
-      const divisor = argument;
-      this.push(Math.floor(dividend / divisor));
-      // TODO make sure to use mathematical modulus
-      this.aux = dividend % divisor;
-
-    // Binary bitwise
-    } else if (mnemonic === 'or') {
-      this.push(this.pop() | argument);
-
-    } else if (mnemonic === 'and') {
-      this.push(this.pop() & argument);
-
-    } else if (mnemonic === 'xor') {
-      this.push(this.pop() ^ argument);
-
-    } else if (mnemonic === 'shift') {
-      let value = this.pop();
-      if (argument < 0) {
-        this.push(value << argument);
-        this.aux = value >> (15 + argument);
-      } else {
-        this.push(value >> argument);
-        this.aux = value & ((1 << argument) - 1);
-      }
-      // console.log(this.aux, this.fetch(-SPECIAL.AUX), this.special[SPECIAL.AUX]);
-      */
-
     // Unary operators
-
     } else if (mnemonic === 'unary') {
       let value = pop();
       let operator = UNARY_OPERATORS[argument];
@@ -537,62 +488,8 @@ class VirtualMachine {
     // "Real"-world instructions, all of which advance character age and set
     //  a boolean value in AUX indication if the instruction completed
 
-    } else if (mnemonic === 'walk') {
-      this.special[SPECIAL.AGE] += 1;
-      if (this.special[SPECIAL.FATIGUE] >= this.special[SPECIAL.ENERGY]
-          || Math.abs(argument) > 150) {
-        // Unable to walk
-        this.special[SPECIAL.AUX] = 0;
-      } else {
-        if (Math.random() < (Math.abs(argument) - 75) / 50)
-          this.special[SPECIAL.FATIGUE] += 1;
-        let a = this.special[SPECIAL.FACING] * Math.PI / 180;
-        let speed = this.special[SPECIAL.SPEED] * argument / 100; // TODO limits etc
-        if (argument < 0) speed *= 0.5;  // walking backwards is half as fast
-        this.special[SPECIAL.LATIUDE] += Math.sin(a) * speed;
-        this.special[SPECIAL.LONGITUDE] += Math.cos(a) * speed;
-        this.special[SPECIAL.AUX] = 1;
-      }
-
-    } else if (mnemonic === 'face') {
-      this.special[SPECIAL.FACING] = argument;
-      this.special[SPECIAL.AGE] += 1;
-      this.special[SPECIAL.AUX] = 1;
-
-    } else if (mnemonic === 'act') {
-      let action = ACTIONS[argument];
-      let result = 0;
-      if (action) result = action.action() ? 1 : 0;
-      this.special[SPECIAL.AGE] += 1;
-      this.special[SPECIAL.AUX] = result;
-
-    } else  if (mnemonic === 'buy') {
-      // argument is an equipment or inventory category
-      this.push(this.world.buy(this, parameter));
-
-    } else  if (mnemonic === 'sell') {
-      // argument is an equipment or inventory category
-      this.push(this.world.sell(this, parameter));
-
-    } else if (mnemonic === 'cast') {
-      const SPELLS = {
-        0x911: { mnemonic: 'heal', effect: _ => {
-          this.mp -= 1;
-          this.hp += 1;
-        } },
-      };
-      // TODO check for availabliltiy of spell
-      // TODO check mana requirements
-      let spell = SPELLS[argument];
-      let result = 0;
-      if (spell) result = spell.effect() ? 1 : 0;
-      this.special[SPECIAL.AGE] += 1;
-      this.special[SPECIAL.AUX] = result;
-
-    } else if (mnemonic === 'log') {
-      this.log.push(argument);
-      this.special[SPECIAL.AGE] += 1;
-      this.special[SPECIAL.AUX] = 1;
+    } else if (opcode >= 0x30) {
+      this.top = this.world.handleInstruction(this.special, this.top, argument);
 
     } else if (mnemonic === 'assert') {
       if(this.top !== argument) {
@@ -1010,6 +907,12 @@ const terrains =  [
 let TERR = {};
 for (let t of terrains) TERR[t.code] = t;
 
+function reverseMapToArray(m) {
+  let result = [];
+  for (let i in m) result[m[i]] = i;
+ return result;
+}
+
 class World {
   // assumed to be rectangular
   height;
@@ -1050,41 +953,130 @@ class World {
     vm.special[SPECIAL.LEVELING_MULTIPLIER] = 200;
   }
 
-  walk(latitude, longitude, direction) {
-    if (direction === 0) {
-      latitude -= 1;
-      if (latitude < 0) return null;
-    } else if (direction === 90) {
-      longitude += 1;
-      if (longitude => this.width) return null;
-    } else if (direction === 180) {
-      latitude += 1;
-      if (latitude => this.height) return null;
-    } else if (direction === 270) {
-      longitude -= 1;
-      if (longitude < 0) return null;
-    } else {
-      return null;
-    }
-    let index = latitude * this.width + longitude;
-    return this.tiles[index];
+  static opcodes = {
+    walk: 0x30,
+    act: 0x31,
+    buy: 0x32,
+    sell: 0x33,
+    cast: 0x34,
   }
 
-  passTime(vm, hours, days) {
+  static mnemonics = reverseMapToArray(World.opcodes);
+
+
+  handleInstruction(special, opcode, top, argument) {
+    let mnemonic = World.mnemonics[opcode];
+
+    if (mnemonic === 'walk') {
+      if (special[SPECIAL.FATIGUE] >= special[SPECIAL.ENERGY]) {
+          // || Math.abs(argument) > 150) {
+        // Unable to walk
+        return 0;
+      }
+
+      let latitude = special[SPECIAL.LATITUDE];
+      let longitude = special[SPECIAL.LONGITUDE];
+      let direction = argument;
+      if (direction === 0) {
+        latitude -= 1;
+        if (latitude < 0) return 0;
+      } else if (direction === 90) {
+        longitude += 1;
+        if (longitude => this.width) return 0;
+      } else if (direction === 180) {
+        latitude += 1;
+        if (latitude => this.height) return 0;
+      } else if (direction === 270) {
+        longitude -= 1;
+        if (longitude < 0) return 0;
+      } else {
+        return 0;
+      }
+      let index = latitude * this.width + longitude;
+      let tile = this.tiles[index];
+      if (!tile.passable) return 0;
+
+      special[SPECIAL.TERRAIN] = tile.terrain;
+      special[SPECIAL.MOB_LEVEL] = tile.level;
+      special[SPECIAL.LATITUDE] = latitude;
+      special[SPECIAL.LONGITUDE] = longitude;
+
+      this.passTime(special, 0, 1);
+
+      return 1;
+      /*
+        if (Math.random() < (Math.abs(argument) - 75) / 50)
+          special[SPECIAL.FATIGUE] += 1;
+        let a = special[SPECIAL.FACING] * Math.PI / 180;
+        let speed = special[SPECIAL.SPEED] * argument / 100; // TODO limits etc
+        if (argument < 0) speed *= 0.5;  // walking backwards is half as fast
+        special[SPECIAL.LATIUDE] += Math.sin(a) * speed;
+        special[SPECIAL.LONGITUDE] += Math.cos(a) * speed;
+        special[SPECIAL.AUX] = 1;
+      */
+
+      /*
+    } else if (mnemonic === 'face') {
+      special[SPECIAL.FACING] = argument;
+      special[SPECIAL.AGE] += 1;
+      special[SPECIAL.AUX] = 1;
+      */
+
+    } else if (mnemonic === 'act') {
+      let action = ACTIONS[argument];
+      return action ? action.action(special) || 0 : 0;
+
+    } else  if (mnemonic === 'buy') {
+      let qty = top;
+      let price = qty * 2;
+      this.passTime(special, 1);
+      if (special[INVENTORY_GOLD] < price) return 0;
+      special[INVENTORY_GOLD] -= price;
+      special[argument] += qty;
+      return qty;
+
+    } else  if (mnemonic === 'sell') {
+      let qty = top;
+      let price = qty * 1;
+      this.passTime(special, 1);
+      if (special[argument] < qty) return 0;
+      special[INVENTORY_GOLD] += price;
+      special[argument] -= qty;
+      return qty;
+
+    } else if (mnemonic === 'cast') {
+      const SPELLS = {
+        0x911: { mnemonic: 'heal', effect: _ => {
+          this.mp -= 1;
+          this.hp += 1;
+        } },
+      };
+      // TODO check for availabliltiy of spell
+      // TODO check mana requirements
+      this.passTime(special, 1);
+      let spell = SPELLS[argument];
+      if (!spell) return false;
+      return spell.effect() || 0;
+
+    }
+  }
+
+
+  passTime(special, hours, days) {
     const HOURS_PER_DAY = 32;
     const DAYS_PER_MONTH = 32;
     const MONTHS_PER_YEAR = 16;
     if (days) hours += HOURS_PER_DAY * days;
-    vm.specials[SPECIALS.TIME_OF_DAY] += hours;
-    while (vm.specials[SPECIALS.TIME_OF_DAY] >= HOURS_PER_DAY) {
-      vm.specials[SPECIALS.TIME_OF_DAY] -= 32;
-      vm.specials[SPECIALS.DAY_OF_MONTH] += 1;
-      if (vm.specials[SPECIALS.DAY_OF_MONTH] >= DAYS_PER_MONTH) {
-        vm.specials[SPECIALS.DAY_OF_MONTH] -= DAYS_PER_MONTH;
-        vm.specials[SPECIALS.MONTH_OF_YEAR] += 1;
-        if (vm.specials[SPECIALS.MONTH_OF_YEAR] >= MONTHS_PER_YEAR) {
-          vm.specials[SPECIALS.MONTH_OF_YEAR] -= MONTHS_PER_YEAR;
-          vm.specials[SPECIALS.YEAR] += 1;
+    special[SPECIALS.TIME_OF_DAY] += hours;
+    while (special[SPECIALS.TIME_OF_DAY] >= HOURS_PER_DAY) {
+      special[SPECIALS.TIME_OF_DAY] -= 32;
+      special[SPECIALS.DAY_OF_MONTH] += 1;
+      if (special[SPECIALS.DAY_OF_MONTH] >= DAYS_PER_MONTH) {
+        special[SPECIALS.DAY_OF_MONTH] -= DAYS_PER_MONTH;
+        special[SPECIALS.MONTH_OF_YEAR] += 1;
+        if (special[SPECIALS.MONTH_OF_YEAR] >= MONTHS_PER_YEAR) {
+          special[SPECIALS.MONTH_OF_YEAR] -= MONTHS_PER_YEAR;
+          special[SPECIALS.YEAR] += 1;
         }
       }
     }
