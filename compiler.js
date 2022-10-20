@@ -1,6 +1,12 @@
 
+class ParseError {
+	message;
+	constructor(message, location) { this.message = message }
+}
+
+
 class Source {
-	lexemes;
+	lexemes = [];
 
 	// Most tokens are literal strings but numeric literals are stored as { literal: NUMBER }
 	// so that they have a positive truth value.
@@ -22,57 +28,59 @@ class Source {
 
 			let m;
 			if (m = take(/^[$][\da-f]+/i)) {
-				lexemes.push({ literal: parseInt(m.substr(1), 16) });
+				this.lexemes.push({ literal: parseInt(m.substr(1), 16) });
 			} else if (m = take(/^\d+/)) {
-				lexemes.push({ literal: parseInt(m) });
-			} else if (m = take(/^([a-z_]\W+|[.,~!@#(){}[\]]|[-+=<>*/%^&|]+)/i)) {
+				this.lexemes.push({ literal: parseInt(m) });
+			} else if (m = take(/^([a-z_]\w*|[.,~!@#(){}[\]]|[-+=<>*/%^&|]+)/i)) {
 				// identifier or punctuation or operator
-				lexemes.push(m);
+				this.lexemes.push(m);
 			} else {
-				this.error('unrecognized character');
+				this.error(`unrecognized character '${text[0]}'`);
 			}
 		}
 	}
 
 	consume(token) {
-		if (token !== this.next()) this.error('expected: ' + token);
+		if (token !== this.next()) this.error(`expected '${token}'`);
 	}
 
 	consumeIdentifier() {
-		if (!this.peekIdentifier()) this.error('identifier expected');
-		return next();
+		if (!this.isIdentifier()) this.error('identifier expected');
+		return this.next();
 	}
 
 	consumeLiteral() {
 		if (!this.isLiteral()) this.error('literal value expected');
-		return next().literal;
+		return this.next().literal;
 	}
 
 	tryConsume(token) {
 		if (this.peek(token)) return this.next();
 	}
 
+	empty() { return !this.lexemes.length }
+
 	peek(value) {
-		if (!lexemes.length) return;
-		if (value && lexemes[0] !== value) return;
-		return lexemes[0];
+		if (this.empty()) return;
+		if (value && this.lexemes[0] !== value) return;
+		return this.lexemes[0];
 	}
 
-	peekIdentifier() {
-		return typeof peek() === 'string' && peek().match(/^[a-z_]\W+$/i) && peek();
+	isIdentifier() {
+		return typeof this.peek() === 'string' && this.peek().match(/^[a-z_]\w*$/i);
 	}
 
 	isLiteral() {
-		return peek().literal || true;
+		return this.peek().literal || true;
 	}
 
 	next() {
-		if (!lexemes.length) this.error('unexpected end of file');
-		return lexemes.shift();
+		if (!this.lexemes.length) this.error('unexpected end of file');
+		return this.lexemes.shift();
 	}
 
 	error(message) {
-		throw new ParseError(message);
+		throw new ParseError(`${message} at ${this.lexemes.length}: ${this.lexemes[0]}`);
 	}
 }
 
@@ -86,13 +94,13 @@ class Module {
 		let result = new Module();
 		while (!source.empty()) {
 			let item;
-			if (item = ConstantDefinition.tryParse()) {
+			if (item = ConstantDefinition.tryParse(source)) {
 				result.constants.push(item);
-			} else if (item = VariableDeclaration.tryParse()) {
+			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
 			} else {
-				item = FunctionDefinition.parse();
-				result.function.push(item);
+				item = FunctionDefinition.parse(source);
+				result.functions.push(item);
 			}
 		}
 		return result;
@@ -108,7 +116,7 @@ class ConstantDefinition {
 		let result = new ConstantDefinition;
 		result.name = source.consumeIdentifier();
 		source.consume('=');
-		result.initializer = Expression.parse();
+		result.initializer = Expression.parse(source);
 		return result;
 	}
 }
@@ -122,7 +130,7 @@ class VariableDeclaration {
 		let result = new VariableDeclaration();
 		result.name = source.consumeIdentifier();
 		if (source.tryConsume('=')) {
-			result.initializer = Expression.parse();
+			result.initializer = Expression.parse(source);
 		}
 		return result;
 	}
@@ -137,11 +145,11 @@ class FunctionDefinition {
 	static parse(source) {
 		let result = new FunctionDefinition();
 		result.id = source.consumeIdentifier();
-		let a;
-		while (a = source.tryConsumeIdentifier) result.parameters.push(a);
+		while (source.isIdentifier()) result.parameters.push(a.consumeIdentifier());
 		source.consume('{');
 		result.body = CodeBlock.parse(source);
 		source.consume('}');
+		return result;
 	}
 }
 
@@ -152,16 +160,17 @@ class CodeBlock {
 
 	static parse(source) {
 		let result = new CodeBlock();
-		while (!peek('}')) {
+		while (!source.peek('}')) {
 			let item;
-			if (item = ConstantDefinition.tryParse()) {
+			if (item = ConstantDefinition.tryParse(source)) {
 				result.constants.push(item);
-			} else if (item = VariableDeclaration.tryParse()) {
+			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
 			} else {
-				result.statements.push(Statement.parse());
+				result.statements.push(Statement.parse(source));
 			}
 		}
+		return result;
 	}
 }
 
@@ -175,7 +184,7 @@ class Statement {
 		} else if (source.peek('if')) {
 			return IfStatement.parse(source);
 		} else {
-			return new ExpressionStatement(Expression.parse());
+			return new ExpressionStatement(Expression.parse(source));
 		}
 	}
 }
@@ -243,7 +252,7 @@ class Expression {
 		lhs = PostfixExpression.tryPostParse(lhs, source);
 		let binop = BinaryExpression.operators[source.peek()];
 		if (binop && binop.precedence < precedence) {
-			result = new BinaryExpression();
+			let result = new BinaryExpression();
 			result.lhs = lhs;
 			result.operator = source.next();
 			result.rhs = Expression.parse(source, binop.precedence);
@@ -254,14 +263,14 @@ class Expression {
 	}
 }
 
-class LiterallExpression {
+class LiteralExpression {
 	literal;
 
 	constructor(literal) {
 		this.literal = literal;
 	}
 
-	tryParse(source) {
+	static tryParse(source) {
 		if (!source.isLiteral()) return;
 		return new LiteralExpression(source.consumeLiteral());
 	}
@@ -272,7 +281,7 @@ class LiterallExpression {
 class IdentifierExpression {
 	identifier;
 
-	tryParse(source) {
+	static tryParse(source) {
 		if (!source.isIdentifier()) return;
 		let result = new IndentifierExpression();
 		result.identifier = source.consumeIdentifier();
@@ -297,11 +306,12 @@ class PrefixExpression {
 		'*': { }
 	};
 
-	tryParse(source) {
-		if (!PrefixExpressions.operators.includes(souce.peek())) return false;
+	static tryParse(source) {
+		if (!PrefixExpression.operators[source.peek()]) return false;
 		let result = new PrefixExpression();
 		result.operator = source.next();
 		result.rhs = Expression.parse(source, 2);
+		return result;
 	}
 
 	simplify(context) {
@@ -448,7 +458,7 @@ class PostfixExpression {
 		'.': { }
 	};
 
-	constructor(lhs, op) {
+	constructor(lhs, operator) {
 		this.lhs = lhs;
 		this.operator = operator;
 	}
@@ -459,16 +469,35 @@ class PostfixExpression {
 			source.next();  // skip past op
 			lhs = new PostfixExpression(lhs, op);
 			if (op.closer) {
-				while (true) {
+				while (!source.tryConsume(op.closer)) {
 					lhs.arguments.push(Expression.parse(source));
 					if (source.tryConsume(op.closer)) break;
 					source.consume(',');
 				}
 			} else {
-				arguments.push(source.consumeIdentifier());
+				lhs.arguments.push(source.consumeIdentifier());
 			}
 		}
 		return lhs;
 	}
 
 }
+
+function compile(text) {
+	let source = new Source(text);
+	console.log(source);
+
+	let m = Module.parse(source);
+	console.log(m);
+}
+
+compile(`
+var i = 5
+var b
+const c = -5
+main {
+	go()
+}
+go {
+	state.level = 4
+}`);
