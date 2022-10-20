@@ -178,17 +178,6 @@ Push a value onto the stack.
 	MEMORY[--SP] = argument
 
 
-### $D sethi
-
-Set the high 8 bits of top of stack
-
-	MEMORY[SP] = (MEMORY[SP] & 0xFF) | (argument << 8)
-
-This is useful for values outside the range that can be represented in an
-immediate argument, but it's not as useful as `stack`, and takes no more
-instuctions, so I'll probably get rid of it.
-
-
 ### $1C stack
 
 Push the ensuing data onto the stack. This instruction behaves somewhat
