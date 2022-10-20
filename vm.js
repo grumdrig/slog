@@ -24,12 +24,6 @@ const opcodes = [
   // stack N .data D1 D2 ... DN
   // ... => DN ... D1 ...
 
-  { opcode: 0xD, mnemonic: 'sethi' },
-  // set high 8 bits of top of stack
-  // sethi X
-  // ... S => ... ((X << 8) | (S & 0xFF))
-
-
   { opcode: 0x9, mnemonic: 'adjust' },
   // remove/reserve values on the stack
   // adjust N
@@ -90,7 +84,7 @@ const opcodes = [
   { opcode: 0x2, mnemonic: 'jump' },
   // Unconditional branch, which we *could* handle by just setting PC
 
-  { opcode: 0xA, mnemonic: 'bury' },  // TODO: not so sure this is useful
+  // { opcode: 0xA, mnemonic: 'bury' },  // TODO: not so sure this is useful
   // rotate stack
   // bury N (N > 0)
   // ... X1 ... XN => ... XN X1 ... X(N-1), PP?
@@ -427,9 +421,6 @@ class VirtualMachine {
       for (let i = 0; i < argument; i += 1)
         this.push(this.memory[this.pc++]);
 
-    } else if (mnemonic === 'sethi') {
-      this.top = (this.top & 0xff) | (argument << 8);
-
     } else if (mnemonic === 'adjust') {
       this.sp += argument;
 
@@ -457,6 +448,7 @@ class VirtualMachine {
       if (immediate) argument += this.pc;
       if (this.pop()) this.pc = argument;
 
+      /*
     } else if (mnemonic === 'bury') {
       // TODO might be backwards
       let offset = argument < 0 ? -1 : 1;
@@ -468,6 +460,7 @@ class VirtualMachine {
         this.store(this.a1, this.fetch(this.a2));
         this.store(this.a2, tmp);
       }
+      */
 
     // Unary operators
     } else if (mnemonic === 'unary') {
