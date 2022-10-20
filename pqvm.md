@@ -212,6 +212,16 @@ or else an addmem instruction
 	push addend
 	addmem SP
 
+	.macro adjust offset
+		push offset
+		decrement SP
+	.end
+
+but on the other hand, really, all you'll mostly ever do is pop, i.e.
+adjust -1. But on the OTHER hand, some kind if increment instruction seems
+useful.
+
+
 
 ### $E fetch
 
@@ -225,6 +235,16 @@ Fetch a value at a memory location and store it in the stack.
 Fetch a value at a [distant] memory location and store it in the stack.
 
 	MEMORY[--SP] = MEMORY[DS + argument]
+
+Equivalent to
+
+	fetch DS
+	add argument
+	fetch
+	push
+
+So maybe we don't need these now that we have stack so we're not trying so
+hard for immediates.
 
 
 ### $5 store
@@ -247,6 +267,14 @@ Peek on the stack.
 
 	MEMORY[SP] = MEMORY[SP + argument]
 	SP--
+
+Same as
+
+	fetch SP
+	add argument
+	fetch
+	store SP
+	dec SP
 
 
 ### $15 poke
