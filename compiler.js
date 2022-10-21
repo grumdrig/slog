@@ -91,16 +91,16 @@ class Context {
 	parent;
 	// forwards = {};
 
-	constructor(parent, functionParameters) {
+	constructor(parent, functionDefinition) {
 		this.parent = parent;
 		if (!parent) {
 			this.code = [];
 			this.unique = 1;
 		}
 
-		if (functionParameters) {
+		if (functionDefinition) {
 			this.scope = {};
-			functionParameters.forEach((parameter, i) => {
+			functionDefinition.parameters.forEach((parameter, i) => {
 				this.scope[parameter] = { offset: i + 1, count: 1 };
 				this.scope['_return_position'] = { offset: functionParameters.count + 1, count: 1 };
 			});
@@ -276,9 +276,11 @@ class FunctionDefinition {
 		return result;
 	}
 
+	stackFrameSize() { return this.parameters.length }
+
 	generate(context) {
 		context.emit(this.id + ':');
-		context = new Context(context, this.parameters);
+		context = new Context(context, this);
 		// context.returnValueDepth = this.parameters.length + 1;
 		// context.returnLabel = context.uniqueLabel(this.id + '_return');
 		// for (let p of this.parameters) {
@@ -286,6 +288,10 @@ class FunctionDefinition {
 		// }
 		this.body.generate(context);
 
+		this.generateReturn(context);
+	}
+
+	generateReturn(context) {
 		context.emit('adjust ' + -(this.parameters.length));
 		if (this.id === 'main') {
 			context.emit('halt 0');
@@ -359,7 +365,7 @@ class ExpressionStatement {
 
 	generate(context) {
 		this.expression.generate(context);
-		context.emit('pop'); // throw away resulting value
+		context.emit('adjust -1'); // throw away resulting value
 	}
 }
 
@@ -971,20 +977,10 @@ function compile(text) {
 	console.log(m);
 
 	let c = m.generate();
-	console.log(c);
-	for (let l of c.code)
-		console.log(l);
+
+	return c.code.join('\n');
 }
 
-compile(`
-var i
-var b = 2
-const c = -5
-main {
-	go(5,6)
+if (typeof exports !== 'undefined') {
+	exports.compile = compile;
 }
-go(a) {
-	if 6 {
-		b = a
-	}
-}`);

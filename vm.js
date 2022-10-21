@@ -676,12 +676,16 @@ class Assembler {
         } else if (inst === toLowerCase('.jump')) {
           this.assert(tokens.length === 2, "label of target for jump (only) expected");
           this.assert(typeof arg === 'string', "label of target for jump expected");
-          TODO
+          // TODO: immediate mode
+          this.emit(MNEMONICS._jmp, INLINE_MODE_FLAG);
+          this.data(arg);
 
         } else if (inst === toLowerCase('.branch')) {
           this.assert(tokens.length === 2, "label of target for branch (only) expected");
           this.assert(typeof arg === 'string', "label of target for branch expected");
-          TODO
+          // TODO: immediate mode
+          this.emit(MNEMONICS._br, INLINE_MODE_FLAG);
+          this.data(arg);
 
         } else if (this.macros[inst]) {
 

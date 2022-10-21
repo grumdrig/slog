@@ -1,0 +1,1 @@
+-x node test_compiler.js -- compiler.js vm.js
