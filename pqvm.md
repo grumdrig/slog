@@ -129,30 +129,45 @@ Control Flow Instruction
 Halt program execution. The machine stops running. Argument is ignored.
 
 
-### $2 jump
+### $2 `_jmp`
 
-Unconditional branch. PC takes on the value of argument.
+Unconditional branch. Unconventionally, `_jmp`, along with `_br`, has
+different semantics in the immediate-addressed and stack-addressed forms. The
+awkward naming is meant to warn assmbly programmers away from directly using
+`_jmp` in favor of the `.jump` directive instead.
+
+In the stack-addressed form PC takes on the value of argument.
 
 	PC = argument
 
-This is equivalent to
+whereas with immediate addressing, the argument is an offset from the current
+value of PC:
 
-	.stack argument
-	store PC
-
-which is, yes, 2 or 3 words rather than 1 or 3, but seems like a job for a
-macro, so maybe get rid of this.
+	PC += argument
 
 
 ### $B branch
 
-Branch if popped value is nonzero.
+Branch if popped value is nonzero. That is to say, if the value removed from
+the top of the stack is not equial to zero, move program execution to the
+address supplied by the parameter.
+
+As with `_jmp`, semantics differ between the immediate and stack-addressed
+forms. It is less error-prone to use the `.branch` directive instead.
+
+When stack addressing is used, the pseudocode is:
 
 	if MEMORY[SP++] != 0 {
 		PC = argument
 	}
 
-If the value removed from the top of the stack is not equial to zero, move program execution the the address supplied by the parameter.
+whereas with immediate addressing, it is:
+
+	if MEMORY[SP++] != 0 {
+		PC += argument
+	}
+
+
 
 
 ### $1A assert

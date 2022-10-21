@@ -71,7 +71,7 @@ class Source {
 	}
 
 	isLiteral() {
-		return this.peek().literal || true;
+		return this.peek().literal || false;
 	}
 
 	next() {
@@ -100,13 +100,14 @@ class Context {
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
 
-	link() {
-		for (let f in forwards) {
-			this.code[forwards[f]] = this.symbols[f];  // or something
-		}
-	}
+	// link() {
+	// 	for (let f in forwards) {
+	// 		this.code[forwards[f]] = this.symbols[f];  // or something
+	// 	}
+	// }
 
 	error(message) { throw new SemanticError(message) }
+	assert(cond, mess) { if (!cond) this.error(mess) }
 }
 
 class SemanticError {
@@ -138,18 +139,13 @@ class Module {
 	generate() {
 		let context = new Context();
 
-		// jump main
-		context.forwards['main'] = context.PC;
-		context.emit(0);
-		context.emit('jump');
+		context.emit('.jump _main');
 
 		for (let c of this.constants) c.generate(context);
 		for (let v of this.variables) v.generate(context);
 		for (let f of this.functions) f.generate(context);
 
-		context.link();
-
-		console.log(context);
+		// context.link();
 
 		return context;
 	}
@@ -176,12 +172,17 @@ class ConstantDefinition {
 
 class VariableDeclaration {
 	name;
+	count;
 	initializer;
 
 	static tryParse(source) {
 		if (!source.tryConsume('var')) return false;
 		let result = new VariableDeclaration();
 		result.name = source.consumeIdentifier();
+		if (source.tryConsume('[')) {
+			result.count = Expression.parse(source);
+			source.consume(']');
+		}
 		if (source.tryConsume('=')) {
 			result.initializer = Expression.parse(source);
 		}
@@ -189,7 +190,15 @@ class VariableDeclaration {
 	}
 
 	generate(context) {
-		context.define(this.name, { offset: context.symbols.length });
+		let decl = {
+			offset: context.symbols.length,
+		};
+		if (this.count) {
+			this.count = this.count.simplify(context);
+			if (!this.count.literal) context.error('literal array length expected');
+			decl.count = this.count.literal;
+		}
+		context.define(this.name, decl);
 		if (this.initializer) context.error('variable initialization is not implemented yet');
 	}
 }
@@ -284,7 +293,7 @@ class ExpressionStatement {
 	constructor(expression) { this.expression = expression }
 
 	generate(context) {
-		this.expression.generate();
+		this.expression.generate(context);
 		context.emit('pop'); // throw away resulting value
 	}
 }
@@ -305,28 +314,23 @@ class WhileStatement {
 
 	generate(context) {
 		context = new Context(context);
-		context.isLoop = true;
+		context.breakLabel = newUniqueName('endwhile');
 
-		let breakLabel = newUniqueName('while');
-
-		let loopStart = context.PC;
-
-		context.forwards[context.PC] = breakLabel;
-		context.emit(null);
+		let loopStartLabel = newUniqueName('while');
+		context.emit(loopStartLabel + ':');
 
 		// Test loop condition
 		condition.generate(context);
 		context.emit('unary NOT');
 
-		context.emit({
-			instruction: 'branch',
-			forward: breakLabel
-		});
+		// Exit loop if it's false
+		context.emit('.branch ' + breakLabel);
 
 		body.generate(context);
-		context.emitJump(loopStart);
 
-		context.define(breakLabel, context.PC);
+		context.emit('.jump ' + loopStartLabel);
+
+		context.emit(breakLabel + ':');
 	}
 }
 
@@ -386,7 +390,8 @@ class Expression {
 		if (binop && binop.precedence < precedence) {
 			let result = new BinaryExpression();
 			result.lhs = lhs;
-			result.operator = source.next();
+			result.operator = binop;
+			source.next();
 			result.rhs = Expression.parse(source, binop.precedence);
 			return result;
 		} else {
@@ -419,7 +424,7 @@ class IdentifierExpression {
 
 	static tryParse(source) {
 		if (!source.isIdentifier()) return;
-		let result = new IndentifierExpression();
+		let result = new IdentifierExpression();
 		result.identifier = source.consumeIdentifier();
 		return result;
 	}
@@ -685,7 +690,8 @@ class BinaryExpression {
 		'=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				rhs.generate(context);
 				context.emit('store');
 			},
@@ -693,7 +699,8 @@ class BinaryExpression {
 		'+=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -704,7 +711,8 @@ class BinaryExpression {
 		'-=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -715,7 +723,8 @@ class BinaryExpression {
 		'*=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -726,7 +735,8 @@ class BinaryExpression {
 		'/=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -737,7 +747,8 @@ class BinaryExpression {
 		'%=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -748,7 +759,8 @@ class BinaryExpression {
 		'<<=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -760,7 +772,8 @@ class BinaryExpression {
 		'>>=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -771,7 +784,8 @@ class BinaryExpression {
 		'&=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -782,7 +796,8 @@ class BinaryExpression {
 		'^=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -793,7 +808,8 @@ class BinaryExpression {
 		'|=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				lhs.generateExpressionAddress(context);
+				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
+				context.emit(lhs.identifier + ':');
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
@@ -810,6 +826,10 @@ class BinaryExpression {
 		else
 			return this;
 	}
+
+	generate(context) {
+		this.operator.generate(context, this.lhs, this.rhs);
+	}
 }
 
 class PostfixExpression {
@@ -823,31 +843,27 @@ class PostfixExpression {
 			generate: (context, lhs, args) => {
 				for (let a of args) {
 					a.generate(context);
-					context.emit('.stack', context.symbols[this.lhs]);
-					context.emit('jump');
+					context.emit('.jump ' + context.symbols[lhs]);
 				}
 			},
 		},
 		'[': {
 			closer: ']',
 			generate: (context, lhs, args) => {
-
-asdklfjhadslkjf
-
-
-
+				lhs.generateAddress(context);
+				context.assert(args.length === 1, 'expected index expression');
+				args[0].generate(context);
+				context.emit('add');
+				context.emit('fetch');
 			},
 		},
+		/*
 		'.': {
 			generate: (context, lhs, args) => {
-
-
-alksdfjlakdjf
-
-
-
+				// Not sure what to do here but it doesn't seem like we need structs
 			},
 		}
+		*/
 	};
 
 	constructor(lhs, operator) {
@@ -897,5 +913,5 @@ main {
 	go()
 }
 go {
-	state.level = 4
+	b = 4
 }`);

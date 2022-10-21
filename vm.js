@@ -74,14 +74,14 @@ const opcodes = [
   // ... X A => ... ; [SP + A] = X, SP -= 2
 
 
-  { opcode: 0xB, mnemonic: 'branch' },
-  // branch if nonzero
-  // branch
+  { opcode: 0xB, mnemonic: '_br' },
+  // _br if nonzero
+  // _br
   // ... V A => ... ; SP -= 2, if V != 0 then PC = A
-  // branch D
+  // _br D
   // ... V => ... ; SP -= 1, if V != 0 the PC += D
 
-  { opcode: 0x2, mnemonic: 'jump' },
+  { opcode: 0x2, mnemonic: '_jmp' },
   // Unconditional branch, which we *could* handle by just setting PC
 
   // { opcode: 0xA, mnemonic: 'bury' },  // TODO: not so sure this is useful
@@ -441,10 +441,11 @@ class VirtualMachine {
         this.store(address, this.pop());
       } // else illegal
 
-    } else if (mnemonic === 'jump') {
+    } else if (mnemonic === '_jmp') {
+      if (immediate) argument += this.pc;
       this.pc = argument;
 
-    } else if (mnemonic === 'branch') {
+    } else if (mnemonic === '_br') {
       // with immediate addressing mode, the value is an offset not an absolute
       if (immediate) argument += this.pc;
       if (this.pop()) this.pc = argument;
@@ -671,6 +672,16 @@ class Assembler {
           this.assert(tokens.length === 2, "expected '.line LINE_NUMBER'");
           this.assert(typeof arg === 'number', "numeric value expected");
           this.line_no_adjustment = arg - this.line_no;
+
+        } else if (inst === toLowerCase('.jump')) {
+          this.assert(tokens.length === 2, "label of target for jump (only) expected");
+          this.assert(typeof arg === 'string', "label of target for jump expected");
+          TODO
+
+        } else if (inst === toLowerCase('.branch')) {
+          this.assert(tokens.length === 2, "label of target for branch (only) expected");
+          this.assert(typeof arg === 'string', "label of target for branch expected");
+          TODO
 
         } else if (this.macros[inst]) {
 
