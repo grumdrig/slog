@@ -85,6 +85,35 @@ class Source {
 }
 
 
+class Context {
+	symbols = {};
+	code = [];
+	parent;
+	// forwards = {};
+
+	constructor(parent) { this.parent = parent; }
+
+	define(symbol, info) {
+		if (this.symbols[symbol]) this.error('duplicate definition ' + symbol);
+		this.symbols[symbol] = info;
+	}
+
+	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
+
+	link() {
+		for (let f in forwards) {
+			this.code[forwards[f]] = this.symbols[f];  // or something
+		}
+	}
+
+	error(message) { throw new SemanticError(message) }
+}
+
+class SemanticError {
+	message;
+	constructor(m) { this.message = m }
+}
+
 class Module {
 	constants = [];
 	variables = [];
@@ -105,19 +134,43 @@ class Module {
 		}
 		return result;
 	}
+
+	generate() {
+		let context = new Context();
+
+		// jump main
+		context.forwards['main'] = context.PC;
+		context.emit(0);
+		context.emit('jump');
+
+		for (let c of this.constants) c.generate(context);
+		for (let v of this.variables) v.generate(context);
+		for (let f of this.functions) f.generate(context);
+
+		context.link();
+
+		console.log(context);
+
+		return context;
+	}
 }
 
 class ConstantDefinition {
 	name;
-	initializer;
+	value;
 
 	static tryParse(source) {
 		if (!source.tryConsume('const')) return false;
 		let result = new ConstantDefinition;
 		result.name = source.consumeIdentifier();
 		source.consume('=');
-		result.initializer = Expression.parse(source);
+		result.value = Expression.parse(source);
 		return result;
+	}
+
+	generate(context) {
+		if (context.symbols[this.name]) context.error('duplicate definition');
+		context.symbols[this.name] = { constant: this.value }
 	}
 }
 
@@ -134,9 +187,15 @@ class VariableDeclaration {
 		}
 		return result;
 	}
+
+	generate(context) {
+		context.define(this.name, { offset: context.symbols.length });
+		if (this.initializer) context.error('variable initialization is not implemented yet');
+	}
 }
 
-// Yeah I may want a 'func' keyword. We'll see.
+// Yeah I may want a 'func' keyword. We'll see. Also the parameter syntax is weird. Or maybe
+// I should use juxtaposition for arguments as well.
 class FunctionDefinition {
 	id;
 	parameters = [];
@@ -150,6 +209,15 @@ class FunctionDefinition {
 		result.body = CodeBlock.parse(source);
 		source.consume('}');
 		return result;
+	}
+
+	generate(context) {
+		context.define(this.id, { address: context.code.length });
+		context = new Context(context);
+		for (let p of this.parameters) {
+			context.define(p);
+		}
+		this.body.generate(context);
 	}
 }
 
@@ -172,13 +240,21 @@ class CodeBlock {
 		}
 		return result;
 	}
+
+	generate(context) {
+		context = new Context(context);
+		for (let c of this.constants) c.generate(context);
+		for (let v of this.variables) v.generate(context);
+		for (let s of this.statements) s.generate(context);
+	}
 }
 
-class Statement {
-
+class Statement {  // namespace only
 	static parse(source) {
 		if (source.tryConsume('break')) {
 			return new BreakStatement();
+		} else if (source.peek('return')) {
+			return new ReturnStatement();
 		} else if (source.peek('while')) {
 			return WhileStatement.parse(source);
 		} else if (source.peek('if')) {
@@ -189,11 +265,28 @@ class Statement {
 	}
 }
 
-class BreakStatement { }
+class BreakStatement {
+	generate(context) {
+		if (!context.enclosingLoopExit()) context.error('no enclosing loop for break');
+		emit('.stack ' + context.enclosingLoopExit());
+	}
+}
+
+class ReturnStatement {
+	generate(context) {
+		if (!context.enclosingReturn()) context.error('no enclosing function for return');
+		emit('.stack ' + context.enclosingReturn());
+	}
+}
 
 class ExpressionStatement {
 	expression;
 	constructor(expression) { this.expression = expression }
+
+	generate(context) {
+		this.expression.generate();
+		context.emit('pop'); // throw away resulting value
+	}
 }
 
 class WhileStatement {
@@ -208,6 +301,32 @@ class WhileStatement {
 		result.body = CodeBlock.parse(source);
 		source.consume('}');
 		return result;
+	}
+
+	generate(context) {
+		context = new Context(context);
+		context.isLoop = true;
+
+		let breakLabel = newUniqueName('while');
+
+		let loopStart = context.PC;
+
+		context.forwards[context.PC] = breakLabel;
+		context.emit(null);
+
+		// Test loop condition
+		condition.generate(context);
+		context.emit('unary NOT');
+
+		context.emit({
+			instruction: 'branch',
+			forward: breakLabel
+		});
+
+		body.generate(context);
+		context.emitJump(loopStart);
+
+		context.define(breakLabel, context.PC);
 	}
 }
 
@@ -234,10 +353,23 @@ class IfStatement {
 		}
 		return result;
 	}
+
+	generate(context) {
+		let elseLabel = newUniqueName('else');
+		context.emit('.stack ' + elseLabel);
+		condition.generate(context);
+		context.emit('unary NOT');
+		context.emit('branch');
+
+		ifbody.generate(context);
+
+		context.emit(elseLabel + ':');
+
+		if (elsebody) elsebody.generate(context);
+	}
 }
 
 class Expression {
-
 	static parse(source, precedence = 100) {
 		if (source.tryConsume('(')) {
 			let result = Expression.parse(source);
@@ -683,12 +815,39 @@ class BinaryExpression {
 class PostfixExpression {
 	lhs;
 	operator;
-	arguments = [];
+	args = [];
 
 	static operators = {
-		'(': { closer: ')' },
-		'[': { closer: ']' },
-		'.': { }
+		'(': {
+			closer: ')',
+			generate: (context, lhs, args) => {
+				for (let a of args) {
+					a.generate(context);
+					context.emit('.stack', context.symbols[this.lhs]);
+					context.emit('jump');
+				}
+			},
+		},
+		'[': {
+			closer: ']',
+			generate: (context, lhs, args) => {
+
+asdklfjhadslkjf
+
+
+
+			},
+		},
+		'.': {
+			generate: (context, lhs, args) => {
+
+
+alksdfjlakdjf
+
+
+
+			},
+		}
 	};
 
 	constructor(lhs, operator) {
@@ -703,19 +862,19 @@ class PostfixExpression {
 			lhs = new PostfixExpression(lhs, op);
 			if (op.closer) {
 				while (!source.tryConsume(op.closer)) {
-					lhs.arguments.push(Expression.parse(source));
+					lhs.args.push(Expression.parse(source));
 					if (source.tryConsume(op.closer)) break;
 					source.consume(',');
 				}
 			} else {
-				lhs.arguments.push(source.consumeIdentifier());
+				lhs.args.push(source.consumeIdentifier());
 			}
 		}
 		return lhs;
 	}
 
 	generate(context) {
-		this.operator.generate(context, this.lhs, this.rhs);
+		this.operator.generate(context, this.lhs, this.args);
 	}
 }
 
@@ -725,10 +884,13 @@ function compile(text) {
 
 	let m = Module.parse(source);
 	console.log(m);
+
+	let c = m.generate();
+	console.log(c);
 }
 
 compile(`
-var i = 5
+var i
 var b
 const c = -5
 main {
