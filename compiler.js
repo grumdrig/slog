@@ -86,16 +86,53 @@ class Source {
 
 
 class Context {
-	symbols = {};
-	code = [];
+	// symbols = {};
+	constants = {};
 	parent;
 	// forwards = {};
 
-	constructor(parent) { this.parent = parent; }
+	constructor(parent, functionParameters) {
+		this.parent = parent;
+		if (!parent) {
+			this.code = [];
+			this.unique = 1;
+		}
 
-	define(symbol, info) {
-		if (this.symbols[symbol]) this.error('duplicate definition ' + symbol);
-		this.symbols[symbol] = info;
+		if (functionParameters) {
+			this.scope = {};
+			functionParameters.forEach((parameter, i) => {
+				this.scope[parameter] = { offset: i + 1, count: 1 };
+				this.scope['_return_position'] = { offset: functionParameters.count + 1, count: 1 };
+			});
+		}
+	}
+
+	// define(symbol, info) {
+	// 	if (this.symbols[symbol]) this.error('duplicate definition ' + symbol);
+	// 	this.symbols[symbol] = info;
+	// }
+
+	enclosingScope() { return this.scope || (this.parent ? this.parent.enclosingScope() : null) }
+
+	lookup(id) { return (this.enclosingScope() || {})[id]; }
+
+	declareVariable(name, count, initializer) {
+		if (!this.parent) {
+			// Global declaration
+			this.emit(name + ':');
+			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count));
+		} else {
+			let scope = this.enclosingScope();
+			this.assert(scope, "no enclosing scope"); // seems impossible
+			let offset = 0;
+			for (let i in scope) offset += scope[i].countl
+			scope[name] = { name, offset, count, initializer };
+		}
+	}
+
+	defineConstant(identifier, value) {
+		if (this.constants[identifier]) this.error('duplicate definition');
+		this.constants[identifier] = value;
 	}
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
@@ -105,6 +142,10 @@ class Context {
 	// 		this.code[forwards[f]] = this.symbols[f];  // or something
 	// 	}
 	// }
+
+	uniqueLabel(realm) { return this.parent ? this.parent.uniqueLabel(realm) :
+		`@${realm}_${this.unique++}`;
+	}
 
 	error(message) { throw new SemanticError(message) }
 	assert(cond, mess) { if (!cond) this.error(mess) }
@@ -139,7 +180,7 @@ class Module {
 	generate() {
 		let context = new Context();
 
-		context.emit('.jump _main');
+		context.emit('.jump main');
 
 		for (let c of this.constants) c.generate(context);
 		for (let v of this.variables) v.generate(context);
@@ -165,8 +206,7 @@ class ConstantDefinition {
 	}
 
 	generate(context) {
-		if (context.symbols[this.name]) context.error('duplicate definition');
-		context.symbols[this.name] = { constant: this.value }
+		context.defineConstant(this.name, this.value);
 	}
 }
 
@@ -174,6 +214,7 @@ class VariableDeclaration {
 	name;
 	count;
 	initializer;
+
 
 	static tryParse(source) {
 		if (!source.tryConsume('var')) return false;
@@ -190,16 +231,25 @@ class VariableDeclaration {
 	}
 
 	generate(context) {
-		let decl = {
-			offset: context.symbols.length,
-		};
+		let count = 1, initializer;
+		// let decl = {
+		// 	offset: context.symbols.length,
+		// };
 		if (this.count) {
-			this.count = this.count.simplify(context);
-			if (!this.count.literal) context.error('literal array length expected');
-			decl.count = this.count.literal;
+			let c = this.count.simplify(context);
+			if (typeof c.literal === 'undefined')
+				context.error('literal array length expected');
+			// decl.count = this.count.literal;
+			count = c.literal;
 		}
-		context.define(this.name, decl);
-		if (this.initializer) context.error('variable initialization is not implemented yet');
+		// context.define(this.name, decl);
+		if (this.initializer) {
+			let i = this.initializer.simplify(context);
+			if (typeof i.literal === 'undefined')
+				context.error('literal initializer expected');
+			initializer = i.literal;
+		}
+		context.declareVariable(this.name, count, initializer);
 	}
 }
 
@@ -213,7 +263,13 @@ class FunctionDefinition {
 	static parse(source) {
 		let result = new FunctionDefinition();
 		result.id = source.consumeIdentifier();
-		while (source.isIdentifier()) result.parameters.push(a.consumeIdentifier());
+		if (source.tryConsume('(')) {
+			if (!source.tryConsume(')')) while (true) {
+				result.parameters.push(source.consumeIdentifier());
+				if (source.tryConsume(')')) break;
+				source.consume(',');
+			}
+		}
 		source.consume('{');
 		result.body = CodeBlock.parse(source);
 		source.consume('}');
@@ -221,12 +277,21 @@ class FunctionDefinition {
 	}
 
 	generate(context) {
-		context.define(this.id, { address: context.code.length });
-		context = new Context(context);
-		for (let p of this.parameters) {
-			context.define(p);
-		}
+		context.emit(this.id + ':');
+		context = new Context(context, this.parameters);
+		// context.returnValueDepth = this.parameters.length + 1;
+		// context.returnLabel = context.uniqueLabel(this.id + '_return');
+		// for (let p of this.parameters) {
+		// 	context.define(p);
+		// }
 		this.body.generate(context);
+
+		context.emit('adjust ' + -(this.parameters.length));
+		if (this.id === 'main') {
+			context.emit('halt 0');
+		} else {
+			context.emit('jump'); // return
+		}
 	}
 }
 
@@ -314,19 +379,19 @@ class WhileStatement {
 
 	generate(context) {
 		context = new Context(context);
-		context.breakLabel = newUniqueName('endwhile');
+		context.breakLabel = context.uniqueLabel('endwhile');
 
-		let loopStartLabel = newUniqueName('while');
+		let loopStartLabel = context.uniqueLabel('while');
 		context.emit(loopStartLabel + ':');
 
 		// Test loop condition
-		condition.generate(context);
+		this.condition.generate(context);
 		context.emit('unary NOT');
 
 		// Exit loop if it's false
 		context.emit('.branch ' + breakLabel);
 
-		body.generate(context);
+		this.body.generate(context);
 
 		context.emit('.jump ' + loopStartLabel);
 
@@ -359,17 +424,16 @@ class IfStatement {
 	}
 
 	generate(context) {
-		let elseLabel = newUniqueName('else');
-		context.emit('.stack ' + elseLabel);
-		condition.generate(context);
+		let elseLabel = context.uniqueLabel('else');
+		this.condition.generate(context);
 		context.emit('unary NOT');
-		context.emit('branch');
+		context.emit('.branch ' + elseLabel);
 
-		ifbody.generate(context);
+		this.ifbody.generate(context);
 
 		context.emit(elseLabel + ':');
 
-		if (elsebody) elsebody.generate(context);
+		if (this.elsebody) this.elsebody.generate(context);
 	}
 }
 
@@ -435,13 +499,12 @@ class IdentifierExpression {
 	}
 
 	generate(context) {
-		let a = context.addressOf(this.identifier);
-		if (!a) context.error('undefined identifier ' + this.identifier);
-		if (immediateEligible(a)) {
-			context.emit('fetch ' + a);
+		let reference = context.lookup(this.identifier);
+		if (reference) {
+			context.emit('peek ' + reference.offset + ' ; ' + this.identifier);
 		} else {
-			context.emit('.stack ' + a);
-			context.emit('fetch');
+			// hopefully global
+			context.emit('fetch ' + this.identifier);
 		}
 	}
 }
@@ -691,11 +754,12 @@ class BinaryExpression {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
 				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
+				context.emit('.stack ' + lhs.identifier);
 				rhs.generate(context);
 				context.emit('store');
 			},
 		},
+		/*
 		'+=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
@@ -817,6 +881,7 @@ class BinaryExpression {
 				context.emit('store');
 			},
 		},
+		*/
 	};
 
 	simplify(context) {
@@ -839,15 +904,19 @@ class PostfixExpression {
 
 	static operators = {
 		'(': {
+			// Function call
 			closer: ')',
 			generate: (context, lhs, args) => {
+				context.emit('.stack 0 PC');
 				for (let a of args) {
 					a.generate(context);
-					context.emit('.jump ' + context.symbols[lhs]);
 				}
+				context.assert(lhs.identifier, 'function identifier expected');
+				context.emit('.jump ' + lhs.identifier);
 			},
 		},
 		'[': {
+			// Array indexing
 			closer: ']',
 			generate: (context, lhs, args) => {
 				lhs.generateAddress(context);
@@ -903,15 +972,19 @@ function compile(text) {
 
 	let c = m.generate();
 	console.log(c);
+	for (let l of c.code)
+		console.log(l);
 }
 
 compile(`
 var i
-var b
+var b = 2
 const c = -5
 main {
-	go()
+	go(5,6)
 }
-go {
-	b = 4
+go(a) {
+	if 6 {
+		b = a
+	}
 }`);

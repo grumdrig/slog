@@ -1,10 +1,3 @@
-// opcodes are 16 bits but only the upper 6 bits (values 0x00 to 0x3F=63) are
-// opcode, the other 10 are immediate values so that's 64 instructions, and
-// immediate values range from -0x1FF to 0x1FF (-511 to 511), with 0x200
-// indicating stack addressing mode
-
-// Probably should have stack grow downward since mem size is to be fixed
-// (so SP should be descending in the below)
 
 const opcodes = [
   { opcode: 0x0, mnemonic: 'halt' },
@@ -154,6 +147,9 @@ const opcodes = [
   // Result code shows quantitiy sold (0 or 1 probably)
   // sell : ... => ... result ; gold and inventory or equipment affected
 ];
+
+const STACK_MODE_FLAG = -0x200;
+const INLINE_MODE_FLAG = 0x1FF;
 
 let MNEMONICS = {};
 let OPCODES = []
@@ -398,11 +394,15 @@ class VirtualMachine {
     const opcode = instruction & 0x3F;
     const mnemonic = OPCODES[opcode];
     let argument = (instruction >> 6);// & 0x3ff;
-    const immediate = (argument !== -0x200);
-    if (!immediate) {
+    const stackMode = (argument == STACK_MODE_FLAG);
+    const inlineMode = (argument == INLINE_MODE_FLAG);
+    const immediateMode = !stackMode && !inlineMode;
+    if (stackMode) {
       argument = this.pop();
+    } else if (inlineMode) {
+      argument = this.memory[this.pc++];
     }
-    if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediate ? argument : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] aux=${this.aux}=${this.aux.toString(16)}`);
+    if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediateMode ? argument : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] aux=${this.aux}=${this.aux.toString(16)}`);
     this.pc += 1
 
     if (mnemonic === 'halt') {
@@ -442,12 +442,12 @@ class VirtualMachine {
       } // else illegal
 
     } else if (mnemonic === '_jmp') {
-      if (immediate) argument += this.pc;
+      if (immediateMode) argument += this.pc;
       this.pc = argument;
 
     } else if (mnemonic === '_br') {
       // with immediate addressing mode, the value is an offset not an absolute
-      if (immediate) argument += this.pc;
+      if (immediateMode) argument += this.pc;
       if (this.pop()) this.pc = argument;
 
       /*
@@ -519,9 +519,9 @@ function is_identifier(id) {
   return id.match(/^[a-zA-Z_][0-9a-zA-Z_]*$/);
 }
 
-function isInt10(v) {
+function fitsAsImmediate(v) {
   // Return true if the value can be represented in 10-bits
-  return typeof v === 'number' && -0x200 < v && v < 0x200;
+  return typeof v === 'number' && -0x1ff < v && v < 0x200;
 }
 
 function clone(...objs) {
@@ -659,7 +659,7 @@ class Assembler {
 
         } else if (inst === toLowerCase('.stack')) {
           this.assert(tokens.length > 1, "data expected following '.stack'");
-          if (tokens.length === 2 && isInt10(tokens[1])) {
+          if (tokens.length === 2 && fitsAsImmediate(tokens[1])) {
             this.emit(MNEMONICS.push, tokens[1]);
           } else {
             this.emit(MNEMONICS.stack, tokens.length - 1);
@@ -702,7 +702,7 @@ class Assembler {
 
           if (tokens.length === 1) {
             "INST  ; instruction in stack addressing mode"
-            this.emit(inst, 0x200);
+            this.emit(inst, STACK_MODE_FLAG);
 
           } else {
             "INST ARG  ; instruction with an immediate argument"

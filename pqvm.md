@@ -104,7 +104,12 @@ Valid instructions are described in the following sections.
 Instructions
 ============
 
-Instructions are listed by their numeric opcode and mnemonic. The argument supplied as an immediate value as part of the instruction, or removed from the stack in the case of stack addressing, is referred to as "argument".
+Instructions are listed by their numeric opcode and mnemonic. Each instruction
+is provided with a argument, supplied as an immediate value as part of the
+instruction. The immediate value, however may take on one of two special
+value that signal that the instuction argument is to be either taken from the
+stack, or else found inline following the instruction. It all three cases the
+number arrived at is referred to as "argument".
 
 A value removed from the stack is called "pop". That is, in the case
 that "pop" is used, the stack is shrunk by one and what had been the top value is
