@@ -831,7 +831,7 @@ class Assembler {
           + '  ' + disa);
     } else {
       let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
-        asm.disassemble(num));
+        this.disassemble(num));
       return result.join('\n');
     }
   }

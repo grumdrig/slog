@@ -10,7 +10,9 @@ main {
 
 `);
 
-console.log(c);
+c_no = c.split('\n').map((l,i) => (i+1) + ': ' + l).join('\n');
+
+console.log(c_no);
 
 let { VirtualMachine, World, Assembler } = require('./vm');
 

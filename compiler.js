@@ -7,71 +7,82 @@ class ParseError {
 
 class Source {
 	lexemes = [];
-
-	// Most tokens are literal strings but numeric literals are stored as { literal: NUMBER }
-	// so that they have a positive truth value.
+	// Lexemes are { line_no, text, TYPE } plus maybe a numeric value
 
 	constructor(text) {
 
-		function take(re) {
-			let result = text.match(re);
-			if (result) {
-				result = result[0];
-				text = text.substr(result.length);
-				return result;
-			}
-		}
+		let lines = text.split('\n');
+		lines.forEach((line, l) => {
+			let line_no = l + 1;
+			line = line.split('//')[0];
 
-		while (true) {
-			text = text.trim();
-			if (text.length === 0) break;
-
-			let m;
-			if (m = take(/^[$][\da-f]+/i)) {
-				this.lexemes.push({ literal: parseInt(m.substr(1), 16) });
-			} else if (m = take(/^\d+/)) {
-				this.lexemes.push({ literal: parseInt(m) });
-			} else if (m = take(/^([a-z_]\w*|[.,~!@#(){}[\]]|[-+=<>*/%^&|]+)/i)) {
-				// identifier or punctuation or operator
-				this.lexemes.push(m);
-			} else {
-				this.error(`unrecognized character '${text[0]}'`);
+			function take(re) {
+				let result = line.match(re);
+				if (result) {
+					result = result[0];
+					line = line.substr(result.length);
+					return result;
+				}
 			}
-		}
+
+			while (true) {
+				line = line.trim();
+				if (line.length === 0) break;
+
+				let lexeme = { line_no };
+				this.lexemes.push(lexeme);
+
+				if (lexeme.text = take(/^[$][\da-f]+/i)) {
+					lexeme.literal = true;
+					lexeme.value = parseInt(lexeme.text.substr(1), 16);
+				} else if (lexeme.text = take(/^\d+/)) {
+					lexeme.literal = true;
+					lexeme.value = parseInt(lexeme.text);
+				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
+					lexeme.identifier = true;
+				} else if (lexeme.text = take(/^[-+=<>*/%^&|]+/i)) {
+					lexeme.operator = true;
+				} else if (lexeme.text = take(/^[.,~!@#(){}[\]]/i)) {
+					lexeme.punctuation = true;
+				} else {
+					this.error(`unrecognized character al line ${line_no}: '${line[0]}'`);
+				}
+			}
+		});
 	}
 
 	consume(token) {
-		if (token !== this.next()) this.error(`expected '${token}'`);
+		if (token !== this.next().text) this.error(`expected '${token}'`);
 	}
 
 	consumeIdentifier() {
 		if (!this.isIdentifier()) this.error('identifier expected');
-		return this.next();
+		return this.next().text;
 	}
 
 	consumeLiteral() {
-		if (!this.isLiteral()) this.error('literal value expected');
-		return this.next().literal;
+		if (!this.lexemes[0].literal) this.error('literal value expected');
+		return this.next().value;
 	}
 
 	tryConsume(token) {
-		if (this.peek(token)) return this.next();
+		if (this.peek(token)) return this.next().text;
 	}
 
 	empty() { return !this.lexemes.length }
 
 	peek(value) {
 		if (this.empty()) return;
-		if (value && this.lexemes[0] !== value) return;
-		return this.lexemes[0];
+		if (value && this.lexemes[0].text !== value) return;
+		return this.lexemes[0].text;
 	}
 
 	isIdentifier() {
-		return typeof this.peek() === 'string' && this.peek().match(/^[a-z_]\w*$/i);
+		return this.lexemes[0].identifier;
 	}
 
 	isLiteral() {
-		return this.peek().literal || false;
+		return this.lexemes[0].literal;
 	}
 
 	next() {
@@ -82,7 +93,7 @@ class Source {
 	}
 
 	error(message) {
-		throw new ParseError(`${message} at ${this.lexemes.length}: ${this.lexemes[0]}`);
+		throw new ParseError(`${message} at line ${this.lexems[0].line_no}: ${this.lexemes[0]}`);
 	}
 }
 
@@ -220,9 +231,6 @@ class ConstantDefinition {
 
 class VariableDeclaration {
 	name;
-	count;
-	initializer;
-
 
 	static tryParse(source) {
 		if (!source.tryConsume('var')) return false;
