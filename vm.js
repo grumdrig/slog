@@ -169,7 +169,7 @@ const opcodes = [
 ];
 
 const STACK_MODE_FLAG = -0x200;
-const INLINE_MODE_FLAG = 0x1FF;
+const INLINE_MODE_FLAG = -0x1FF;
 
 let MNEMONICS = {};
 let OPCODES = []
@@ -423,7 +423,7 @@ class VirtualMachine {
     if (stackMode) {
       argument = this.pop();
     } else if (inlineMode) {
-      argument = this.memory[this.pc++];
+      argument = this.memory[++this.pc];
     }
     if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediateMode ? argument : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] ax=${this.ax}=${this.ax.toString(16)}`);
     this.pc += 1
@@ -465,6 +465,7 @@ class VirtualMachine {
       } // else illegal
 
     } else if (mnemonic === '_jmp') {
+      console.log('jump!', immediateMode, argument, this.pc);
       if (immediateMode) argument += this.pc;
       this.pc = argument;
 
@@ -808,20 +809,41 @@ class Assembler {
     this.code[pc] = value;
   }
 
-  disassemble() {
-    let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
-        ('000' + num).substr(-4)
-      + ' $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
-      + ' ' + ('     ' + inst).substr(-6)
-      + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}` : '  ')
-      + '  $' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
-      + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-2)
-      + ' ' + (OPCODES[inst & 0x3f] || '??')
-      + ' ' + ((inst >> 6 === -0x200) ? '' : (inst >> 6))
-      );
-    return result.join('\n');
+  disassemble(address) {
+    if (typeof address === 'number') {
+      let inst = this.code[address];
+      let disa;
+      if (address > 0 && isInlineModeInstruction(this.code[address - 1])) {
+        disa = '.data ' + inst;
+      } else {
+        disa = ('$' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
+          + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-3)
+          + ' ' + (OPCODES[inst & 0x3f] || '??')
+          + ' ' + (isStackModeInstruction(inst) ? '' :
+                   isInlineModeInstruction(inst) ? ':::' : (inst >> 6)));
+      }
+
+      return (
+        ('000' + address).substr(-4)
+          + ' $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
+          + ' ' + ('     ' + inst).substr(-6)
+          + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}` : '  ')
+          + '  ' + disa);
+    } else {
+      let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
+        asm.disassemble(num));
+      return result.join('\n');
+    }
   }
 
+}
+
+function isInlineModeInstruction(inst) {
+  return INLINE_MODE_FLAG === (inst >> 6);
+}
+
+function isStackModeInstruction(inst) {
+  return STACK_MODE_FLAG === (inst >> 6);
 }
 
 // Testing:

@@ -4,11 +4,13 @@
 <title>PQ Chasm</title>
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="height: 512px; width: 512px;"><path d="M0 0h512v512H0z" fill="black" fill-opacity="1"></path><g class="" transform="translate(0,0)" style=""><path d="M19.75 14.438c59.538 112.29 142.51 202.35 232.28 292.718l3.626 3.75.063-.062c21.827 21.93 44.04 43.923 66.405 66.25-18.856 14.813-38.974 28.2-59.938 40.312l28.532 28.53 68.717-68.717c42.337 27.636 76.286 63.646 104.094 105.81l28.064-28.06c-42.47-27.493-79.74-60.206-106.03-103.876l68.936-68.938-28.53-28.53c-11.115 21.853-24.413 42.015-39.47 60.593-43.852-43.8-86.462-85.842-130.125-125.47-.224-.203-.432-.422-.656-.625C183.624 122.75 108.515 63.91 19.75 14.437zm471.875 0c-83.038 46.28-154.122 100.78-221.97 161.156l22.814 21.562 56.81-56.812 13.22 13.187-56.438 56.44 24.594 23.186c61.802-66.92 117.6-136.92 160.97-218.72zm-329.53 125.906l200.56 200.53c-4.36 4.443-8.84 8.793-13.405 13.032L148.875 153.53l13.22-13.186zm-76.69 113.28l-28.5 28.532 68.907 68.906c-26.29 43.673-63.53 76.414-106 103.907l28.063 28.06c27.807-42.164 61.758-78.174 104.094-105.81l68.718 68.717 28.53-28.53c-20.962-12.113-41.08-25.5-59.937-40.313 17.865-17.83 35.61-35.433 53.157-52.97l-24.843-25.655-55.47 55.467c-4.565-4.238-9.014-8.62-13.374-13.062l55.844-55.844-24.53-25.374c-18.28 17.856-36.602 36.06-55.158 54.594-15.068-18.587-28.38-38.758-39.5-60.625z" fill="white" fill-opacity="1"></path></g></svg>' />
 <script src="vm.js"></script>
+<script src="compiler.js"></script>
 <style>
 	#sheet {
 		display: grid;
 		grid-template-columns: repeat(3, 190px);
 		gap: 4px;
+		margin: 10px 0;
 	}
 
 	#col1, #col2, #col3 {
@@ -48,12 +50,64 @@
 		border-color: red;
 	}
 
+	.button {
+	   	-webkit-writing-mode: vertical-rl;
+	    writing-mode: vertical-rl;
+	    text-orientation: upright;
+	 }
+
+	.button > br {
+	  content: "";
+	  margin: -1px;
+	  display: block;
+	}
+	 #sources {
+	 	display: grid;
+	 	grid-template-columns: auto 30px auto 30px auto;
+	 	vertical-align: bottom;
+	 }
+
+	 #registers {
+	 	display: grid;
+	 	grid-template-columns: 50px 50px;
+	 }
+
+	 #machinestate {
+		margin: 10px 0;
+	 	display: grid;
+	 	grid-template-columns: 100px 350px 250px;
+	 }
+
+	 pre {
+	 	margin: 0;
+	 }
+
 </style>
 </head>
 <body>
-<textarea id=asm></textarea>
-<textarea id=machine></textarea>
-<button onclick="assemble()">Assemble</button>
+	<div id="sources">
+<textarea rows=10 cols=50 id=source></textarea>
+<button onclick="comp()">&rarr;<br>C<br>o<br>m<br>p<br>i<br>l<br>e<br>&rarr;</button>
+<textarea rows=10 cols=20 id=asm></textarea>
+<button onclick="assemble()">&rarr;<br>A<br>s<br>s<br>e<br>m<br>b<br>l<br>e<br>&rarr;</button>
+<textarea rows=10 cols=20 id=machine></textarea>
+	</div>
+
+	<div id=machinestate>
+<span id=registers>
+  <div>PC</div><div id=PC></div>
+  <div>SP</div><div id=SP></div>
+  <div>FP</div><div id=FP></div>
+  <div>AX</div><div id=AX></div>
+  <div>INT_R</div><div id=INT_R></div>
+  <div>CLOCK</div><div id=CLOCK></div>
+</span>
+
+<div id=codepoint></div>
+<div id=stack></div>
+<button onclick="step()">Step</button>
+</div>
+
 
 <div id=sheet>
 	<div id=col1>
@@ -127,11 +181,36 @@
 function $(s) { return document.querySelector(s) }
 function $$(s) { return document.querySelectorAll(s) }
 
+function comp() {
+	try {
+		$("#asm").value = compile($("#source").value);
+		assemble();
+	} catch (e) {
+		console.log(e);
+		$("#asm").value = e.message;
+	}
+}
+
+let asm, vm;
 function assemble() {
-	let asm = new Assembler();
-	asm.parse($("#asm").value);
-	asm.link();
-	$("#machine").value = asm.disassemble();
+	asm = new Assembler();
+	try {
+		asm.assemble($("#asm").value);
+		$("#machine").value = asm.disassemble();
+		vm = new VirtualMachine(asm.code, new World(`
+		  WWWWWW
+		  W__t_W
+		  WWWWWW`));
+		updateCharacterSheet(vm);
+	} catch (e) {
+		$("#machine").value = e.toString();
+	}
+
+}
+
+function step() {
+	vm.step();
+	updateCharacterSheet(vm);
 }
 
 function rand(m) { return Math.floor(Math.random() * m) }
@@ -181,34 +260,59 @@ function boxIn(div) {
 
 $$(".boxy").forEach(div => boxIn(div));
 
-let asm = new Assembler();
-asm.assemble('');
-let vm = new VirtualMachine(asm.code, new World(`
-  WWWWWW
-  W__t_W
-  WWWWWW`));
-$('#level').innerText = vm.special[SPECIAL.LEVEL];
-$('#xp').innerText = vm.special[SPECIAL.EXPERIENCE];
-$('#health').innerText = `${vm.special[SPECIAL.HEALTH]-vm.special[SPECIAL.DAMAGE]} / ${vm.special[SPECIAL.HEALTH]}`;
-$('#energy').innerText = `${vm.special[SPECIAL.ENERGY]-vm.special[SPECIAL.FATIGUE]} / ${vm.special[SPECIAL.ENERGY]}`;
-for (let i = 0; i < 6; ++i) {
-	$("#s" + i).innerText = vm.special[SPECIAL.STAT_0 + i];
-}
-let n_spells = 0;
-for (let i = 0; i < 16; ++i) {
-	let l = vm.special[SPECIAL.SPELL_0 + i];
-	if (l) {
-		$("#bt" + n_spells).innerText = `Spell #${i}`;
-		$("#b" + n_spells).innerText = l;
-		n_spells += 1;
+$("#source").value = "main {}";
+comp();
+
+function updateCharacterSheet(vm) {
+	$("#PC").innerText = vm.pc;
+	$("#SP").innerText = vm.sp;
+	$("#FP").innerText = vm.fp;
+	$("#AX").innerText = vm.ax;
+	$("#INT_R").innerText = vm.special[SPECIAL.INT_R];
+	$("#CLOCK").innerText = vm.special[SPECIAL.CLOCK];
+
+	$("#codepoint").innerText = '';
+	for (let p = -3; p <= 3; ++p) {
+		let d = $("#codepoint").appendChild(document.createElement('pre'));
+		d.innerText = (vm.pc + p < 0 ? ' ' : asm.disassemble(vm.pc + p)) + '\n';
+		if (p === 0) d.style.backgroundColor="yellow";
 	}
+
+	$("#stack").innerText = '';
+	for (let i = Math.min(vm.sp + 5, vm.memory.length - 1); i >= vm.sp; --i) {
+		let d = $("#stack").appendChild(document.createElement('pre'));
+		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
+		if (i === vm.sp) d.style.backgroundColor="yellow";
+	}
+
+
+
+
+	$('#level').innerText = vm.special[SPECIAL.LEVEL];
+	$('#xp').innerText = vm.special[SPECIAL.EXPERIENCE];
+	$('#health').innerText = `${vm.special[SPECIAL.HEALTH]-vm.special[SPECIAL.DAMAGE]} / ${vm.special[SPECIAL.HEALTH]}`;
+	$('#energy').innerText = `${vm.special[SPECIAL.ENERGY]-vm.special[SPECIAL.FATIGUE]} / ${vm.special[SPECIAL.ENERGY]}`;
+	for (let i = 0; i < 6; ++i) {
+		$("#s" + i).innerText = vm.special[SPECIAL.STAT_0 + i];
+	}
+	let n_spells = 0;
+	for (let i = 0; i < 16; ++i) {
+		let l = vm.special[SPECIAL.SPELL_0 + i];
+		if (l) {
+			$("#bt" + n_spells).innerText = `Spell #${i}`;
+			$("#b" + n_spells).innerText = l;
+			n_spells += 1;
+		}
+	}
+	for (let i = 0; i < 8; ++i) {
+		$("#e" + i).innerText = `+${vm.special[SPECIAL.EQUIPMENT_0 + i]} dagger`;
+	}
+	for (let i = 0; i < 8; ++i) {
+		$("#i" + i).innerText = vm.special[SPECIAL.INVENTORY_0 + i];
+	}
+	$("#longitude").innerText = vm.special[SPECIAL.LONGITUDE];
+	$("#latitude").innerText = vm.special[SPECIAL.LATITUDE];
 }
-for (let i = 0; i < 8; ++i) {
-	$("#e" + i).innerText = `+${vm.special[SPECIAL.EQUIPMENT_0 + i]} dagger`;
-}
-for (let i = 0; i < 8; ++i) {
-	$("#i" + i).innerText = vm.special[SPECIAL.INVENTORY_0 + i];
-}
-$("#longitude").innerText = vm.special[SPECIAL.LONGITUDE];
-$("#latitude").innerText = vm.special[SPECIAL.LATITUDE];
+
+
 </script>

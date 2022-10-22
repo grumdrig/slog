@@ -75,7 +75,9 @@ class Source {
 	}
 
 	next() {
-		if (!this.lexemes.length) this.error('unexpected end of file');
+		if (!this.lexemes.length) {
+			this.error('unexpected end of file');
+		}
 		return this.lexemes.shift();
 	}
 
@@ -99,6 +101,7 @@ class Context {
 		}
 
 		if (functionDefinition) {
+			this.function = functionDefinition;
 			this.scope = {};
 			functionDefinition.parameters.forEach((parameter, i) => {
 				this.scope[parameter] = { offset: i + 1, count: 1 };
@@ -112,7 +115,9 @@ class Context {
 	// 	this.symbols[symbol] = info;
 	// }
 
-	enclosingScope() { return this.scope || (this.parent ? this.parent.enclosingScope() : null) }
+	enclosingFunction() { return this.function || (this.parent && this.parent.enclosingFunction()) }
+
+	enclosingScope() { return this.scope || (this.parent && this.parent.enclosingScope()) }
 
 	lookup(id) { return (this.enclosingScope() || {})[id]; }
 
@@ -256,13 +261,13 @@ class VariableDeclaration {
 // Yeah I may want a 'func' keyword. We'll see. Also the parameter syntax is weird. Or maybe
 // I should use juxtaposition for arguments as well.
 class FunctionDefinition {
-	id;
+	name;
 	parameters = [];
 	body;
 
 	static parse(source) {
 		let result = new FunctionDefinition();
-		result.id = source.consumeIdentifier();
+		result.name = source.consumeIdentifier();
 		if (source.tryConsume('(')) {
 			if (!source.tryConsume(')')) while (true) {
 				result.parameters.push(source.consumeIdentifier());
@@ -279,10 +284,10 @@ class FunctionDefinition {
 	stackFrameSize() { return this.parameters.length }
 
 	generate(context) {
-		context.emit(this.id + ':');
+		context.emit(this.name + ':');
 		context = new Context(context, this);
 		// context.returnValueDepth = this.parameters.length + 1;
-		// context.returnLabel = context.uniqueLabel(this.id + '_return');
+		// context.returnLabel = context.uniqueLabel(this.name + '_return');
 		// for (let p of this.parameters) {
 		// 	context.define(p);
 		// }
@@ -293,7 +298,7 @@ class FunctionDefinition {
 
 	generateReturn(context) {
 		context.emit('adjust ' + -(this.parameters.length));
-		if (this.id === 'main') {
+		if (this.name === 'main') {
 			context.emit('halt 0');
 		} else {
 			context.emit('jump'); // return
@@ -333,8 +338,8 @@ class Statement {  // namespace only
 	static parse(source) {
 		if (source.tryConsume('break')) {
 			return new BreakStatement();
-		} else if (source.peek('return')) {
-			return new ReturnStatement();
+		} else if (source.tryConsume('return')) {
+			return new ReturnStatement(Expression.parse(source));
 		} else if (source.peek('while')) {
 			return WhileStatement.parse(source);
 		} else if (source.peek('if')) {
@@ -355,16 +360,25 @@ class BreakStatement {
 class ReturnStatement {
 	value;
 
+	constructor(value) {
+		this.value = value;
+	}
+
 	generate(context) {
-		// if (!context.enclosingReturn()) context.error('no enclosing function for return');
-		// emit('.stack ' + context.enclosingReturn());
+		let func = context.enclosingFunction();
+		if (!func) context.error('no enclosing function for return');
 
 		this.value.generate(context);
-		context.emit('storelocal -3');  // save the return value
-		context.emit('fetch FP');
-		context.emit('store SP');
-		context.emit('store FP');
-		context.emit('store PC'); // aka jump
+
+		if (func.name === 'main') {
+			context.emit('halt');
+		} else {
+			context.emit('storelocal -3');  // save the return value
+			context.emit('fetch FP');
+			context.emit('store SP');
+			context.emit('store FP');
+			context.emit('store PC'); // aka jump
+		}
 	}
 }
 
