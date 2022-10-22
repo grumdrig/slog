@@ -353,9 +353,18 @@ class BreakStatement {
 }
 
 class ReturnStatement {
+	value;
+
 	generate(context) {
-		if (!context.enclosingReturn()) context.error('no enclosing function for return');
-		emit('.stack ' + context.enclosingReturn());
+		// if (!context.enclosingReturn()) context.error('no enclosing function for return');
+		// emit('.stack ' + context.enclosingReturn());
+
+		this.value.generate(context);
+		context.emit('storelocal -3');  // save the return value
+		context.emit('fetch FP');
+		context.emit('store SP');
+		context.emit('store FP');
+		context.emit('store PC'); // aka jump
 	}
 }
 
@@ -913,10 +922,23 @@ class PostfixExpression {
 			// Function call
 			closer: ')',
 			generate: (context, lhs, args) => {
+				/*
 				context.emit('.stack 0 PC');
 				for (let a of args) {
 					a.generate(context);
 				}
+				context.assert(lhs.identifier, 'function identifier expected');
+				context.emit('.jump ' + lhs.identifier);
+				*/
+
+				// new scheme
+				context.emit('.data 0 ; return value');
+				context.emit('fetch PC');
+				context.emit('fetch FP');
+				for (let a of args) { a.generate(context) }
+				context.emit('fetch SP');
+				context.emit('sub ' + args.length);
+				context.emit('store FP');
 				context.assert(lhs.identifier, 'function identifier expected');
 				context.emit('.jump ' + lhs.identifier);
 			},

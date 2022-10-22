@@ -1,8 +1,5 @@
 `I think we need a frame pointer, not a data segment.
 Here's the plan. Rename
-DS => FP
-fetchdata => fetchlocal or lfetch
-storedata => storelocal or lstore
 When a function is called
 CALL a:
   .data 0 ; return value
@@ -20,6 +17,9 @@ RETURN v:
   FP = pop()
   PC = pop()
   push(v)  ; this is another way to do it
+
+Looks like its better to handle this at the compiler level rather than as an
+instruction.
 `
 
 
@@ -55,12 +55,7 @@ const opcodes = [
   // fetch
   // ... A => ... [A]
 
-  { opcode: 0xF, mnemonic: 'fetchdata' },
-  // fetchdata a value at a [distant] memory location
-  // fetchdata A
-  // ... => ... [DS + A] ; SP += 1
-  // fetchdata
-  // ... A => ... [DS + A]
+  { opcode: 0xF, mnemonic: 'fetchlocal' },
 
   { opcode: 0x1F, mnemonic: 'peek' },
   // peek on the stack
@@ -76,12 +71,7 @@ const opcodes = [
   // set
   // ... X A => ... ; [A] = X, SP -= 2
 
-  { opcode: 0x6, mnemonic: 'storedata' },
-  // storedata a value in [distant] memory
-  // storedata A
-  // ... X => ... ; [DS + A] = X, SP -= 1
-  // storedata
-  // ... X A => ... ; [DS + A] = X, SP -= 2
+  { opcode: 0x6, mnemonic: 'storelocal' },
 
   { opcode: 0x15, mnemonic: 'poke' },
   // poke a value in [distant] memory
@@ -113,10 +103,10 @@ const opcodes = [
   // ... X1 ... XN -N => ... X2 ... XN X1
   // bury 0 is a noop
 
-  { opcode: 0x12, mnemonic: 'call' },
+  // { opcode: 0x12, mnemonic: 'call' },
   // Call a subroutine, saving and adjusting the frame pointer
 
-  { opcode: 0x13, mnemonic: 'return' },
+  // { opcode: 0x13, mnemonic: 'ret' },
   // Return from a function, restoring the frame pointer
 
   { opcode: 0x11, mnemonic: 'unary' },
@@ -134,7 +124,7 @@ const opcodes = [
   { opcode: 0x24, mnemonic: 'mul' },
   { opcode: 0x25, mnemonic: 'atan2' },
   { opcode: 0x26, mnemonic: 'pow' },
-  { opcode: 0x27, mnemonic: 'div' },  // AUX = mod(X,Y)
+  { opcode: 0x27, mnemonic: 'div' },  // AX = mod(X,Y)
   // bitwise
   { opcode: 0x28, mnemonic: 'or' },
   { opcode: 0x29, mnemonic: 'and' },
@@ -232,8 +222,8 @@ const BINARY_OPERATORS = {
 const SPECIAL = {
   PC: 0x1,    // Program counter register
   SP: 0x2,    // Stack pointer register
-  AUX: 0x3,   // Auxilliary register, gets some results
-  DS: 0x4,    // Data segment register
+  FP: 0x3,    // Frame pointer
+  AX: 0x4,    // Auxilliary register, gets some results
   INT_R: 0x5, // Spoken response interrupt vector (or 0)
   CLOCK: 0xF, // Counts clock cycles from startup
 
@@ -379,9 +369,12 @@ class VirtualMachine {
   get sp() { return this.special[SPECIAL.SP] }
   set sp(v) { this.special[SPECIAL.SP] = v }
 
-  get aux() { return this.special[SPECIAL.AUX] }
-  set aux(v) { this.special[SPECIAL.AUX] = v }
-  set aux_fractional(f) { this.special[SPECIAL.AUX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
+  get fp() { return this.special[SPECIAL.FP] }
+  set fp(v) { this.special[SPECIAL.FP] = v }
+
+  get ax() { return this.special[SPECIAL.AX] }
+  set ax(v) { this.special[SPECIAL.AX] = v }
+  set ax_fractional(f) { this.special[SPECIAL.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
   get top() { return this.fetch(this.sp) }
   set top(v) { this.store(this.sp, v) }
@@ -432,12 +425,12 @@ class VirtualMachine {
     } else if (inlineMode) {
       argument = this.memory[this.pc++];
     }
-    if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediateMode ? argument : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] aux=${this.aux}=${this.aux.toString(16)}`);
+    if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediateMode ? argument : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] ax=${this.ax}=${this.ax.toString(16)}`);
     this.pc += 1
 
     if (mnemonic === 'halt') {
       this.running = false;
-      this.special[SPECIAL.AUX] = argument;
+      this.special[SPECIAL.AX] = argument;
 
     } else if (mnemonic === 'assert') {
       if(this.top !== argument) {
@@ -455,19 +448,19 @@ class VirtualMachine {
     } else if (mnemonic === 'adjust') {
       this.sp += argument;
 
-    } else if (mnemonic === 'fetch' || mnemonic === 'fetchdata' || mnemonic == 'peek') {
+    } else if (mnemonic === 'fetch' || mnemonic === 'fetchlocal' || mnemonic == 'peek') {
       let address = argument;
-      if (mnemonic === 'fetchdata') address += this.special[SPECIAL.DS];
+      if (mnemonic === 'fetchlocal') address += this.special[SPECIAL.FP];
       if (mnemonic === 'peek')  address += this.special[SPECIAL.SP];
       this.push(this.fetch(address));
 
-    } else if (mnemonic === 'store' || mnemonic === 'storedata' || mnemonic === 'poke') {
+    } else if (mnemonic === 'store' || mnemonic === 'storelocal' || mnemonic === 'poke') {
       let value = pop();
       let address = argument;
-      if (mnemonic === 'storedata') address += this.special[SPECIAL.DS];
+      if (mnemonic === 'storelocal') address += this.special[SPECIAL.FP];
       if (mnemonic === 'poke')  address += this.special[SPECIAL.SP];
       if (address >= 0 ||
-         [SPECIAL.PC, SPECIAL.SP, SPECIAL.AUX, SPECIAL.DS].includes(-address)) {
+         [SPECIAL.PC, SPECIAL.SP, SPECIAL.AX, SPECIAL.DS].includes(-address)) {
         this.store(address, this.pop());
       } // else illegal
 
@@ -479,6 +472,27 @@ class VirtualMachine {
       // with immediate addressing mode, the value is an offset not an absolute
       if (immediateMode) argument += this.pc;
       if (this.pop()) this.pc = argument;
+
+/*
+    } else if (mnemonic === 'call') {
+      this.push(this.pc);
+      this.push(this.fp);
+      let frameSP = this.pc;
+
+      push arg1
+      ...
+      push arg2
+      FP = oldSP
+      PC = a
+
+
+    } else if (mnemonic === 'ret') {
+    [FP-3] = v  ; return value
+    SP = FP
+    FP = pop()
+    PC = pop()
+    push(v)  ; this is another way to do it
+    */
 
       /*
     } else if (mnemonic === 'bury') {
@@ -501,7 +515,7 @@ class VirtualMachine {
       if (operator) {
         let result = operator.operation(value);
         this.push(Math.floor(result));
-        this.aux_fractional = result - Math.floor(result);
+        this.ax_fractional = result - Math.floor(result);
       } else {
         throw "invalid unary operator"
         this.push(0xBAD);
@@ -514,11 +528,11 @@ class VirtualMachine {
         this.top = result;
       } else {
         this.top = result[0];
-        this.aux = result[1];
+        this.ax = result[1];
       }
 
     // "Real"-world instructions, all of which advance character age and set
-    //  a boolean value in AUX indication if the instruction completed
+    //  a boolean value in AX indication if the instruction completed
 
     } else if (opcode >= 0x30) {
       this.top = this.world.handleInstruction(this.special, this.top, argument);
@@ -1064,14 +1078,14 @@ class World {
         if (argument < 0) speed *= 0.5;  // walking backwards is half as fast
         special[SPECIAL.LATIUDE] += Math.sin(a) * speed;
         special[SPECIAL.LONGITUDE] += Math.cos(a) * speed;
-        special[SPECIAL.AUX] = 1;
+        special[SPECIAL.AX] = 1;
       */
 
       /*
     } else if (mnemonic === 'face') {
       special[SPECIAL.FACING] = argument;
       special[SPECIAL.AGE] += 1;
-      special[SPECIAL.AUX] = 1;
+      special[SPECIAL.AX] = 1;
       */
 
     } else if (mnemonic === 'act') {
