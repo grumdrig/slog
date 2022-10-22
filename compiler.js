@@ -165,6 +165,7 @@ class Module {
 	constants = [];
 	variables = [];
 	functions = [];
+	externals = [];
 
 	static parse(source) {
 		let result = new Module();
@@ -174,6 +175,8 @@ class Module {
 				result.constants.push(item);
 			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
+			} else if (item = ExternalDefinition.tryParse(source)) {
+				result.externals.push(item);
 			} else {
 				item = FunctionDefinition.parse(source);
 				result.functions.push(item);
@@ -255,6 +258,34 @@ class VariableDeclaration {
 			initializer = i.literal;
 		}
 		context.declareVariable(this.name, count, initializer);
+	}
+}
+
+class ExternalDefinition {
+	name;
+	parameters = [];  // ignored
+	opcode;
+
+	static tryParse(source) {
+		if (!source.tryConsume('external')) return false;
+		let result = new ExternalDefinition;
+		result.name = source.consumeIdentifier();
+		if (source.tryConsume('(')) {
+			if (!source.tryConsume(')')) while (true) {
+				result.parameters.push(source.consumeIdentifier());
+				if (source.tryConsume(')')) break;
+				source.consume(',');
+			}
+		}
+		source.consume('=');
+		result.opcode = Expression.parse(source);
+		return result;
+	}
+
+	generate(context) {
+		let opcode = this.opcode.simplify(context);
+		context.assert(opcode.literal, "literal opcode value expected");
+		context.defineExternal(this.name, this.opcode.literal);
 	}
 }
 
@@ -936,25 +967,24 @@ class PostfixExpression {
 			// Function call
 			closer: ')',
 			generate: (context, lhs, args) => {
-				/*
-				context.emit('.stack 0 PC');
-				for (let a of args) {
-					a.generate(context);
-				}
 				context.assert(lhs.identifier, 'function identifier expected');
-				context.emit('.jump ' + lhs.identifier);
-				*/
 
-				// new scheme
-				context.emit('.data 0 ; return value');
-				context.emit('fetch PC');
-				context.emit('fetch FP');
-				for (let a of args) { a.generate(context) }
-				context.emit('fetch SP');
-				context.emit('sub ' + args.length);
-				context.emit('store FP');
-				context.assert(lhs.identifier, 'function identifier expected');
-				context.emit('.jump ' + lhs.identifier);
+				let func = context.lookup(lhs.identifier);
+				if (func.opcode) {
+					// external opcode
+					for (let a of args) { a.generate(context) }
+					context.emit(func.opcode);
+				} else {
+					// regular function call
+					context.emit('.data 0 ; return value');
+					context.emit('fetch PC');
+					context.emit('fetch FP');
+					for (let a of args) { a.generate(context) }
+					context.emit('fetch SP');
+					context.emit('sub ' + args.length);
+					context.emit('store FP');
+					context.emit('.jump ' + lhs.identifier);
+				}
 			},
 		},
 		'[': {

@@ -78,6 +78,10 @@
 	 	grid-template-columns: 100px 350px 250px;
 	 }
 
+	 .err {
+	 	color: red;
+	 }
+
 	 pre {
 	 	margin: 0;
 	 }
@@ -182,11 +186,14 @@ function $(s) { return document.querySelector(s) }
 function $$(s) { return document.querySelectorAll(s) }
 
 function comp() {
+	localStorage.source = $("#source").value;
 	try {
+		$("#asm").classList.remove("err");
 		$("#asm").value = compile($("#source").value);
 		assemble();
 	} catch (e) {
 		console.log(e);
+		$("#asm").classList.add("err");
 		$("#asm").value = e.message;
 	}
 }
@@ -196,6 +203,7 @@ function assemble() {
 	asm = new Assembler();
 	try {
 		asm.assemble($("#asm").value);
+		$("#asm").classList.remove("err");
 		$("#machine").value = asm.disassemble();
 		vm = new VirtualMachine(asm.code, new World(`
 		  WWWWWW
@@ -203,6 +211,7 @@ function assemble() {
 		  WWWWWW`));
 		updateCharacterSheet(vm);
 	} catch (e) {
+		$("#machine").classList.add("err");
 		$("#machine").value = e.toString();
 	}
 
@@ -260,7 +269,7 @@ function boxIn(div) {
 
 $$(".boxy").forEach(div => boxIn(div));
 
-$("#source").value = "main {}";
+$("#source").value = localStorage.source || "main {\n}";
 comp();
 
 function updateCharacterSheet(vm) {
