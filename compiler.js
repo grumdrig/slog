@@ -99,10 +99,8 @@ class Source {
 
 
 class CompilationContext {
-	// symbols = {};
-	constants = {};
+	symbols = {};
 	parent;
-	// forwards = {};
 
 	constructor(parent, functionDefinition) {
 		this.parent = parent;
@@ -130,13 +128,13 @@ class CompilationContext {
 
 	enclosingScope() { return this.scope || (this.parent && this.parent.enclosingScope()) }
 
-	lookup(id) { return (this.enclosingScope() || {})[id]; }
+	lookup(id) { return this.symbols[id] || (this.parent && this.parent.lookup(id)) }
 
 	declareVariable(name, count, initializer) {
 		if (!this.parent) {
 			// Global declaration
 			this.emit(name + ':');
-			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count));
+			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + name);
 		} else {
 			let scope = this.enclosingScope();
 			this.assert(scope, "no enclosing scope"); // seems impossible
@@ -147,8 +145,8 @@ class CompilationContext {
 	}
 
 	defineConstant(identifier, value) {
-		if (this.constants[identifier]) this.error('duplicate definition');
-		this.constants[identifier] = value;
+		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
+		this.symbols[identifier] = { constant: true, value };
 	}
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
@@ -225,7 +223,7 @@ class ConstantDefinition {
 	}
 
 	generate(context) {
-		context.defineConstant(this.name, this.value);
+		context.defineConstant(this.name, this.value.simplify());
 	}
 }
 
@@ -407,7 +405,7 @@ class ReturnStatement {
 		let func = context.enclosingFunction();
 		if (!func) context.error('no enclosing function for return');
 
-		this.value.generate(context);
+		this.value.simplify().generate(context);
 
 		if (func.name === 'main') {
 			context.emit('halt');
@@ -426,7 +424,7 @@ class ExpressionStatement {
 	constructor(expression) { this.expression = expression }
 
 	generate(context) {
-		this.expression.generate(context);
+		this.expression.simplify(context).generate(context);
 		context.emit('adjust -1'); // throw away resulting value
 	}
 }
@@ -453,7 +451,7 @@ class WhileStatement {
 		context.emit(loopStartLabel + ':');
 
 		// Test loop condition
-		this.condition.generate(context);
+		this.condition.simplify().generate(context);
 		context.emit('unary NOT');
 
 		// Exit loop if it's false
@@ -493,7 +491,7 @@ class IfStatement {
 
 	generate(context) {
 		let elseLabel = context.uniqueLabel('else');
-		this.condition.generate(context);
+		this.condition.simplify().generate(context);
 		context.emit('unary NOT');
 		context.emit('.branch ' + elseLabel);
 
@@ -536,6 +534,8 @@ class LiteralExpression {
 	literal;
 
 	constructor(literal) {
+		if (typeof literal !== 'number' || Number.isNaN(literal))
+			throw "Invalid literal " + literal;
 		this.literal = literal;
 	}
 
@@ -562,13 +562,16 @@ class IdentifierExpression {
 	}
 
 	simplify(context) {
-		let l = context.resolveConstant(this.identifier);
-		return l ? new LiteralExpression(l) : this;
+		let reference = context.lookup(this.identifier);
+		return reference ? reference.value : this;
 	}
 
 	generate(context) {
 		let reference = context.lookup(this.identifier);
-		if (reference) {
+		context.assert(reference, 'undefined identifier: ' + this.identifier);
+		if (reference) { //.constant) {
+
+		// }
 			context.emit('peek ' + reference.offset + ' ; ' + this.identifier);
 		} else {
 			// hopefully global
@@ -578,8 +581,8 @@ class IdentifierExpression {
 }
 
 class PrefixExpression {
-	operator;
-	rhs;
+	operator;  // operator record from the list below
+	rhs;       // Expression
 
 	static operators = {
 		'+': {
@@ -603,12 +606,13 @@ class PrefixExpression {
 			}
 	};
 
+	constructor(operator, rhs) { this.operator = operator; this.rhs = rhs }
+
 	static tryParse(source) {
-		if (!PrefixExpression.operators[source.peek()]) return false;
-		let result = new PrefixExpression();
-		result.operator = source.next();
-		result.rhs = Expression.parse(source, 2);
-		return result;
+		let op = PrefixExpression.operators[source.peek()];
+		if (!op) return false;
+		source.next(); // skip that op
+		return new PrefixExpression(op, Expression.parse(source, 2));
 	}
 
 	simplify(context) {
@@ -620,7 +624,7 @@ class PrefixExpression {
 	}
 
 	generate(context) {
-		rhs.generate(context);
+		this.rhs.generate(context);
 		this.operator.generate(context);
 	}
 
@@ -953,9 +957,10 @@ class BinaryExpression {
 	};
 
 	simplify(context) {
+		this.lhs = this.lhs.simplify(context);
 		this.rhs = this.rhs.simplify(context);
-		if (this.rhs.literal && this.operator.precompute)
-			return new LiteralExpression(this.operator.precompute(this.rhs.literal));
+		if (this.lhs.literal && this.operator.precompute && this.rhs.literal)
+			return new LiteralExpression(this.operator.precompute(this.lhs.literal, this.rhs.literal));
 		else
 			return this;
 	}
