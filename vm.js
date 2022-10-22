@@ -1,3 +1,27 @@
+`I think we need a frame pointer, not a data segment.
+Here's the plan. Rename
+DS => FP
+fetchdata => fetchlocal or lfetch
+storedata => storelocal or lstore
+When a function is called
+CALL a:
+  .data 0 ; return value
+  push [PC]
+  push [FP]
+  oldSP = SP
+  push arg1
+  ...
+  push arg2
+  FP = oldSP
+  PC = a
+RETURN v:
+  [FP-3] = v  ; return value
+  SP = FP
+  FP = pop()
+  PC = pop()
+  push(v)  ; this is another way to do it
+`
+
 
 const opcodes = [
   { opcode: 0x0, mnemonic: 'halt' },
@@ -88,6 +112,12 @@ const opcodes = [
   // bury (N > 0)
   // ... X1 ... XN -N => ... X2 ... XN X1
   // bury 0 is a noop
+
+  { opcode: 0x12, mnemonic: 'call' },
+  // Call a subroutine, saving and adjusting the frame pointer
+
+  { opcode: 0x13, mnemonic: 'return' },
+  // Return from a function, restoring the frame pointer
 
   { opcode: 0x11, mnemonic: 'unary' },
   // unary OP
