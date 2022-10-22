@@ -98,7 +98,7 @@ class Source {
 }
 
 
-class Context {
+class CompilationContext {
 	// symbols = {};
 	constants = {};
 	parent;
@@ -197,7 +197,7 @@ class Module {
 	}
 
 	generate() {
-		let context = new Context();
+		let context = new CompilationContext();
 
 		context.emit('.jump main');
 
@@ -324,7 +324,7 @@ class FunctionDefinition {
 
 	generate(context) {
 		context.emit(this.name + ':');
-		context = new Context(context, this);
+		context = new CompilationContext(context, this);
 		// context.returnValueDepth = this.parameters.length + 1;
 		// context.returnLabel = context.uniqueLabel(this.name + '_return');
 		// for (let p of this.parameters) {
@@ -366,7 +366,7 @@ class CodeBlock {
 	}
 
 	generate(context) {
-		context = new Context(context);
+		context = new CompilationContext(context);
 		for (let c of this.constants) c.generate(context);
 		for (let v of this.variables) v.generate(context);
 		for (let s of this.statements) s.generate(context);
@@ -446,7 +446,7 @@ class WhileStatement {
 	}
 
 	generate(context) {
-		context = new Context(context);
+		context = new CompilationContext(context);
 		context.breakLabel = context.uniqueLabel('endwhile');
 
 		let loopStartLabel = context.uniqueLabel('while');
