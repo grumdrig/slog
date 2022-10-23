@@ -75,7 +75,13 @@
 	 #machinestate {
 		margin: 10px 0;
 	 	display: grid;
-	 	grid-template-columns: 100px 350px 250px;
+	 	grid-template-columns: 100px 350px 250px 100px;
+	 }
+
+	 #machinestate button { width: 100%; }
+	 #machinestate > div {
+	 	border: solid 1px silver;
+	 	padding: 4px;
 	 }
 
 	 .err {
@@ -97,21 +103,22 @@
 	<textarea rows=10 cols=25 id=machine></textarea>
 </div>
 
-	<div id=machinestate>
-<span id=registers>
-  <div>PC</div><div id=PC></div>
-  <div>SP</div><div id=SP></div>
-  <div>FP</div><div id=FP></div>
-  <div>AX</div><div id=AX></div>
-  <div>INT_R</div><div id=INT_R></div>
-  <div>CLOCK</div><div id=CLOCK></div>
-</span>
-
-<div id=codepoint></div>
-<div id=stack></div>
-<button onclick="step()">Step</button>
-<button onclick="runimate()">Runimate</button>
-<button onclick="run()">Run</button>
+<div id=machinestate>
+	<div id=registers>
+	  <div>PC</div><div id=PC></div>
+	  <div>SP</div><div id=SP></div>
+	  <div>FP</div><div id=FP></div>
+	  <div>AX</div><div id=AX></div>
+	  <div>INT_R</div><div id=INT_R></div>
+	  <div>CLOCK</div><div id=CLOCK></div>
+	</div>
+	<div id=codepoint></div>
+	<div id=stack></div>
+	<div>
+		<button onclick="step()">Step</button><br/>
+		<button onclick="runimate()">Runimate</button><br/>
+		<button onclick="run()">Run</button><br/>
+	</div>
 </div>
 
 

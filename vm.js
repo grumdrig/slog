@@ -825,7 +825,7 @@ class Assembler {
 
       return (
         ('000' + address).substr(-4)
-          + ' $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
+          + ': $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
           + ' ' + ('     ' + inst).substr(-6)
           + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}` : '  ')
           + '  ' + disa);
