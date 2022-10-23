@@ -89,13 +89,13 @@
 </style>
 </head>
 <body>
-	<div id="sources">
-<textarea rows=10 cols=50 id=source></textarea>
-<button onclick="comp()">&rarr;<br>C<br>o<br>m<br>p<br>i<br>l<br>e<br>&rarr;</button>
-<textarea rows=10 cols=20 id=asm></textarea>
-<button onclick="assemble()">&rarr;<br>A<br>s<br>s<br>e<br>m<br>b<br>l<br>e<br>&rarr;</button>
-<textarea rows=10 cols=20 id=machine></textarea>
-	</div>
+<div id="sources">
+	<textarea rows=10 cols=50 id=source></textarea>
+	<button onclick="comp()">&rarr;<br>C<br>o<br>m<br>p<br>i<br>l<br>e<br>&rarr;</button>
+	<textarea rows=10 cols=15 id=asm></textarea>
+	<button onclick="assemble()">&rarr;<br>A<br>s<br>s<br>e<br>m<br>b<br>l<br>e<br>&rarr;</button>
+	<textarea rows=10 cols=25 id=machine></textarea>
+</div>
 
 	<div id=machinestate>
 <span id=registers>
@@ -205,7 +205,7 @@ function assemble() {
 	asm = new Assembler();
 	try {
 		asm.assemble($("#asm").value);
-		$("#asm").classList.remove("err");
+		$("#machine").classList.remove("err");
 		$("#machine").value = asm.disassemble();
 		vm = new VirtualMachine(asm.code, new World(`
 		  WWWWWW

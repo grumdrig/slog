@@ -112,10 +112,9 @@ class CompilationContext {
 
 		if (functionDefinition) {
 			this.function = functionDefinition;
-			this.scope = {};
 			functionDefinition.parameters.forEach((parameter, i) => {
-				this.scope[parameter] = { offset: i + 1, count: 1 };
-				this.scope['_return_position'] = { offset: functionParameters.count + 1, count: 1 };
+				this.symbols[parameter] = { variable: true, local: true, offset: i + 1, count: 1 };
+				// this.symbols['_return_position'] = { variable: true, local: true, offset: functionParameters.count + 1, count: 1 };
 			});
 		}
 	}
@@ -125,9 +124,7 @@ class CompilationContext {
 	// 	this.symbols[symbol] = info;
 	// }
 
-	enclosingFunction() { return this.function || (this.parent && this.parent.enclosingFunction()) }
-
-	enclosingScope() { return this.scope || (this.parent && this.parent.enclosingScope()) }
+	enclosingScope() { return (this.function && this.symbols) || (this.parent && this.parent.enclosingScope()) }
 
 	lookup(id) { return this.symbols[id] || (this.parent && this.parent.lookup(id)) }
 
@@ -141,7 +138,7 @@ class CompilationContext {
 			let scope = this.enclosingScope();
 			this.assert(scope, "no enclosing scope"); // seems impossible
 			let offset = 0;
-			for (let i in scope) offset += scope[i].countl
+			for (let i in scope) offset += scope[i].count;
 			scope[name] = { name, offset, count, initializer };
 		}
 	}
@@ -373,9 +370,9 @@ class CodeBlock {
 
 	generate(context) {
 		context = new CompilationContext(context);
-		for (let c of this.constants) c.generate(context);
-		for (let v of this.variables) v.generate(context);
-		for (let s of this.statements) s.generate(context);
+		for (let d of this.constants) d.generate(context);
+		for (let d of this.variables) d.generate(context);
+		for (let d of this.statements) d.generate(context);
 	}
 }
 
@@ -410,9 +407,6 @@ class ReturnStatement {
 	}
 
 	generate(context) {
-		let func = context.enclosingFunction();
-		if (!func) context.error('no enclosing function for return');
-
 		this.value.simplify(context).generate(context);
 
 		if (func.name === 'main') {
@@ -612,13 +606,24 @@ class IdentifierExpression {
 	generate(context) {
 		let reference = context.lookup(this.identifier);
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
-		if (reference) { //.constant) {
-
-		// }
-			context.emit('peek ' + reference.offset + ' ; ' + this.identifier);
+		if (reference) {
+			context.emit('fetchlocal ' + reference.offset + ' ; ' + this.identifier);
 		} else {
 			// hopefully global
 			context.emit('fetch ' + this.identifier);
+		}
+	}
+
+	generateAddress(context) {
+		let reference = context.lookup(this.identifier);
+		context.assert(reference, 'undefined identifier: ' + this.identifier);
+		if (reference) {
+			// TODO should this be an opcode?
+			context.emit('.stack ' + reference.offset + '  ; ' + this.identifier);
+			context.emit('add FP  ; ...');
+		} else {
+			// hopefully global
+			context.emit('.stack ' + this.identifier);
 		}
 	}
 }
@@ -868,8 +873,8 @@ class BinaryExpression {
 		'=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit('.stack ' + lhs.identifier);
+				context.assert(lhs.generateAddress, "addressable variable expected");
+				lhs.generateAddress(context);
 				rhs.generate(context);
 				context.emit('store');
 			},
