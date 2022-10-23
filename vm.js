@@ -455,7 +455,7 @@ class VirtualMachine {
       this.push(this.fetch(address));
 
     } else if (mnemonic === 'store' || mnemonic === 'storelocal' || mnemonic === 'poke') {
-      let value = pop();
+      let value = this.pop();
       let address = argument;
       if (mnemonic === 'storelocal') address += this.special[SPECIAL.FP];
       if (mnemonic === 'poke')  address += this.special[SPECIAL.SP];

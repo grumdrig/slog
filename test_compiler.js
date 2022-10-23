@@ -1,10 +1,12 @@
 let { compile } = require('./compiler');
 
 let source = `
+external walk(direction) = $30
 var i = 1  // comment
 const c = -5
 main {
 	i = c + 1
+	walk(i)
 }
 `;
 

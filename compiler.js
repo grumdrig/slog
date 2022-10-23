@@ -52,7 +52,8 @@ class Source {
 	}
 
 	consume(token) {
-		if (token !== this.next().text) this.error(`expected '${token}'`);
+		if (token !== this.peek()) this.error(`expected '${token}'`);
+		this.next();
 	}
 
 	consumeIdentifier() {
@@ -93,7 +94,7 @@ class Source {
 	}
 
 	error(message) {
-		throw new ParseError(`${message} at line ${this.lexems[0].line_no}: ${this.lexemes[0]}`);
+		throw new ParseError(`${message} on line ${this.lexemes[0].line_no} at '${this.lexemes[0].text}'`);
 	}
 }
 
@@ -135,6 +136,7 @@ class CompilationContext {
 			// Global declaration
 			this.emit(name + ':');
 			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + name);
+			this.symbols[name] = { variable: true, static: true, name };
 		} else {
 			let scope = this.enclosingScope();
 			this.assert(scope, "no enclosing scope"); // seems impossible
@@ -147,6 +149,11 @@ class CompilationContext {
 	defineConstant(identifier, value) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
 		this.symbols[identifier] = { constant: true, value };
+	}
+
+	defineExternal(identifier, opcode) {
+		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
+		this.symbols[identifier] = { external: true, value: { opcode } };
 	}
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
@@ -172,9 +179,9 @@ class SemanticError {
 
 class Module {
 	constants = [];
+	externals = [];
 	variables = [];
 	functions = [];
-	externals = [];
 
 	static parse(source) {
 		let result = new Module();
@@ -199,9 +206,10 @@ class Module {
 
 		context.emit('.jump main');
 
-		for (let c of this.constants) c.generate(context);
-		for (let v of this.variables) v.generate(context);
-		for (let f of this.functions) f.generate(context);
+		for (let d of this.constants) d.generate(context);
+		for (let d of this.externals) d.generate(context);
+		for (let d of this.variables) d.generate(context);
+		for (let d of this.functions) d.generate(context);
 
 		// context.link();
 
@@ -223,7 +231,7 @@ class ConstantDefinition {
 	}
 
 	generate(context) {
-		context.defineConstant(this.name, this.value.simplify());
+		context.defineConstant(this.name, this.value.simplify(context));
 	}
 }
 
@@ -405,7 +413,7 @@ class ReturnStatement {
 		let func = context.enclosingFunction();
 		if (!func) context.error('no enclosing function for return');
 
-		this.value.simplify().generate(context);
+		this.value.simplify(context).generate(context);
 
 		if (func.name === 'main') {
 			context.emit('halt');
@@ -451,7 +459,7 @@ class WhileStatement {
 		context.emit(loopStartLabel + ':');
 
 		// Test loop condition
-		this.condition.simplify().generate(context);
+		this.condition.simplify(context).generate(context);
 		context.emit('unary NOT');
 
 		// Exit loop if it's false
@@ -491,7 +499,7 @@ class IfStatement {
 
 	generate(context) {
 		let elseLabel = context.uniqueLabel('else');
-		this.condition.simplify().generate(context);
+		this.condition.simplify(context).generate(context);
 		context.emit('unary NOT');
 		context.emit('.branch ' + elseLabel);
 
@@ -511,6 +519,7 @@ class Expression {
 			return result;
 		}
 		let lhs =
+			ExternalExpression.tryParse(source) ||
 			PrefixExpression.tryParse(source) ||
 			LiteralExpression.tryParse(source) ||
 			IdentifierExpression.tryParse(source);
@@ -526,6 +535,40 @@ class Expression {
 			return result;
 		} else {
 			return lhs;
+		}
+	}
+}
+
+
+class ExternalExpression {
+	static tryParse(source) {
+		if (!source.tryConsume('external')) return;
+		let result = new ExternalExpression();
+		if (source.tryConsume('(')) {
+			result.opcode = Expression.parse(source);
+			source.consume(')');
+		} else if (source.tryConsume('[')) {
+			result.index = Expression.parse(source);
+			source.consume(']');
+		} else {
+			source.error('expected (opcode) or [index]');
+		}
+		return result;
+	}
+
+	simplify(context) {
+		if (this.opcode) this.opcode = this.opcode.simplify(context);
+		if (this.index) this.index = this.index.simplify(context);
+		return this;
+	}
+
+	generate(context) {
+		if (this.index) {
+			context.assert(this.index.literal);
+			context.emit('fetch ' + -this.index.literal);
+		} else {
+			context.assert(this.opcode.literal);
+			context.emit('fetch ' + -this.index.literal);
 		}
 	}
 }
@@ -563,7 +606,7 @@ class IdentifierExpression {
 
 	simplify(context) {
 		let reference = context.lookup(this.identifier);
-		return reference ? reference.value : this;
+		return reference && reference.constant ? reference.value : this;
 	}
 
 	generate(context) {
@@ -980,23 +1023,27 @@ class PostfixExpression {
 			// Function call
 			closer: ')',
 			generate: (context, lhs, args) => {
-				context.assert(lhs.identifier, 'function identifier expected');
-
-				let func = context.lookup(lhs.identifier);
-				if (func.opcode) {
-					// external opcode
-					for (let a of args) { a.generate(context) }
+				if (lhs.opcode) {
+					for (let a of args) a.generate(context)
 					context.emit(func.opcode);
 				} else {
-					// regular function call
-					context.emit('.data 0 ; return value');
-					context.emit('fetch PC');
-					context.emit('fetch FP');
-					for (let a of args) { a.generate(context) }
-					context.emit('fetch SP');
-					context.emit('sub ' + args.length);
-					context.emit('store FP');
-					context.emit('.jump ' + lhs.identifier);
+					context.assert(lhs.identifier, 'function identifier expected');
+
+					let func = context.lookup(lhs.identifier);
+					context.assert(func, 'unknown identifier ' + lhs.identifier);
+					// if (func.opcode) {
+					// 	// external opcode
+					// } else {
+						// regular function call
+						context.emit('.data 0 ; return value');
+						context.emit('fetch PC');
+						context.emit('fetch FP');
+						for (let a of args) { a.generate(context) }
+						context.emit('fetch SP');
+						context.emit('sub ' + args.length);
+						context.emit('store FP');
+						context.emit('.jump ' + lhs.identifier);
+					// }
 				}
 			},
 		},
@@ -1010,12 +1057,15 @@ class PostfixExpression {
 				context.emit('add');
 				context.emit('fetch');
 			},
+			numargs: 1,
+			precompute: (lhs, args) => lhs + args[0],
 		},
 		/*
 		'.': {
 			generate: (context, lhs, args) => {
 				// Not sure what to do here but it doesn't seem like we need structs
 			},
+			numargs: 1,
 		}
 		*/
 	};
@@ -1039,8 +1089,20 @@ class PostfixExpression {
 			} else {
 				lhs.args.push(source.consumeIdentifier());
 			}
+			if (op.numargs && op.numargs !== lhs.args.length)
+				source.error(op.numargs + " arguments expected");
 		}
 		return lhs;
+	}
+
+	simplify(context) {
+		this.lhs = this.lhs.simplify(context);
+		this.args = this.args.map(arg => arg.simplify(context));
+
+		if (this.lhs.literal && this.operator.precompute && this.args.filter(arg => !arg.literal).length === 0)
+			return new LiteralExpression(this.operator.precompute(this.lhs.literal, this.rhs.literal, this.args.map(arg => arg.literal)));
+		else
+			return this;
 	}
 
 	generate(context) {
