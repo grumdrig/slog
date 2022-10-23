@@ -124,24 +124,9 @@ class CompilationContext {
 	// 	this.symbols[symbol] = info;
 	// }
 
-	enclosingScope() { return (this.function && this.symbols) || (this.parent && this.parent.enclosingScope()) }
+	enclosingScope() { return (this.function && this) || (this.parent && this.parent.enclosingScope()) }
 
 	lookup(id) { return this.symbols[id] || (this.parent && this.parent.lookup(id)) }
-
-	declareVariable(name, count, initializer) {
-		if (!this.parent) {
-			// Global declaration
-			this.emit(name + ':');
-			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + name);
-			this.symbols[name] = { variable: true, static: true, name };
-		} else {
-			let scope = this.enclosingScope();
-			this.assert(scope, "no enclosing scope"); // seems impossible
-			let offset = 0;
-			for (let i in scope) offset += scope[i].count;
-			scope[name] = { name, offset, count, initializer };
-		}
-	}
 
 	defineConstant(identifier, value) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
@@ -151,6 +136,25 @@ class CompilationContext {
 	defineExternal(identifier, opcode) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
 		this.symbols[identifier] = { external: true, value: { opcode } };
+	}
+
+	declareVariable(identifier, count, initializer) {
+		if (!this.parent) {
+			// Global declaration
+			this.emit(identifier + ':');
+			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
+			this.symbols[identifier] = { variable: true, static: true, identifier };
+		} else {
+			let scope = this.enclosingScope();
+			this.assert(scope, "no enclosing scope"); // seems impossible
+			let offset = 0;
+			for (let i in scope.symbols) offset += scope.symbols[i].count;
+			scope.symbols[identifier] = { variable: true, local: true, identifier, offset, count, initializer };
+		}
+	}
+
+	declareFunction(identifier, declaration) {
+		this.symbols[identifier] = { function: true, declaration };
 	}
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
@@ -203,9 +207,11 @@ class Module {
 
 		context.emit('.jump main');
 
-		for (let d of this.constants) d.generate(context);
-		for (let d of this.externals) d.generate(context);
-		for (let d of this.variables) d.generate(context);
+		for (let d of this.constants) d.define(context);
+		for (let d of this.externals) d.define(context);
+		for (let d of this.variables) d.declare(context);
+		for (let d of this.functions) d.declare(context);
+
 		for (let d of this.functions) d.generate(context);
 
 		// context.link();
@@ -227,7 +233,7 @@ class ConstantDefinition {
 		return result;
 	}
 
-	generate(context) {
+	define(context) {
 		context.defineConstant(this.name, this.value.simplify(context));
 	}
 }
@@ -249,7 +255,7 @@ class VariableDeclaration {
 		return result;
 	}
 
-	generate(context) {
+	declare(context) {
 		let count = 1, initializer;
 		// let decl = {
 		// 	offset: context.symbols.length,
@@ -293,7 +299,7 @@ class ExternalDefinition {
 		return result;
 	}
 
-	generate(context) {
+	define(context) {
 		let opcode = this.opcode.simplify(context);
 		context.assert(opcode.literal, "literal opcode value expected");
 		context.defineExternal(this.name, this.opcode.literal);
@@ -325,6 +331,10 @@ class FunctionDefinition {
 
 	stackFrameSize() { return this.parameters.length }
 
+	declare(context) {
+		context.declareFunction(this.name, this);
+	}
+
 	generate(context) {
 		context.emit(this.name + ':');
 		context = new CompilationContext(context, this);
@@ -339,12 +349,21 @@ class FunctionDefinition {
 	}
 
 	generateReturn(context) {
-		context.emit('adjust ' + -(this.parameters.length));
 		if (this.name === 'main') {
-			context.emit('halt 0');
+			context.emit('halt');
 		} else {
-			context.emit('jump'); // return
+			context.emit('storelocal -3');  // save the return value
+			context.emit('fetch FP');
+			context.emit('store SP');
+			context.emit('store FP');
+			context.emit('store PC'); // aka jump
 		}
+		// context.emit('adjust ' + -(this.parameters.length));
+		// if (this.name === 'main') {
+		// 	context.emit('halt 0');
+		// } else {
+		// 	context.emit('jump'); // return
+		// }
 	}
 }
 
@@ -370,8 +389,8 @@ class CodeBlock {
 
 	generate(context) {
 		context = new CompilationContext(context);
-		for (let d of this.constants) d.generate(context);
-		for (let d of this.variables) d.generate(context);
+		for (let d of this.constants) d.define(context);
+		for (let d of this.variables) d.declare(context);
 		for (let d of this.statements) d.generate(context);
 	}
 }
@@ -408,16 +427,8 @@ class ReturnStatement {
 
 	generate(context) {
 		this.value.simplify(context).generate(context);
-
-		if (func.name === 'main') {
-			context.emit('halt');
-		} else {
-			context.emit('storelocal -3');  // save the return value
-			context.emit('fetch FP');
-			context.emit('store SP');
-			context.emit('store FP');
-			context.emit('store PC'); // aka jump
-		}
+		let func = context.enclosingScope().function;
+		func.generateReturn(context);
 	}
 }
 
