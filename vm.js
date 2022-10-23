@@ -340,6 +340,9 @@ const SPECIAL = {
 
 };
 
+const SPECIAL_OPS = reverseMapIntoArray(SPECIAL);
+
+
 const ACTIONS = {
   TALK: 0x5A,
   HUNT: 0x40,
@@ -536,7 +539,7 @@ class VirtualMachine {
     //  a boolean value in AX indication if the instruction completed
 
     } else if (opcode >= 0x30) {
-      this.top = this.world.handleInstruction(this.special, this.top, argument);
+      this.top = this.world.handleInstruction(this.special, opcode, this.top, argument);
 
     } else {
       throw `${this.pc}: invalid opcode ${opcode} ${mnemonic}`;
@@ -816,11 +819,16 @@ class Assembler {
       if (address > 0 && isInlineModeInstruction(this.code[address - 1])) {
         disa = '.data ' + inst;
       } else {
+        let opcode = OPCODES[inst & 0x3f] || '??';
+        let immediate = isStackModeInstruction(inst) ? '' :
+                        isInlineModeInstruction(inst) ? ':::' :
+                        (inst >> 6);
+        if (['fetch','store'].includes(opcode))
+          immediate = SPECIAL_OPS[-immediate] || immediate;
         disa = ('$' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
           + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-3)
-          + ' ' + (OPCODES[inst & 0x3f] || '??')
-          + ' ' + (isStackModeInstruction(inst) ? '' :
-                   isInlineModeInstruction(inst) ? ':::' : (inst >> 6)));
+          + ' ' + opcode
+          + ' ' + immediate);
       }
 
       return (
@@ -998,6 +1006,7 @@ function reverseMapIntoArray(m) {
   for (let i in m) result[m[i]] = i;
  return result;
 }
+
 
 class World {
   // assumed to be rectangular

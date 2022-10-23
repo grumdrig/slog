@@ -221,7 +221,6 @@ function comp() {
 	}
 }
 
-const unspecial = reverseMapIntoArray(SPECIAL);
 
 
 let asm, vm;
@@ -326,9 +325,9 @@ $("#asm").addEventListener('keypress', e => {
 function updateCharacterSheet(vm) {
 
 	$("#registers").innerText = '';
-	for (let i = 1; i < 100; ++i) {
+	for (let i = 1; i < vm.special.length; ++i) {
 		let d = $("#registers").appendChild(document.createElement('pre'));
-		d.innerText = `${((unspecial[i] || i) + ' '.repeat(12)).substr(0,12)} $${('0000'+vm.special[i].toString(16)).substr(-4)} ${vm.special[i]}`;
+		d.innerText = `${((SPECIAL_OPS[i] || i) + ' '.repeat(12)).substr(0,12)} $${('0000'+vm.special[i].toString(16)).substr(-4)} ${vm.special[i]}`;
 	}
 
 	$("#codepoint").innerText = '';
