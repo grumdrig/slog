@@ -446,7 +446,7 @@ class VirtualMachine {
         this.push(this.memory[this.pc++]);
 
     } else if (mnemonic === 'adjust') {
-      this.sp += argument;
+      this.sp -= argument;
 
     } else if (mnemonic === 'fetch' || mnemonic === 'fetchlocal' || mnemonic == 'peek') {
       let address = argument;
@@ -561,7 +561,7 @@ class VirtualMachine {
 
 
 function is_identifier(id) {
-  return id.match(/^[a-zA-Z_][0-9a-zA-Z_]*$/);
+  return id.match(/^[@]?[a-zA-Z_][0-9a-zA-Z_]*$/);
 }
 
 function fitsAsImmediate(v) {
@@ -591,7 +591,7 @@ function toLowerCase(s) {
 }
 
 class Assembler {
-  static tokenre = /[.][a-z]+|[a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!@#%^&*]|[-+]?[0-9]+|[-+]?[$][a-fA-F0-9]+|"[^"]*"|'./g;
+  static tokenre = /[.][a-z]+|[@a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!#%^&*]|[-+]?[0-9]+|[-+]?[$][a-fA-F0-9]+|"[^"]*"|'./g;
 
   macros = {};
   labels = {};

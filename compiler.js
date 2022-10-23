@@ -183,6 +183,7 @@ class Module {
 	externals = [];
 	variables = [];
 	functions = [];
+	statements = [];
 
 	static parse(source) {
 		let result = new Module();
@@ -194,9 +195,10 @@ class Module {
 				result.variables.push(item);
 			} else if (item = ExternalDefinition.tryParse(source)) {
 				result.externals.push(item);
-			} else {
-				item = FunctionDefinition.parse(source);
+			} else if (item = FunctionDefinition.tryParse(source)) {
 				result.functions.push(item);
+			} else {
+				result.statements.push(Statement.parse(source));
 			}
 		}
 		return result;
@@ -205,7 +207,7 @@ class Module {
 	generate() {
 		let context = new CompilationContext();
 
-		context.emit('.jump main');
+		context.emit('.jump @main');
 
 		for (let d of this.constants) d.define(context);
 		for (let d of this.externals) d.define(context);
@@ -214,7 +216,8 @@ class Module {
 
 		for (let d of this.functions) d.generate(context);
 
-		// context.link();
+		context.emit('@main:');
+		for (let d of this.statements) d.generate(context);
 
 		return context;
 	}
@@ -313,7 +316,8 @@ class FunctionDefinition {
 	parameters = [];
 	body;
 
-	static parse(source) {
+	static tryParse(source) {
+		if (!source.tryConsume('func')) return;
 		let result = new FunctionDefinition();
 		result.name = source.consumeIdentifier();
 		if (source.tryConsume('(')) {
@@ -349,21 +353,11 @@ class FunctionDefinition {
 	}
 
 	generateReturn(context) {
-		if (this.name === 'main') {
-			context.emit('halt');
-		} else {
-			context.emit('storelocal -3');  // save the return value
-			context.emit('fetch FP');
-			context.emit('store SP');
-			context.emit('store FP');
-			context.emit('store PC'); // aka jump
-		}
-		// context.emit('adjust ' + -(this.parameters.length));
-		// if (this.name === 'main') {
-		// 	context.emit('halt 0');
-		// } else {
-		// 	context.emit('jump'); // return
-		// }
+		context.emit('storelocal -3  ; store return value');
+		context.emit('fetch FP');
+		context.emit('store SP');
+		context.emit('store FP');
+		context.emit('store PC  ; return'); // aka jump
 	}
 }
 
@@ -628,7 +622,7 @@ class IdentifierExpression {
 	generateAddress(context) {
 		let reference = context.lookup(this.identifier);
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
-		if (reference) {
+		if (reference && reference.local) {
 			// TODO should this be an opcode?
 			context.emit('.stack ' + reference.offset + '  ; ' + this.identifier);
 			context.emit('add FP  ; ...');
@@ -1051,7 +1045,7 @@ class PostfixExpression {
 					// 	// external opcode
 					// } else {
 						// regular function call
-						context.emit('.data 0 ; return value');
+						context.emit('.stack 0 ; return value');
 						context.emit('fetch PC');
 						context.emit('fetch FP');
 						for (let a of args) { a.generate(context) }

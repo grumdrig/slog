@@ -4,19 +4,21 @@ let source = `
 external walk(direction) = $30
 var i = 1  // comment
 const c = -5
-main {
+func main {
 	i = c + 1
-	walk(i)
+//	walk(i)
 }
 `;
 
-console.log(source);
+function number(c) {
+	return c.split('\n').map((l,i) => (i+1) + ': ' + l).join('\n');
+}
+
+console.log(number(source));
 
 let c = compile(source);
 
-c_no = c.split('\n').map((l,i) => (i+1) + ': ' + l).join('\n');
-
-console.log(c_no);
+console.log(number(c));
 
 let { VirtualMachine, World, Assembler } = require('./vm');
 
