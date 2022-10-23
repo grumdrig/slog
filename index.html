@@ -67,15 +67,15 @@
 	 	vertical-align: bottom;
 	 }
 
-	 #registers {
-	 	display: grid;
-	 	grid-template-columns: 50px 50px;
+	 #registers > pre {
+	 	 border-bottom: dotted 1px silver;
+	 	 margin-bottom: -1px;
 	 }
 
 	 #machinestate {
 		margin: 10px 0;
 	 	display: grid;
-	 	grid-template-columns: 100px 100px 370px 250px 250px;
+	 	grid-template-columns: 250px 100px 370px 250px 250px;
 	 }
 
 	 #machinestate button { width: 100%; }
@@ -86,7 +86,7 @@
 	 #machinestate > div.nobo {
 	 		border: none;
 	 	}
-	 	#brain {
+	 	.brain {
 	 		overflow: scroll;
 	 		max-height: 112px;
 	 	}
@@ -121,17 +121,10 @@
 	<span>Registers</span>
 	<span></span>
 	<span>Execution point</span>
-	<span>Stack</span>
+	<span>Stack [<span id=stackdepth></span>]</span>
 	<span>Memory</span>
 
-	<div id=registers>
-	  <div>PC</div><div id=PC></div>
-	  <div>SP</div><div id=SP></div>
-	  <div>FP</div><div id=FP></div>
-	  <div>AX</div><div id=AX></div>
-	  <div>INT_R</div><div id=INT_R></div>
-	  <div>CLOCK</div><div id=CLOCK></div>
-	</div>
+	<div class=brain><div id=registers></div></div>
 	<div class=nobo>
 		<button onclick="step()">Step</button><br/>
 		<button onclick="runimate()">Runimate</button><br/>
@@ -139,7 +132,7 @@
 	</div>
 	<div id=codepoint></div>
 	<div id=stack></div>
-	<div id=brain><div id=memory></div></div>
+	<div class=brain><div id=memory></div></div>
 </div>
 
 
@@ -227,6 +220,9 @@ function comp() {
 		$("#asm").value = e.message;
 	}
 }
+
+const unspecial = reverseMapIntoArray(SPECIAL);
+
 
 let asm, vm;
 function assemble() {
@@ -328,12 +324,12 @@ $("#asm").addEventListener('keypress', e => {
 });
 
 function updateCharacterSheet(vm) {
-	$("#PC").innerText = vm.pc;
-	$("#SP").innerText = vm.sp;
-	$("#FP").innerText = vm.fp;
-	$("#AX").innerText = vm.ax;
-	$("#INT_R").innerText = vm.special[SPECIAL.INT_R];
-	$("#CLOCK").innerText = vm.special[SPECIAL.CLOCK];
+
+	$("#registers").innerText = '';
+	for (let i = 1; i < 100; ++i) {
+		let d = $("#registers").appendChild(document.createElement('pre'));
+		d.innerText = `${((unspecial[i] || i) + ' '.repeat(12)).substr(0,12)} $${('0000'+vm.special[i].toString(16)).substr(-4)} ${vm.special[i]}`;
+	}
 
 	$("#codepoint").innerText = '';
 	for (let p = -3; p <= 3; ++p) {
@@ -342,6 +338,7 @@ function updateCharacterSheet(vm) {
 		if (p === 0) d.style.backgroundColor="yellow";
 	}
 
+	$("#stackdepth").innerText = vm.memory.length - vm.sp;
 	$("#stack").innerText = '';
 	for (let i = Math.min(vm.sp + 5, vm.memory.length - 1); i >= vm.sp; --i) {
 		let d = $("#stack").appendChild(document.createElement('pre'));

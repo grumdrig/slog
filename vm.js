@@ -1155,16 +1155,16 @@ class World {
     const DAYS_PER_MONTH = 32;
     const MONTHS_PER_YEAR = 16;
     if (days) hours += HOURS_PER_DAY * days;
-    special[SPECIALS.TIME_OF_DAY] += hours;
-    while (special[SPECIALS.TIME_OF_DAY] >= HOURS_PER_DAY) {
-      special[SPECIALS.TIME_OF_DAY] -= 32;
-      special[SPECIALS.DAY_OF_MONTH] += 1;
-      if (special[SPECIALS.DAY_OF_MONTH] >= DAYS_PER_MONTH) {
-        special[SPECIALS.DAY_OF_MONTH] -= DAYS_PER_MONTH;
-        special[SPECIALS.MONTH_OF_YEAR] += 1;
-        if (special[SPECIALS.MONTH_OF_YEAR] >= MONTHS_PER_YEAR) {
-          special[SPECIALS.MONTH_OF_YEAR] -= MONTHS_PER_YEAR;
-          special[SPECIALS.YEAR] += 1;
+    special[SPECIAL.TIME_OF_DAY] += hours;
+    while (special[SPECIAL.TIME_OF_DAY] >= HOURS_PER_DAY) {
+      special[SPECIAL.TIME_OF_DAY] -= 32;
+      special[SPECIAL.DAY_OF_MONTH] += 1;
+      if (special[SPECIAL.DAY_OF_MONTH] >= DAYS_PER_MONTH) {
+        special[SPECIAL.DAY_OF_MONTH] -= DAYS_PER_MONTH;
+        special[SPECIAL.MONTH_OF_YEAR] += 1;
+        if (special[SPECIAL.MONTH_OF_YEAR] >= MONTHS_PER_YEAR) {
+          special[SPECIAL.MONTH_OF_YEAR] -= MONTHS_PER_YEAR;
+          special[SPECIAL.YEAR] += 1;
         }
       }
     }
