@@ -1033,14 +1033,17 @@ class PostfixExpression {
 			// Function call
 			closer: ')',
 			generate: (context, lhs, args) => {
-				if (lhs.opcode) {
+				let func = lhs;
+				if (func.identifier) {
+					func = context.lookup(func.identifier);
+					context.assert(func, 'unknown identifier ' + func.identifier);
+				}
+				if (func.external) {
 					for (let a of args) a.generate(context)
-					context.emit(func.opcode);
+					context.emit(func.value.opcode);
 				} else {
-					context.assert(lhs.identifier, 'function identifier expected');
+					// context.assert(lhs.identifier, 'function identifier expected');
 
-					let func = context.lookup(lhs.identifier);
-					context.assert(func, 'unknown identifier ' + lhs.identifier);
 					// if (func.opcode) {
 					// 	// external opcode
 					// } else {
