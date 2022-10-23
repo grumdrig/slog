@@ -51,9 +51,8 @@ class Source {
 		});
 	}
 
-	consume(token) {
-		if (token !== this.peek()) this.error(`expected '${token}'`);
-		this.next();
+	consume(...tokens) {
+		if (!this.tryConsume(...tokens)) this.error(`expected '${tokens.join(' ')}'`);
 	}
 
 	consumeIdentifier() {
@@ -66,15 +65,31 @@ class Source {
 		return this.next().value;
 	}
 
-	tryConsume(token) {
-		if (this.peek(token)) return this.next().text;
+	tryConsume(...tokens) {
+		console.log(tokens);
+		if (!this.lookahead(...tokens)) return false;
+		this.lexemes = this.lexemes.slice(tokens.length);
+		return true;
 	}
 
 	empty() { return !this.lexemes.length }
 
-	peek(value) {
+	lookahead(...tokens) {
+		if (this.lexemes.length < tokens.length) return false;
+		for (let i = 0; i < tokens.length; ++i) {
+			if (typeof tokens[i] === 'string') {
+				if (tokens[i] !== this.lexemes[i].text) return false
+			} else {
+				for (let tag in tokens[i]) {
+					if (!this.lexemes[i][tag]) return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	peek() {
 		if (this.empty()) return;
-		if (value && this.lexemes[0].text !== value) return;
 		return this.lexemes[0].text;
 	}
 
@@ -287,8 +302,9 @@ class ExternalDefinition {
 	opcode;
 
 	static tryParse(source) {
-		if (!source.tryConsume('external')) return false;
+		if (!source.lookahead('external', {identifier:true})) return false;
 		let result = new ExternalDefinition;
+		source.consume('external');
 		result.name = source.consumeIdentifier();
 		if (source.tryConsume('(')) {
 			if (!source.tryConsume(')')) while (true) {
@@ -368,7 +384,7 @@ class CodeBlock {
 
 	static parse(source) {
 		let result = new CodeBlock();
-		while (!source.peek('}')) {
+		while (!source.lookahead('}')) {
 			let item;
 			if (item = ConstantDefinition.tryParse(source)) {
 				result.constants.push(item);
@@ -395,9 +411,9 @@ class Statement {  // namespace only
 			return new BreakStatement();
 		} else if (source.tryConsume('return')) {
 			return new ReturnStatement(Expression.parse(source));
-		} else if (source.peek('while')) {
+		} else if (source.lookahead('while')) {
 			return WhileStatement.parse(source);
-		} else if (source.peek('if')) {
+		} else if (source.lookahead('if')) {
 			return IfStatement.parse(source);
 		} else {
 			return new ExpressionStatement(Expression.parse(source));
@@ -485,7 +501,7 @@ class IfStatement {
 		result.ifbody = CodeBlock.parse(source);
 		source.consume('}');
 		if (source.tryConsume('else')) {
-			if (source.peek('if')) {
+			if (source.lookahead('if')) {
 				elsebody = IfStatement.parse(source);
 			} else {
 				source.consume('{');
@@ -518,7 +534,8 @@ class Expression {
 			return result;
 		}
 		let lhs =
-			ExternalExpression.tryParse(source) ||
+			ExternalFunctionExpression.tryParse(source) ||
+			ExternalIndexExpression.tryParse(source) ||
 			PrefixExpression.tryParse(source) ||
 			LiteralExpression.tryParse(source) ||
 			IdentifierExpression.tryParse(source);
@@ -539,36 +556,60 @@ class Expression {
 }
 
 
-class ExternalExpression {
+class ExternalFunctionExpression {
+	opcode;
+	arg1;
+	arg2;
+
 	static tryParse(source) {
-		if (!source.tryConsume('external')) return;
-		let result = new ExternalExpression();
-		if (source.tryConsume('(')) {
-			result.opcode = Expression.parse(source);
-			source.consume(')');
-		} else if (source.tryConsume('[')) {
-			result.index = Expression.parse(source);
-			source.consume(']');
-		} else {
-			source.error('expected (opcode) or [index]');
-		}
+		if (!source.tryConsume('external', '(')) return;
+		let result = new ExternalFunctionExpression();
+		result.opcode = Expression.parse(source);
+		source.consume(')');
+		source.consume('(');
+		result.arg1 = Expression.parse(source);
+		source.consume(',');
+		result.arg2 = Expression.parse(source);
+		source.consume(')');
 		return result;
 	}
 
 	simplify(context) {
-		if (this.opcode) this.opcode = this.opcode.simplify(context);
-		if (this.index) this.index = this.index.simplify(context);
+		this.opcode = this.opcode.simplify(context);
+		this.arg1 = this.arg1.simplify(context);
+		this.arg2 = this.arg2.simplify(context);
 		return this;
 	}
 
 	generate(context) {
-		if (this.index) {
-			context.assert(this.index.literal);
-			context.emit('fetch ' + -this.index.literal);
-		} else {
-			context.assert(this.opcode.literal);
-			context.emit('fetch ' + -this.index.literal);
-		}
+		this.simplify(context);  // needed?
+		context.assert(this.opcode.literal, 'literal value expected');
+		this.arg1.generate(context);
+		this.arg2.generate(context);
+		context.emit(this.opcode.literal + '  ; external call');
+	}
+}
+
+class ExternalIndexExpression {
+	index;
+
+	static tryParse(source) {
+		if (!source.tryConsume('external', '[')) return;
+		let result = new ExternalIndexExpression();
+		result.index = Expression.parse(source);
+		source.consume(']');
+		return result;
+	}
+
+	simplify(context) {
+		this.index = this.index.simplify(context);
+		return this;
+	}
+
+	generate(context) {
+		this.simplify(context); //?
+		context.assert(this.index.literal);
+		context.emit('fetch ' + -this.index.literal);
 	}
 }
 
