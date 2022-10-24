@@ -514,7 +514,7 @@ class VirtualMachine {
 
     // Unary operators
     } else if (mnemonic === 'unary') {
-      let value = pop();
+      let value = this.pop();
       let operator = UNARY_OPERATORS[argument];
       if (operator) {
         let result = operator.operation(value);

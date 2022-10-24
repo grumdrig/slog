@@ -415,6 +415,8 @@ class Statement {  // namespace only
 			return WhileStatement.parse(source);
 		} else if (source.lookahead('if')) {
 			return IfStatement.parse(source);
+		} else if (source.lookahead('assert')) {
+			return AssertionStatement.parse(source);
 		} else {
 			return new ExpressionStatement(Expression.parse(source));
 		}
@@ -523,6 +525,25 @@ class IfStatement {
 		context.emit(elseLabel + ':');
 
 		if (this.elsebody) this.elsebody.generate(context);
+	}
+}
+
+class AssertionStatement {
+	test;
+
+	static parse(source) {
+		source.consume('assert');
+		let result = new AssertionStatement();
+		result.test = Expression.parse(source);
+		return result;
+	}
+
+	generate(context) {
+		this.test = this.test.simplify();
+		this.test.generate(context);
+		context.emit('unary NOT');
+		context.emit('assert 0');
+		context.emit('adjust -1');
 	}
 }
 
