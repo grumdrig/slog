@@ -222,6 +222,38 @@ function comp() {
 }
 
 
+class TestGame {
+  initialize(vm) {
+    vm.special[SPECIAL.LEVEL] = 1;
+    vm.special[SPECIAL.HEALTH] = 6;
+    vm.special[SPECIAL.ENERGY] = 10;
+    vm.special[SPECIAL.LEVELING_EXPONENT] = 160;
+    vm.special[SPECIAL.LEVELING_ADDEND] = 0;
+    vm.special[SPECIAL.LEVELING_MULTIPLIER] = 200;
+  }
+
+  static opcodes = {
+    walk: 0x30,
+    act: 0x31,
+    buy: 0x32,
+    sell: 0x33,
+    cast: 0x34,
+  }
+
+  static mnemonics = reverseMapIntoArray(TestGame.opcodes);
+
+  handleInstruction(special, opcode, top, argument) {
+    let mnemonic = TestGame.mnemonics[opcode];
+
+    if (mnemonic === 'walk') {
+      special[SPECIAL.TERRAIN] = Math.floor(Math.random() * 100);
+      return special[SPECIAL.TERRAIN];
+    } else {
+	    return ++special[16 + opcode - 0x30];
+	  }
+  }
+}
+
 
 let asm, vm;
 function assemble() {
@@ -230,10 +262,11 @@ function assemble() {
 		asm.assemble($("#asm").value);
 		$("#machine").classList.remove("err");
 		$("#machine").value = asm.disassemble();
-		vm = new VirtualMachine(asm.code, new World(`
-		  WWWWWW
-		  W__t_W
-		  WWWWWW`));
+		vm = new VirtualMachine(asm.code, new TestGame());
+			// new World(`
+		 //  WWWWWW
+		 //  W__t_W
+		 //  WWWWWW`));
 		updateCharacterSheet(vm);
 	} catch (e) {
 		$("#machine").classList.add("err");
