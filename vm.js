@@ -146,7 +146,7 @@ const opcodes = [
   // Face a direction, given an angle in degrees
 
   { opcode: 0x32, mnemonic: 'act' },
-  // Do an action with argument giving action type
+  // Do an action with operand giving action type
 
   { opcode: 0x33, mnemonic: 'cast' },
   // cast N : ... => ...
@@ -419,47 +419,47 @@ class VirtualMachine {
     const instruction = this.memory[this.pc];
     const opcode = instruction & 0x3F;
     const mnemonic = OPCODES[opcode];
-    let argument = (instruction >> 6);// & 0x3ff;
-    const stackMode = (argument == STACK_MODE_FLAG);
-    const inlineMode = (argument == INLINE_MODE_FLAG);
+    let operand = (instruction >> 6);// & 0x3ff;
+    const stackMode = (operand == STACK_MODE_FLAG);
+    const inlineMode = (operand == INLINE_MODE_FLAG);
     const immediateMode = !stackMode && !inlineMode;
     if (stackMode) {
-      argument = this.pop();
+      operand = this.pop();
     } else if (inlineMode) {
-      argument = this.memory[++this.pc];
+      operand = this.memory[++this.pc];
     }
-    if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediateMode ? argument : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] ax=${this.ax}=${this.ax.toString(16)}`);
+    if (this.trace) console.log(`${this.pc}: ${OPCODES[opcode] || opcode.toString(16)} ${immediateMode ? operand : '--'} [${this.memory.slice(this.sp)}] [${Array.from(this.memory.slice(this.sp)).map(m => '$'+m.toString(16))}] ax=${this.ax}=${this.ax.toString(16)}`);
     this.pc += 1
 
     if (mnemonic === 'halt') {
       this.running = false;
-      this.special[SPECIAL.AX] = argument;
+      this.special[SPECIAL.AX] = operand;
 
     } else if (mnemonic === 'assert') {
-      if(this.top !== argument) {
-        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != arg ${argument}`);
+      if(this.top !== operand) {
+        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != arg ${operand}`);
         throw "assertion failure";
       }
 
     } else if (mnemonic === 'push') {
-      this.push(argument);
+      this.push(operand);
 
     } else if (mnemonic === 'stack') {
-      for (let i = 0; i < argument; i += 1)
+      for (let i = 0; i < operand; i += 1)
         this.push(this.memory[this.pc++]);
 
     } else if (mnemonic === 'adjust') {
-      this.sp -= argument;
+      this.sp -= operand;
 
     } else if (mnemonic === 'fetch' || mnemonic === 'fetchlocal' || mnemonic == 'peek') {
-      let address = argument;
+      let address = operand;
       if (mnemonic === 'fetchlocal') address += this.special[SPECIAL.FP];
       if (mnemonic === 'peek')  address += this.special[SPECIAL.SP];
       this.push(this.fetch(address));
 
     } else if (mnemonic === 'store' || mnemonic === 'storelocal' || mnemonic === 'poke') {
       let value = this.pop();
-      let address = argument;
+      let address = operand;
       if (mnemonic === 'storelocal') address += this.special[SPECIAL.FP];
       if (mnemonic === 'poke')  address += this.special[SPECIAL.SP];
       if (address >= 0 ||
@@ -468,14 +468,14 @@ class VirtualMachine {
       } // else illegal
 
     } else if (mnemonic === '_jmp') {
-      console.log('jump!', immediateMode, argument, this.pc);
-      if (immediateMode) argument += this.pc;
-      this.pc = argument;
+      console.log('jump!', immediateMode, operand, this.pc);
+      if (immediateMode) operand += this.pc;
+      this.pc = operand;
 
     } else if (mnemonic === '_br') {
       // with immediate addressing mode, the value is an offset not an absolute
-      if (immediateMode) argument += this.pc;
-      if (this.pop()) this.pc = argument;
+      if (immediateMode) operand += this.pc;
+      if (this.pop()) this.pc = operand;
 
 /*
     } else if (mnemonic === 'call') {
@@ -501,8 +501,8 @@ class VirtualMachine {
       /*
     } else if (mnemonic === 'bury') {
       // TODO might be backwards
-      let offset = argument < 0 ? -1 : 1;
-      let depth = Math.abs(argument);
+      let offset = operand < 0 ? -1 : 1;
+      let depth = Math.abs(operand);
       for (let i = 0; i < depth; ++i) {
         let a1 = this.sp + i;
         let a2 = this.sp + (i + offset + depth) % depth
@@ -515,7 +515,7 @@ class VirtualMachine {
     // Unary operators
     } else if (mnemonic === 'unary') {
       let value = this.pop();
-      let operator = UNARY_OPERATORS[argument];
+      let operator = UNARY_OPERATORS[operand];
       if (operator) {
         let result = operator.operation(value);
         this.push(Math.floor(result));
@@ -527,7 +527,7 @@ class VirtualMachine {
 
     // Binary operators
     } else if (BINARY_OPERATORS[mnemonic]) {
-      let result = BINARY_OPERATORS[mnemonic](this.top, argument);
+      let result = BINARY_OPERATORS[mnemonic](this.top, operand);
       if (typeof result === 'number') {
         this.top = result;
       } else {
@@ -539,7 +539,7 @@ class VirtualMachine {
     //  a boolean value in AX indication if the instruction completed
 
     } else if (opcode >= 0x30) {
-      this.top = this.world.handleInstruction(this.special, opcode, this.top, argument);
+      this.top = this.world.handleInstruction(this.special, opcode, this.top, operand);
 
     } else {
       throw `${this.pc}: invalid opcode ${opcode} ${mnemonic}`;
@@ -757,7 +757,7 @@ class Assembler {
             this.emit(inst, STACK_MODE_FLAG);
 
           } else {
-            "INST ARG  ; instruction with an immediate argument"
+            "INST ARG  ; instruction with an immediate operand"
 
             if (typeof arg === 'number') {
               this.emit(inst, arg);
@@ -1059,19 +1059,19 @@ class World {
   static mnemonics = reverseMapIntoArray(World.opcodes);
 
 
-  handleInstruction(special, opcode, top, argument) {
+  handleInstruction(special, opcode, top, operand) {
     let mnemonic = World.mnemonics[opcode];
 
     if (mnemonic === 'walk') {
       if (special[SPECIAL.FATIGUE] >= special[SPECIAL.ENERGY]) {
-          // || Math.abs(argument) > 150) {
+          // || Math.abs(operand) > 150) {
         // Unable to walk
         return 0;
       }
 
       let latitude = special[SPECIAL.LATITUDE];
       let longitude = special[SPECIAL.LONGITUDE];
-      let direction = argument;
+      let direction = operand;
       if (direction === 0) {
         latitude -= 1;
         if (latitude < 0) return 0;
@@ -1102,11 +1102,11 @@ class World {
       /*
       this fatigue dynamic could be cool but let's start simple
 
-        if (Math.random() < (Math.abs(argument) - 75) / 50)
+        if (Math.random() < (Math.abs(operand) - 75) / 50)
           special[SPECIAL.FATIGUE] += 1;
         let a = special[SPECIAL.FACING] * Math.PI / 180;
-        let speed = special[SPECIAL.SPEED] * argument / 100; // TODO limits etc
-        if (argument < 0) speed *= 0.5;  // walking backwards is half as fast
+        let speed = special[SPECIAL.SPEED] * operand / 100; // TODO limits etc
+        if (operand < 0) speed *= 0.5;  // walking backwards is half as fast
         special[SPECIAL.LATIUDE] += Math.sin(a) * speed;
         special[SPECIAL.LONGITUDE] += Math.cos(a) * speed;
         special[SPECIAL.AX] = 1;
@@ -1114,13 +1114,13 @@ class World {
 
       /*
     } else if (mnemonic === 'face') {
-      special[SPECIAL.FACING] = argument;
+      special[SPECIAL.FACING] = operand;
       special[SPECIAL.AGE] += 1;
       special[SPECIAL.AX] = 1;
       */
 
     } else if (mnemonic === 'act') {
-      let action = ACTIONS[argument];
+      let action = ACTIONS[operand];
       return action ? action.action(special) || 0 : 0;
 
     } else  if (mnemonic === 'buy') {
@@ -1129,16 +1129,16 @@ class World {
       this.passTime(special, 1);
       if (special[INVENTORY_GOLD] < price) return 0;
       special[INVENTORY_GOLD] -= price;
-      special[argument] += qty;
+      special[operand] += qty;
       return qty;
 
     } else  if (mnemonic === 'sell') {
       let qty = top;
       let price = qty * 1;
       this.passTime(special, 1);
-      if (special[argument] < qty) return 0;
+      if (special[operand] < qty) return 0;
       special[INVENTORY_GOLD] += price;
-      special[argument] -= qty;
+      special[operand] -= qty;
       return qty;
 
     } else if (mnemonic === 'cast') {
@@ -1151,7 +1151,7 @@ class World {
       // TODO check for availabliltiy of spell
       // TODO check mana requirements
       this.passTime(special, 1);
-      let spell = SPELLS[argument];
+      let spell = SPELLS[operand];
       if (!spell) return false;
       return spell.effect() || 0;
 
