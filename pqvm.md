@@ -24,7 +24,7 @@ architecture, which includes:
 	  the main memory area with the code and data.
 
 Every machine instruction shares the same addressing scheme, which packs an
-unsigned 6-bit opcode and a signed 10-bit argument into a single 16-bit
+unsigned 6-bit opcode and a signed 10-bit operand into a single 16-bit
 instruction.
 
 
@@ -63,8 +63,8 @@ They are:
   register.
 
 * DS, the data segment register, at memory location -4. A small number of
-  instructions add the value of DS to their argument to derive an address.
-  This may be useful for data that is out of reach of instruction arguments,
+  instructions add the value of DS to their operand to derive an address.
+  This may be useful for data that is out of reach of instruction operands,
   which can range only as high as 511.
 
 * INT_R, the response interrupt vector, at memory location -5. A subroutine to
@@ -81,17 +81,17 @@ Every instruction is stored within a single 16-bit word. The instruction
 consists of two parts:
 
 * opcode: An unsigned 6-bit integer value
-* argument: A signed 10-bit integer value
+* operand: A signed 10-bit integer value
 
 The two are encoded in a 16 instruction by the bitwise operation:
 
-	opcode | (argument << 6)
+	opcode | (operand << 6)
 
-In the case where the argument has value -512 (hexadecimal 0x200), before
+In the case where the operand has value -512 (hexadecimal 0x200), before
 executing the instruction, the top value is removed from the stack and used
-as the argument instead. That is, in pseudocode:
+as the operand instead. That is, in pseudocode:
 
-	argument = MEMORY[SP]
+	operand = MEMORY[SP]
 	SP = SP + 1
 
 Following this, PC is incremented. Then the instruction is executed in an
@@ -105,11 +105,11 @@ Instructions
 ============
 
 Instructions are listed by their numeric opcode and mnemonic. Each instruction
-is provided with a argument, supplied as an immediate value as part of the
+is provided with a operand, supplied as an immediate value as part of the
 instruction. The immediate value, however may take on one of two special
-value that signal that the instuction argument is to be either taken from the
+value that signal that the instuction operand is to be either taken from the
 stack, or else found inline following the instruction. It all three cases the
-number arrived at is referred to as "argument".
+number arrived at is referred to as "operand".
 
 A value removed from the stack is called "pop". That is, in the case
 that "pop" is used, the stack is shrunk by one and what had been the top value is
@@ -131,7 +131,7 @@ Control Flow Instruction
 
 ### $0 halt
 
-Halt program execution. The machine stops running. Argument is ignored.
+Halt program execution. The machine stops running. operand is ignored.
 
 
 ### $2 `_jmp`
@@ -141,14 +141,14 @@ different semantics in the immediate-addressed and stack-addressed forms. The
 awkward naming is meant to warn assmbly programmers away from directly using
 `_jmp` in favor of the `.jump` directive instead.
 
-In the stack-addressed form PC takes on the value of argument.
+In the stack-addressed form PC takes on the value of operand.
 
-	PC = argument
+	PC = operand
 
-whereas with immediate addressing, the argument is an offset from the current
+whereas with immediate addressing, the operand is an offset from the current
 value of PC:
 
-	PC += argument
+	PC += operand
 
 
 ### $B branch
@@ -163,13 +163,13 @@ forms. It is less error-prone to use the `.branch` directive instead.
 When stack addressing is used, the pseudocode is:
 
 	if MEMORY[SP++] != 0 {
-		PC = argument
+		PC = operand
 	}
 
 whereas with immediate addressing, it is:
 
 	if MEMORY[SP++] != 0 {
-		PC += argument
+		PC += operand
 	}
 
 
@@ -182,7 +182,7 @@ Assertion of expected equality.
 If the value on the top of the stack does not equal the parameter, throw an
 exception.
 
-	if MEMORY[SP++] != argument {
+	if MEMORY[SP++] != operand {
 		throw
 	}
 
@@ -195,7 +195,7 @@ Stack and Memory Instructions
 
 Push a value onto the stack.
 
-	MEMORY[--SP] = argument
+	MEMORY[--SP] = operand
 
 
 ### $1C stack
@@ -203,9 +203,9 @@ Push a value onto the stack.
 Push the ensuing data onto the stack. This instruction behaves somewhat
 differently from most others as it inserts for non-instruction data to be
 inlined in the code. It's useful especially for values outside the range of
-what can be represented as an immediate argument.
+what can be represented as an immediate operand.
 
-	repeat `argument` times {
+	repeat `operand` times {
 		MEMORY[--SP] = MEMORY[PC++]
 	}
 
@@ -214,12 +214,12 @@ what can be represented as an immediate argument.
 
 Remove or reserve values on the stack
 
-	SP = SP - argument
+	SP = SP - operand
 
 Equivalent to
 
 	fetch SP
-	add argument
+	add operand
 	store SP
 
 which is kind of wordy, so it seems worth keeping, but maybe better to have an
@@ -247,19 +247,19 @@ useful.
 
 Fetch a value at a memory location and store it in the stack.
 
-	MEMORY[--SP] = MEMORY[argument]
+	MEMORY[--SP] = MEMORY[operand]
 
 
 ### $F fetchdata
 
 Fetch a value at a [distant] memory location and store it in the stack.
 
-	MEMORY[--SP] = MEMORY[DS + argument]
+	MEMORY[--SP] = MEMORY[DS + operand]
 
 Equivalent to
 
 	fetch DS
-	add argument
+	add operand
 	fetch
 	push
 
@@ -271,27 +271,27 @@ hard for immediates.
 
 Set a value in memory to a value removed from the stack.
 
-	MEMORY[argument] = MEMORY[SP++]
+	MEMORY[operand] = MEMORY[SP++]
 
 
 ### $6 storedata
 
 Store a value in [distant] memory.
 
-	MEMORY[DS + arguments] = MEMORY[SP++]
+	MEMORY[DS + operands] = MEMORY[SP++]
 
 
 ### $1F peek
 
 Peek on the stack.
 
-	MEMORY[SP] = MEMORY[SP + argument]
+	MEMORY[SP] = MEMORY[SP + operand]
 	SP--
 
 Same as
 
 	fetch SP
-	add argument
+	add operand
 	fetch
 	store SP
 	dec SP
@@ -301,7 +301,7 @@ Same as
 
 Set a value stored on the stack to the value popped from the stack.
 
-	MEMORY[SP + argument] = MEMORY[SP]
+	MEMORY[SP + operand] = MEMORY[SP]
 	SP++
 
 
@@ -311,14 +311,14 @@ Mathematical Instructions
 ### $10 unary
 
 Apply a unary operation to the value at the top of the stack. The operation is
-determined by the value of argument.
+determined by the value of operand.
 
-	MEMORY[SP] = UNARY_OPERATIONS[argument](MEMORY[SP])
+	MEMORY[SP] = UNARY_OPERATIONS[operand](MEMORY[SP])
 
 A list of unary operations is forthcoming.
 
 All other math instructions are binary operations. All use a value popped from
-the stack as their first argument, and `argument` as their second argument.
+the stack as their first operand, and `operand` as their second operand.
 The result is returned to the stack. So to clarify, in the assembly code
 snippet:
 
@@ -334,75 +334,75 @@ it is 3 that is subtracted from 5, not the other way around, and likewise in
 
 ### $20 max
 
-	MEMORY[SP] = max(MEMORY[SP], argument)
+	MEMORY[SP] = max(MEMORY[SP], operand)
 
 ### $21 min
 
-	MEMORY[SP] = min(MEMORY[SP], argument)
+	MEMORY[SP] = min(MEMORY[SP], operand)
 
 ### $22 add
 
-	MEMORY[SP] += argument
+	MEMORY[SP] += operand
 
 ### $23 sub
 
-	MEMORY[SP] -= argument
+	MEMORY[SP] -= operand
 
 ### $24 mul
 
-	MEMORY[SP] *= argument
+	MEMORY[SP] *= operand
 
 ### $27 div
 
-Divide the top stack value in place by the argument. Additionally, the
+Divide the top stack value in place by the operand. Additionally, the
 remainder (e.g. the modulus of the two parameters) is placed in AUX:
 
-	MEMORY[SP] /= argument
-	AUX = MEMORY[SP] % argument
+	MEMORY[SP] /= operand
+	AUX = MEMORY[SP] % operand
 
 
 ### $25 atan2
 
-Calculates the arctangent of top/argument. Result is in degrees. The fractional part is stored in AUX.
+Calculates the arctangent of top/operand. Result is in degrees. The fractional part is stored in AUX.
 
 	fractional(t - Math.floor(t))
-	var degress = atan2(MEMORY[SP], argument) * 180/π
+	var degress = atan2(MEMORY[SP], operand) * 180/π
 	MEMORY[SP] = floor(degrees)
 	AUX = frac(degrees)
 
 ### $26 pow
 
-	MEMORY[SP] = MEMORY[SP] ^ argument
+	MEMORY[SP] = MEMORY[SP] ^ operand
 
 ### $28 or
 
 Bitwise or
 
-	MEMORY[SP] |= argument
+	MEMORY[SP] |= operand
 
 ### $29 and
 
 Bitwise and
 
-	MEMORY[SP] &= argument
+	MEMORY[SP] &= operand
 
 ### $2A xor
 
 Bitwise exclusive or
 
-	MEMORY[SP] ^= argument
+	MEMORY[SP] ^= operand
 
 ### $2B shift
 
-Shift the bits of item on the top of the stack left (if argument is negative) or right (if it is positive). Additionally, the shifted-off bits are placed in AUX, but at the
+Shift the bits of item on the top of the stack left (if operand is negative) or right (if it is positive). Additionally, the shifted-off bits are placed in AUX, but at the
 opposite end, as if they were rotated off of the top-of-stack value.
 
-	MEMORY[SP] = MEMORY[SP] << -argument  ; if argument is negative
+	MEMORY[SP] = MEMORY[SP] << -operand  ; if operand is negative
 	AUX = <a slightly complicated expression>
 
 Or
 
-	MEMORY[SP] = MEMORY[SP] >> argument  ; if argument is positive
+	MEMORY[SP] = MEMORY[SP] >> operand  ; if operand is positive
 	AUX = <a slightly complicated expression>
 
 The bit rotation by the same amount may thus be computed after bit shifting as:
@@ -414,9 +414,9 @@ Gameplay Instructions
 ---------------------
 
 Opcodes $30 through $37 are game-specific interactions with the game world.
-Each passes their the value at the top of the stack and the argument to a game world handler function, which returns that replaces the top stack value. In pseudocode:
+Each passes their the value at the top of the stack and the operand to a game world handler function, which returns that replaces the top stack value. In pseudocode:
 
-	MEMORY[SP] = game.handleInstruction(opcode, MEMORY[SP], argument)
+	MEMORY[SP] = game.handleInstruction(opcode, MEMORY[SP], operand)
 
 The world-specific handler may affect any of the game-specific special memory,
 but is not expected to alter the registers or main memory in any way.
@@ -431,7 +431,7 @@ but is not expected to alter the registers or main memory in any way.
   // Face a direction, given an angle in degrees
 
 ### $32 act
-  // Do an action with argument giving action type
+  // Do an action with operand giving action type
 
 ### $33 cast
   // cast N : ... => ...
