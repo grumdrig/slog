@@ -242,14 +242,14 @@ class TestGame {
 
   static mnemonics = reverseMapIntoArray(TestGame.opcodes);
 
-  handleInstruction(special, opcode, top, argument) {
+  handleInstruction(state, opcode, top, argument) {
     let mnemonic = TestGame.mnemonics[opcode];
 
     if (mnemonic === 'walk') {
-      special[SPECIAL.TERRAIN] = Math.floor(Math.random() * 100);
-      return special[SPECIAL.TERRAIN];
+      state[SPECIAL.TERRAIN] = Math.floor(Math.random() * 100);
+      return state[SPECIAL.TERRAIN];
     } else {
-	    return ++special[16 + opcode - 0x30];
+	    return ++state[16 + opcode - 0x30];
 	  }
   }
 }

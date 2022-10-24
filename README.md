@@ -332,32 +332,32 @@ Maybe just a real simple 5x5 map or something.
 	!v_F_#
 
 	+----------+----------+----------+----------+----------+----------+
-	|          |          |          |          |          |          |
+	| Watha    | Maak     | Wolfin   |  Hohamp  |  Skiddo  | Chinbreak|
 	|  tundra  |  tundra  |  forest  |  town    |  hill    | mountain |
 	|          |          |          |  dwarf   |          |          |
 	|          |          |          |          |          |          |
 	+----------+----------+----------+----------+----------+----------+
-	|          |          |          |          |          |          |
+	|  Yar     | Deepni   | Barkmot  | Goldona  | Breezeby |          |
 	|  town    |  forest  |  forest  |  hill    | mountain |  forest  |
 	|  eff     |          |          |          |          |          |
 	|          |          |          |          |          |          |
 	+----------+----------+----------+----------+----------+----------+
-	|          |          |          |          |          |  HOME    |
+	|          |          | Skidge   | Krako    | Sprue    |H Bompton |
 	|  forest  |  hill    | mountain | mountain |  forest  |  town    |
 	|          |          |          |          |          | dunkling |
 	|          |          |          |          |          |          |
 	+----------+----------+----------+----------+----------+----------+
-	|          |          |          |          |          |          |
+	|          | Blue Mist|  Pillary | Grein    | Woofa    | Hallon   |
 	|  plain   | mountain |  town    |  hill    |  plain   |  plain   |
 	|          |          |  dwarf   |          |          |          |
 	|          |          |          |          |          |          |
 	+----------+----------+----------+----------+----------+----------+
-	|          |          |          |          |          |          |
+	| Donga    | Panar    |          | Apapay   | Delial   | Solla    |
 	|  marsh   |  plain   |  forest  |  forest  |  town    | desert   |
 	|          |          |          |          | dunkling |          |
 	|          |          |          |          |          |          |
 	+----------+----------+----------+----------+----------+----------+
-	|          |          |          |          |          |          |
+	| Cholar   | Ritoll   | Arapet   | Wheewit  | Enotor   | Noonaf   |
 	|  town    |  marsh   |  plain   |  forest  |  plain   | desert   |
 	| dunkling |          |          |          |          |          |
 	|          |          |          |          |          |          |
@@ -453,26 +453,33 @@ Different
 * npc species
 
 Yar:
+	0,1
 	Good for training wisdom.
 	Eff
 
-Bompton:
-	Good for charisma
-	Dunkling
-
 Pillary:
+	2,3
 	Good for strength
 	Hardwarf
 
 Hohamp:
+	3,0
 	Good for constitution
 	Hardwarf
 
+Bompton:
+	5,2
+	Good for charisma
+	Dunkling
+	HOME
+
 Cholar:
+	0,5
 	Good for intelligence
 	Dunkling
 
 Delial:
+	4,4
 	Good for agility
 	Dunkling
 
@@ -588,9 +595,43 @@ Friendliness with the fantasy race 3 effs (one town)
 *
 
 
-
 ### Um...
 
 For progress bars, pause the machine every player action, I guess.
 
 This is starting to look a bit like the complicated original-ish idea.
+
+For training stats and spells, maybe just have a % chance of success rather
+than keeping track of progress. Less info to manage, but otoh it better to
+have less randomness I think
+
+
+### Charcter race
+
+Maybe we should belong to one of the races.
+
+Who       Values   Disdains
+--------- -------- ----------
+Nerflings Hardwarf Eff
+Eff       Nerfling Hardwarf
+Hardwarf  Eff      Nerfling
+
+
+### Character class
+
+Might affect weapon options, some stat-learning bias, etc
+
+
+### Initialization
+
+Start at level 0. None of the external calls work except initialize() and
+startGame(). Give character 8 points to assign to stats via initialize() also
+set the race and class slots. Then call startGame().
+
+
+Nomenclature
+------------
+
+Change "special" to "state". (But registers are not "state" strictly speaking.
+They're registers.)
+

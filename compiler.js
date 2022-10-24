@@ -66,7 +66,6 @@ class Source {
 	}
 
 	tryConsume(...tokens) {
-		console.log(tokens);
 		if (!this.lookahead(...tokens)) return false;
 		this.lexemes = this.lexemes.slice(tokens.length);
 		return true;
@@ -1102,23 +1101,16 @@ class PostfixExpression {
 				}
 				if (func.external) {
 					for (let a of args) a.generate(context)
-					context.emit(func.value.opcode);
+					context.emit(func.value.opcode + '  ; external ' + lhs.identifier + '()');
 				} else {
-					// context.assert(lhs.identifier, 'function identifier expected');
-
-					// if (func.opcode) {
-					// 	// external opcode
-					// } else {
-						// regular function call
-						context.emit('.stack 0 ; return value');
-						context.emit('fetch PC');
-						context.emit('fetch FP');
-						for (let a of args) { a.generate(context) }
-						context.emit('fetch SP');
-						context.emit('sub ' + args.length);
-						context.emit('store FP');
-						context.emit('.jump ' + lhs.identifier);
-					// }
+					context.emit('.stack 0 ; return value');
+					context.emit('fetch PC');
+					context.emit('fetch FP');
+					for (let a of args) { a.generate(context) }
+					context.emit('fetch SP');
+					context.emit('sub ' + args.length);
+					context.emit('store FP');
+					context.emit('.jump ' + lhs.identifier);
 				}
 			},
 		},
