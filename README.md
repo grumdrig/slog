@@ -189,7 +189,8 @@ Physical world:
 	  fireball
 	  heal
 	  haste
-	  talk (results in journalled conversation?)
+
+  	TALK: (results in journalled conversation?)
 
 	JOURNAL N: add character to journal of limited length
 
@@ -309,3 +310,287 @@ INFORMATION RETURNED
 
 Can you watch the whole game? Or just see the final state?
 
+
+PQ6
+===
+
+Maybe the thing to start out with is something pretty close to PQ 6. Even
+closer, that is, than the above. As simply as can be.
+
+* travel(location)
+
+Relocate to town or else the killng fields, or one of many such. Some might be good for completing quests, some might be good for gaining xp, some for training.
+CON helps
+
+Maybe just a real simple 5x5 map or something.
+
+	~~F!mM
+	!vFmMF
+	FmMMF!
+	_M!m__
+	v_FF!#
+	!v_F_#
+
+	+----------+----------+----------+----------+----------+----------+
+	|          |          |          |          |          |          |
+	|  tundra  |  tundra  |  forest  |  town    |  hill    | mountain |
+	|          |          |          |  dwarf   |          |          |
+	|          |          |          |          |          |          |
+	+----------+----------+----------+----------+----------+----------+
+	|          |          |          |          |          |          |
+	|  town    |  forest  |  forest  |  hill    | mountain |  forest  |
+	|  eff     |          |          |          |          |          |
+	|          |          |          |          |          |          |
+	+----------+----------+----------+----------+----------+----------+
+	|          |          |          |          |          |  HOME    |
+	|  forest  |  hill    | mountain | mountain |  forest  |  town    |
+	|          |          |          |          |          | dunkling |
+	|          |          |          |          |          |          |
+	+----------+----------+----------+----------+----------+----------+
+	|          |          |          |          |          |          |
+	|  plain   | mountain |  town    |  hill    |  plain   |  plain   |
+	|          |          |  dwarf   |          |          |          |
+	|          |          |          |          |          |          |
+	+----------+----------+----------+----------+----------+----------+
+	|          |          |          |          |          |          |
+	|  marsh   |  plain   |  forest  |  forest  |  town    | desert   |
+	|          |          |          |          | dunkling |          |
+	|          |          |          |          |          |          |
+	+----------+----------+----------+----------+----------+----------+
+	|          |          |          |          |          |          |
+	|  town    |  marsh   |  plain   |  forest  |  plain   | desert   |
+	| dunkling |          |          |          |          |          |
+	|          |          |          |          |          |          |
+	+----------+----------+----------+----------+----------+----------+
+
+6x6 looks like it might be better if I have 6 towns
+
+Some places might have min requirements to enter (equipment, spell, level, etc)
+
+Can you travel to anywhere? Or do you have to go step by step?
+
+Locations are the usual (6 * row + column) coordinate
+
+* execute(): Fight the mob that's there (Ill effects if done in town!)
+
+There's a not-too-long list of mobs and what they drop.
+This causes some damage and may kill you.
+STR or DEX depending on weapon
+
+* sell(slot, qty)
+
+Sell anything you have that's saleable. Or make them select a slot.
+Maybe you get 0 for stuff if you're not at a store (so it's also drop())
+CHA helps
+INT helps?
+
+qty 0 to ask price
+
+* buy(equipment_slot, level)
+
+Upgrade equipment
+CHA helps prices
+WIS helps?
+
+0 to ask price
+
+* seekquest()
+
+Get yourself a quest.
+Maybe it has a location you have to walk to too.
+You can seek to abandon a quest.
+CHA helps
+
+* completequest()
+
+Once progress is full, get spoils.
+
+* study(spell)
+
+Learn or upgrade a spell.
+Different locationas are better for certain spells.
+INT helps
+
+* train(stat)
+
+Different locations will be better for training certain stats.
+DEX helps with STR and CON
+INT helps with CHA and WIS
+
+* cast(spell)
+
+Uses energy, natch.
+INT or WIS depending on spell
+
+* bell(freq)
+
+Plays a sound effect
+CHA helps
+
+* forage()
+
+Look for good stuff to add to inventory
+INT helps
+
+* levelup()
+
+CON helps HP
+WIS helps MP or is it energy?
+
+* give(slot)
+
+Spurs along quests
+
+
+### Towns
+
+Different
+* prices,
+* stat training,
+* spell training,
+* available equipment?,
+* quests
+* npc species
+
+Yar:
+	Good for training wisdom.
+	Eff
+
+Bompton:
+	Good for charisma
+	Dunkling
+
+Pillary:
+	Good for strength
+	Hardwarf
+
+Hohamp:
+	Good for constitution
+	Hardwarf
+
+Cholar:
+	Good for intelligence
+	Dunkling
+
+Delial:
+	Good for agility
+	Dunkling
+
+### Locations
+
+Need a bunch of places to seek monsters. Is that everywhere else? Different mob per area?
+
+
+### Mobs (say 12 but with different variations that make them stronger?)
+
+Maybe just level 1, level 2, etc. But I've got here some scarier names to sub
+in at higher levels:
+
+* Parakeet / Triplikeet
+
+plains
+
+* Pig / Supersow
+
+hills
+
+* Gegnome / Megegnome
+
+forest
+
+* Giant Flea / Flealord
+
+desert
+
+* Zorc / Zigzorc
+
+mountains
+
+* Baklakesh / Wuntrakesh
+
+marsh
+
+* Plasterbear / Fasterbear
+
+tundra
+
+
+### Spells
+
+	* fireball: kill a monster sans damage
+	* heal: heal, just like it says
+	* haste: walk faster
+	* buff: make stronger or whatever temporarily
+	* invisibility: it's just cool
+	* luck: increase drops for a while
+
+### Registers
+
+Level
+XP
+HP
+Health
+MP
+Mana
+STR
+DEX
+CON
+WIS
+INT
+CHA
+training remaining for each of these spells
+.
+.
+.
+.
+.
+Active enchantment
+Spell1 level heal
+Spell2 level fireball
+Spell3 level haste
+Spell4 level buff
+Spell5 level luck
+Spell6 level
+training remaining for each of these spells
+.
+.
+.
+.
+.
+Equipment1 level weapon
+Equipment2 level helm
+Equipment3 level shield
+Equipment4 level armor
+Equipment5 level footwear
+Equipment6 level jewelry
+Inventory1 qty gold (buy with it)
+Inventory2 qty spoils (sell it)
+Inventory3 qty reagents (cast w/ it)
+Inventory4 qty gathered shit (sell it)
+Inventory5 qty food (eat it)
+Inventory6 qty potions (heal & mana up)
+Encumbrance
+Quest monster or item (by slot)
+Quest qty (# required)
+Quest completion (# remaining)
+Quest originator/benefactor (town location)
+Act # (up to 9, finish to win)
+Act % completion (as advanced by quests)
+Friendliness with the fantasy race 1 dunklings (3 towns)
+Friendliness with the fantasy race 2 hardwarves (2 towns)
+Friendliness with the fantasy race 3 effs (one town)
+
+
+### Quests
+
+* Give # of something to somewhere
+* Kill # mobs
+*
+
+
+
+### Um...
+
+For progress bars, pause the machine every player action, I guess.
+
+This is starting to look a bit like the complicated original-ish idea.
