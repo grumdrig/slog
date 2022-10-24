@@ -437,7 +437,7 @@ class VirtualMachine {
 
     } else if (mnemonic === 'assert') {
       if(this.top !== operand) {
-        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != arg ${operand}`);
+        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != operand ${operand}`);
         throw "assertion failure";
       }
 
@@ -649,7 +649,7 @@ class Assembler {
       tokens = tokens.map(t => typeof symbols[t] === 'undefined' ? t : symbols[t]);
 
       let inst = tokens[0];   // though it may also not be an actual inst
-      let arg = tokens[1];    // though it may also be an operator
+      let operand = tokens[1];    // though it may also be an operator
       let third = tokens[2];  // though there may not be a third
 
       if (this.macroInProgress) {
@@ -663,13 +663,13 @@ class Assembler {
 
       else if (tokens.length > 0) {
 
-        if (tokens.length === 2 && arg === ':') {
+        if (tokens.length === 2 && operand === ':') {
           "LABEL:"
           this.assert(is_identifier(inst), "identifier expected");
           this.assert(!this.labels[inst], "label already defined");
           this.labels[inst] = this.pc
 
-        } else if (arg === '=') {
+        } else if (operand === '=') {
           "NAME = VALUE ;  symbolic constant"
           this.assert(tokens.length === 3, "invalid constant definition");
           this.assert(typeof third === 'number', "numeric value expected: " + third);
@@ -678,10 +678,10 @@ class Assembler {
         } else if (inst === toLowerCase('.macro')) {
           this.assert(tokens.length >= 2, "macro name expected");
 
-          ".macro NAME [ARGS...]  ; begin macro definition"
-          this.macroInProgress = arg;
-          this.macros[arg] = {
-            name: arg,
+          ".macro NAME [operandS...]  ; begin macro definition"
+          this.macroInProgress = operand;
+          this.macros[operand] = {
+            name: operand,
             parameters: tokens.slice(2),
             body: []
           }
@@ -718,22 +718,22 @@ class Assembler {
 
         } else if (inst === toLowerCase('.line')) {
           this.assert(tokens.length === 2, "expected '.line LINE_NUMBER'");
-          this.assert(typeof arg === 'number', "numeric value expected");
-          this.line_no_adjustment = arg - this.line_no;
+          this.assert(typeof operand === 'number', "numeric value expected");
+          this.line_no_adjustment = operand - this.line_no;
 
         } else if (inst === toLowerCase('.jump')) {
           this.assert(tokens.length === 2, "label of target for jump (only) expected");
-          this.assert(typeof arg === 'string', "label of target for jump expected");
+          this.assert(typeof operand === 'string', "label of target for jump expected");
           // TODO: immediate mode
           this.emit(MNEMONICS._jmp, INLINE_MODE_FLAG);
-          this.data(arg);
+          this.data(operand);
 
         } else if (inst === toLowerCase('.branch')) {
           this.assert(tokens.length === 2, "label of target for branch (only) expected");
-          this.assert(typeof arg === 'string', "label of target for branch expected");
+          this.assert(typeof operand === 'string', "label of target for branch expected");
           // TODO: immediate mode
           this.emit(MNEMONICS._br, INLINE_MODE_FLAG);
-          this.data(arg);
+          this.data(operand);
 
         } else if (this.macros[inst]) {
 
@@ -749,7 +749,7 @@ class Assembler {
           this.parse(m.body, ss);
 
         } else if (typeof inst === 'number') {
-          "INST [ARG]  ; a regular instruction"
+          "INST [OPERAND]  ; a regular instruction"
           this.assert(tokens.length <= 2, "unexpected characters following instruction");
 
           if (tokens.length === 1) {
@@ -757,12 +757,12 @@ class Assembler {
             this.emit(inst, STACK_MODE_FLAG);
 
           } else {
-            "INST ARG  ; instruction with an immediate operand"
+            "INST operand  ; instruction with an immediate operand"
 
-            if (typeof arg === 'number') {
-              this.emit(inst, arg);
+            if (typeof operand === 'number') {
+              this.emit(inst, operand);
             } else {
-              this.forwardCodeReferences[this.pc] = arg;
+              this.forwardCodeReferences[this.pc] = operand;
               this.emit(inst, 0);
             }
 
