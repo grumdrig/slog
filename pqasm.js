@@ -131,25 +131,135 @@ let slots = {
 	"Act", // (up to 9, 10 = win)
 	"ActDuration", // # of something required
 	"ActProgress", // as advanced by quests
-	"Friendliness1", // with the fantasy race 1 dunklings (3 towns)
-	"Friendliness2", // with the fantasy race 2 hardwarves (2 towns)
-	"Friendliness3", // with the fantasy race 3 effs (one town)
+	"Esteem1", // with the fantasy race 1 dunklings (3 towns)
+	"Esteem2", // with the fantasy race 2 hardwarves (2 towns)
+	"Esteem3", // with the fantasy race 3 effs (one town)
 }
 
 
 const RACES = [
 	dunkling: {
-		number: 1,
+		name: "Dunkling",
+		aka: "Nerfling",
+		index: 1,
+		esteems: 2,
+		waryof: 3,
+		proficiency: BLADE,
+		badat: BOW,
+		stat_mods: {
+			DEX: +2,
+			CHA: +1,
+			STR: -1,
+			WIS: -2,
+		},
+		description: "Likable, lithe creatures of small stature, often underestimated",
+		startingitems: { weapon: 2, hat: 1, food: 1 },
 	},
 	hardwarf: {
-		number: 2,
+		name: "Hardwarf",
+		plural: "Hardwarves",
+		index: 2,
+		esteems: 3,
+		waryof: 1,
+		proficiency: SMASH,
+		badat: BLADE
+		stat_mods: {
+			CON: +2,
+			STR: +1,
+			DEX: -1,
+			INT: -2,
+		},
+		description: "Sturdy sorts with a direct approch to problems",
+		startingitem: { weapon: 1, shield: 1, gold: 1 },
 	},
 	eff: {
-		number: 3,
+		name: "Eff",
+		index: 3,
+		esteems: 1,
+		waryof: 2,
+		proficiency: BOW,
+		badad: SMASH,
+		stat_mods: {
+			INT: +2,
+			WIS: +1,
+			CON: -1,
+			CHA: -2,
+		},
+		description: "Proud, sometimes haughty, intellectuals",
+		startingitem: { weapon: 3, shoes: 1, reagent: 1 },
+	}
+];
+
+const MOBS = [
+	{
+		name: "Parakeet",
+		badassname: "Triplikeet",
+		domain: PLAINS,
+		hitdice: 1,
+	}, {
+		name: "Pig",
+		bigname: "Spectral Pig",
+		badassname: "Supersow",
+		domain: HILLS,
+		hitditce: 2,
+	}, {
+		name: "Gegnome",
+		badassname: "Megegnome",
+		domain: FOREST,
+		hitdice: 3,
+	}, {
+		name: "Giant Flea",
+		badassname: "Flealord",
+		domain: DESERT,
+		hitdice: 4,
+	}, {
+		name: "Zorc",
+		badassname: "Zigzorc",
+		domain: MOUNTAINS,
+		hitdice: 5,
+	}, {
+		name: "Trogor",
+		badassname: "Ortrogor"
+		domain: HILLS,
+		hitdice: 6,
+	}, {
+		name "Baklakesh",
+		badassname: "Huntrakesh",
+		domain: MARSH,
+		hitdice: 7
+	}, {
+		name: "Plasterbear",
+		badassname: "Fasterbear",
+		domain: TUNDRA,
+		hitdice: 8,
+	}, {
+		name: "Saberon",
+		badassname: "Supersaber",
+		domain: FOREST,
+		hitdice: 9,
+	}, {
+		name: "Komordem",
+		badassname: "Mokomordem",
+		domain: MOUNTAINS,
+		hitdice: 10,
+	}, {
+		name: "Icehalt",
+		badassname: "Ikkadrosshalt",
+		domain: TUNDRA,
+		hitdice: 11,
+	}, {
+		name: "Veilerwyrm",
+		badassname: "Veilerwyrmogon",
+		domain: DESERT,
+		hitdice: 12,
 	}
 ];
 
 class Game {
+	initialize(state) {
+		// Happens with the initialize / startgame ops
+	}
+
 	handleInstruction(state, opcode, arg1, arg2) {
 		if (state[level] === 0) {
 			// game hasn't begun
@@ -166,17 +276,20 @@ class Game {
 				if (!RACE_NAME[state[RACE]]) return -1;
 				if (!CLASS_NAME[state[CLASS]]) return -1;
 				// All good. Start the game.
+				add 3 to all stats
+				add class bonuses to all stats
 				state[LEVEL] = 1;
 				state[LOCATION] = 11;
 				state[HP] = 6 + state[CONSTITUTION];
 				state[MP] = 6 + state[INTELLIGENCE];
 				state[WEAPON] = 1;
+
 				return 1;
 			}
 			return -1;
 		}
 
-		// Game is already proceeding
+		// Game is in process
 		if (opcode === travel) {
 			const destination = arg1;
 			if (destination < 0 || destination >= MAP_W * MAP_H)
@@ -192,13 +305,17 @@ class Game {
 				y1 = (y1 < y0) ? y0 - 1 : y0 + 1;
 			}
 			state[LOCATION] = x1 + MAP_W * y1;
+			pass less time depending on speed
+			pass more time depending on terrain
 			this.passTime(0, 1);
 			return 1;
+
 		} else if (opcode === melee) {
 			take some damage
 			earn some xp
 			gain a drop
 			lose acclaim with species
+
 		} else if (opcode === buy) {
 			let slot = arg1;
 			if (equipmentslot(slot)) {
@@ -215,6 +332,7 @@ class Game {
 			state[slot] = level || (state[slot] + qty);
 			this.passTime(1, 0);
 			return qty;
+
 		} else if (opcode === sell || opcode === give) {
 			let [slot, qty] = [arg1, arg2];
 			if (isEquipmentSlot(slot)) {
@@ -232,6 +350,7 @@ class Game {
 			state[slot] = equipment ? 0 : state[slot] - qty;
 			this.passTime(1, 0);
 			return qty;
+
 		} else if (opcode === seekquest) {
 			this.passTime(1, 0);
 			if (!isTown(state[LOCATION])) return 0;
@@ -240,6 +359,7 @@ class Game {
 			state[QUESTPROGRESS] = 0;
 			state[QUESTGIVER] = state[LOCATION];
 			return 1;
+
 		} else if (opcode === completequest) {
 			if (!state[QUESTOBJECT]) return -1;
 			if (state[QUESTGIVER] != state[LOCATION]) return -1;
@@ -247,6 +367,7 @@ class Game {
 			get quest rewards
 			wipe quest info
 			return 1;
+
 		} else  if (opcode === train) {
 			let slot = arg1;
 			if (!inTown(state[LOCATION])) return -1;
@@ -258,6 +379,7 @@ class Game {
 			} else {
 				return 0;
 			}
+
 		} else if (opcode === cast) {
 			let slot = arg1;
 			if (!spellslot(slot)) return -1;
@@ -269,8 +391,10 @@ class Game {
 			state[FATIGUE] += manaused;
 			do something depending on spell
 			return 1;
+
 		} else if (opcode === forage) {
 			with some chance incrememt forage inventory
+
 		} else if (opcode === levelup) {
 			if (state[XP] <= xpNeededForLeve(state[LEVEL] + 1))
 				return 0;

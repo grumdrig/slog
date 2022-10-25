@@ -322,55 +322,6 @@ closer, that is, than the above. As simply as can be.
 Relocate to town or else the killng fields, or one of many such. Some might be good for completing quests, some might be good for gaining xp, some for training.
 CON helps
 
-Maybe just a real simple 5x5 map or something.
-
-	~~F!mM
-	!vFmMF
-	FmMMF!
-	_M!m__
-	v_FF!#
-	!v_F_#
-
-	+----------+----------+----------+----------+----------+----------+
-	| Watha    | Maak     | Wolfin   |  Hohamp  |  Skiddo  | Chinbreak|
-	|  tundra  |  tundra  |  forest  |  town    |  hill    | mountain |
-	|          |          |          |  dwarf   |          |          |
-	|          |          |          |          |          |          |
-	+----------+----------+----------+----------+----------+----------+
-	|  Yar     | Deepni   | Barkmot  | Goldona  | Breezeby |          |
-	|  town    |  forest  |  forest  |  hill    | mountain |  forest  |
-	|  eff     |          |          |          |          |          |
-	|          |          |          |          |          |          |
-	+----------+----------+----------+----------+----------+----------+
-	|          |          | Skidge   | Krako    | Sprue    |H Bompton |
-	|  forest  |  hill    | mountain | mountain |  forest  |  town    |
-	|          |          |          |          |          | dunkling |
-	|          |          |          |          |          |          |
-	+----------+----------+----------+----------+----------+----------+
-	|          | Blue Mist|  Pillary | Grein    | Woofa    | Hallon   |
-	|  plain   | mountain |  town    |  hill    |  plain   |  plain   |
-	|          |          |  dwarf   |          |          |          |
-	|          |          |          |          |          |          |
-	+----------+----------+----------+----------+----------+----------+
-	| Donga    | Panar    |          | Apapay   | Delial   | Solla    |
-	|  marsh   |  plain   |  forest  |  forest  |  town    | desert   |
-	|          |          |          |          | dunkling |          |
-	|          |          |          |          |          |          |
-	+----------+----------+----------+----------+----------+----------+
-	| Cholar   | Ritoll   | Arapet   | Wheewit  | Enotor   | Noonaf   |
-	|  town    |  marsh   |  plain   |  forest  |  plain   | desert   |
-	| dunkling |          |          |          |          |          |
-	|          |          |          |          |          |          |
-	+----------+----------+----------+----------+----------+----------+
-
-6x6 looks like it might be better if I have 6 towns
-
-Some places might have min requirements to enter (equipment, spell, level, etc)
-
-Can you travel to anywhere? Or do you have to go step by step?
-
-Locations are the usual (6 * row + column) coordinate
-
 * execute(): Fight the mob that's there (Ill effects if done in town!)
 
 There's a not-too-long list of mobs and what they drop.
@@ -483,9 +434,98 @@ Delial:
 	Good for agility
 	Dunkling
 
-### Locations
 
-Need a bunch of places to seek monsters. Is that everywhere else? Different mob per area?
+### Map
+
+
+	~~F!mM
+	!vFmMF
+	FmMMF!
+	_M!m__
+	v_FF!#
+	!v_F_#
+
+Key:
+	Name
+	Terrain
+	Denizen
+	Level
+
+	+----------+----------+----------+----------+----------+----------+
+	| Watha    | Maak     | Wolfin   |  Hohamp  |  Skiddo  | Chinbreak|
+	|  tundra  |  tundra  |  forest  |  town    |  hill    | mountain |
+	|          |          |          |  dwarf   |          |          |
+	|   7      |    5     |    2     |   0      |   1      |   7      |
+	+----------+----------+----------+----------+----------+----------+
+	|  Yar     | Deepni   | Barkmot  | Goldona  | Breezeby |  Iperko  |
+	|  town    |  forest  |  forest  |  hill    | mountain |  forest  |
+	|  eff     |          |          |          |          |          |
+	|   0      |   1      |    4     |   3      |   5      |   1      |
+	+----------+----------+----------+----------+----------+----------+
+	|  Blesh   |  Donday  | Skidge   | Krako    | Sprue    |H Bompton |
+	|  forest  |  hill    | mountain | mountain |  forest  |  town    |
+	|          |          |          |          |          | dunkling |
+	|  2       |    3     |   5      |   4      |   2      |   0      |
+	+----------+----------+----------+----------+----------+----------+
+	| Terfu    | Blue Mist|  Pillary | Grein    | Woofa    | Hallon   |
+	|  plain   | mountain |  town    |  hill    |  plain   |  plain   |
+	|          |          |  dwarf   |          |          |          |
+	|    3     |    1     |    0     |   3      |   2      |  1       |
+	+----------+----------+----------+----------+----------+----------+
+	| Donga    | Panar    | Owlholm  | Apapay   | Delial   | Solla    |
+	|  marsh   |  plain   |  forest  |  forest  |  town    | desert   |
+	|          |          |          |          | dunkling |          |
+	|   1      |   2      |   4      |   3      |  0       |   1      |
+	+----------+----------+----------+----------+----------+----------+
+	| Cholar   | Ritoll   | Arapet   | Wheewit  | Enotor   | Noonaf   |
+	|  town    |  marsh   |  plain   |  forest  |  plain   | desert   |
+	| dunkling |          |          |          |          |          |
+	|   0      |   4      |   6      |   5      |  4       |   5      |
+	+----------+----------+----------+----------+----------+----------+
+
+6x6 looks like it might be better if I have 6 towns
+
+Some places might have min requirements to enter (equipment, spell, level, etc)
+
+Can you travel to anywhere? Or do you have to go step by step?
+
+Locations are the usual (6 * row + column) coordinate
+
+
+### Terrain types
+
+Normal move cost is 1 day, say. Some are slower
+
+* Tundra
+
+
+* Forest
+
+	- Move cost 3
+
+* Town
+
+
+* Hill
+
+	- Move cost 2
+
+* Mountain
+
+	- Move cost 4
+
+* Plain
+
+	- Better food forage
+
+* Marsh
+
+	- Move cost 2.5
+	- No food forage
+
+* Desert
+
+	- No food forage
 
 
 ### Mobs (say 12 but with different variations that make them stronger?)
@@ -627,6 +667,18 @@ Might affect weapon options, some stat-learning bias, etc
 Start at level 0. None of the external calls work except initialize() and
 startGame(). Give character 8 points to assign to stats via initialize() also
 set the race and class slots. Then call startGame().
+
+
+### Proficiency
+
+Weapon types:
+0. Clubs
+1. Blades
+2. Bows
+
+Choose? Or determined by race? The latter I guess.
+
+Weapons numbered to that `N % 3` is the weapon type.
 
 
 Nomenclature
