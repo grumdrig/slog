@@ -761,3 +761,10 @@ Nomenclature
 Change "special" to "state". (But registers are not "state" strictly speaking.
 They're registers.)
 
+Stying
+------
+
+I just changed to XP styling. You have to
+
+	npm install xp.css
+
