@@ -19,64 +19,65 @@ external give(slot, quantity) = $3A
 external drop(slot, quantity) = $3A
 `
 
-const CALLS = [
+const CALLS = {
 	travel: {
-		parameters = 'destination',
-		opcode = 0x30,
+		parameters: 'destination',
+		opcode: 0x30,
 	},
 	melee: {
-		parameters = '',
-		opcode = 0x31,
+		parameters: '',
+		opcode: 0x31,
 	},
 	buy: {
-		parameters = 'slot,level',
-		opcode = 0x32,
+		parameters: 'slot,level',
+		opcode: 0x32,
 	},
 	sell: {
-		parameters = 'slot,qty',
-		opcode = 0x33,
+		parameters: 'slot,qty',
+		opcode: 0x33,
 	},
 	seekquest: {
-		parameters = '',
-		opcode = 0x34,
+		parameters: '',
+		opcode: 0x34,
 	},
 	completequest: {
-		parameters = '',
-		opcode = 0x35,
+		parameters: '',
+		opcode: 0x35,
 	},
 	train: {
-		parameters = 'slot',
-		opcode = 0x36
+		parameters: 'slot',
+		opcode: 0x36
 	},
 	initialize: {
-		parameters = 'slot,value',
-		opcode = 0x36,
+		parameters: 'slot,value',
+		opcode: 0x36,
 	},
 	cast: {
-		parameters = 'spell_slot',
-		opcode = 0x37,
+		parameters: 'spell_slot',
+		opcode: 0x37,
 	},
 	forage: {
-		parameters = 'target_slot',
-		opcode = 0x38,
+		parameters: 'target_slot',
+		opcode: 0x38,
 	},
 	levelup: {
-		parameters = '',
-		opcode = 0x39,
+		parameters: '',
+		opcode: 0x39,
 	},
 	startGame: {
-		parameters = '',
-		opcode = 0x39,
+		parameters: '',
+		opcode: 0x39,
 	},
 	give: {
-		parameters = 'slot',
-		opcode = 0x3A,
+		parameters: 'slot',
+		opcode: 0x3A,
 	},
-];
+};
 for (let call in CALLS) {
-	{ opcode, parameters } = CALLS[call];
+	let { opcode, parameters } = CALLS[call];
 	let externalDef = `external ${call}(${parameters}) = $${opcode.toString(16)}`;
-	window[call] = opcode;
+	if (typeof window !== 'undefined')
+		window[call] = opcode;
 }
 
 /*
@@ -109,7 +110,8 @@ let EQUIPMENT_TYPES = {
 */
 
 
-let slots = {
+let slots = [
+	null,
 	"AgeHours",
 	"Level",
 	"XP",
@@ -174,19 +176,25 @@ let slots = {
 	"Esteem1", // with the fantasy race 1 dunklings (3 towns)
 	"Esteem2", // with the fantasy race 2 hardwarves (2 towns)
 	"Esteem3", // with the fantasy race 3 effs (one town)
-}
+];
+
+// Weapon types
+const SMASH = 1;
+const SLASH = 2;
+const SHOOT = 3;
+const POKE = 4;
 
 
 const RACES = [
 	null,
-	dunkling: {
+	{
 		name: "Dunkling",
 		aka: "Nerfling",
 		index: 1,
 		esteems: 2,
 		waryof: 3,
-		proficiency: BLADE,
-		badat: [POLEARMS, BOW],
+		proficiency: SLASH,
+		badat: [POKE, SHOOT],
 		stat_mods: {
 			DEX: +2,
 			CHA: +1,
@@ -196,14 +204,14 @@ const RACES = [
 		description: "Likable, lithe creatures of small stature, often underestimated",
 		startingitems: { weapon: 2, hat: 1, food: 1 },
 	},
-	hardwarf: {
+	{
 		name: "Hardwarf",
 		plural: "Hardwarves",
 		index: 2,
 		esteems: 3,
 		waryof: 1,
 		proficiency: SMASH,
-		badat: BLADE
+		badat: SLASH,
 		stat_mods: {
 			CON: +2,
 			STR: +1,
@@ -213,12 +221,12 @@ const RACES = [
 		description: "Sturdy sorts with a...direct approch to problems",
 		startingitem: { weapon: 1, shield: 1, gold: 1 },
 	},
-	eff: {
+	{
 		name: "Eff",
 		index: 3,
 		esteems: 1,
 		waryof: 2,
-		proficiency: [POLEARMS, BOW],
+		proficiency: [POKE, SHOOT],
 		badat: SMASH,
 		stat_mods: {
 			INT: +2,
@@ -230,6 +238,19 @@ const RACES = [
 		startingitem: { weapon: 3, shoes: 1, reagent: 1 },
 	}
 ];
+
+
+// Terrain types
+// This is kinda placeholder.
+const TUNDRA = 1;
+const FOREST = 2;
+const TOWN = 3;
+const HILLS = 4;
+const MOUNTAINS = 5;
+const PLAINS = 6;
+const MARSH = 7;
+const DESERT = 8;
+
 
 const MOBS = [
 	{
@@ -260,11 +281,11 @@ const MOBS = [
 		hitdice: 5,
 	}, {
 		name: "Trogor",
-		badassname: "Ortrogor"
+		badassname: "Ortrogor",
 		domain: HILLS,
 		hitdice: 6,
 	}, {
-		name "Baklakesh",
+		name: "Baklakesh",
 		badassname: "Huntrakesh",
 		domain: MARSH,
 		hitdice: 7
@@ -356,8 +377,8 @@ class Game {
 			}
 			state[LOCATION] = x1 + MAP_W * y1;
 			let hours = 24;
-			pass less time depending on speed
-			pass more time depending on terrain
+			hours = statMod(hours, speed(state));
+			hours *= terrain.movementCost || 1;
 			this.passTime(0, 1);
 			return 1;
 
@@ -371,7 +392,7 @@ class Game {
 				qty = 1;
 				levelToBe = arg2;
 				capacity = state[slot] ? 0 : 1;
-			} else if (isInventorySlot(slot) {
+			} else if (isInventorySlot(slot)) {
 				qty = arg2;
 				levelToBe = state[slot] + qty;
 				capacity = carryAbility(state) - encumbrance(state);
@@ -409,7 +430,7 @@ class Game {
 			let price = qty * 0.5 * marketValue(slot);
 			if (opcode !== give) {
 				state[GOLD] += price;
-			} else if (state[QUESTOBJECT] === slot)
+			} else if (state[QUESTOBJECT] === slot) {
 				state[QUESTPROGRESS] += qty;
 			}
 			state[slot] -= qty;
@@ -495,7 +516,7 @@ class Game {
 				state[MOBTYPE] = location.mobtype;
 				state[MOBLEVEL] = location.moblevel;
 			}
-			let qty = Math.random() < 0.5 : 1 : 0;
+			let qty = Math.random() < 0.5 ? 1 : 0;
 			qty = Math.min(qty, inventoryCapacity(state));
 			state[FORAGE] += qty;
 			this.passTime(1);
@@ -504,7 +525,7 @@ class Game {
 			if (state[XP] <= state[XP_NEEDED])
 				return -1;
 			state[LEVEL] += 1;
-			state[XP_NEEDED] = xpNeededForLevel(state[LEVEL] + 1;
+			state[XP_NEEDED] = xpNeededForLevel(state[LEVEL] + 1);
 			this.passTime(1, 0);
 			return 1;
 		}
@@ -513,7 +534,7 @@ class Game {
 	static battle(state, invulnerable=false) {
 		if (!state[MOBTYPE]) return -1;
 
-		let info = MOB_INFO[state[MOBTYPE];
+		let info = MOB_INFO[state[MOBTYPE]];
 		if (!info) return -1;
 
 		if (info.esteemSlot)

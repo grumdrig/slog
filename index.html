@@ -239,8 +239,9 @@
 			</div>
 			<div id=plot class=listview>
 				<div class=header>Game Progress</div>
-				<div>Act</div> <div>II</div>
-				<div>Completion</div> <div>50%</div>
+				<div>Act</div> <div id=act>II</div>
+				<div>Act Completion</div> <div id=actprogress>50%</div>
+				<div>Game Completion</div> <div id=gameprogress>50%</div>
 			</div>
 		</div>
 
@@ -410,6 +411,9 @@ function updateCharacterSheet(vm) {
 	}
 	$("#longitude").innerText = vm.special[SPECIAL.LONGITUDE];
 	$("#latitude").innerText = vm.special[SPECIAL.LATITUDE];
+
+	$("#act").innerText = vm.special[SPECIAL.ACT] || 'Prologue';
+
 }
 
 
