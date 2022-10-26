@@ -625,62 +625,6 @@ Pecadinus
 	* invisibility: it's just cool
 	* luck: increase drops for a while
 
-### Registers
-
-Level
-XP
-HP
-Health
-MP
-Mana
-STR
-DEX
-CON
-WIS
-INT
-CHA
-training remaining for each of these spells
-.
-.
-.
-.
-.
-Active enchantment
-Spell1 level heal
-Spell2 level fireball
-Spell3 level haste
-Spell4 level buff
-Spell5 level luck
-Spell6 level
-training remaining for each of these spells
-.
-.
-.
-.
-.
-Equipment1 level weapon
-Equipment2 level helm
-Equipment3 level shield
-Equipment4 level armor
-Equipment5 level footwear
-Equipment6 level jewelry
-Inventory1 qty gold (buy with it)
-Inventory2 qty spoils (sell it)
-Inventory3 qty reagents (cast w/ it)
-Inventory4 qty gathered shit (sell it)
-Inventory5 qty food (eat it)
-Inventory6 qty potions (heal & mana up)
-Encumbrance
-Quest monster or item (by slot)
-Quest qty (# required)
-Quest completion (# remaining)
-Quest originator/benefactor (town location)
-Act # (up to 9, finish to win)
-Act % completion (as advanced by quests)
-Friendliness with the fantasy race 1 dunklings (3 towns)
-Friendliness with the fantasy race 2 hardwarves (2 towns)
-Friendliness with the fantasy race 3 effs (one town)
-
 
 ### Quests
 
@@ -753,6 +697,9 @@ When the item(s) are there, they are transported an island way down on row 8:
 
 where they can get quests to fight some adversaries (minions of the final
 boss), and finally fight the boss. Resources in the final island are limited and/or expensive, and there's no returning.
+
+
+###
 
 
 Nomenclature
