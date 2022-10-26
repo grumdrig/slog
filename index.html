@@ -35,7 +35,7 @@
 		display: grid;
 		grid-template-columns: 2fr 1fr;
 	}
-	#col3 > #log { grid-template-columns: 1fr; }
+	#col3 > #quest { grid-template-columns: 2fr 3fr; }
 	#col2 > #equipment {
 		grid-template-columns: 1fr 1fr;
 	}
@@ -176,7 +176,7 @@
 	<div id=sheet class=window-body>
 		<div id=col1>
 			<div id=vitals class=listview>
-				<div class=header>Character Sheet</div>
+				<div class=header>Vital Statistics</div>
 				<div>Level</div> <div id="level">1</div>
 				<div>XP</div>    <div id="xp">0</div>
 				<div>Health</div> <div id="health">1</div>
@@ -230,13 +230,17 @@
 				<div class=header>Map</div>
 				<div>Location</div><div>&lt;<span id=longitude>23</span>,<span id=latitude>45</span>&gt;</div>
 			</div>
-			<div id=plot class=listview>
-				<div class=header>Plot Development</div>
-				<div>Act II</div> <div>50%</div>
-			</div>
 			<div id=quest class=listview>
 				<div class=header>Quest</div>
-				<div>Destroy the chickens</div> <div>50%</div>
+				<div>Object</div> <div>Kill the selkies</div>
+				<div>Location</div> <div>Chump woods</div>
+				<div>Progress</div> <div>50%</div>
+				<div>Origin</div> <div>Dojo town</div>
+			</div>
+			<div id=plot class=listview>
+				<div class=header>Game Progress</div>
+				<div>Act</div> <div>II</div>
+				<div>Completion</div> <div>50%</div>
 			</div>
 		</div>
 
