@@ -138,6 +138,7 @@ let slots = {
 
 
 const RACES = [
+	null,
 	dunkling: {
 		name: "Dunkling",
 		aka: "Nerfling",
@@ -273,16 +274,20 @@ class Game {
 
 			} else if (opcode === startGame) {
 				if (state.slice(STAT0, 6).reduce((a,b) => a+b) > 10) return -1;
-				if (!RACE_NAME[state[RACE]]) return -1;
+				if (!RACES[state[RACE]]) return -1;
 				if (!CLASS_NAME[state[CLASS]]) return -1;
 				// All good. Start the game.
-				add 3 to all stats
-				add class bonuses to all stats
+				for (let stat = STAT0; stat <= STAT5; stat += 1) {
+					// Add 3 plus race bonuses to stats
+					state[stat] += 3 + (RACES[RACE].stat_mods[STATE_NAME[stat]] || 0);
+				}
 				state[LEVEL] = 1;
 				state[LOCATION] = 11;
 				state[HP] = 6 + state[CONSTITUTION];
 				state[MP] = 6 + state[INTELLIGENCE];
-				state[WEAPON] = 1;
+				for (let slot in RACES[RACE].startingitems) {
+					state[slot] = RACES[RACE].startingitems[slot];
+				}
 
 				return 1;
 			}
@@ -292,9 +297,9 @@ class Game {
 		// Game is in process
 		if (opcode === travel) {
 			const destination = arg1;
+			if (state[LOCATION] === destination) return 0;
 			if (destination < 0 || destination >= MAP_W * MAP_H)
 				return -1;
-			if (state[LOCATION] === destination) return 0;
 			let [x0, y0] = [state[LOCATION] % MAP_W, (state[LOCATION] / MAP_W) >> 0];
 			let [x1, y1] = [destination % MAP_W, (destination / MAP_W) >> 0];
 			if (Math.abs(x1 - x0) > Math.abs(y1 - y0)) {
@@ -305,6 +310,7 @@ class Game {
 				y1 = (y1 < y0) ? y0 - 1 : y0 + 1;
 			}
 			state[LOCATION] = x1 + MAP_W * y1;
+			let hours = 24;
 			pass less time depending on speed
 			pass more time depending on terrain
 			this.passTime(0, 1);
@@ -354,8 +360,12 @@ class Game {
 		} else if (opcode === seekquest) {
 			this.passTime(1, 0);
 			if (!isTown(state[LOCATION])) return 0;
-			state[QUESTOBJECT] = random;
-			state[QUESTQTY] = random;
+			if (irand(2) == 0) {
+				// Exterminate the ___
+				state[QUESTLOCATION] = randomLocation(state[LOCATION]);
+				state[QUESTOBJECT] = MAP[state[QUESTLOCATION]].randomMob();
+				state[QUESTQTY] = 5 + irand(10);
+			}
 			state[QUESTPROGRESS] = 0;
 			state[QUESTGIVER] = state[LOCATION];
 			return 1;

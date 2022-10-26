@@ -561,6 +561,60 @@ marsh
 
 tundra
 
+Monster brainstorm with Andy, transformed:
+
+Mob
+Owlcub
+Bugnisaur
+Zuckerborg
+Randroid
+Objectivist
+Wist-o-the-will
+Gelatinous dodecahedron
+Vanilla pudding
+Misplacerbeast
+Trall
+Munt
+Knolling
+Proboscan
+Weevil
+Clamerous
+Pleshy
+Boglard
+Quince
+Deddy
+Komeek
+Supernumari
+Swan-at-arms
+Brainstorm
+Thymelisk
+Betagorgon / Alfagorgon
+Dust monster
+Noteti
+Dwoks
+Dancigun
+Psinon
+Werewat
+Chespian
+Kashasa
+Featherless
+Multibar
+Air Cucumber
+Land Urchin
+Seamole
+Biznit
+Botherbear
+Brotherbear
+Blinker
+Polycorn
+Ochre Marmalade
+Umbertine
+Plaidypus
+Quesadillo
+Night Smurf
+Pecadinus
+
+
 
 ### Spells
 
@@ -632,7 +686,7 @@ Friendliness with the fantasy race 3 effs (one town)
 
 * Give # of something to somewhere
 * Kill # mobs
-*
+* more?
 
 
 ### Um...
@@ -678,7 +732,27 @@ Weapon types:
 
 Choose? Or determined by race? The latter I guess.
 
-Weapons numbered to that `N % 3` is the weapon type.
+Weapons numbered so that `N % 3` is the weapon type.
+
+
+### Endgame
+
+Once player reaches Act IX, the only quests he will be given is to
+1. Go obtain some particular jewelry item by some means
+2. Place the item on some altar or something in some spot on the map
+(Or maybe three of these things.)
+
+When the item(s) are there, they are transported an island way down on row 8:
+
+	+----------+----------+
+	| Sygnon   | Emkell   |
+	|  town    | mountain |
+	| ghosts   |          |
+	|   0      |   9      |
+	+----------+----------+
+
+where they can get quests to fight some adversaries (minions of the final
+boss), and finally fight the boss. Resources in the final island are limited and/or expensive, and there's no returning.
 
 
 Nomenclature
