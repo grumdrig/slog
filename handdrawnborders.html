@@ -1,0 +1,188 @@
+<!doctype html>
+<head>
+<meta charset="utf-8"/>
+<title>Example of Hand-drawn Borders</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="height: 512px; width: 512px;"><path d="M0 0h512v512H0z" fill="black" fill-opacity="1"></path><g class="" transform="translate(0,0)" style=""><path d="M19.75 14.438c59.538 112.29 142.51 202.35 232.28 292.718l3.626 3.75.063-.062c21.827 21.93 44.04 43.923 66.405 66.25-18.856 14.813-38.974 28.2-59.938 40.312l28.532 28.53 68.717-68.717c42.337 27.636 76.286 63.646 104.094 105.81l28.064-28.06c-42.47-27.493-79.74-60.206-106.03-103.876l68.936-68.938-28.53-28.53c-11.115 21.853-24.413 42.015-39.47 60.593-43.852-43.8-86.462-85.842-130.125-125.47-.224-.203-.432-.422-.656-.625C183.624 122.75 108.515 63.91 19.75 14.437zm471.875 0c-83.038 46.28-154.122 100.78-221.97 161.156l22.814 21.562 56.81-56.812 13.22 13.187-56.438 56.44 24.594 23.186c61.802-66.92 117.6-136.92 160.97-218.72zm-329.53 125.906l200.56 200.53c-4.36 4.443-8.84 8.793-13.405 13.032L148.875 153.53l13.22-13.186zm-76.69 113.28l-28.5 28.532 68.907 68.906c-26.29 43.673-63.53 76.414-106 103.907l28.063 28.06c27.807-42.164 61.758-78.174 104.094-105.81l68.718 68.717 28.53-28.53c-20.962-12.113-41.08-25.5-59.937-40.313 17.865-17.83 35.61-35.433 53.157-52.97l-24.843-25.655-55.47 55.467c-4.565-4.238-9.014-8.62-13.374-13.062l55.844-55.844-24.53-25.374c-18.28 17.856-36.602 36.06-55.158 54.594-15.068-18.587-28.38-38.758-39.5-60.625z" fill="white" fill-opacity="1"></path></g></svg>' />
+ <style>
+	#sheet {
+		display: grid;
+		grid-template-columns: repeat(3, 190px);
+		gap: 4px;
+		margin: 10px 0;
+	}
+
+	#col1, #col2, #col3 {
+		grid-row: 1;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 4px;
+		/*width: 300px;*/
+	}
+	#col1 { grid-column: 1; }
+	#col2 { grid-column: 2; }
+	#col3 { grid-column: 3; }
+	#col1 > div, #col2 > div, #col3 > div {
+		display: grid;
+		grid-template-columns: 120px 60px;
+	}
+	#col3 > #log { grid-template-columns: 1fr; }
+	#col2 > #equipment {
+		grid-template-columns: 80px 80px;
+	}
+
+	div {
+		font: 14px "helvetica";
+		font-weight: 100;
+	}
+
+	div.head {
+		font-style: italic;
+		font-size: 16px;
+		margin-bottom: 4px;
+		grid-column: 1 / 3;
+	}
+
+	.boxy {
+		border: solid 5px;
+		border-image-slice: 5;
+		border-color: red;
+	}
+
+	.button {
+	   	-webkit-writing-mode: vertical-rl;
+	    writing-mode: vertical-rl;
+	    text-orientation: upright;
+	 }
+
+	.button > br {
+	  content: "";
+	  margin: -1px;
+	  display: block;
+	}
+</style>
+</head>
+<body>
+
+
+<div id=sheet>
+	<div id=col1>
+		<div id=vitals class=boxy>
+			<div class=head>Character Sheet</div>
+			<div>Level</div> <div id="level">1</div>
+			<div>XP</div>    <div id="xp">0</div>
+			<div>Health</div> <div id="health">1</div>
+			<div>Energy</div> <div id="energy">1</div>
+		</div>
+
+		<div id=stats class=boxy>
+			<div class=head>Stats</div>
+			<div>Strength</div>     <div id="s0">1</div>
+			<div>Agility</div>      <div id="s1">1</div>
+			<div>Constitution</div> <div id="s2">1</div>
+			<div>Intelligence</div> <div id="s3">1</div>
+			<div>Wisdom</div>       <div id="s4">1</div>
+			<div>Charisma</div>     <div id="s5">1</div>
+		</div>
+
+		<div id=spells class=boxy>
+			<div class=head>Spell Book</div>
+			<div id=bt0>(none)</div> <div id="b0"></div>
+			<div id=bt1>(none)</div> <div id="b1"></div>
+			<div id=bt2>(none)</div> <div id="b2"></div>
+			<div id=bt3>(none)</div> <div id="b3"></div>
+		</div>
+	</div>
+	<div id=col2>
+		<div id=equipment class=boxy>
+			<div class=head>Equipment</div>
+			<div>Weapon</div>   <div id=e0></div>
+			<div>Armor</div>    <div id=e1></div>
+			<div>Shield</div>   <div id=e2></div>
+			<div>Backpack</div> <div id=e3></div>
+			<div>Footwear</div> <div id=e4></div>
+			<div>Ring</div>     <div id=e5></div>
+			<div>Amulet</div>   <div id=e6></div>
+			<div>Mount</div>    <div id=e7></div>
+		</div>
+		<div id=inventory class=boxy>
+			<div class=head>Inventory</div>
+			<div>Gold</div>            <div id=i0>10</div>
+			<div>Drops</div>           <div id=i1>10</div>
+			<div>Reagents</div>        <div id=i2>10</div>
+			<div>Healing potions</div> <div id=i3>10</div>
+			<div>Energy potions</div>  <div id=i4>10</div>
+			<div>Rations</div>         <div id=i5>10</div>
+			<div>Gems</div>            <div id=i6>10</div>
+			<div>Sand</div>            <div id=i7>10</div>
+		</div>
+	</div>
+	<div id=col3>
+		<div id=environment class=boxy>
+			<div>Location</div><div>&lt;<span id=longitude>23</span>,<span id=latitude>45</span>&gt;</div>
+		</div>
+		<div id=log class=boxy>
+			<div class=head>Statment</div>
+			<div>Live to kill orcs.</div>
+			<div class=head>Response</div>
+			<!-- 1234567890123456_890123456789012_4567890 -->
+			<div>Hello and welcome to the shop!</div>
+		</div>
+	</div>
+
+</div>
+
+<script>
+
+function $(s) { return document.querySelector(s) }
+function $$(s) { return document.querySelectorAll(s) }
+
+
+function rand(m) { return Math.floor(Math.random() * m) }
+function crand(s) { return s * (Math.random() - Math.random()) }
+
+function handline(svg, wiggle, X1, Y1, X2, Y2) {
+	let x1, y1;
+	let length = Math.sqrt(Math.pow(X2-X1, 2) + Math.pow(Y2-Y1, 2));
+	let n = Math.round(length / 50);
+	for (let i = 0; i <= n; i += 1) {
+		x2 = (X1 + i/n * (X2-X1) + crand(wiggle)).toFixed(1);
+		y2 = (Y1 + i/n * (Y2-Y1) + crand(wiggle)).toFixed(1);
+		if (typeof x1 !== 'undefined') {
+			let line = svg.appendChild(
+						document.createElementNS('http://www.w3.org/2000/svg', 'line'));
+			line.setAttribute('x1', x1);
+			line.setAttribute('y1', y1);
+			line.setAttribute('x2', x2);
+			line.setAttribute('y2', y2);
+			line.setAttribute('stroke', "black");
+			line.setAttribute('stroke-width', (1.0 + crand(0.25)).toFixed(1) + "px");
+		}
+		x1 = x2;
+		y1 = y2;
+	}
+}
+
+function boxIn(div) {
+	let IN = 2;
+	let W = div.offsetWidth;
+	let H = div.offsetHeight;
+	let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	svg.setAttribute('version', '1.1');
+	svg.setAttribute('width',  W);
+	svg.setAttribute('height', H);
+	svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+	let wiggle = IN * 0.75;
+
+	handline(svg, wiggle, IN-1,   IN,     W-0-IN, IN    ); // N
+	handline(svg, wiggle, IN,     IN-1,   IN,     H-0-IN); // W
+	handline(svg, wiggle, IN-1,   H-1-IN, W-0-IN, H-1-IN); // S
+	handline(svg, wiggle, W-1-IN, IN-1,   W-1-IN, H-0-IN); // E
+
+	div.style.borderImageSource = `url('data:image/svg+xml,${svg.outerHTML}'`;
+}
+
+$$(".boxy").forEach(div => boxIn(div));
+
+
+</script>
