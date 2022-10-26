@@ -130,7 +130,8 @@ let slots = {
 	"WisdomTrain",
 	"IntelligenceTrain",
 	"CharismTrain",
-	"ActiveEnchantment",
+	"Enchantment",
+	"EnchantmentLevel",
 	"SpellLevel1", //  heal
 	"SpellLevel2", //  fireball
 	"SpellLevel3", //  haste
@@ -297,13 +298,13 @@ const MOBS = [
 
 
 class Game {
-	initialize(state) {
+	static initialize(state) {
 		// Most of it happens with the initialize / startgame ops
 		state[LOCATION] = -1;
 		state[QUESTLOCATION] = -1;
 	}
 
-	handleInstruction(state, opcode, arg1, arg2) {
+	static handleInstruction(state, opcode, arg1, arg2) {
 		if (state[level] === 0) {
 			// game hasn't begun
 			if (opcode === initialize) {
@@ -361,10 +362,7 @@ class Game {
 			return 1;
 
 		} else if (opcode === melee) {
-			take some damage
-			earn some xp
-			gain a drop
-			lose acclaim with species
+			return this.battle(state);
 
 		} else if (opcode === buy) {
 			let slot = arg1;
@@ -471,21 +469,32 @@ class Game {
 		} else if (opcode === cast) {
 			let spell = arg1;
 			if (!isSpellSlot(spell)) return -1;
-			if (!state[spell]) return -1;
+			let level = state[spell];
+			if (level < 1) return -1;
 			const manaused = 1;
 			this.passTime(1);
 			if (state[FATIGUE] + manaused > state[ENERGY])
 				return -1;
 			state[FATIGUE] += manaused;
 			if (spell === HEAL) {
-				state[DAMAGE] = 0;
+				state[DAMAGE] = Math.min(state[DAMAGE] - level, 0);
 			} else if (spell === FIREBALL) {
-				kill a mob
-			} else do the other effects
-
-			return 1;
+				return this.battle(state, true);
+			} else if (spell === HASTE || spell === BUFF || spell === INVISIBILITY || spell === LUCK) {
+				state[ENCHANTMENT] = spell;
+				state[ENCHANTMENTLEVEL] = spell;
+				// TODO: effects of these
+			} else {
+				return -1;
+			}
+			return level;
 
 		} else if (opcode === forage) {
+			let target = arg1;
+			if (target === MOBTYPE) {
+				state[MOBTYPE] = location.mobtype;
+				state[MOBLEVEL] = location.moblevel;
+			}
 			let qty = Math.random() < 0.5 : 1 : 0;
 			qty = Math.min(qty, inventoryCapacity(state));
 			state[FORAGE] += qty;
@@ -501,7 +510,35 @@ class Game {
 		}
 	}
 
-	passTime(special, hours, days) {
+	static battle(state, invulnerable=false) {
+		if (!state[MOBTYPE]) return -1;
+
+		let info = MOB_INFO[state[MOBTYPE];
+		if (!info) return -1;
+
+		if (info.esteemSlot)
+			state[info.esteemSlot] = Math.max(state[info.esteemSlot] - 1, 0);
+
+		let levelDisadvantage = state[MOBLEVEL] - state[LEVEL];
+		let damage = Math.pow(1.5, levelDisadvantage);
+		state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
+		if (state[DAMAGE] >= state[HEALTH]) {
+			if (state[LIFEPOTIONS] > 0) {
+				state[LIFEPOTIONS] -= 1;
+				state[DAMAGE] = state[HEALTH] - 1;  // or 0?
+			} else {
+				// dead. now what?
+			}
+			return 0;
+		} else {
+			state[XP] = 10 * Math.pow(1.5, levelDisadvantage);
+			let ndrops = Math.min(1, carryCapacity());
+			state[INVENTORY_DROPS] += ndrops;
+			return 1;
+		}
+	}
+
+	static passTime(special, hours, days) {
 		const HOURS_PER_DAY = 24;
 		if (days) hours += HOURS_PER_DAY * days;
 		state[AGEHOURS] += hours;
