@@ -305,7 +305,7 @@ function comp() {
 	localStorage.autorun = JSON.stringify($("#autorun").checked);
 	try {
 		$("#asm").classList.remove("err");
-		$("#asm").value = compile($("#source").value);
+		$("#asm").value = compile(generateInterface() + $("#source").value);
 		assemble();
 		if ($("#autorun").checked)
 			run();

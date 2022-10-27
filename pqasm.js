@@ -186,16 +186,20 @@ function generateInterface() {
 	for (let call in CALLS) {
 		let { opcode, parameters } = CALLS[call];
 		let externalDef = `external ${call}(${parameters || ''}) = $${opcode.toString(16)}`;
-		console.log(externalDef);
+		interface.push(externalDef);
 	}
 
-	console.log('');
+	interface.push('');
 
-	SLOTS.forEach((slot, index) => console.log(`const ${slot} = ${index}`));
+	SLOTS.forEach((slot, index) => interface.push(`const ${slot} = ${index}`));
+
+	interface.push('');
+
+	return interface.join('\n');
 }
 
 if (typeof process !== 'undefined' && process.argv.includes('--generate-interface')) {
-	generateInterface();
+	console.log(generateInterface());
 	process.exit();
 }
 
@@ -612,6 +616,7 @@ class Game {
 			name: "Emkell Peak",
 			latitude: 3,
 			longitude: 8,
+			neighbors: [37],
 			terrain: MOUNTAINS,
 			level: 9,
 		}, {
@@ -619,6 +624,7 @@ class Game {
 			name: "Sygnon Tower",
 			latitude: 4,
 			longitude: 8,
+			neighbors: [36],
 			terrain: TOWN,
 			civilization: GAST,
 			level: 0,
@@ -679,24 +685,36 @@ class Game {
 			// TODO consider questal
 		}
 
+		function coordinates(locale) {
+			return [locale.longitude || (locale.index % 6),
+					locale.latitude || (locale.index / 6) >> 0];
+		}
+
 		if (opcode === travel) {
 			const destination = arg1;
-			if (state[LOCATION] === destination) return 0;
-			if (destination < 0 || destination >= MAP_W * MAP_H)
-				return -1;
-			let [x0, y0] = [state[LOCATION] % MAP_W, (state[LOCATION] / MAP_W) >> 0];
-			let [x1, y1] = [destination % MAP_W, (destination / MAP_W) >> 0];
-			if (Math.abs(x1 - x0) > Math.abs(y1 - y0)) {
-				y1 = y0;
-				x1 = (x1 < x0) ? x0 - 1 : x0 + 1;
+			if (destination === state[LOCATION]) return 0;
+			let remote = this.MAP[destination];
+			if (!remote) return -1;
+			if (local.neighbors) {
+				if (!local.neighbors.includes(destination)) return -1;
 			} else {
-				x1 = x0;
-				y1 = (y1 < y0) ? y0 - 1 : y0 + 1;
+				// we're in the 6x6 grid
+				let [x0, y0] = coordinates(local);
+				let [x1, y1] = coordinates(remote);
+				if (Math.abs(x1 - x0) > Math.abs(y1 - y0)) {
+					y1 = y0;
+					x1 = (x1 < x0) ? x0 - 1 : x0 + 1;
+				} else {
+					x1 = x0;
+					y1 = (y1 < y0) ? y0 - 1 : y0 + 1;
+				}
+				remote = this.MAP[x1 + 6 * y1];
+				if (!remote) return -1;  // but shouldn't happen
 			}
-			state[LOCATION] = x1 + MAP_W * y1;
 			let hours = 24;
-			hours = statMod(hours, speed(state));
+			// TODO hours = statMod(hours, speed(state));
 			hours *= terrain.movementCost || 1;
+			state[LOCATION] = remote.index;
 			passTime(0, 1);
 			return 1;
 
