@@ -40,6 +40,7 @@
 	#col2 > #equipment {
 		grid-template-columns: 1fr 1fr;
 	}
+	#col3 > #map { grid-template-columns: 2fr 3fr; }
 
 	div.header {
 		grid-column: 1 / 3;
@@ -158,13 +159,13 @@
 		<button onclick="step()">Step</button><br/>
 		<button onclick="runimate()">Runimate</button><br/>
 		<button onclick="run()">Run</button><br/>
+		<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
 	</div>
 	<div id=codepoint></div>
 	<div id=stack></div>
 	<div class=brain><div id=memory></div></div>
 </div>
 </div id=debug>
-
 
 <div class=window>
 	<div class="title-bar">
@@ -228,16 +229,18 @@
 			</div>
 		</div>
 		<div id=col3>
-			<div id=environment class=listview>
+			<div id=map class=listview>
 				<div class=header>Map</div>
-				<div>Location</div><div>&lt;<span id=longitude>23</span>,<span id=latitude>45</span>&gt;</div>
+				<div>Coordinates</div><div>#<span id=location></span> &lt;<span id=longitude></span>,<span id=latitude></span>&gt;</div>
+				<div>Locale</div><div id=locale></div>
+				<div>Terrain</div><div id=terrain></div>
 			</div>
 			<div id=quest class=listview>
 				<div class=header>Quest</div>
-				<div>Object</div> <div>Kill the selkies</div>
-				<div>Location</div> <div>Chump woods</div>
-				<div>Progress</div> <div>50%</div>
-				<div>Origin</div> <div>Dojo town</div>
+				<div>Object</div> <div id=questobject>Kill the selkies</div>
+				<div>Location</div> <div id=questlocation>Chump woods</div>
+				<div>Progress</div> <div id=questprogress>50%</div>
+				<div>Origin</div> <div id=questorigin>Dojo town</div>
 			</div>
 			<div id=plot class=listview>
 				<div class=header>Game Progress</div>
@@ -250,6 +253,8 @@
 	</div>
 </div>
 
+<br/>
+
 <div class=window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Controls</div>
@@ -260,23 +265,23 @@
 
 	<div class="window-body">
 
-		Game.initialize(state);
-Game.handleInstruction(state, study, 1, 1);
-Game.handleInstruction(state, train, 1, 1);
-Game.handleInstruction(state, initialize, 1, 1);
-Game.handleInstruction(state, travel, 1, 1);
-Game.handleInstruction(state, melee, 1, 1);
-Game.handleInstruction(state, buyItem, 1, 1);
-Game.handleInstruction(state, buyEquipment, 1, 1);
-Game.handleInstruction(state, sell, 1, 1);
-Game.handleInstruction(state, seekquest, 1, 1);
-Game.handleInstruction(state, completequest, 1, 1);
-Game.handleInstruction(state, cast, 1, 1);
-Game.handleInstruction(state, forage, 1, 1);
-Game.handleInstruction(state, levelup, 1, 1);
-Game.handleInstruction(state, startGame, 1, 1);
-Game.handleInstruction(state, give, 1, 1);
-Game.handleInstruction(state, drop, 1, 1);
+<button onclick="Game.initialize(state)">initialize</button>
+<button onclick="Game.handleInstruction(state, study, 1, 1)">study</button>
+<button onclick="Game.handleInstruction(state, train, 1, 1)">train</button>
+<button onclick="Game.handleInstruction(state, initialize, 1, 1)">initialize</button>
+<button onclick="Game.handleInstruction(state, travel, 1, 1)">travel</button>
+<button onclick="Game.handleInstruction(state, melee, 1, 1)">melee</button>
+<button onclick="Game.handleInstruction(state, buyItem, 1, 1)">buyItem</button>
+<button onclick="Game.handleInstruction(state, buyEquipment, 1, 1)">buyEquipment</button>
+<button onclick="Game.handleInstruction(state, sell, 1, 1)">sell</button>
+<button onclick="Game.handleInstruction(state, seekquest, 1, 1)">seekquest</button>
+<button onclick="Game.handleInstruction(state, completequest,1,1)">completequest</button>
+<button onclick="Game.handleInstruction(state, cast, 1, 1)">cast</button>
+<button onclick="Game.handleInstruction(state, forage, 1, 1)">forage</button>
+<button onclick="Game.handleInstruction(state, levelup, 1, 1)">levelup</button>
+<button onclick="Game.handleInstruction(state, startGame, 1, 1)">startGame</button>
+<button onclick="Game.handleInstruction(state, give, 1, 1)">give</button>
+<button onclick="Game.handleInstruction(state, drop, 1, 1)">drop</button>
 
 	</div>
 </div>
@@ -287,12 +292,17 @@ Game.handleInstruction(state, drop, 1, 1);
 function $(s) { return document.querySelector(s) }
 function $$(s) { return document.querySelectorAll(s) }
 
+let asm, vm;
+
 function comp() {
 	localStorage.source = $("#source").value;
+	localStorage.autorun = JSON.stringify($("#autorun").checked);
 	try {
 		$("#asm").classList.remove("err");
 		$("#asm").value = compile($("#source").value);
 		assemble();
+		if ($("#autorun").checked)
+			run();
 	} catch (e) {
 		console.log(e);
 		$("#asm").classList.add("err");
@@ -301,7 +311,6 @@ function comp() {
 }
 
 
-let asm, vm;
 function assemble() {
 	asm = new Assembler();
 	try {
@@ -346,6 +355,8 @@ function crand(s) { return s * (Math.random() - Math.random()) }
 
 // editor.innerText =
 $("#source").value = localStorage.source || "main {\n}";
+$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
+
 comp();
 
 $("#source").addEventListener('keypress', e => {
@@ -411,10 +422,24 @@ function updateCharacterSheet(state) {
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
 		$("#i" + i).innerText = state[INVENTORY_0 + i];
 	}
-	$("#longitude").innerText = state[LOCATION];
-	$("#latitude").innerText = state[LOCATION];
+
+	if (!state[LEVEL]) return;
+
+	let locale = Game.MAP[state[LOCATION]];
+	$("#location").innerText = locale.index;
+	$("#longitude").innerText = locale.longitude || (locale.index % 6);
+	$("#latitude").innerText = locale.latitude || (locale.index / 6) >> 0;
+	$("#locale").innerText = locale.name;
+	$("#terrain").innerText = Game.TERRAIN_TYPES[locale.terrain].name;
+
+	$("#questobject").innerText = state[QUEST_OBJECT];
+	$("#questlocation").innerText = state[QUEST_LOCATION];
+	$("#questprogress").innerText = `${state[QUEST_PROGRESS]} / ${state[QUEST_QTY]}`;
+	$("#questorigin").innerText = state[QUEST_ORIGIN];
 
 	$("#act").innerText = state[ACT] || 'Prologue';
+	$("#actprogress").innerText = `${state[ACT_PROGRESS]} / ${state[ACT_DURATION]}`;
+	$("#gameprogress").innerText = `${Math.round(100 * state[ACT] / 10)}%`;
 
 }
 

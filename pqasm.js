@@ -295,16 +295,44 @@ const EFF = 3;
 const GAST = 4;
 
 
-// Terrain types
-// This is kinda placeholder.
-const TUNDRA = 1;
-const FOREST = 2;
-const TOWN = 3;
-const HILLS = 4;
-const MOUNTAINS = 5;
-const PLAINS = 6;
-const MARSH = 7;
-const DESERT = 8;
+const TERRAIN_TYPES = [
+	null, {
+		name: 'Tundra',
+	}, {
+		name: 'Forest',
+		moveCost: 3,
+	}, {
+		name: 'Town',
+	}, {
+		name: 'Hills',
+		moveCost: 2,
+	}, {
+		name: 'Mountains',
+		moveCost: 4,
+	}, {
+		name: 'Plains',
+		forage: 2,
+	}, {
+		name: 'Marsh',
+		moveCost: 2.5,
+		forage: 0,
+	}, {
+		name: 'Desert',
+		forage: 0,
+	}];
+
+TERRAIN_TYPES.forEach((info, index) => {
+	if (info) define(info.name.toUpperCase(), index);
+});
+
+// const TUNDRA = 1;
+// const FOREST = 2;
+// const TOWN = 3;
+// const HILLS = 4;
+// const MOUNTAINS = 5;
+// const PLAINS = 6;
+// const MARSH = 7;
+// const DESERT = 8;
 
 
 const MOBS = [
@@ -384,6 +412,8 @@ class Game {
 
 	static RACE_NAMES = RACES.map(r => (r && r.name) || 'TBD');
 
+	static TERRAIN_TYPES = TERRAIN_TYPES;
+
 	static MAP = [{
 			index: 0,
 			name: "Watha",
@@ -396,7 +426,7 @@ class Game {
 			level: 5,
 		}, {
 			index: 2,
-			same: "Wolfin Forest",
+			name: "Wolfin Forest",
 			terrain: FOREST,
 			level: 2,
 		}, {
@@ -577,11 +607,15 @@ class Game {
 		}, {
 			index: 36,
 			name: "Emkell Peak",
+			latitude: 3,
+			longitude: 8,
 			terrain: MOUNTAINS,
 			level: 9,
 		}, {
 			index: 37,
 			name: "Sygnon Tower",
+			latitude: 4,
+			longitude: 8,
 			terrain: TOWN,
 			civilization: GAST,
 			level: 0,
