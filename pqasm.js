@@ -19,7 +19,7 @@ external give(slot, quantity) = $3A
 external drop(slot, quantity) = $3A
 `
 
-const EXTERNALS = {
+const CALLS = {
 	study: {
 		parameters: 'spell',
 		opcode: 0x36,
@@ -81,70 +81,8 @@ const EXTERNALS = {
 	},
 };
 
-for (let name in EXTERNALS) {
-	define(name, EXTERNALS[name].opcode);
-}
-
-
-
-const CALLS = {
-	travel: {
-		parameters: 'destination',
-		opcode: 0x30,
-	},
-	melee: {
-		parameters: '',
-		opcode: 0x31,
-	},
-	buy: {
-		parameters: 'slot,level',
-		opcode: 0x32,
-	},
-	sell: {
-		parameters: 'slot,qty',
-		opcode: 0x33,
-	},
-	seekquest: {
-		parameters: '',
-		opcode: 0x34,
-	},
-	completequest: {
-		parameters: '',
-		opcode: 0x35,
-	},
-	train: {
-		parameters: 'slot',
-		opcode: 0x36
-	},
-	initialize: {
-		parameters: 'slot,value',
-		opcode: 0x36,
-	},
-	cast: {
-		parameters: 'spell_slot',
-		opcode: 0x37,
-	},
-	forage: {
-		parameters: 'target_slot',
-		opcode: 0x38,
-	},
-	levelup: {
-		parameters: '',
-		opcode: 0x39,
-	},
-	startGame: {
-		parameters: '',
-		opcode: 0x39,
-	},
-	give: {
-		parameters: 'slot',
-		opcode: 0x3A,
-	},
-};
 for (let call in CALLS) {
-	let { opcode, parameters } = CALLS[call];
-	let externalDef = `external ${call}(${parameters}) = $${opcode.toString(16)}`;
-	define(call, opcode);
+	define(call, CALLS[call].opcode);
 }
 
 /*
@@ -178,7 +116,6 @@ let EQUIPMENT_TYPES = {
 
 
 const SLOTS = [
-	null,
 	'RACE',
 	'AGE',
 	'LOCATION',
@@ -242,6 +179,25 @@ const SLOTS = [
 	'ESTEEM_HARDWARVES',
 	'ESTEEM_EFFS',
 ];
+
+function generateInterface() {
+	let interface = [];
+
+	for (let call in CALLS) {
+		let { opcode, parameters } = CALLS[call];
+		let externalDef = `external ${call}(${parameters || ''}) = $${opcode.toString(16)}`;
+		console.log(externalDef);
+	}
+
+	console.log('');
+
+	SLOTS.forEach((slot, index) => console.log(`const ${slot} = ${index}`));
+}
+
+if (typeof process !== 'undefined' && process.argv.includes('--generate-interface')) {
+	generateInterface();
+	process.exit();
+}
 
 
 function define(symbol, value) {
@@ -425,6 +381,8 @@ class Game {
 		state[QUEST_LOCATION] = -1;
 		return state;
 	}
+
+	static RACE_NAMES = RACES.map(r => (r && r.name) || 'TBD');
 
 	static MAP = [{
 			index: 0,
@@ -635,7 +593,7 @@ class Game {
 			// game hasn't begun
 			if (opcode === initialize) {
 				let [slot, value] = [arg1, arg2];
-				if (slot !== RACE && slot !== CLASS && (STAT_0 > slot || slot > STAT5))
+				if (slot !== RACE && (STAT_0 > slot || slot >= STAT_0 + STAT_COUNT))
 					return -1;
 				if (value < 0) return -1
 				state[slot] = value;
@@ -643,18 +601,19 @@ class Game {
 
 			} else if (opcode === startGame) {
 				if (state.slice(STAT_0, SPELL_0).reduce((a,b) => a+b) > 10) return -1;
-				if (!RACES[state[RACE]]) return -1;
+				let raceinfo = RACES[state[RACE]];
+				if (!raceinfo) return -1;
 				// All good. Start the game.
 				for (let stat = STAT_0; stat < SPELL_0; stat += 1) {
 					// Add 3 plus race bonuses to stats
-					state[stat] += 3 + (RACES[RACE].stat_mods[SLOTS[stat]] || 0);
+					state[stat] += 3 + (raceinfo.stat_mods[SLOTS[stat]] || 0);
 				}
 				state[LEVEL] = 1;
 				state[LOCATION] = 11;
 				state[MAX_HP] = 6 + state[STAT_CONSTITUTION];
 				state[MAX_MP] = 6 + state[STAT_INTELLIGENCE];
-				for (let slot in RACES[RACE].startingitems) {
-					state[slot] = RACES[RACE].startingitems[slot];
+				for (let slot in raceinfo.startingitems) {
+					state[slot] = raceinfo.startingitems[slot];
 				}
 
 				return 1;

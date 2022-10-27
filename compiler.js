@@ -1105,7 +1105,7 @@ class PostfixExpression {
 					for (let a of args) a.generate(context);
 					if (args.length === 0) context.emit('.stack 0 0  ; default arg');
 					if (args.length === 1) context.emit('.stack 0  ; default arg');
-					context.emit('ext' + func.opcode.toString(16) + '  ; ' + lhs.identifier + '()');
+					context.emit('ext' + func.opcode.toString(16) + '  ; ' + lhs.identifier);
 				} else {
 					context.emit('.stack 0 ; return value');
 					context.emit('fetch PC');

@@ -178,10 +178,11 @@
 		<div id=col1>
 			<div id=vitals class=listview>
 				<div class=header>Vital Statistics</div>
-				<div>Level</div> <div id="level">1</div>
-				<div>XP</div>    <div id="xp">0</div>
-				<div>Health</div> <div id="health">1</div>
-				<div>Energy</div> <div id="energy">1</div>
+				<div>Race</div><div id="race"></div>
+				<div>Level</div><div id="level">1</div>
+				<div>XP</div><div id="xp">0</div>
+				<div>Health</div><div id="health">1</div>
+				<div>Energy</div><div id="energy">1</div>
 			</div>
 
 			<div id=stats class=listview>
@@ -387,6 +388,7 @@ function updateDebuggerState(vm) {
 }
 
 function updateCharacterSheet(state) {
+	$('#race').innerText = Game.RACE_NAMES[state[RACE]];
 	$('#level').innerText = state[LEVEL];
 	$('#xp').innerText = state[XP];
 	$('#health').innerText = `${state[MAX_HP]-state[DAMAGE]} / ${state[MAX_HP]}`;
