@@ -325,6 +325,7 @@ TERRAIN_TYPES.forEach((info, index) => {
 	if (info) define(info.name.toUpperCase(), index);
 });
 
+
 // const TUNDRA = 1;
 // const FOREST = 2;
 // const TOWN = 3;
@@ -400,6 +401,8 @@ const MOBS = [
 	}
 ];
 
+
+function irand(n) { return Math.floor(Math.random() * n) }
 
 
 class Game {
@@ -643,7 +646,7 @@ class Game {
 					state[stat] += 3 + (raceinfo.stat_mods[SLOTS[stat]] || 0);
 				}
 				state[LEVEL] = 1;
-				state[LOCATION] = 11;
+				state[LOCATION] = 17;
 				state[MAX_HP] = 6 + state[STAT_CONSTITUTION];
 				state[MAX_MP] = 6 + state[STAT_INTELLIGENCE];
 				for (let slot in raceinfo.startingitems) {
@@ -656,7 +659,25 @@ class Game {
 		}
 
 		// Game is in process
+
 		let local = this.MAP[state[LOCATION]];
+		let questal = this.MAP[state[QUEST_LOCATION]];
+
+		function passTime(hours, days) {
+			const HOURS_PER_DAY = 24;
+			if (days) hours += HOURS_PER_DAY * days;
+			state[AGE] += hours;
+		}
+
+		function randomLocation() {
+			// TODO consider local
+			return irand(36);
+		}
+
+		function randomMob() {
+			return 1;
+			// TODO consider questal
+		}
 
 		if (opcode === travel) {
 			const destination = arg1;
@@ -676,13 +697,13 @@ class Game {
 			let hours = 24;
 			hours = statMod(hours, speed(state));
 			hours *= terrain.movementCost || 1;
-			this.passTime(0, 1);
+			passTime(0, 1);
 			return 1;
 
 		} else if (opcode === melee) {
 			return this.battle(state);
 
-		} else if (opcode === buy) {
+		} else if (opcode === buyItem) {
 			let slot = arg1;
 			let qty, levelToBe, capacity;
 			if (isEquipmentSlot(slot)) {
@@ -701,7 +722,7 @@ class Game {
 
 			if (arg2 === 0) {
 				// It's a price check only
-				this.passTime(1);
+				passTime(1);
 				return price;
 			}
 
@@ -712,7 +733,7 @@ class Game {
 			// You may proceed with the purchase
 			state[GOLD] -= price;
 			state[slot] = levelToBe;
-			this.passTime(1);
+			passTime(1);
 			return qty;
 
 		} else if (opcode === sell || opcode === give) {
@@ -731,30 +752,30 @@ class Game {
 				state[QUEST_PROGRESS] += qty;
 			}
 			state[slot] -= qty;
-			this.passTime(1, 0);
+			passTime(1, 0);
 			return qty;
 
 		} else if (opcode === seekquest) {
-			this.passTime(1, 0);
-			if (!isTown(state[LOCATION])) return 0;
+			passTime(1, 0);
+			if (local.terrain !== TOWN) return -1;
 			if (irand(2) == 0) {
 				// Exterminate the ___
-				state[QUEST_LOCATION] = randomLocation(state[LOCATION]);
-				state[QUEST_OBJECT] = MAP[state[QUEST_LOCATION]].randomMob();
+				state[QUEST_LOCATION] = randomLocation();
+				state[QUEST_OBJECT] = randomMob();
 				state[QUEST_QTY] = 5 + irand(10);
 			} else {
 				// Bring me N of SOMETHING
-				state[QUEST_LOCATION] = state[LOCATION];
-				state[QUEST_OBJECT] = randomItem();
+				state[QUEST_LOCATION] = -1;
+				state[QUEST_OBJECT] = INVENTORY_0 + irand(INVENTORY_COUNT);
 				state[QUEST_QTY] = 5 * irand(10);
 			}
 			state[QUEST_PROGRESS] = 0;
-			state[QUEST_GIVER] = state[LOCATION];
+			state[QUEST_ORIGIN] = state[LOCATION];
 			return 1;
 
 		} else if (opcode === completequest) {
 			if (!state[QUEST_OBJECT]) return -1;
-			if (state[QUEST_GIVER] != state[LOCATION]) return -1;
+			if (state[QUEST_ORIGIN] != state[LOCATION]) return -1;
 			if (state[QUEST_PROGRESS] < state[QUEST_QTY]) return -1;
 			state[XP] += 100;
 			state[ACTPROGRESS] += 1;
@@ -765,16 +786,16 @@ class Game {
 			}
 			state[QUEST_OBJECT] = 0;
 			state[QUEST_LOCATION] = -1;
-			state[QUEST_GIVER] = -1;
+			state[QUEST_ORIGIN] = -1;
 			state[QUEST_PROGRESS] = 0;
 			state[QUEST_QTY] = 0;
 			return 1;
 
 		} else  if (opcode === train) {
 			let slot = arg1;
-			if (!inTown(state[LOCATION])) return -1;
+			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
-			this.passTime(0, 1);
+			passTime(0, 1);
 			let chance = Math.exp(1/5, 1.5);
 			// TODO other factors, like race, stats
 			if (Math.random() < chance) {
@@ -790,7 +811,7 @@ class Game {
 			let level = state[spell];
 			if (level < 1) return -1;
 			const manaused = 1;
-			this.passTime(1);
+			passTime(1);
 			if (state[FATIGUE] + manaused > state[ENERGY])
 				return -1;
 			state[FATIGUE] += manaused;
@@ -816,18 +837,18 @@ class Game {
 			let qty = Math.random() < 0.5 ? 1 : 0;
 			qty = Math.min(qty, inventoryCapacity(state));
 			state[FORAGE] += qty;
-			this.passTime(1);
+			passTime(1);
 
 		} else if (opcode === levelup) {
 			if (state[XP] <= state[XP_NEEDED])
 				return -1;
 			state[LEVEL] += 1;
 			state[XP_NEEDED] = xpNeededForLevel(state[LEVEL] + 1);
-			this.passTime(1, 0);
+			passTime(1, 0);
 			return 1;
 		}
 
-		if (state[DAMAGE] >= state[SPECIAL.HEALTH] ||
+		if (state[DAMAGE] >= state[MAX_HP] ||
 	       	state[AGE] >= 0x7FFF) {
 			TODO("were dead. now what? have to stop the machine somehow.")
 		}
@@ -868,12 +889,6 @@ class Game {
 			state[INVENTORY_DROPS] += ndrops;
 			return 1;
 		}
-	}
-
-	static passTime(special, hours, days) {
-		const HOURS_PER_DAY = 24;
-		if (days) hours += HOURS_PER_DAY * days;
-		state[AGEHOURS] += hours;
 	}
 }
 

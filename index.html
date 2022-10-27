@@ -265,23 +265,29 @@
 
 	<div class="window-body">
 
-<button onclick="Game.initialize(state)">initialize</button>
-<button onclick="Game.handleInstruction(state, study, 1, 1)">study</button>
-<button onclick="Game.handleInstruction(state, train, 1, 1)">train</button>
-<button onclick="Game.handleInstruction(state, initialize, 1, 1)">initialize</button>
-<button onclick="Game.handleInstruction(state, travel, 1, 1)">travel</button>
-<button onclick="Game.handleInstruction(state, melee, 1, 1)">melee</button>
-<button onclick="Game.handleInstruction(state, buyItem, 1, 1)">buyItem</button>
-<button onclick="Game.handleInstruction(state, buyEquipment, 1, 1)">buyEquipment</button>
-<button onclick="Game.handleInstruction(state, sell, 1, 1)">sell</button>
-<button onclick="Game.handleInstruction(state, seekquest, 1, 1)">seekquest</button>
-<button onclick="Game.handleInstruction(state, completequest,1,1)">completequest</button>
-<button onclick="Game.handleInstruction(state, cast, 1, 1)">cast</button>
-<button onclick="Game.handleInstruction(state, forage, 1, 1)">forage</button>
-<button onclick="Game.handleInstruction(state, levelup, 1, 1)">levelup</button>
-<button onclick="Game.handleInstruction(state, startGame, 1, 1)">startGame</button>
-<button onclick="Game.handleInstruction(state, give, 1, 1)">give</button>
-<button onclick="Game.handleInstruction(state, drop, 1, 1)">drop</button>
+<label for=arg1>Arguments:</label>
+	<input id=arg1 type=number value=0></input>
+	<input id=arg2 type=number value=0></input>
+<br/>
+<span>Result: <code id=result>-</code></span>
+<br/>
+<br/>
+<button onclick="gameplay(study)">study(spell)</button>
+<button onclick="gameplay(train)">train(stat)</button>
+<button onclick="gameplay(initialize)">initialize(slot,value)</button>
+<button onclick="gameplay(travel)">travel(destination)</button>
+<button onclick="gameplay(melee)">melee()</button>
+<button onclick="gameplay(buy)">buyItem(slot,quantity)</button>
+<button onclick="gameplay(buy)">buyEquipment(slot,quality)</button>
+<button onclick="gameplay(sell)">sell(slot,quantity)</button>
+<button onclick="gameplay(seekquest)">seekquest()</button>
+<button onclick="gameplay(completequest)">completequest()</button>
+<button onclick="gameplay(cast)">cast(spell_slot)</button>
+<button onclick="gameplay(forage)">forage(target_slot)</button>
+<button onclick="gameplay(levelup)">levelup()</button>
+<button onclick="gameplay(start)">startGame()</button>
+<button onclick="gameplay(give)">give(slot,quantity)</button>
+<button onclick="gameplay(drop)">drop(slot,quantity)</button>
 
 	</div>
 </div>
@@ -425,17 +431,19 @@ function updateCharacterSheet(state) {
 
 	if (!state[LEVEL]) return;
 
-	let locale = Game.MAP[state[LOCATION]];
-	$("#location").innerText = locale.index;
-	$("#longitude").innerText = locale.longitude || (locale.index % 6);
-	$("#latitude").innerText = locale.latitude || (locale.index / 6) >> 0;
-	$("#locale").innerText = locale.name;
-	$("#terrain").innerText = Game.TERRAIN_TYPES[locale.terrain].name;
+	let local = Game.MAP[state[LOCATION]];
+	$("#location").innerText = local.index;
+	$("#longitude").innerText = local.longitude || (local.index % 6);
+	$("#latitude").innerText = local.latitude || (local.index / 6) >> 0;
+	$("#locale").innerText = local.name;
+	$("#terrain").innerText = Game.TERRAIN_TYPES[local.terrain].name;
 
+	let questal = Game.MAP[state[QUEST_LOCATION]];
+	let original = Game.MAP[state[QUEST_ORIGIN]];
 	$("#questobject").innerText = state[QUEST_OBJECT];
-	$("#questlocation").innerText = state[QUEST_LOCATION];
+	$("#questlocation").innerText = questal && (questal.name + ' #' + questal.index) || '';
 	$("#questprogress").innerText = `${state[QUEST_PROGRESS]} / ${state[QUEST_QTY]}`;
-	$("#questorigin").innerText = state[QUEST_ORIGIN];
+	$("#questorigin").innerText = original && (original.name + ' #' + original.index) || '';
 
 	$("#act").innerText = state[ACT] || 'Prologue';
 	$("#actprogress").innerText = `${state[ACT_PROGRESS]} / ${state[ACT_DURATION]}`;
@@ -444,4 +452,11 @@ function updateCharacterSheet(state) {
 }
 
 
+function gameplay(inst) {
+	let arg1 = parseInt($("#arg1").innerText);
+	let arg2 = parseInt($("#arg2").innerText);
+	let result = Game.handleInstruction(vm.state, inst, arg1, arg2);
+	$("#result").innerText = result;
+	updateCharacterSheet(vm.state);
+}
 </script>
