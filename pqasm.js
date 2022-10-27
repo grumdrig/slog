@@ -1,7 +1,7 @@
 `
 // Include defs for this game
 
-external train(spell) = $36
+external study(spell) = $36
 external train(stat) = $36
 external initialize(slot, value) = $36
 external travel(destination) = $30
@@ -18,6 +18,74 @@ external startGame() = $39
 external give(slot, quantity) = $3A
 external drop(slot, quantity) = $3A
 `
+
+const EXTERNALS = {
+	study: {
+		parameters: 'spell',
+		opcode: 0x36,
+	},
+	train: {
+		parameters: 'stat',
+		opcode: 0x36,
+	},
+	initialize: {
+		parameters: 'slot,value',
+		opcode: 0x36,
+	},
+	travel: {
+		parameters: 'destination',
+		opcode: 0x30,
+	},
+	melee: {
+		opcode: 0x31,
+	},
+	buyItem: {
+		parameters: 'slot,quantity',
+		opcode: 0x32,
+	},
+	buyEquipment: {
+		parameters: 'slot,quality',
+		opcode: 0x32,
+	},
+	sell: {
+		parameters: 'slot,quantity',
+		opcode: 0x33,
+	},
+	seekquest: {
+		opcode: 0x34,
+	},
+	completequest: {
+		opcode: 0x35,
+	},
+	cast: {
+		parameters: 'spell_slot',
+		opcode: 0x37,
+	},
+	forage: {
+		parameters: 'target_slot',
+		opcode: 0x38,
+	},
+	levelup: {
+		opcode: 0x39,
+	},
+	startGame: {
+		opcode: 0x39,
+	},
+	give: {
+		parameters: 'slot,quantity',
+		opcode: 0x3A,
+	},
+	drop: {
+		parameters: 'slot,quantity',
+		opcode: 0x3A,
+	},
+};
+
+for (let name in EXTERNALS) {
+	define(name, EXTERNALS[name].opcode);
+}
+
+
 
 const CALLS = {
 	travel: {
@@ -76,8 +144,7 @@ const CALLS = {
 for (let call in CALLS) {
 	let { opcode, parameters } = CALLS[call];
 	let externalDef = `external ${call}(${parameters}) = $${opcode.toString(16)}`;
-	if (typeof window !== 'undefined')
-		window[call] = opcode;
+	define(call, opcode);
 }
 
 /*
@@ -110,80 +177,106 @@ let EQUIPMENT_TYPES = {
 */
 
 
-let slots = [
+const SLOTS = [
 	null,
-	"AgeHours",
-	"Level",
+	"RACE",
+	"AGE",
+	"LOCATION",
+
+	"LEVEL",
 	"XP",
-	"XpNeeded",
-	"HP",
-	"Health",
-	"MP",
-	"Mana",
-	"Strength",
-	"Agility",
-	"Constitution",
-	"Wisdom",
-	"Intelligence",
-	"Charism",
-	"StrengthTrain",
-	"AgilityTrain",
-	"ConstitutionTrain",
-	"WisdomTrain",
-	"IntelligenceTrain",
-	"CharismTrain",
-	"Enchantment",
-	"EnchantmentLevel",
-	"SpellLevel1", //  heal
-	"SpellLevel2", //  fireball
-	"SpellLevel3", //  haste
-	"SpellLevel4", //  buff
-	"SpellLevel5", //  luck
-	"SpellLevel6", //
-	"SpellTrain1",
-	"SpellTrain2",
-	"SpellTrain3",
-	"SpellTrain4",
-	"SpellTrain5",
-	"SpellTrain6",
-	"Equipment1", // Weapon
-	"Equipment2", // Armor
-	"Equipment3", // Shield
-	"Equipment4", // Headgear
-	"Equipment5", // Footwear
-	"Equipment6", // Mount
-	"Equipment7", // Ring
-	"Equipment8", // Amulet
-	"ArmorClass", // accumulated armor rating
-	"Inventory1", // qty gold
-	"Inventory2", // qty spoils
-	"Inventory3", // qty reagents
-	"Inventory4", // qty resources
-	"Inventory5", // qty food
-	"Inventory6", // qty treasures
-	"Inventory7", // qty potions
-	"Inventory8", // qty life potions
-	"Encumbrance",
-	"Location",  // grid position (col + 6 * row)
-	"QuestLocation", // location to perform the quest
-	"QuestObject", // monster or item (by slot)
-	"QuestQty", // qty # required
-	"QuestProgress", // # completed
-	"QuestGiver", // town location
-	"Act", // (up to 9, 10 = win)
-	"ActDuration", // # of something required
-	"ActProgress", // as advanced by quests
-	"Esteem1", // with the fantasy race 1 dunklings (3 towns)
-	"Esteem2", // with the fantasy race 2 hardwarves (2 towns)
-	"Esteem3", // with the fantasy race 3 effs (one town)
+	"XP_NEEDED",
+
+	"MAX_HP",
+	"DAMAGE",
+
+	"MAX_MP",
+	"FATIGUE",
+
+	"ENCHANTMENT",
+	"ENCHANTMENT_LEVEL",
+
+	"STAT_STRENGTH",
+	"STAT_AGILITY",
+	"STAT_CONSTITUTION",
+	"STAT_INTELLIGENCE",
+	"STAT_WISDOM",
+	"STAT_CHARISMA",
+
+	"SPELL_HEAL",
+	"SPELL_FIREBALL",
+	"SPELL_HASTE",
+	"SPELL_BUFF",
+	"SPELL_LUCK",
+	"SPELL_6", //
+
+	"EQUIPMENT_WEAPON",
+	"EQUIPMENT_ARMOR",
+	"EQUIPMENT_SHIELD",
+	"EQUIPMENT_HEADGEAR",
+	"EQUIPMENT_FOOTWEAR",
+	"EQUIPMENT_MOUNT",
+	"EQUIPMENT_RING",
+	"EQUIPMENT_TOTEM",
+
+	"INVENTORY_GOLD",
+	"INVENTORY_SPOILS",
+	"INVENTORY_REAGENTS",
+	"INVENTORY_RESOURCES",
+	"INVENTORY_FOOD",
+	"INVENTORY_TREASURES",
+	"INVENTORY_POTIONS",
+	"INVENTORY_LIFE_POTIONS",
+
+	"QUEST_OBJECT", // monster or item (by slot)
+	"QUEST_LOCATION", // location to perform the quest
+	"QUEST_QTY", // qty # required
+	"QUEST_PROGRESS", // # completed
+	"QUEST_ORIGIN", // town location
+
+	"ACT", // (up to 9, 10 = win)
+	"ACT_DURATION", // # of something required
+	"ACT_PROGRESS", // as advanced by quests
+
+	"ESTEEM_DUNKLINGS",
+	"ESTEEM_HARDWARVES",
+	"ESTEEM_EFFS",
 ];
+
+
+function define(symbol, value) {
+	if (!symbol) return;
+	if (typeof global !== 'undefined')
+		Object.defineProperty(global, symbol, { value });
+	if (typeof window !== 'undefined')
+		Object.defineProperty(window, symbol, { value });
+	if (typeof exports !== 'undefined')
+		Object.defineProperty(exports, symbol, { value });
+}
+
+// const LEVEL = 1; for example
+SLOTS.forEach(define);
+
+const STAT_0 = STAT_STRENGTH;
+const SPELL_0 = SPELL_HEAL;
+const EQUIPMENT_0 = EQUIPMENT_WEAPON;
+const INVENTORY_0 =INVENTORY_GOLD;
+
+function isStatSlot(slot) { return STAT_0 <= slot && slot < SPELL_0 }
+function isSpellSlot(slot) { return SPELL_0 <= slot && slot < EQUIPMENT_0 }
+function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < INVENTORY_0 }
+function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < QUEST_OBJECT }
+
+const STAT_N = SPELL_0 - STAT_0;
+// const SPELL_N = EQUIPMENT_0 - SPELL_0;
+// const EQUIPMENT_N = INVENTORY_0 - EQUIPMENT_0;
+// const INVENTORY_N = QUEST_OBJECT - INVENTORY_0;
 
 // Weapon types
 const SMASH = 1;
 const SLASH = 2;
 const SHOOT = 3;
 const POKE = 4;
-
 
 const RACES = [
 	null,
@@ -238,6 +331,12 @@ const RACES = [
 		startingitem: { weapon: 3, shoes: 1, reagent: 1 },
 	}
 ];
+
+
+const DUNKLING = 1;
+const HARDWARF = 2;
+const EFF = 3;
+const GAST = 4;
 
 
 // Terrain types
@@ -318,37 +417,241 @@ const MOBS = [
 ];
 
 
+
 class Game {
 	static initialize(state) {
 		// Most of it happens with the initialize / startgame ops
 		state[LOCATION] = -1;
-		state[QUESTLOCATION] = -1;
+		state[QUEST_LOCATION] = -1;
 	}
 
+	static MAP = [{
+			index: 0,
+			name: "Watha",
+			terrain: TUNDRA,
+			level: 7
+		}, {
+			index: 1,
+			name: "Maak",
+			terrain: TUNDRA,
+			level: 5,
+		}, {
+			index: 2,
+			same: "Wolfin Forest",
+			terrain: FOREST,
+			level: 2,
+		}, {
+			index: 3,
+			name: "Hohamp",
+			terrain: TOWN,
+			level: 0,
+		}, {
+			index: 4,
+			name: "Skiddo",
+			terrain: HILLS,
+			level: 1,
+		}, {
+			index: 5,
+			name: "Chinbreak Cliff",
+			terrain: MOUNTAINS,
+			level: 7,
+
+		}, {
+			index: 6,
+			name: "Yar",
+			terrain: TOWN,
+			level: 0,
+		}, {
+			index: 7,
+			name: "Deepni Woods",
+			terrain: FOREST,
+			level: 7,
+		}, {
+			index: 8,
+			name: "Barkmot Forest",
+			terrain: FOREST,
+			level: 7,
+		}, {
+			index: 9,
+			name: "Goldona Hills",
+			terrain: HILLS,
+			level: 3,
+		}, {
+			index: 10,
+			name: "Breezeby Peak",
+			terrain: MOUNTAINS,
+			level: 5,
+		}, {
+			index: 11,
+			name: "Iperko Forest",
+			terrain: FOREST,
+			level: 1,
+
+		}, {
+			index: 12,
+			name: "Blesh Grove",
+			terrain: FOREST,
+			level: 2,
+		}, {
+			index: 13,
+			name: "Donday Hill",
+			terrain: HILLS,
+			level: 3,
+		}, {
+			index: 14,
+			name: "Skidge Mountain",
+			terrain: MOUNTAINS,
+			level: 5,
+		}, {
+			index: 15,
+			name: "Krack Mountain",
+			terrain: MOUNTAINS,
+			level: 7,
+		}, {
+			index: 16,
+			name: "Sprue Forest",
+			terrain: FOREST,
+			level: 2,
+		}, {
+			index: 17,
+			name: "Bompton",
+			terrain: TOWN,
+			denizen: DUNKLING,
+			level: 0,
+
+		}, {
+			index: 18,
+			name: "Terfu Plain",
+			terrain: PLAINS,
+			level: 3,
+		}, {
+			index: 19,
+			name: "Blue Mist Mountains",
+			terrain: MOUNTAINS,
+			level: 1,
+		}, {
+			index: 20,
+			name: "Pillary",
+			terrain: TOWN,
+			civilization: HARDWARF,
+			level: 0,
+		}, {
+			index: 21,
+			name: "Grein Hills",
+			terrain: HILLS,
+			level: 3,
+		}, {
+			index: 22,
+			name: "Woofa Plain",
+			terrain: PLAINS,
+			level: 2,
+		}, {
+			index: 23,
+			name: "Hallon Prairie",
+			terrain: PLAINS,
+			level: 1,
+
+		}, {
+			index: 24,
+			name: "Donga Marsh",
+			terrain: MARSH,
+			level: 1,
+		}, {
+			index: 25,
+			name: "Panar Plain",
+			terrain: PLAINS,
+			level: 2,
+		}, {
+			index: 26,
+			name: "Owlholm Woods",
+			terrain: FOREST,
+			level: 4,
+		}, {
+			index: 27,
+			name: "Papay Forest",
+			terrain: FOREST,
+			level: 3,
+		}, {
+			index: 28,
+			name: "Delial",
+			terrain: TOWN,
+			civilization: DUNKLING,
+			level: 0,
+		}, {
+			index: 29,
+			name: "Solla Desert",
+			terrain: DESERT,
+			level: 1,
+
+		}, {
+			index: 30,
+			name: "Cholar",
+			terrain: TOWN,
+			civilization: DUNKLING,
+			level: 0,
+		}, {
+			index: 31,
+			name: "Ritoli Marsh",
+			terrain: MARSH,
+			level: 4,
+		}, {
+			index: 32,
+			name: "Arapet Plains",
+			terrain: PLAINS,
+			level: 6,
+		}, {
+			index: 33,
+			name: "Wheewit Forest",
+			terrain: FOREST,
+			level: 5,
+		}, {
+			index: 34,
+			name: "Enotar Plains",
+			terrain: PLAINS,
+			level: 4,
+		}, {
+			index: 35,
+			name: "Noonaf Wastes",
+			terrain: DESERT,
+			level: 5,
+
+		}, {
+			index: 36,
+			name: "Emkell Peak",
+			terrain: MOUNTAINS,
+			level: 9,
+		}, {
+			index: 37,
+			name: "Sygnon Tower",
+			terrain: TOWN,
+			civilization: GAST,
+			level: 0,
+		}];
+
+
 	static handleInstruction(state, opcode, arg1, arg2) {
-		if (state[level] === 0) {
+		if (state[LEVEL] === 0) {
 			// game hasn't begun
 			if (opcode === initialize) {
 				let [slot, value] = [arg1, arg2];
-				if (slot !== RACE && slot !== CLASS && (STAT0 > slot || slot > STAT5))
+				if (slot !== RACE && slot !== CLASS && (STAT_0 > slot || slot > STAT5))
 					return -1;
 				if (value < 0) return -1
 				state[slot] = value;
 				return state[slot];
 
 			} else if (opcode === startGame) {
-				if (state.slice(STAT0, 6).reduce((a,b) => a+b) > 10) return -1;
+				if (state.slice(STAT_0, SPELL_0).reduce((a,b) => a+b) > 10) return -1;
 				if (!RACES[state[RACE]]) return -1;
-				if (!CLASS_NAME[state[CLASS]]) return -1;
 				// All good. Start the game.
-				for (let stat = STAT0; stat <= STAT5; stat += 1) {
+				for (let stat = STAT_0; stat < SPELL_0; stat += 1) {
 					// Add 3 plus race bonuses to stats
-					state[stat] += 3 + (RACES[RACE].stat_mods[STATE_NAME[stat]] || 0);
+					state[stat] += 3 + (RACES[RACE].stat_mods[SLOTS[stat]] || 0);
 				}
 				state[LEVEL] = 1;
 				state[LOCATION] = 11;
-				state[HP] = 6 + state[CONSTITUTION];
-				state[MP] = 6 + state[INTELLIGENCE];
+				state[MAX_HP] = 6 + state[STAT_CONSTITUTION];
+				state[MAX_MP] = 6 + state[STAT_INTELLIGENCE];
 				for (let slot in RACES[RACE].startingitems) {
 					state[slot] = RACES[RACE].startingitems[slot];
 				}
@@ -359,7 +662,7 @@ class Game {
 		}
 
 		// Game is in process
-		let local = this.contructor.MAP[state[LOCATION]];
+		let local = this.MAP[state[LOCATION]];
 
 		if (opcode === travel) {
 			const destination = arg1;
@@ -430,8 +733,8 @@ class Game {
 			let price = qty * 0.5 * marketValue(slot);
 			if (opcode !== give) {
 				state[GOLD] += price;
-			} else if (state[QUESTOBJECT] === slot) {
-				state[QUESTPROGRESS] += qty;
+			} else if (state[QUEST_OBJECT] === slot) {
+				state[QUEST_PROGRESS] += qty;
 			}
 			state[slot] -= qty;
 			this.passTime(1, 0);
@@ -442,23 +745,23 @@ class Game {
 			if (!isTown(state[LOCATION])) return 0;
 			if (irand(2) == 0) {
 				// Exterminate the ___
-				state[QUESTLOCATION] = randomLocation(state[LOCATION]);
-				state[QUESTOBJECT] = MAP[state[QUESTLOCATION]].randomMob();
-				state[QUESTQTY] = 5 + irand(10);
+				state[QUEST_LOCATION] = randomLocation(state[LOCATION]);
+				state[QUEST_OBJECT] = MAP[state[QUEST_LOCATION]].randomMob();
+				state[QUEST_QTY] = 5 + irand(10);
 			} else {
 				// Bring me N of SOMETHING
-				state[QUESTLOCATION] = state[LOCATION];
-				state[QUESTOBJECT] = randomItem();
-				state[QUESTQTY] = 5 * irand(10);
+				state[QUEST_LOCATION] = state[LOCATION];
+				state[QUEST_OBJECT] = randomItem();
+				state[QUEST_QTY] = 5 * irand(10);
 			}
-			state[QUESTPROGRESS] = 0;
-			state[QUESTGIVER] = state[LOCATION];
+			state[QUEST_PROGRESS] = 0;
+			state[QUEST_GIVER] = state[LOCATION];
 			return 1;
 
 		} else if (opcode === completequest) {
-			if (!state[QUESTOBJECT]) return -1;
-			if (state[QUESTGIVER] != state[LOCATION]) return -1;
-			if (state[QUESTPROGRESS] < state[QUESTQTY]) return -1;
+			if (!state[QUEST_OBJECT]) return -1;
+			if (state[QUEST_GIVER] != state[LOCATION]) return -1;
+			if (state[QUEST_PROGRESS] < state[QUEST_QTY]) return -1;
 			state[XP] += 100;
 			state[ACTPROGRESS] += 1;
 			if (state[ACTPROGRESS] >= state[ACTDURATION]) {
@@ -466,11 +769,11 @@ class Game {
 				state[ACTDURATION] = ACT_LENGTHS[state[ACT]];
 				state[ACTPROGRESS] = 0;
 			}
-			state[QUESTOBJECT] = 0;
-			state[QUESTLOCATION] = -1;
-			state[QUESTGIVER] = -1;
-			state[QUESTPROGRESS] = 0;
-			state[QUESTQTY] = 0;
+			state[QUEST_OBJECT] = 0;
+			state[QUEST_LOCATION] = -1;
+			state[QUEST_GIVER] = -1;
+			state[QUEST_PROGRESS] = 0;
+			state[QUEST_QTY] = 0;
 			return 1;
 
 		} else  if (opcode === train) {
@@ -531,6 +834,15 @@ class Game {
 		}
 	}
 
+	static armorClass(state) {
+		// accumulated armor rating
+		return TODO;
+	}
+
+	static encumbrance(state) {
+		return TODO;
+	}
+
 	static battle(state, invulnerable=false) {
 		if (!state[MOBTYPE]) return -1;
 
@@ -565,3 +877,23 @@ class Game {
 		state[AGEHOURS] += hours;
 	}
 }
+
+state = new Array(SLOTS.length).fill(0);
+Game.initialize(state);
+Game.handleInstruction(state, study, 1, 1);
+Game.handleInstruction(state, train, 1, 1);
+Game.handleInstruction(state, initialize, 1, 1);
+Game.handleInstruction(state, travel, 1, 1);
+Game.handleInstruction(state, melee, 1, 1);
+Game.handleInstruction(state, buyItem, 1, 1);
+Game.handleInstruction(state, buyEquipment, 1, 1);
+Game.handleInstruction(state, sell, 1, 1);
+Game.handleInstruction(state, seekquest, 1, 1);
+Game.handleInstruction(state, completequest, 1, 1);
+Game.handleInstruction(state, cast, 1, 1);
+Game.handleInstruction(state, forage, 1, 1);
+Game.handleInstruction(state, levelup, 1, 1);
+Game.handleInstruction(state, startGame, 1, 1);
+Game.handleInstruction(state, give, 1, 1);
+Game.handleInstruction(state, drop, 1, 1);
+console.log(state);
