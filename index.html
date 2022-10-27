@@ -4,6 +4,7 @@
 <title>PQ Chasm</title>
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="height: 512px; width: 512px;"><path d="M0 0h512v512H0z" fill="black" fill-opacity="1"></path><g class="" transform="translate(0,0)" style=""><path d="M19.75 14.438c59.538 112.29 142.51 202.35 232.28 292.718l3.626 3.75.063-.062c21.827 21.93 44.04 43.923 66.405 66.25-18.856 14.813-38.974 28.2-59.938 40.312l28.532 28.53 68.717-68.717c42.337 27.636 76.286 63.646 104.094 105.81l28.064-28.06c-42.47-27.493-79.74-60.206-106.03-103.876l68.936-68.938-28.53-28.53c-11.115 21.853-24.413 42.015-39.47 60.593-43.852-43.8-86.462-85.842-130.125-125.47-.224-.203-.432-.422-.656-.625C183.624 122.75 108.515 63.91 19.75 14.437zm471.875 0c-83.038 46.28-154.122 100.78-221.97 161.156l22.814 21.562 56.81-56.812 13.22 13.187-56.438 56.44 24.594 23.186c61.802-66.92 117.6-136.92 160.97-218.72zm-329.53 125.906l200.56 200.53c-4.36 4.443-8.84 8.793-13.405 13.032L148.875 153.53l13.22-13.186zm-76.69 113.28l-28.5 28.532 68.907 68.906c-26.29 43.673-63.53 76.414-106 103.907l28.063 28.06c27.807-42.164 61.758-78.174 104.094-105.81l68.718 68.717 28.53-28.53c-20.962-12.113-41.08-25.5-59.937-40.313 17.865-17.83 35.61-35.433 53.157-52.97l-24.843-25.655-55.47 55.467c-4.565-4.238-9.014-8.62-13.374-13.062l55.844-55.844-24.53-25.374c-18.28 17.856-36.602 36.06-55.158 54.594-15.068-18.587-28.38-38.758-39.5-60.625z" fill="white" fill-opacity="1"></path></g></svg>' />
 <script src="vm.js"></script>
+<script src="pqasm.js"></script>
 <script src="compiler.js"></script>
 <link rel=stylesheet href="node_modules/xp.css/dist/XP.css"/>
 <style>
@@ -98,7 +99,7 @@
 	 		border: none;
 	 	}
 		.brain {
-			overflow: scroll;
+			overflow: auto;
 			max-height: 112px;
 		}
 
@@ -248,6 +249,38 @@
 	</div>
 </div>
 
+<div class=window>
+	<div class="title-bar">
+	  <div class="title-bar-text">Controls</div>
+	  <div class="title-bar-controls">
+	    <button aria-label="Close"></button>
+	  </div>
+	</div>
+
+	<div class="window-body">
+
+		Game.initialize(state);
+Game.handleInstruction(state, study, 1, 1);
+Game.handleInstruction(state, train, 1, 1);
+Game.handleInstruction(state, initialize, 1, 1);
+Game.handleInstruction(state, travel, 1, 1);
+Game.handleInstruction(state, melee, 1, 1);
+Game.handleInstruction(state, buyItem, 1, 1);
+Game.handleInstruction(state, buyEquipment, 1, 1);
+Game.handleInstruction(state, sell, 1, 1);
+Game.handleInstruction(state, seekquest, 1, 1);
+Game.handleInstruction(state, completequest, 1, 1);
+Game.handleInstruction(state, cast, 1, 1);
+Game.handleInstruction(state, forage, 1, 1);
+Game.handleInstruction(state, levelup, 1, 1);
+Game.handleInstruction(state, startGame, 1, 1);
+Game.handleInstruction(state, give, 1, 1);
+Game.handleInstruction(state, drop, 1, 1);
+
+	</div>
+</div>
+
+
 <script>
 
 function $(s) { return document.querySelector(s) }
@@ -267,39 +300,6 @@ function comp() {
 }
 
 
-class TestGame {
-  initialize(vm) {
-    vm.special[SPECIAL.LEVEL] = 1;
-    vm.special[SPECIAL.HEALTH] = 6;
-    vm.special[SPECIAL.ENERGY] = 10;
-    vm.special[SPECIAL.LEVELING_EXPONENT] = 160;
-    vm.special[SPECIAL.LEVELING_ADDEND] = 0;
-    vm.special[SPECIAL.LEVELING_MULTIPLIER] = 200;
-  }
-
-  static opcodes = {
-    walk: 0x30,
-    act: 0x31,
-    buy: 0x32,
-    sell: 0x33,
-    cast: 0x34,
-  }
-
-  static mnemonics = reverseMapIntoArray(TestGame.opcodes);
-
-  handleInstruction(state, opcode, top, argument) {
-    let mnemonic = TestGame.mnemonics[opcode];
-
-    if (mnemonic === 'walk') {
-      state[SPECIAL.TERRAIN] = Math.floor(Math.random() * 100);
-      return state[SPECIAL.TERRAIN];
-    } else {
-	    return ++state[16 + opcode - 0x30];
-	  }
-  }
-}
-
-
 let asm, vm;
 function assemble() {
 	asm = new Assembler();
@@ -307,12 +307,9 @@ function assemble() {
 		asm.assemble($("#asm").value);
 		$("#machine").classList.remove("err");
 		$("#machine").value = asm.disassemble();
-		vm = new VirtualMachine(asm.code, new TestGame());
-			// new World(`
-		 //  WWWWWW
-		 //  W__t_W
-		 //  WWWWWW`));
-		updateCharacterSheet(vm);
+		vm = new VirtualMachine(asm.code, Game);
+		updateDebuggerState(vm);
+		updateCharacterSheet(vm.state);
 	} catch (e) {
 		$("#machine").classList.add("err");
 		$("#machine").value = e.toString();
@@ -322,13 +319,13 @@ function assemble() {
 
 function step() {
 	vm.step();
-	updateCharacterSheet(vm);
+	updateDebuggerState(vm);
+	updateCharacterSheet(vm.state);
 }
 
 function runimate() {
   if (vm.alive()) {
-    vm.step();
-		updateCharacterSheet(vm);
+    step();
   	setTimeout(runimate, 100);
   }
 }
@@ -336,8 +333,9 @@ function runimate() {
 function run() {
   while (vm.alive()) {
 		vm.step();
-		updateCharacterSheet(vm);
 	}
+	updateDebuggerState(vm);
+	updateCharacterSheet(vm.state);
 }
 
 
@@ -357,12 +355,13 @@ $("#asm").addEventListener('keypress', e => {
 	if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) assemble();
 });
 
-function updateCharacterSheet(vm) {
+function updateDebuggerState(vm) {
 
 	$("#registers").innerText = '';
-	for (let i = 1; i < vm.special.length; ++i) {
+	for (let i = 0; i < vm.registers.length; ++i) {
+		let address = -i - 1;
 		let d = $("#registers").appendChild(document.createElement('pre'));
-		d.innerText = `${((SPECIAL_OPS[i] || i) + ' '.repeat(12)).substr(0,12)} $${('0000'+vm.special[i].toString(16)).substr(-4)} ${vm.special[i]}`;
+		d.innerText = `${((REGISTER_NAMES[address] || i) + ' '.repeat(12)).substr(0,12)} $${('0000'+vm.registers[i].toString(16)).substr(-4)} ${vm.registers[i]}`;
 	}
 
 	$("#codepoint").innerText = '';
@@ -385,34 +384,35 @@ function updateCharacterSheet(vm) {
 		let d = $("#memory").appendChild(document.createElement('pre'));
 		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
 	}
+}
 
-
-	$('#level').innerText = vm.special[SPECIAL.LEVEL];
-	$('#xp').innerText = vm.special[SPECIAL.EXPERIENCE];
-	$('#health').innerText = `${vm.special[SPECIAL.HEALTH]-vm.special[SPECIAL.DAMAGE]} / ${vm.special[SPECIAL.HEALTH]}`;
-	$('#energy').innerText = `${vm.special[SPECIAL.ENERGY]-vm.special[SPECIAL.FATIGUE]} / ${vm.special[SPECIAL.ENERGY]}`;
+function updateCharacterSheet(state) {
+	$('#level').innerText = state[LEVEL];
+	$('#xp').innerText = state[XP];
+	$('#health').innerText = `${state[MAX_HP]-state[DAMAGE]} / ${state[MAX_HP]}`;
+	$('#energy').innerText = `${state[MAX_MP]-state[FATIGUE]} / ${state[MAX_MP]}`;
 	for (let i = 0; i < 6; ++i) {
-		$("#s" + i).innerText = vm.special[SPECIAL.STAT_0 + i];
+		$("#s" + i).innerText = state[STAT_0 + i];
 	}
 	let n_spells = 0;
-	for (let i = 0; i < 16; ++i) {
-		let l = vm.special[SPECIAL.SPELL_0 + i];
+	for (let i = 0; i < SPELL_COUNT; ++i) {
+		let l = state[SPELL_0 + i];
 		if (l) {
 			$("#bt" + n_spells).innerText = `Spell #${i}`;
 			$("#b" + n_spells).innerText = l;
 			n_spells += 1;
 		}
 	}
-	for (let i = 0; i < 8; ++i) {
-		$("#e" + i).innerText = `+${vm.special[SPECIAL.EQUIPMENT_0 + i]} dagger`;
+	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
+		$("#e" + i).innerText = `+${state[EQUIPMENT_0 + i]} dagger`;
 	}
-	for (let i = 0; i < 8; ++i) {
-		$("#i" + i).innerText = vm.special[SPECIAL.INVENTORY_0 + i];
+	for (let i = 0; i < INVENTORY_COUNT; ++i) {
+		$("#i" + i).innerText = state[INVENTORY_0 + i];
 	}
-	$("#longitude").innerText = vm.special[SPECIAL.LONGITUDE];
-	$("#latitude").innerText = vm.special[SPECIAL.LATITUDE];
+	$("#longitude").innerText = state[LOCATION];
+	$("#latitude").innerText = state[LOCATION];
 
-	$("#act").innerText = vm.special[SPECIAL.ACT] || 'Prologue';
+	$("#act").innerText = state[ACT] || 'Prologue';
 
 }
 

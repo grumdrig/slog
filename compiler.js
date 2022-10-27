@@ -147,9 +147,9 @@ class CompilationContext {
 		this.symbols[identifier] = { constant: true, value };
 	}
 
-	defineExternal(identifier, opcode) {
+	defineExternal(identifier, opcode, parameters) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
-		this.symbols[identifier] = { external: true, value: { opcode } };
+		this.symbols[identifier] = { external: true, opcode, parameters };
 	}
 
 	declareVariable(identifier, count, initializer) {
@@ -168,7 +168,7 @@ class CompilationContext {
 	}
 
 	declareFunction(identifier, declaration) {
-		this.symbols[identifier] = { function: true, declaration };
+		this.symbols[identifier] = { function: true, parameters: declaration.parameters };
 	}
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
@@ -312,6 +312,7 @@ class ExternalDefinition {
 				source.consume(',');
 			}
 		}
+		if (result.parameters.length > 2) source.error("excess parameters in exteral definition; limit is two");
 		source.consume('=');
 		result.opcode = Expression.parse(source);
 		return result;
@@ -320,7 +321,7 @@ class ExternalDefinition {
 	define(context) {
 		let opcode = this.opcode.simplify(context);
 		context.assert(opcode.literal, "literal opcode value expected");
-		context.defineExternal(this.name, this.opcode.literal);
+		context.defineExternal(this.name, this.opcode.literal, this.parameters);
 	}
 }
 
@@ -368,7 +369,7 @@ class FunctionDefinition {
 	}
 
 	generateReturn(context) {
-		context.emit('storelocal -3  ; store return value');
+		context.emit('storelocal -3  ; result');
 		context.emit('fetch FP');
 		context.emit('store SP');
 		context.emit('store FP');
@@ -606,7 +607,7 @@ class ExternalFunctionExpression {
 		context.assert(this.opcode.literal, 'literal value expected');
 		this.arg1.generate(context);
 		this.arg2.generate(context);
-		context.emit(this.opcode.literal + '  ; external call');
+		context.emit('ext' + this.opcode.literal.toString(16));
 	}
 }
 
@@ -1099,9 +1100,12 @@ class PostfixExpression {
 					func = context.lookup(func.identifier);
 					context.assert(func, 'unknown identifier ' + func.identifier);
 				}
+				context.assert(func.parameters.length === args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${args.length}`);
 				if (func.external) {
-					for (let a of args) a.generate(context)
-					context.emit(func.value.opcode + '  ; external ' + lhs.identifier + '()');
+					for (let a of args) a.generate(context);
+					if (args.length === 0) context.emit('.stack 0 0  ; default arg');
+					if (args.length === 1) context.emit('.stack 0  ; default arg');
+					context.emit('ext' + func.opcode.toString(16) + '  ; ' + lhs.identifier + '()');
 				} else {
 					context.emit('.stack 0 ; return value');
 					context.emit('fetch PC');
@@ -1179,10 +1183,10 @@ class PostfixExpression {
 
 function compile(text) {
 	let source = new Source(text);
-	console.log(source);
+	// console.log(source);
 
 	let m = Module.parse(source);
-	console.log(m);
+	// console.log(m);
 
 	let c = m.generate();
 

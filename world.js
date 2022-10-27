@@ -1,3 +1,136 @@
+`This is all part of the early idea for the (first) game in the VM, which was
+a bit too complicated to start with at least.`
+
+let SLOTS = {
+  // Environment
+  TERRAIN: 0x10,
+  SURROUNDINGS: 0x11,
+  RESOURCE_TYPE: 0x12,  // type of visible lootable thing
+  RESOURCE_QTY: 0x13,
+  TIME_OF_DAY: 0x14,
+  DAY_OF_YEAR: 0x15,
+  YEAR: 0x16,
+  MONTH: 0x17,
+  MOON_PHASE: 0x18,
+  WIND_SPEED: 0x19,
+  WIND_DIRECTION: 0x1A,
+  WEATHER: 0x1B,
+  TIDE: 0x1C,
+  //
+  //
+  //
+
+  // Nearby mob
+  MOB_SPECIES: 0x20,  // from some list.
+  MOB_LEVEL: 0x21,
+  MOB_AGGRO: 0x22,  // -8 = friendly, 0 = neutral, 8 = hostile
+  MOB_HEALTH: 0x23,  // as %
+  MOB_JOB: 0x24,  // for NPC, and more generally
+
+  // Character sheet
+
+  LEVEL: 0x30,
+  EXPERIENCE: 0x31,
+  AGE: 0x32,
+  //
+  STAT_0: 0x38,
+  STR: 0x38,
+  DEX: 0x39,
+  CON: 0x3A,
+  INT: 0x3B,
+  WIS: 0x3C,
+  CHA: 0x3D,
+
+  DAMAGE: 0x40,
+  HEALTH: 0x41,
+  FATIGUE: 0x42,
+  ENERGY: 0x43,
+  ENCUMBRANCE: 0x44,
+  CAPACITY: 0x45,
+
+  INVENTORY_0: 0x50,
+  INVENTORY_GOLD: 0x50,
+  INVENTORY_REAGENTS: 0x51,
+  INVENTORY_DROPS: 0x52,
+  INVENTORY_HEALING_POTIONS: 0x53,
+  INVENTORY_ENERGY_POTIONS: 0x54,
+  INVENTORY_KEYS: 0x55,
+  INVENTORY_FOOD: 0x56,
+  // ...
+  INVENTORY15: 0x5F,
+
+  EQUIPMENT_0: 0x60,
+  EQUIP_WEAPON: 0x60,  // Level of puissance
+  // ...
+  EQUIP_SHOES: 0x6F,
+
+  SPELL_0: 0x70,  // spell level
+  // ...
+  SPELL_15: 0x7F,
+
+  LONGITUDE: 0x80,  // as fixed point?
+  LATITUDE: 0x81,
+  LEVEL: 0x82,  // 0 = on land, -1 underground, 1 flying
+  FACING: 0x83,  // degrees on compass
+
+  STATEMENT_0: 0x90,  // ASCII codes of some arbitrary blabber
+  // ...
+  STATEMENT_15: 0x9F,
+
+  // When TALK or other stuff is used, responses might go here. Not sure if
+  // this is enough characters. Then this might leave logging, if any, to the
+  // player.
+  RESPONSE_0: 0xA0,
+  // ...
+  RESPONSE_15: 0xAF,
+
+  MAP_NW: 0xB0,
+  MAP_N:  0xB1,
+  MAP_NE: 0xB2,
+  MAP_W:  0xB3,
+  MAP_X:  0xB4,
+  MAP_E:  0xB5,
+  MAP_SW: 0xB6,
+  MAP_S:  0xB7,
+  MAP_SE: 0xB8,
+
+  // Character name (not at all sure this needs inclusion)
+  NAME_0: 0xC0,
+  /// ...
+  NAME_15: 0xCF,
+
+  ATTITUDE_0: 0xD0,  // reserved for game-specific attitudes / stances /
+  // ...
+  ATTITUDE_2: 0xDF,  // strategies / behaviors set by player
+
+  // Game rules
+  // Leveling: xp(level) = A + pow(level - 1, E/100) * M
+  LEVELING_ADDEND: 0xE0,
+  LEVELING_EXPONENT: 0xE1,
+  LEVELING_MULTIPLIER: 0xE2,
+
+  TONE_FREQUENCY: 0xF0,
+  TONE_VOLUME: 0xF1,
+  // Room for polyphony
+};
+
+
+
+const ACTIONS = {
+  TALK: 0x5A,
+  HUNT: 0x40,
+  // BUY: 0xB1,
+  // SELL: 0x5E,
+  FIGHT: 0xA7,
+  REST: 0x22,
+  CAMP: 0xCA,
+  FORAGE: 0xF0,
+  GATHER: 0xF1,  // don't know what the difference might be
+  SEARCH: 0x70,
+  LEVEL_UP: 0x77,
+};
+
+
 let world_opcodes = {
   // Just here for safekeeping. Not used.
 

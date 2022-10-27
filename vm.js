@@ -107,6 +107,23 @@ const opcodes = [
   { opcode: 0x2A, mnemonic: 'xor' },
   { opcode: 0x2B, mnemonic: 'shift' },
   // similar for these binary ops
+
+  { opcode: 0x30, mnemonic: 'ext30' },
+  { opcode: 0x31, mnemonic: 'ext31' },
+  { opcode: 0x32, mnemonic: 'ext32' },
+  { opcode: 0x33, mnemonic: 'ext33' },
+  { opcode: 0x34, mnemonic: 'ext34' },
+  { opcode: 0x35, mnemonic: 'ext35' },
+  { opcode: 0x36, mnemonic: 'ext36' },
+  { opcode: 0x37, mnemonic: 'ext37' },
+  { opcode: 0x38, mnemonic: 'ext38' },
+  { opcode: 0x39, mnemonic: 'ext39' },
+  { opcode: 0x3A, mnemonic: 'ext3A' },
+  { opcode: 0x3B, mnemonic: 'ext3B' },
+  { opcode: 0x3C, mnemonic: 'ext3C' },
+  { opcode: 0x3D, mnemonic: 'ext3D' },
+  { opcode: 0x3E, mnemonic: 'ext3E' },
+  { opcode: 0x3F, mnemonic: 'ext3F' },
 ];
 
 
@@ -161,174 +178,57 @@ const BINARY_OPERATORS = {
 
 
 // Machine registers
-const SPECIAL = {
-  PC: 0x1,    // Program counter register
-  SP: 0x2,    // Stack pointer register
-  FP: 0x3,    // Frame pointer
-  AX: 0x4,    // Auxilliary register, gets some results
-  INT_R: 0x5, // Spoken response interrupt vector (or 0)
-  CLOCK: 0x6, // Counts clock cycles from startup
-
-  // Environment
-  TERRAIN: 0x10,
-  SURROUNDINGS: 0x11,
-  RESOURCE_TYPE: 0x12,  // type of visible lootable thing
-  RESOURCE_QTY: 0x13,
-  TIME_OF_DAY: 0x14,
-  DAY_OF_YEAR: 0x15,
-  YEAR: 0x16,
-  MONTH: 0x17,
-  MOON_PHASE: 0x18,
-  WIND_SPEED: 0x19,
-  WIND_DIRECTION: 0x1A,
-  WEATHER: 0x1B,
-  TIDE: 0x1C,
-  //
-  //
-  //
-
-  // Nearby mob
-  MOB_SPECIES: 0x20,  // from some list.
-  MOB_LEVEL: 0x21,
-  MOB_AGGRO: 0x22,  // -8 = friendly, 0 = neutral, 8 = hostile
-  MOB_HEALTH: 0x23,  // as %
-  MOB_JOB: 0x24,  // for NPC, and more generally
-
-  // Character sheet
-
-  LEVEL: 0x30,
-  EXPERIENCE: 0x31,
-  AGE: 0x32,
-  //
-  STAT_0: 0x38,
-  STR: 0x38,
-  DEX: 0x39,
-  CON: 0x3A,
-  INT: 0x3B,
-  WIS: 0x3C,
-  CHA: 0x3D,
-
-  DAMAGE: 0x40,
-  HEALTH: 0x41,
-  FATIGUE: 0x42,
-  ENERGY: 0x43,
-  ENCUMBRANCE: 0x44,
-  CAPACITY: 0x45,
-
-  INVENTORY_0: 0x50,
-  INVENTORY_GOLD: 0x50,
-  INVENTORY_REAGENTS: 0x51,
-  INVENTORY_DROPS: 0x52,
-  INVENTORY_HEALING_POTIONS: 0x53,
-  INVENTORY_ENERGY_POTIONS: 0x54,
-  INVENTORY_KEYS: 0x55,
-  INVENTORY_FOOD: 0x56,
-  // ...
-  INVENTORY15: 0x5F,
-
-  EQUIPMENT_0: 0x60,
-  EQUIP_WEAPON: 0x60,  // Level of puissance
-  // ...
-  EQUIP_SHOES: 0x6F,
-
-  SPELL_0: 0x70,  // spell level
-  // ...
-  SPELL_15: 0x7F,
-
-  LONGITUDE: 0x80,  // as fixed point?
-  LATITUDE: 0x81,
-  LEVEL: 0x82,  // 0 = on land, -1 underground, 1 flying
-  FACING: 0x83,  // degrees on compass
-
-  STATEMENT_0: 0x90,  // ASCII codes of some arbitrary blabber
-  // ...
-  STATEMENT_15: 0x9F,
-
-  // When TALK or other stuff is used, responses might go here. Not sure if
-  // this is enough characters. Then this might leave logging, if any, to the
-  // player.
-  RESPONSE_0: 0xA0,
-  // ...
-  RESPONSE_15: 0xAF,
-
-  MAP_NW: 0xB0,
-  MAP_N:  0xB1,
-  MAP_NE: 0xB2,
-  MAP_W:  0xB3,
-  MAP_X:  0xB4,
-  MAP_E:  0xB5,
-  MAP_SW: 0xB6,
-  MAP_S:  0xB7,
-  MAP_SE: 0xB8,
-
-  // Character name (not at all sure this needs inclusion)
-  NAME_0: 0xC0,
-  /// ...
-  NAME_15: 0xCF,
-
-  ATTITUDE_0: 0xD0,  // reserved for game-specific attitudes / stances /
-  // ...
-  ATTITUDE_2: 0xDF,  // strategies / behaviors set by player
-
-  // Game rules
-  // Leveling: xp(level) = A + pow(level - 1, E/100) * M
-  LEVELING_ADDEND: 0xE0,
-  LEVELING_EXPONENT: 0xE1,
-  LEVELING_MULTIPLIER: 0xE2,
-
-  TONE_FREQUENCY: 0xF0,
-  TONE_VOLUME: 0xF1,
-  // Room for polyphony
-
+const REGISTERS = {
+  PC: -1,        // Program counter register
+  SP: -2,        // Stack pointer register
+  FP: -3,        // Frame pointer
+  AX: -4,        // Auxilliary register, gets some results
+  CLOCK: -5,     // Counts clock cycles from startup
+  REGISTER6: -6, // Reserved
+  REGISTER7: -7, // Reserved
 };
 
-const SPECIAL_OPS = reverseMapIntoArray(SPECIAL);
-
-
-const ACTIONS = {
-  TALK: 0x5A,
-  HUNT: 0x40,
-  // BUY: 0xB1,
-  // SELL: 0x5E,
-  FIGHT: 0xA7,
-  REST: 0x22,
-  CAMP: 0xCA,
-  FORAGE: 0xF0,
-  GATHER: 0xF1,  // don't know what the difference might be
-  SEARCH: 0x70,
-  LEVEL_UP: 0x77,
-};
+const REGISTER_NAMES = reverseMapIntoArray(REGISTERS);
 
 
 function fractional(f) { return (f << 16) & 0xffff }
 
 
 class VirtualMachine {
-  memory = new Int16Array(4096);//.fill(0);
-  special = new Int16Array(256);//.fill(0);  // negative memory
+  memory = new Int16Array(4096);
+  registers = new Int16Array(7);
+  state;  // negative memory beyond registers
   running = true;
 
-  get pc() { return this.special[SPECIAL.PC] }
-  set pc(v) { this.special[SPECIAL.PC] = v }
+  get pc() { return this.registers[1-REGISTERS.PC] }
+  set pc(v) { this.registers[1-REGISTERS.PC] = v }
 
-  get sp() { return this.special[SPECIAL.SP] }
-  set sp(v) { this.special[SPECIAL.SP] = v }
+  get sp() { return this.registers[1-REGISTERS.SP] }
+  set sp(v) { this.registers[1-REGISTERS.SP] = v }
 
-  get fp() { return this.special[SPECIAL.FP] }
-  set fp(v) { this.special[SPECIAL.FP] = v }
+  get fp() { return this.registers[1-REGISTERS.FP] }
+  set fp(v) { this.registers[1-REGISTERS.FP] = v }
 
-  get ax() { return this.special[SPECIAL.AX] }
-  set ax(v) { this.special[SPECIAL.AX] = v }
-  set ax_fractional(f) { this.special[SPECIAL.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
+  get ax() { return this.registers[1-REGISTERS.AX] }
+  set ax(v) { this.registers[1-REGISTERS.AX] = v }
+  set ax_fractional(f) { this.registers[1-REGISTERS.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
+
+  get clock() { return this.registers[1-REGISTERS.CLOCK] }
+  set clock(v) { this.registers[1-REGISTERS.CLOCK] = v }
 
   get top() { return this.fetch(this.sp) }
   set top(v) { this.store(this.sp, v) }
 
   store(a, v) {
     if (a < 0) {
-      a = -a;
-      if (a < this.special.length)
-        this.special[a] = v;
+      a = -a - 1;
+      if (a < this.registers.length) {
+        this.registers[a] = v;
+      } else {
+        a -= this.registers.length;
+        if (a < this.state.length)
+          this.state[a] = v;
+      }
     } else if (a < this.memory.length) {
         this.memory[a] = v;
     }
@@ -336,9 +236,11 @@ class VirtualMachine {
 
   fetch(a) {
     if (a < 0) {
-      a = -a;
-      if (a >= this.special.length) return 0;
-      return this.special[a];
+      a = -a - 1;
+      if (a < this.registers.length) return this.registers[a];
+      a -= this.registers.length;
+      if (a < this.state.length) return this.state[a];
+      return 0;
     } else {
       if (a >= this.memory.length) return 0;
       return this.memory[a];
@@ -354,7 +256,7 @@ class VirtualMachine {
       this.memory[i] = program[i];
     }
     this.sp = this.memory.length;  // stack size is 0
-    world.initialize(this);
+    this.state = world.create();
   }
 
   step() {
@@ -375,7 +277,7 @@ class VirtualMachine {
 
     if (mnemonic === 'halt') {
       this.running = false;
-      this.special[SPECIAL.AX] = operand;
+      this.ax = operand;
 
     } else if (mnemonic === 'assert') {
       if(this.top !== operand) {
@@ -395,19 +297,18 @@ class VirtualMachine {
 
     } else if (mnemonic === 'fetch' || mnemonic === 'fetchlocal' || mnemonic == 'peek') {
       let address = operand;
-      if (mnemonic === 'fetchlocal') address += this.special[SPECIAL.FP];
-      if (mnemonic === 'peek')  address += this.special[SPECIAL.SP];
+      if (mnemonic === 'fetchlocal') address += this.fp;
+      if (mnemonic === 'peek')  address += this.sp;
       this.push(this.fetch(address));
 
     } else if (mnemonic === 'store' || mnemonic === 'storelocal' || mnemonic === 'poke') {
       let value = this.pop();
       let address = operand;
-      if (mnemonic === 'storelocal') address += this.special[SPECIAL.FP];
-      if (mnemonic === 'poke')  address += this.special[SPECIAL.SP];
-      if (address >= 0 ||
-         [SPECIAL.PC, SPECIAL.SP, SPECIAL.AX, SPECIAL.DS].includes(-address)) {
+      if (mnemonic === 'storelocal') address += this.fp;
+      if (mnemonic === 'poke')  address += this.sp;
+      if (address >= -this.registers.length)
         this.store(address, this.pop());
-      } // else illegal
+      // else illegal; can't manipulate state
 
     } else if (mnemonic === '_jmp') {
       if (immediateMode) operand += this.pc;
@@ -480,20 +381,22 @@ class VirtualMachine {
     //  a boolean value in AX indication if the instruction completed
 
     } else if (opcode >= 0x30) {
-      this.top = this.world.handleInstruction(this.special, opcode, this.top, operand);
+      this.top = this.world.handleInstruction(this.state, opcode, this.top, operand);
 
     } else {
       throw `${this.pc}: invalid opcode ${opcode} ${mnemonic}`;
     }
 
-    this.special[SPECIAL.CLOCK] += 1;
+    this.clock += 1;
+
+    if (this.clock > 30) {
+      console.log("Debug limit");
+      this.running = false;
+    }
   }
 
   alive() {
-    return this.running &&
-           this.special[SPECIAL.DAMAGE] < this.special[SPECIAL.HEALTH] &&
-           this.special[SPECIAL.CLOCK] < 30;
-           this.special[SPECIAL.AGE] < 0x7FFF;
+    return this.running;
   }
 
   run() {
@@ -554,7 +457,7 @@ class Assembler {
 
   assemble(text) {
     let lines = this.lex(text);
-    this.parse(lines, clone(negate(SPECIAL), MNEMONICS, UNARY_SYMBOLS, ACTIONS));
+    this.parse(lines, clone(REGISTERS, MNEMONICS, UNARY_SYMBOLS));
     this.link();
   }
 
@@ -765,7 +668,7 @@ class Assembler {
                         isInlineModeInstruction(inst) ? ':::' :
                         (inst >> 6);
         if (['fetch','store'].includes(opcode))
-          immediate = SPECIAL_OPS[-immediate] || immediate;
+          immediate = REGISTER_NAMES[-immediate] || immediate;
         disa = ('$' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
           + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-3)
           + ' ' + opcode

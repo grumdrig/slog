@@ -179,68 +179,68 @@ let EQUIPMENT_TYPES = {
 
 const SLOTS = [
 	null,
-	"RACE",
-	"AGE",
-	"LOCATION",
+	'RACE',
+	'AGE',
+	'LOCATION',
 
-	"LEVEL",
-	"XP",
-	"XP_NEEDED",
+	'LEVEL',
+	'XP',
+	'XP_NEEDED',
 
-	"MAX_HP",
-	"DAMAGE",
+	'MAX_HP',
+	'DAMAGE',
 
-	"MAX_MP",
-	"FATIGUE",
+	'MAX_MP',
+	'FATIGUE',
 
-	"ENCHANTMENT",
-	"ENCHANTMENT_LEVEL",
+	'ENCHANTMENT',
+	'ENCHANTMENT_LEVEL',
 
-	"STAT_STRENGTH",
-	"STAT_AGILITY",
-	"STAT_CONSTITUTION",
-	"STAT_INTELLIGENCE",
-	"STAT_WISDOM",
-	"STAT_CHARISMA",
+	'STAT_STRENGTH',
+	'STAT_AGILITY',
+	'STAT_CONSTITUTION',
+	'STAT_INTELLIGENCE',
+	'STAT_WISDOM',
+	'STAT_CHARISMA',
 
-	"SPELL_HEAL",
-	"SPELL_FIREBALL",
-	"SPELL_HASTE",
-	"SPELL_BUFF",
-	"SPELL_LUCK",
-	"SPELL_6", //
+	'SPELL_HEAL',
+	'SPELL_FIREBALL',
+	'SPELL_HASTE',
+	'SPELL_BUFF',
+	'SPELL_LUCK',
+	'SPELL_6', //
 
-	"EQUIPMENT_WEAPON",
-	"EQUIPMENT_ARMOR",
-	"EQUIPMENT_SHIELD",
-	"EQUIPMENT_HEADGEAR",
-	"EQUIPMENT_FOOTWEAR",
-	"EQUIPMENT_MOUNT",
-	"EQUIPMENT_RING",
-	"EQUIPMENT_TOTEM",
+	'EQUIPMENT_WEAPON',
+	'EQUIPMENT_ARMOR',
+	'EQUIPMENT_SHIELD',
+	'EQUIPMENT_HEADGEAR',
+	'EQUIPMENT_FOOTWEAR',
+	'EQUIPMENT_MOUNT',
+	'EQUIPMENT_RING',
+	'EQUIPMENT_TOTEM',
 
-	"INVENTORY_GOLD",
-	"INVENTORY_SPOILS",
-	"INVENTORY_REAGENTS",
-	"INVENTORY_RESOURCES",
-	"INVENTORY_FOOD",
-	"INVENTORY_TREASURES",
-	"INVENTORY_POTIONS",
-	"INVENTORY_LIFE_POTIONS",
+	'INVENTORY_GOLD',
+	'INVENTORY_SPOILS',
+	'INVENTORY_REAGENTS',
+	'INVENTORY_RESOURCES',
+	'INVENTORY_FOOD',
+	'INVENTORY_TREASURES',
+	'INVENTORY_POTIONS',
+	'INVENTORY_LIFE_POTIONS',
 
-	"QUEST_OBJECT", // monster or item (by slot)
-	"QUEST_LOCATION", // location to perform the quest
-	"QUEST_QTY", // qty # required
-	"QUEST_PROGRESS", // # completed
-	"QUEST_ORIGIN", // town location
+	'QUEST_OBJECT', // monster or item (by slot)
+	'QUEST_LOCATION', // location to perform the quest
+	'QUEST_QTY', // qty # required
+	'QUEST_PROGRESS', // # completed
+	'QUEST_ORIGIN', // town location
 
-	"ACT", // (up to 9, 10 = win)
-	"ACT_DURATION", // # of something required
-	"ACT_PROGRESS", // as advanced by quests
+	'ACT', // (up to 9, 10 = win)
+	'ACT_DURATION', // # of something required
+	'ACT_PROGRESS', // as advanced by quests
 
-	"ESTEEM_DUNKLINGS",
-	"ESTEEM_HARDWARVES",
-	"ESTEEM_EFFS",
+	'ESTEEM_DUNKLINGS',
+	'ESTEEM_HARDWARVES',
+	'ESTEEM_EFFS',
 ];
 
 
@@ -267,10 +267,10 @@ function isSpellSlot(slot) { return SPELL_0 <= slot && slot < EQUIPMENT_0 }
 function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < INVENTORY_0 }
 function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < QUEST_OBJECT }
 
-const STAT_N = SPELL_0 - STAT_0;
-// const SPELL_N = EQUIPMENT_0 - SPELL_0;
-// const EQUIPMENT_N = INVENTORY_0 - EQUIPMENT_0;
-// const INVENTORY_N = QUEST_OBJECT - INVENTORY_0;
+const STAT_COUNT = SPELL_0 - STAT_0;
+const SPELL_COUNT = EQUIPMENT_0 - SPELL_0;
+const EQUIPMENT_COUNT = INVENTORY_0 - EQUIPMENT_0;
+const INVENTORY_COUNT = QUEST_OBJECT - INVENTORY_0;
 
 // Weapon types
 const SMASH = 1;
@@ -419,10 +419,11 @@ const MOBS = [
 
 
 class Game {
-	static initialize(state) {
-		// Most of it happens with the initialize / startgame ops
+	static create() {
+		let state = new Array(SLOTS.length).fill(0);
 		state[LOCATION] = -1;
 		state[QUEST_LOCATION] = -1;
+		return state;
 	}
 
 	static MAP = [{
@@ -832,6 +833,11 @@ class Game {
 			this.passTime(1, 0);
 			return 1;
 		}
+
+		if (state[DAMAGE] >= state[SPECIAL.HEALTH] ||
+	       	state[AGE] >= 0x7FFF) {
+			TODO("were dead. now what? have to stop the machine somehow.")
+		}
 	}
 
 	static armorClass(state) {
@@ -878,6 +884,7 @@ class Game {
 	}
 }
 
+/*
 state = new Array(SLOTS.length).fill(0);
 Game.initialize(state);
 Game.handleInstruction(state, study, 1, 1);
@@ -897,3 +904,4 @@ Game.handleInstruction(state, startGame, 1, 1);
 Game.handleInstruction(state, give, 1, 1);
 Game.handleInstruction(state, drop, 1, 1);
 console.log(state);
+*/
