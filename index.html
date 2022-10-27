@@ -358,12 +358,11 @@ function run() {
 function rand(m) { return Math.floor(Math.random() * m) }
 function crand(s) { return s * (Math.random() - Math.random()) }
 
-
-// editor.innerText =
-$("#source").value = localStorage.source || "main {\n}";
-$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
-
-comp();
+window.addEventListener('load', e => {
+	$("#source").value = localStorage.source || "main {\n}";
+	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
+	comp();
+});
 
 $("#source").addEventListener('keypress', e => {
 	if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) comp();
@@ -453,8 +452,8 @@ function updateCharacterSheet(state) {
 
 
 function gameplay(inst) {
-	let arg1 = parseInt($("#arg1").innerText);
-	let arg2 = parseInt($("#arg2").innerText);
+	let arg1 = parseInt($("#arg1").value);
+	let arg2 = parseInt($("#arg2").value);
 	let result = Game.handleInstruction(vm.state, inst, arg1, arg2);
 	$("#result").innerText = result;
 	updateCharacterSheet(vm.state);

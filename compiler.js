@@ -307,7 +307,8 @@ class ExternalDefinition {
 		result.name = source.consumeIdentifier();
 		if (source.tryConsume('(')) {
 			if (!source.tryConsume(')')) while (true) {
-				result.parameters.push(source.consumeIdentifier());
+				let param = source.isLiteral() ? source.consumeLiteral() : source.consumeIdentifier();
+				result.parameters.push(param);
 				if (source.tryConsume(')')) break;
 				source.consume(',');
 			}

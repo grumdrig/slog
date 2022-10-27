@@ -1,23 +1,101 @@
-`
-// Include defs for this game
+// PQAsm
 
-external study(spell) = $36
-external train(stat) = $36
-external initialize(slot, value) = $36
-external travel(destination) = $30
-external melee() = $31
-external buyItem(slot, quantity) = $32
-external buyEquipment(slot, quality) = $32
-external sell(slot, quantity) = $33
-external seekquest() = $34
-external completequest() = $35
-external cast(spell_slot) = $37
-external forage(target_slot) = $38
-external levelup() = $39
-external startGame() = $39
-external give(slot, quantity) = $3A
-external drop(slot, quantity) = $3A
-`
+const SLOTS = [
+	'RACE',
+	'AGE',
+	'LEVEL',
+	'XP',
+	'XP_NEEDED',
+
+	'MAX_HP',
+	'DAMAGE',
+
+	'MAX_MP',
+	'FATIGUE',
+
+	'ENCHANTMENT',
+	'ENCHANTMENT_LEVEL',
+
+	'STAT_STRENGTH',
+	'STAT_AGILITY',
+	'STAT_CONSTITUTION',
+	'STAT_INTELLIGENCE',
+	'STAT_WISDOM',
+	'STAT_CHARISMA',
+
+	'SPELL_HEAL',
+	'SPELL_FIREBALL',
+	'SPELL_HASTE',
+	'SPELL_BUFF',
+	'SPELL_LUCK',
+	'SPELL_6', //
+
+	'EQUIPMENT_WEAPON',
+	'EQUIPMENT_ARMOR',
+	'EQUIPMENT_SHIELD',
+	'EQUIPMENT_HEADGEAR',
+	'EQUIPMENT_FOOTWEAR',
+	'EQUIPMENT_MOUNT',
+	'EQUIPMENT_RING',
+	'EQUIPMENT_TOTEM',
+
+	'INVENTORY_GOLD',
+	'INVENTORY_SPOILS',
+	'INVENTORY_REAGENTS',
+	'INVENTORY_RESOURCES',
+	'INVENTORY_FOOD',
+	'INVENTORY_TREASURES',
+	'INVENTORY_POTIONS',
+	'INVENTORY_LIFE_POTIONS',
+
+	'LOCATION',
+	'MOB_TYPE',
+	'MOB_LEVEL',
+
+	'QUEST_OBJECT', // monster or item (by slot)
+	'QUEST_LOCATION', // location to perform the quest
+	'QUEST_QTY', // qty # required
+	'QUEST_PROGRESS', // # completed
+	'QUEST_ORIGIN', // town location
+
+	'ACT', // (up to 9, 10 = win)
+	'ACT_DURATION', // # of something required
+	'ACT_PROGRESS', // as advanced by quests
+
+	'ESTEEM_DUNKLINGS',
+	'ESTEEM_HARDWARVES',
+	'ESTEEM_EFFS',
+];
+
+
+function define(symbol, value) {
+	if (!symbol) return;
+	if (typeof global !== 'undefined')
+		Object.defineProperty(global, symbol, { value });
+	if (typeof window !== 'undefined')
+		Object.defineProperty(window, symbol, { value });
+	if (typeof exports !== 'undefined')
+		Object.defineProperty(exports, symbol, { value });
+}
+
+// const LEVEL = 1; for example
+SLOTS.forEach(define);
+
+const STAT_0 = STAT_STRENGTH;
+const SPELL_0 = SPELL_HEAL;
+const EQUIPMENT_0 = EQUIPMENT_WEAPON;
+const INVENTORY_0 = INVENTORY_GOLD;
+
+const STAT_COUNT = SPELL_0 - STAT_0;
+const SPELL_COUNT = EQUIPMENT_0 - SPELL_0;
+const EQUIPMENT_COUNT = INVENTORY_0 - EQUIPMENT_0;
+const INVENTORY_COUNT = LOCATION - INVENTORY_0;
+
+function isStatSlot(slot)      { return STAT_0      <= slot && slot < STAT_0 + STAT_COUNT }
+function isSpellSlot(slot)     { return SPELL_0     <= slot && slot < SPELL_0 + SPELL_COUNT }
+function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < EQUIPMENT_0 + EQUIPMENT_COUNT }
+function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_0 + INVENTORY_COUNT }
+
 
 const CALLS = {
 	study: {
@@ -63,6 +141,10 @@ const CALLS = {
 	},
 	forage: {
 		parameters: 'target_slot',
+		opcode: 0x38,
+	},
+	forage: {
+		parameters: '$' + MOB_TYPE.toString(16),
 		opcode: 0x38,
 	},
 	levelup: {
@@ -115,71 +197,6 @@ let EQUIPMENT_TYPES = {
 */
 
 
-const SLOTS = [
-	'RACE',
-	'AGE',
-	'LOCATION',
-
-	'LEVEL',
-	'XP',
-	'XP_NEEDED',
-
-	'MAX_HP',
-	'DAMAGE',
-
-	'MAX_MP',
-	'FATIGUE',
-
-	'ENCHANTMENT',
-	'ENCHANTMENT_LEVEL',
-
-	'STAT_STRENGTH',
-	'STAT_AGILITY',
-	'STAT_CONSTITUTION',
-	'STAT_INTELLIGENCE',
-	'STAT_WISDOM',
-	'STAT_CHARISMA',
-
-	'SPELL_HEAL',
-	'SPELL_FIREBALL',
-	'SPELL_HASTE',
-	'SPELL_BUFF',
-	'SPELL_LUCK',
-	'SPELL_6', //
-
-	'EQUIPMENT_WEAPON',
-	'EQUIPMENT_ARMOR',
-	'EQUIPMENT_SHIELD',
-	'EQUIPMENT_HEADGEAR',
-	'EQUIPMENT_FOOTWEAR',
-	'EQUIPMENT_MOUNT',
-	'EQUIPMENT_RING',
-	'EQUIPMENT_TOTEM',
-
-	'INVENTORY_GOLD',
-	'INVENTORY_SPOILS',
-	'INVENTORY_REAGENTS',
-	'INVENTORY_RESOURCES',
-	'INVENTORY_FOOD',
-	'INVENTORY_TREASURES',
-	'INVENTORY_POTIONS',
-	'INVENTORY_LIFE_POTIONS',
-
-	'QUEST_OBJECT', // monster or item (by slot)
-	'QUEST_LOCATION', // location to perform the quest
-	'QUEST_QTY', // qty # required
-	'QUEST_PROGRESS', // # completed
-	'QUEST_ORIGIN', // town location
-
-	'ACT', // (up to 9, 10 = win)
-	'ACT_DURATION', // # of something required
-	'ACT_PROGRESS', // as advanced by quests
-
-	'ESTEEM_DUNKLINGS',
-	'ESTEEM_HARDWARVES',
-	'ESTEEM_EFFS',
-];
-
 function generateInterface() {
 	let interface = [];
 
@@ -203,34 +220,6 @@ if (typeof process !== 'undefined' && process.argv.includes('--generate-interfac
 	process.exit();
 }
 
-
-function define(symbol, value) {
-	if (!symbol) return;
-	if (typeof global !== 'undefined')
-		Object.defineProperty(global, symbol, { value });
-	if (typeof window !== 'undefined')
-		Object.defineProperty(window, symbol, { value });
-	if (typeof exports !== 'undefined')
-		Object.defineProperty(exports, symbol, { value });
-}
-
-// const LEVEL = 1; for example
-SLOTS.forEach(define);
-
-const STAT_0 = STAT_STRENGTH;
-const SPELL_0 = SPELL_HEAL;
-const EQUIPMENT_0 = EQUIPMENT_WEAPON;
-const INVENTORY_0 =INVENTORY_GOLD;
-
-function isStatSlot(slot) { return STAT_0 <= slot && slot < SPELL_0 }
-function isSpellSlot(slot) { return SPELL_0 <= slot && slot < EQUIPMENT_0 }
-function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < INVENTORY_0 }
-function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < QUEST_OBJECT }
-
-const STAT_COUNT = SPELL_0 - STAT_0;
-const SPELL_COUNT = EQUIPMENT_0 - SPELL_0;
-const EQUIPMENT_COUNT = INVENTORY_0 - EQUIPMENT_0;
-const INVENTORY_COUNT = QUEST_OBJECT - INVENTORY_0;
 
 // Weapon types
 const SMASH = 1;
@@ -690,6 +679,19 @@ class Game {
 					locale.latitude || (locale.index / 6) >> 0];
 		}
 
+		function inventoryCapacity() {
+			return carryCapacity() - encumbrance();
+		}
+
+		function carryCapacity() {
+			return state[STAT_STRENGTH];
+		}
+
+		function encumbrance() {
+			return state.slice(INVENTORY_0, INVENTORY_0 + INVENTORY_COUNT).reduce(
+				(q, v) => q + v);
+		}
+
 		if (opcode === travel) {
 			const destination = arg1;
 			if (destination === state[LOCATION]) return 0;
@@ -715,6 +717,8 @@ class Game {
 			// TODO hours = statMod(hours, speed(state));
 			hours *= terrain.movementCost || 1;
 			state[LOCATION] = remote.index;
+			state[MOB_TYPE] = 0;
+			state[MOB_LEVEL] = 0;
 			passTime(0, 1);
 			return 1;
 
@@ -848,14 +852,20 @@ class Game {
 
 		} else if (opcode === forage) {
 			let target = arg1;
-			if (target === MOBTYPE) {
-				state[MOBTYPE] = location.mobtype;
-				state[MOBLEVEL] = location.moblevel;
+			let qty;
+			if (target === MOB_TYPE) {
+				state[MOB_TYPE] = location.mobtype;
+				state[MOB_LEVEL] = location.moblevel;
+				qty = 1;
+			} else if (isInventorySlot(target)) {
+				qty = Math.random() < 0.5 ? 1 : 0;
+				qty = Math.min(qty, inventoryCapacity());
+				state[target] += qty;
+			} else {
+				return -1;
 			}
-			let qty = Math.random() < 0.5 ? 1 : 0;
-			qty = Math.min(qty, inventoryCapacity(state));
-			state[FORAGE] += qty;
 			passTime(1);
+			return qty;
 
 		} else if (opcode === levelup) {
 			if (state[XP] <= state[XP_NEEDED])
