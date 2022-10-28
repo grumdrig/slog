@@ -1101,13 +1101,23 @@ class PostfixExpression {
 					func = context.lookup(func.identifier);
 					context.assert(func, 'unknown identifier ' + func.identifier);
 				}
-				context.assert(func.parameters.length === args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${args.length}`);
 				if (func.external) {
+					let named_params = func.parameters.filter(p => typeof p !== 'number').length;
+					context.assert(named_params === args.length, `mismatch in number of arguments; expected ${named_params}, got ${args.length}`);
 					for (let a of args) a.generate(context);
-					if (args.length === 0) context.emit('.stack 0 0  ; default arg');
-					if (args.length === 1) context.emit('.stack 0  ; default arg');
+					if (args.length < 2) {
+						let inst = '.stack ';
+						if (args.length == 0) {
+							inst += typeof func.parameters[0] === 'number' ? func.parameters[0] : 0;
+							inst += ' ';
+						}
+						inst += typeof func.parameters[1] === 'number' ? func.parameters[1] : 0;
+						inst += '  ; default arg';
+						context.emit(inst);
+					}
 					context.emit('ext' + func.opcode.toString(16) + '  ; ' + lhs.identifier);
 				} else {
+					context.assert(func.parameters.length === args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${args.length}`);
 					context.emit('.stack 0 ; return value');
 					context.emit('fetch PC');
 					context.emit('fetch FP');
