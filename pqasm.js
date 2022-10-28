@@ -395,6 +395,217 @@ const MOBS = [
 ];
 
 
+const MAP = [{
+		index: 0,
+		name: "Watha",
+		terrain: TUNDRA,
+		level: 7
+	}, {
+		index: 1,
+		name: "Maak",
+		terrain: TUNDRA,
+		level: 5,
+	}, {
+		index: 2,
+		name: "Wolfin Forest",
+		terrain: FOREST,
+		level: 2,
+	}, {
+		index: 3,
+		name: "Hohamp",
+		terrain: TOWN,
+		level: 0,
+	}, {
+		index: 4,
+		name: "Skiddo",
+		terrain: HILLS,
+		level: 1,
+	}, {
+		index: 5,
+		name: "Chinbreak Cliff",
+		terrain: MOUNTAINS,
+		level: 7,
+
+	}, {
+		index: 6,
+		name: "Yar",
+		terrain: TOWN,
+		level: 0,
+	}, {
+		index: 7,
+		name: "Deepni Woods",
+		terrain: FOREST,
+		level: 7,
+	}, {
+		index: 8,
+		name: "Barkmot Forest",
+		terrain: FOREST,
+		level: 7,
+	}, {
+		index: 9,
+		name: "Goldona Hills",
+		terrain: HILLS,
+		level: 3,
+	}, {
+		index: 10,
+		name: "Breezeby Peak",
+		terrain: MOUNTAINS,
+		level: 5,
+	}, {
+		index: 11,
+		name: "Iperko Forest",
+		terrain: FOREST,
+		level: 1,
+
+	}, {
+		index: 12,
+		name: "Blesh Grove",
+		terrain: FOREST,
+		level: 2,
+	}, {
+		index: 13,
+		name: "Donday Hill",
+		terrain: HILLS,
+		level: 3,
+	}, {
+		index: 14,
+		name: "Skidge Mountain",
+		terrain: MOUNTAINS,
+		level: 5,
+	}, {
+		index: 15,
+		name: "Krack Mountain",
+		terrain: MOUNTAINS,
+		level: 7,
+	}, {
+		index: 16,
+		name: "Sprue Forest",
+		terrain: FOREST,
+		level: 2,
+	}, {
+		index: 17,
+		name: "Bompton",
+		terrain: TOWN,
+		denizen: DUNKLING,
+		level: 0,
+
+	}, {
+		index: 18,
+		name: "Terfu Plain",
+		terrain: PLAINS,
+		level: 3,
+	}, {
+		index: 19,
+		name: "Blue Mist Mountains",
+		terrain: MOUNTAINS,
+		level: 1,
+	}, {
+		index: 20,
+		name: "Pillary",
+		terrain: TOWN,
+		civilization: HARDWARF,
+		level: 0,
+	}, {
+		index: 21,
+		name: "Grein Hills",
+		terrain: HILLS,
+		level: 3,
+	}, {
+		index: 22,
+		name: "Woofa Plain",
+		terrain: PLAINS,
+		level: 2,
+	}, {
+		index: 23,
+		name: "Hallon Prairie",
+		terrain: PLAINS,
+		level: 1,
+
+	}, {
+		index: 24,
+		name: "Donga Marsh",
+		terrain: MARSH,
+		level: 1,
+	}, {
+		index: 25,
+		name: "Panar Plain",
+		terrain: PLAINS,
+		level: 2,
+	}, {
+		index: 26,
+		name: "Owlholm Woods",
+		terrain: FOREST,
+		level: 4,
+	}, {
+		index: 27,
+		name: "Papay Forest",
+		terrain: FOREST,
+		level: 3,
+	}, {
+		index: 28,
+		name: "Delial",
+		terrain: TOWN,
+		civilization: DUNKLING,
+		level: 0,
+	}, {
+		index: 29,
+		name: "Solla Desert",
+		terrain: DESERT,
+		level: 1,
+
+	}, {
+		index: 30,
+		name: "Cholar",
+		terrain: TOWN,
+		civilization: DUNKLING,
+		level: 0,
+	}, {
+		index: 31,
+		name: "Ritoli Marsh",
+		terrain: MARSH,
+		level: 4,
+	}, {
+		index: 32,
+		name: "Arapet Plains",
+		terrain: PLAINS,
+		level: 6,
+	}, {
+		index: 33,
+		name: "Wheewit Forest",
+		terrain: FOREST,
+		level: 5,
+	}, {
+		index: 34,
+		name: "Enotar Plains",
+		terrain: PLAINS,
+		level: 4,
+	}, {
+		index: 35,
+		name: "Noonaf Wastes",
+		terrain: DESERT,
+		level: 5,
+
+	}, {
+		index: 36,
+		name: "Emkell Peak",
+		latitude: 3,
+		longitude: 8,
+		neighbors: [37],
+		terrain: MOUNTAINS,
+		level: 9,
+	}, {
+		index: 37,
+		name: "Sygnon Tower",
+		latitude: 4,
+		longitude: 8,
+		neighbors: [36],
+		terrain: TOWN,
+		civilization: GAST,
+		level: 0,
+	}];
+
+
+
 function irand(n) { return Math.floor(Math.random() * n) }
 
 
@@ -407,218 +618,9 @@ class Game {
 	}
 
 	static RACE_NAMES = RACES.map(r => (r && r.name) || 'TBD');
-
 	static TERRAIN_TYPES = TERRAIN_TYPES;
-
-	static MAP = [{
-			index: 0,
-			name: "Watha",
-			terrain: TUNDRA,
-			level: 7
-		}, {
-			index: 1,
-			name: "Maak",
-			terrain: TUNDRA,
-			level: 5,
-		}, {
-			index: 2,
-			name: "Wolfin Forest",
-			terrain: FOREST,
-			level: 2,
-		}, {
-			index: 3,
-			name: "Hohamp",
-			terrain: TOWN,
-			level: 0,
-		}, {
-			index: 4,
-			name: "Skiddo",
-			terrain: HILLS,
-			level: 1,
-		}, {
-			index: 5,
-			name: "Chinbreak Cliff",
-			terrain: MOUNTAINS,
-			level: 7,
-
-		}, {
-			index: 6,
-			name: "Yar",
-			terrain: TOWN,
-			level: 0,
-		}, {
-			index: 7,
-			name: "Deepni Woods",
-			terrain: FOREST,
-			level: 7,
-		}, {
-			index: 8,
-			name: "Barkmot Forest",
-			terrain: FOREST,
-			level: 7,
-		}, {
-			index: 9,
-			name: "Goldona Hills",
-			terrain: HILLS,
-			level: 3,
-		}, {
-			index: 10,
-			name: "Breezeby Peak",
-			terrain: MOUNTAINS,
-			level: 5,
-		}, {
-			index: 11,
-			name: "Iperko Forest",
-			terrain: FOREST,
-			level: 1,
-
-		}, {
-			index: 12,
-			name: "Blesh Grove",
-			terrain: FOREST,
-			level: 2,
-		}, {
-			index: 13,
-			name: "Donday Hill",
-			terrain: HILLS,
-			level: 3,
-		}, {
-			index: 14,
-			name: "Skidge Mountain",
-			terrain: MOUNTAINS,
-			level: 5,
-		}, {
-			index: 15,
-			name: "Krack Mountain",
-			terrain: MOUNTAINS,
-			level: 7,
-		}, {
-			index: 16,
-			name: "Sprue Forest",
-			terrain: FOREST,
-			level: 2,
-		}, {
-			index: 17,
-			name: "Bompton",
-			terrain: TOWN,
-			denizen: DUNKLING,
-			level: 0,
-
-		}, {
-			index: 18,
-			name: "Terfu Plain",
-			terrain: PLAINS,
-			level: 3,
-		}, {
-			index: 19,
-			name: "Blue Mist Mountains",
-			terrain: MOUNTAINS,
-			level: 1,
-		}, {
-			index: 20,
-			name: "Pillary",
-			terrain: TOWN,
-			civilization: HARDWARF,
-			level: 0,
-		}, {
-			index: 21,
-			name: "Grein Hills",
-			terrain: HILLS,
-			level: 3,
-		}, {
-			index: 22,
-			name: "Woofa Plain",
-			terrain: PLAINS,
-			level: 2,
-		}, {
-			index: 23,
-			name: "Hallon Prairie",
-			terrain: PLAINS,
-			level: 1,
-
-		}, {
-			index: 24,
-			name: "Donga Marsh",
-			terrain: MARSH,
-			level: 1,
-		}, {
-			index: 25,
-			name: "Panar Plain",
-			terrain: PLAINS,
-			level: 2,
-		}, {
-			index: 26,
-			name: "Owlholm Woods",
-			terrain: FOREST,
-			level: 4,
-		}, {
-			index: 27,
-			name: "Papay Forest",
-			terrain: FOREST,
-			level: 3,
-		}, {
-			index: 28,
-			name: "Delial",
-			terrain: TOWN,
-			civilization: DUNKLING,
-			level: 0,
-		}, {
-			index: 29,
-			name: "Solla Desert",
-			terrain: DESERT,
-			level: 1,
-
-		}, {
-			index: 30,
-			name: "Cholar",
-			terrain: TOWN,
-			civilization: DUNKLING,
-			level: 0,
-		}, {
-			index: 31,
-			name: "Ritoli Marsh",
-			terrain: MARSH,
-			level: 4,
-		}, {
-			index: 32,
-			name: "Arapet Plains",
-			terrain: PLAINS,
-			level: 6,
-		}, {
-			index: 33,
-			name: "Wheewit Forest",
-			terrain: FOREST,
-			level: 5,
-		}, {
-			index: 34,
-			name: "Enotar Plains",
-			terrain: PLAINS,
-			level: 4,
-		}, {
-			index: 35,
-			name: "Noonaf Wastes",
-			terrain: DESERT,
-			level: 5,
-
-		}, {
-			index: 36,
-			name: "Emkell Peak",
-			latitude: 3,
-			longitude: 8,
-			neighbors: [37],
-			terrain: MOUNTAINS,
-			level: 9,
-		}, {
-			index: 37,
-			name: "Sygnon Tower",
-			latitude: 4,
-			longitude: 8,
-			neighbors: [36],
-			terrain: TOWN,
-			civilization: GAST,
-			level: 0,
-		}];
-
+	static MOBS = MOBS;
+	static MAP = MAP;
 
 	static handleInstruction(state, opcode, arg1, arg2) {
 		if (state[LEVEL] === 0) {
@@ -817,6 +819,7 @@ class Game {
 			let slot = arg1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
+			if (state[slot] >= 99) return -1;
 			passTime(0, 1);
 			let chance = Math.exp(1/5, 1.5);
 			// TODO other factors, like race, stats
@@ -854,9 +857,9 @@ class Game {
 			let target = arg1;
 			let qty;
 			if (target === MOB_TYPE) {
-				state[MOB_TYPE] = location.mobtype;
-				state[MOB_LEVEL] = location.moblevel;
-				qty = 1;
+				state[MOB_TYPE] = irand(MOBS.length); // location.mobtype;
+				state[MOB_LEVEL] = local.level;
+				qty = state[MOB_TYPE] ? 1 : 0;
 			} else if (isInventorySlot(target)) {
 				qty = Math.random() < 0.5 ? 1 : 0;
 				qty = Math.min(qty, inventoryCapacity());

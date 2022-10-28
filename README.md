@@ -497,34 +497,19 @@ Locations are the usual (6 * row + column) coordinate
 Normal move cost is 1 day, say. Some are slower
 
 * Tundra
-
-
 * Forest
-
 	- Move cost 3
-
 * Town
-
-
 * Hill
-
 	- Move cost 2
-
 * Mountain
-
 	- Move cost 4
-
 * Plain
-
 	- Better food forage
-
 * Marsh
-
 	- Move cost 2.5
 	- No food forage
-
 * Desert
-
 	- No food forage
 
 
@@ -563,56 +548,51 @@ tundra
 
 Monster brainstorm with Andy, transformed:
 
-Mob
-Owlcub
-Bugnisaur
-Zuckerborg
-Randroid
-Objectivist
-Wist-o-the-will
-Gelatinous dodecahedron
-Vanilla pudding
-Misplacerbeast
-Trall
-Munt
-Knolling
-Proboscan
-Weevil
-Clamerous
-Pleshy
-Boglard
-Quince
-Deddy
-Komeek
-Supernumari
-Swan-at-arms
-Brainstorm
-Thymelisk
-Betagorgon / Alfagorgon
-Dust monster
-Noteti
-Dwoks
-Dancigun
-Psinon
-Werewat
-Chespian
-Kashasa
-Featherless
-Multibar
-Air Cucumber
-Land Urchin
-Seamole
-Biznit
-Botherbear
-Brotherbear
-Blinker
-Polycorn
-Ochre Marmalade
-Umbertine
-Plaidypus
-Quesadillo
-Night Smurf
-Pecadinus
+1 Owlcub
+3 Bunisaur
+5 Randroid
+4 Objectifist
+3 Wist-o-the-Hill
+5 Gelidode
+6 Blood Pudding
+4 Misplacer
+7 Trall
+8 Munt
+4 Knolling / Knollon
+4 Proboscan
+6 Deevil
+7 Clamerus
+5 Pleshy
+6 Boglard
+2 Quince
+6 Deddy
+5 Komeek
+6 Supernumari
+3 Swan-at-Arms
+7 Timelisk
+8 Betagorgon / Alfagorgon
+3 Dust Monster
+2 Noteti
+4 Dwoks
+6 Dancigun
+6 Psinon
+7 Werewat
+3 Chespian
+8 Kashasa
+1 Featherless
+1 Multibar
+2 Air Cucumber
+3 Landale
+2 Seamole
+1 Biznit
+8 Botherbear
+2 Blinker
+3 Polycorn
+6 Umbertine
+7 Sadilla
+3 Night Smurf
+4 Pecadinus
+6 Fish Lich
 
 
 
