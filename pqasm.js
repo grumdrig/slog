@@ -13,6 +13,10 @@ const SLOTS = [
 	'MAX_MP',
 	'FATIGUE',
 
+	'ARMOR_CLASS',
+	'ENCUMBRANCE',
+	'CAPACITY',
+
 	'ENCHANTMENT',
 	'ENCHANTMENT_LEVEL',
 
@@ -143,7 +147,7 @@ const CALLS = {
 		parameters: 'target_slot',
 		opcode: 0x38,
 	},
-	forage: {
+	hunt: {
 		parameters: '$' + MOB_TYPE.toString(16),
 		opcode: 0x38,
 	},
@@ -609,6 +613,23 @@ const MAP = [{
 function irand(n) { return Math.floor(Math.random() * n) }
 
 
+function carryCapacity(state) {
+	return state[STAT_STRENGTH] >> 8;
+}
+
+function encumbrance(state) {
+	return state.slice(INVENTORY_0, INVENTORY_0 + INVENTORY_COUNT).reduce(
+		(q, v) => q + v);
+}
+
+function armorClass(state) {
+	return state[EQUIPMENT_ARMOR] +
+			state[EQUIPMENT_SHIELD] +
+			state[EQUIPMENT_HEADGEAR] +
+			state[EQUIPMENT_FOOTWEAR];
+}
+
+
 class Game {
 	static create() {
 		let state = new Array(SLOTS.length).fill(0);
@@ -623,29 +644,49 @@ class Game {
 	static MAP = MAP;
 
 	static handleInstruction(state, opcode, arg1, arg2) {
+		let result = this._handleInstruction(state, opcode, arg1, arg2);
+		state[CAPACITY] = carryCapacity(state);
+		state[ENCUMBRANCE] = encumbrance(state);
+		state[ARMOR_CLASS] = armorClass(state);
+		return result;
+	}
+
+	static _handleInstruction(state, opcode, arg1, arg2) {
+
+		function STR() { return state[STAT_CONSTITUTION] >> 8 }
+		function DEX() { return state[STAT_AGILITY] >> 8 }
+		function CON() { return state[STAT_CONSTITUTION] >> 8 }
+		function INT() { return state[STAT_INTELLIGENCE] >> 8 }
+		function WIS() { return state[STAT_WISDOM] >> 8 }
+		function CHA() { return state[STAT_CHARISMA] >> 8 }
+
 		if (state[LEVEL] === 0) {
 			// game hasn't begun
 			if (opcode === initialize) {
 				let [slot, value] = [arg1, arg2];
-				if (slot !== RACE && (STAT_0 > slot || slot >= STAT_0 + STAT_COUNT))
-					return -1;
 				if (value < 0) return -1
-				state[slot] = value;
+				if (slot === RACE) {
+					state[slot] = value;
+				} else if (STAT_0 <= slot && slot < STAT_0 + STAT_COUNT) {
+					state[slot] = value << 8;
+				} else {
+					return -1;
+				}
 				return state[slot];
 
 			} else if (opcode === startGame) {
-				if (state.slice(STAT_0, SPELL_0).reduce((a,b) => a+b) > 10) return -1;
+				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) >> 8 > 10) return -1;
 				let raceinfo = RACES[state[RACE]];
 				if (!raceinfo) return -1;
 				// All good. Start the game.
-				for (let stat = STAT_0; stat < SPELL_0; stat += 1) {
+				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1) {
 					// Add 3 plus race bonuses to stats
-					state[stat] += 3 + (raceinfo.stat_mods[SLOTS[stat]] || 0);
+					state[stat] += (3 + (raceinfo.stat_mods[SLOTS[stat]] || 0)) << 8;
 				}
 				state[LEVEL] = 1;
 				state[LOCATION] = 17;
-				state[MAX_HP] = 6 + state[STAT_CONSTITUTION];
-				state[MAX_MP] = 6 + state[STAT_INTELLIGENCE];
+				state[MAX_HP] = 6 + CON();
+				state[MAX_MP] = 6 + INT();
 				for (let slot in raceinfo.startingitems) {
 					state[slot] = raceinfo.startingitems[slot];
 				}
@@ -682,16 +723,7 @@ class Game {
 		}
 
 		function inventoryCapacity() {
-			return carryCapacity() - encumbrance();
-		}
-
-		function carryCapacity() {
-			return state[STAT_STRENGTH];
-		}
-
-		function encumbrance() {
-			return state.slice(INVENTORY_0, INVENTORY_0 + INVENTORY_COUNT).reduce(
-				(q, v) => q + v);
+			return carryCapacity(state) - encumbrance(state);
 		}
 
 		if (opcode === travel) {
@@ -737,7 +769,7 @@ class Game {
 			} else if (isInventorySlot(slot)) {
 				qty = arg2;
 				levelToBe = state[slot] + qty;
-				capacity = carryAbility(state) - encumbrance(state);
+				capacity = carryCapacity(state) - encumbrance(state);
 			} else {
 				return -1;
 			}
@@ -816,19 +848,16 @@ class Game {
 			return 1;
 
 		} else  if (opcode === train) {
+			// aka study
 			let slot = arg1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
-			if (state[slot] >= 99) return -1;
+			if (state[slot] >> 8 >= 99) return 0;
 			passTime(0, 1);
-			let chance = Math.exp(1/5, 1.5);
+			let learns = Math.round(256 * Math.exp(1/5, 1.5));
 			// TODO other factors, like race, stats
-			if (Math.random() < chance) {
-				state[slot] += 1;
-				return 1;
-			} else {
-				return 0;
-			}
+			state[slot] += learns;
+			return state[slot];
 
 		} else if (opcode === cast) {
 			let spell = arg1;

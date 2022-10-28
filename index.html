@@ -207,7 +207,7 @@
 		</div>
 		<div id=col2>
 			<div id=equipment class=listview>
-				<div class=header>Equipment</div>
+				<div class=header>Equipment	(Armor Class: <span id=armorClass></span>)</div>
 				<div>Weapon</div>   <div id=e0></div>
 				<div>Armor</div>    <div id=e1></div>
 				<div>Shield</div>   <div id=e2></div>
@@ -218,7 +218,8 @@
 				<div>Mount</div>    <div id=e7></div>
 			</div>
 			<div id=inventory class=listview>
-				<div class=header>Inventory</div>
+				<div class=header>Inventory
+					(Encumbrance: <span id=encumbrance></span>/<span id=capacity></span>)</div>
 				<div>Gold</div>            <div id=i0>10</div>
 				<div>Drops</div>           <div id=i1>10</div>
 				<div>Reagents</div>        <div id=i2>10</div>
@@ -268,14 +269,21 @@
 	<div class="window-body">
 
 <label for=arg1>Arguments:</label>
-	<input id=arg1 type=number value=0></input>
-	<input id=arg2 type=number value=0></input>
+	<input id=arg1 type=text value=0></input>
+	<input id=arg2 type=text value=0></input>
 <br/>
 <span>Result: <code id=result>-</code></span>
 <br/>
 <br/>
-<button onclick="gameplay(study)">study(spell)</button>
 <button onclick="gameplay(train)">train(stat)</button>
+<button onclick="gameplay(train, STAT_STRENGTH)">+Strength</button>
+<button onclick="gameplay(train, STAT_AGILITY)">+Agility</button>
+<button onclick="gameplay(train, STAT_CONSTITUTION)">+Constitution</button>
+<button onclick="gameplay(train, STAT_INTELLIGENCE)">+Intelligence</button>
+<button onclick="gameplay(train, STAT_WISDOM)">+Wisdom</button>
+<button onclick="gameplay(train, STAT_CHARISMA)">+Charisma</button>
+<br/>
+<button onclick="gameplay(study)">study(spell)</button>
 <button onclick="gameplay(initialize)">initialize(slot,value)</button>
 <button onclick="gameplay(travel)">travel(destination)</button>
 <button onclick="gameplay(melee)">melee()</button>
@@ -411,12 +419,12 @@ function updateCharacterSheet(state) {
 	$('#xp').innerText = state[XP];
 	$('#health').innerText = `${state[MAX_HP]-state[DAMAGE]} / ${state[MAX_HP]}`;
 	$('#energy').innerText = `${state[MAX_MP]-state[FATIGUE]} / ${state[MAX_MP]}`;
-	for (let i = 0; i < 6; ++i) {
-		$("#s" + i).innerText = state[STAT_0 + i];
+	for (let i = 0; i < STAT_COUNT; ++i) {
+		$("#s" + i).innerText = state[STAT_0 + i] >> 8;
 	}
 	let n_spells = 0;
 	for (let i = 0; i < SPELL_COUNT; ++i) {
-		let l = state[SPELL_0 + i];
+		let l = state[SPELL_0 + i] >> 8;
 		if (l) {
 			$("#bt" + n_spells).innerText = `Spell #${i}`;
 			$("#b" + n_spells).innerText = l;
@@ -426,9 +434,13 @@ function updateCharacterSheet(state) {
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
 		$("#e" + i).innerText = `+${state[EQUIPMENT_0 + i]} dagger`;
 	}
+	$("#armorClass").innerText = state[ARMOR_CLASS];
+
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
 		$("#i" + i).innerText = state[INVENTORY_0 + i];
 	}
+	$("#encumbrance").innerText = state[ENCUMBRANCE];
+	$("#capacity").innerText = state[CAPACITY];
 
 	if (!state[LEVEL]) return;
 
@@ -455,9 +467,9 @@ function updateCharacterSheet(state) {
 }
 
 
-function gameplay(inst) {
-	let arg1 = parseInt($("#arg1").value);
-	let arg2 = parseInt($("#arg2").value);
+function gameplay(inst, arg1, arg2) {
+	arg1 = arg1 || eval($("#arg1").value);
+	arg2 = arg2 || eval($("#arg2").value);
 	let result = Game.handleInstruction(vm.state, inst, arg1, arg2);
 	$("#result").innerText = result;
 	updateCharacterSheet(vm.state);
