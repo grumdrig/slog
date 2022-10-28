@@ -102,17 +102,27 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 
 
 const CALLS = {
-	study: {
-		parameters: 'spell',
+	initialize: {
+		parameters: 'slot,value',
 		opcode: 0x36,
+		description: `Before the game starts, the character may assign up to
+a total of ten points to their six stat slots using this function. Also, the
+character's race much be assigned using this function with the slot value
+RACE.`,
+	},
+	startGame: {
+		opcode: 0x39,
 	},
 	train: {
 		parameters: 'stat',
 		opcode: 0x36,
 	},
-	initialize: {
-		parameters: 'slot,value',
+	study: {
+		parameters: 'spell',
 		opcode: 0x36,
+		description: `Study a spell. Repeated study sessions will enable the
+character to learn the spell or increase thier mastery of it. The character is
+limited to only four spells, so choose wisely.`,
 	},
 	travel: {
 		parameters: 'destination',
@@ -152,9 +162,6 @@ const CALLS = {
 		opcode: 0x38,
 	},
 	levelup: {
-		opcode: 0x39,
-	},
-	startGame: {
 		opcode: 0x39,
 	},
 	give: {

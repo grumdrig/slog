@@ -451,7 +451,7 @@ function updateCharacterSheet(state) {
 	$("#locale").innerText = local.name;
 	$("#terrain").innerText = Game.TERRAIN_TYPES[local.terrain].name;
 	$("#mob").innerText = state[MOB_TYPE] ?
-		`Level ${state[MOB_LEVEL]} ${Game.MOBS[state[MOB_TYPE]].name}` : '';
+		`${Game.MOBS[state[MOB_TYPE]].name} (level ${state[MOB_LEVEL]})` : '';
 
 	let questal = Game.MAP[state[QUEST_LOCATION]];
 	let original = Game.MAP[state[QUEST_ORIGIN]];
