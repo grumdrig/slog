@@ -679,17 +679,116 @@ where they can get quests to fight some adversaries (minions of the final
 boss), and finally fight the boss. Resources in the final island are limited and/or expensive, and there's no returning.
 
 
-###
+### Weapons
+
+SLASH
+
+Steak knife
+Dirk
+Dagger
+Short Sword
+Long Sword
+Broadsword
+Claymore
+Bastard sword
+Two-handed sword
++1 Magic Sword
++2 Vicious Sword
++3 Stabbity Sword
++4 Dancing Sword
++5 Invisible Sword
++6 Vorpal Sword
++7 Doom Sword
+
+SMASH
+
+Firewood
+Claw Hammer
+Club
+Mace
+Spikemace
+War Hammer
+Morning Star
++1 Blessed Mace
++2 Bloodthirsty Club
++3 Animated Mace
++4
++5 Medusa Mace
++6 Vampyric Hammer
++7 Doomsday Warhammer
 
 
-Nomenclature
-------------
+RANGED
 
-Change "special" to "state". (But registers are not "state" strictly speaking.
-They're registers.)
+Bag of Rocks
+Sling
+Short Bow
+Blunderbuss
+Longbow
+Crankbow
+Crossbow
+Compound Bow
+Culverin
++1 Precision Bow
++2 Fire Bow
++3 Destruction Bow
++4 Heatseeking Bow
++5
++6
++7 Doomsayer Bow
 
-Stying
-------
+
+AXES
+
+Hatchet
+Tomahawk
+Axe
+Battleadze
+Baddleaxe
+Kreen
+War Axe
+Double Axe
+
+
+POKE
+
+Sharpened stick
+Eelspear
+Spear
+Longiron
+Pole-adze
+Spontoon
+Peen-arm
+Lance
+Halberd
+Poleax
+Bandyclef
++1 Enchanted Javelin
++2 Cobra Spear
++3
++4
++5
++6 Nuclear Poleax
++7 Doommaker Spear
+
+
+### Combat
+
+Not sure if should do combat round-by-round or abstract to the full fight. The
+former is probably easier.
+
+Stats are low, like starting 1-3. They and weapon create an attack value, armor and dex creates a defend value, add each of those to a die roll, if attacker's roll is higher than the defenders its a hit. Should be some non-zero chance of guaranteed hit. Then there's a number of dice for damage, maybe d2's.
+
+Attack = DEX + weapon
+Defend = DEX + armor
+Damage = STR + weapon
+Health = CON
+
+Spell attack = INT + spell level
+
+
+Styling
+-------
 
 I just changed to XP styling. You have to
 
