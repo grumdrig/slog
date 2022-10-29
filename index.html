@@ -82,16 +82,13 @@
 <style>
 	/* Styling for the debug area */
 
+	#sources textarea { width: 100%; }
+
 	.button > br {
 	  content: "";
 	  margin: -1px;
 	  display: block;
 	}
-	 #sources {
-	 	display: grid;
-	 	grid-template-columns: 410px 30px 250px 30px 350px;
-	 	vertical-align: bottom;
-	 }
 
 	 #registers > pre {
 	 	 border-bottom: dotted 1px silver;
@@ -123,9 +120,12 @@
 
 	#automom { margin: 4px }
 
+	article { min-height: 280px; }
+
 	 /* defeat some xp.css for the machine area */
 
-	 div#debug pre {
+	 div#sources pre,
+	 div#machinestate pre {
 	 	padding: 0;
 	 	font-size: 13px;
 	 	background-color: white;
@@ -134,12 +134,14 @@
 	 	margin: 0;
 	 }
 
-	 div#debug textarea {
+	 div#sources textarea,
+	 div#machinestate textarea {
 	 	font-family: monospace;
 	 	font-size: 13px;
 	 }
 
-	 div#debug button {
+	 div#sources button,
+	 div#machinestate button {
 	 	min-width: 0px;;
 	 	padding: 1px 6px;
 	 }
@@ -147,20 +149,40 @@
 </style>
 </head>
 <body>
-<div id=debug>
-<div id="sources">
-	<span>Source</span>
-	<span></span>
-	<span>Assembly</span>
-	<span></span>
-	<span>Disassembly</span>
 
-	<textarea rows=10 cols=50 id=source></textarea>
-	<button onclick="comp()">&rarr;<br>C<br>o<br>m<br>p<br>i<br>l<br>e<br>&rarr;</button>
-	<textarea rows=10 cols=15 id=asm></textarea>
-	<button onclick="assemble()">&rarr;<br>A<br>s<br>s<br>e<br>m<br>b<br>l<br>e<br>&rarr;</button>
-	<textarea rows=10 cols=25 id=machine></textarea>
+<div class=window id="sources">
+	<div class="title-bar">
+	  <div class="title-bar-text">Source Code Editor</div>
+	  <div class="title-bar-controls">
+	    <button aria-label="Close"></button>
+	  </div>
+	</div>
+
+	<div class="window-body">
+		<section class="tabs" style="XXmax-width: 500px">
+		  <menu role="tablist" aria-label="Sample Tabs">
+		    <button role="tab" aria-selected="true" aria-controls="tab-A">Source</button>
+		    <button role="tab" aria-controls="tab-B">Assembly</button>
+		    <button role="tab" aria-controls="tab-C">Disassembly</button>
+		  </menu>
+		  <article role="tabpanel" id="tab-A">
+				<textarea rows=16 cols=80 id=source></textarea>
+				<button onclick="comp()">Compile</button>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-B">
+				<textarea rows=16 cols=15 id=asm></textarea>
+				<button onclick="assemble()">Assemble</button>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-C">
+				<textarea rows=18 cols=25 id=machine></textarea>
+		  </article>
+		</section>
+		<div class="status-bar">
+	    <p class="status-bar-field" id=errors>Press F1 for help</p>
+	  </div>
+	</div>
 </div>
+
 
 <div id=machinestate>
 	<span>Registers</span>
@@ -183,7 +205,8 @@
 	<div id=stack></div>
 	<div class=brain><div id=memory></div></div>
 </div>
-</div id=debug>
+
+
 
 <div class=window>
 	<div class="title-bar">
@@ -424,7 +447,46 @@ function prepWindow(hwnd) {
 	});
 }
 
-window.addEventListener('load', e => {
+// window.addEventListener('load', e => {
+
+window.addEventListener("DOMContentLoaded", _ => {
+  const tabs = document.querySelectorAll('[role="tab"]');
+  const tabList = document.querySelector('[role="tablist"]');
+
+  // Add a click event handler to each tab
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", changeTabs);
+  });
+
+	/*
+  // Enable arrow navigation between tabs in the tab list
+  let tabFocus = 0;
+
+  tabList.addEventListener("keydown", (e) => {
+    // Move right
+    if (e.keyCode === 39 || e.keyCode === 37) {
+      tabs[tabFocus].setAttribute("tabindex", -1);
+      if (e.keyCode === 39) {
+        tabFocus++;
+        // If we're at the end, go to the start
+        if (tabFocus >= tabs.length) {
+          tabFocus = 0;
+        }
+        // Move left
+      } else if (e.keyCode === 37) {
+        tabFocus--;
+        // If we're at the start, move to the end
+        if (tabFocus < 0) {
+          tabFocus = tabs.length - 1;
+        }
+      }
+
+      tabs[tabFocus].setAttribute("tabindex", 0);
+      tabs[tabFocus].focus();
+    }
+  });
+  */
+
 	Array.from($$(".window")).reverse().forEach(prepWindow);
 
 	$("#source").value = localStorage.source || "main {\n}";
@@ -439,6 +501,31 @@ $("#source").addEventListener('keypress', e => {
 $("#asm").addEventListener('keypress', e => {
 	if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) assemble();
 });
+
+function changeTabs(e) {
+  const target = e.target;
+  const parent = target.parentNode;
+  const grandparent = parent.parentNode;
+
+  // Remove all current selected tabs
+  parent
+    .querySelectorAll('[aria-selected="true"]')
+    .forEach((t) => t.setAttribute("aria-selected", false));
+
+  // Set this tab as selected
+  target.setAttribute("aria-selected", true);
+
+  // Hide all tab panels
+  grandparent
+    .querySelectorAll('[role="tabpanel"]')
+    .forEach((p) => p.setAttribute("hidden", true));
+
+  // Show the selected panel
+  grandparent.parentNode
+    .querySelector(`#${target.getAttribute("aria-controls")}`)
+    .removeAttribute("hidden");
+}
+
 
 function updateDebuggerState(vm) {
 

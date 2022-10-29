@@ -991,8 +991,8 @@ class Game {
 		let levelDisadvantage = state[MOB_LEVEL] - state[LEVEL];
 		if (state[MOB_DAMAGE] >= mobMaxHP) {
 			state[XP] += 10 * Math.pow(1.5, levelDisadvantage);
-			let ndrops = Math.min(1, carryCapacity());
-			state[INVENTORY_DROPS] += ndrops;
+			let ndrops = Math.min(1, carryCapacity(state));
+			state[INVENTORY_SPOILS] += ndrops;
 			state[MOB_DAMAGE] = 0;
 			state[MOB_TYPE] = 0;
 			state[MOB_LEVEL] = 0;
