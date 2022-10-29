@@ -703,22 +703,48 @@ class PrefixExpression {
 	static operators = {
 		'+': {
 			precompute: x => x,
-			generate: context => null,
+			generate: (context, rhs) => {
+					rhs.generate(context);
+				},
 			},
 		'-': {
 			precompute: x => -x,
-			generate: context => context.emit('unary NEGATE'),
+			generate: (context, rhs) => {
+					rhs.generate(context);
+					context.emit('unary NEG');
+				},
 			},
 		'~': {
 			precompute: x => ~x,
-			generate: context => context.emit('unary COMPLEMENT'),
+			generate: (context, rhs) => {
+					rhs.generate(context);
+					context.emit('unary COMPLEMENT');
+				},
 			},
 		'!': {
 			precompute: x => !x,
-			generate: context => context.emit('unary NOT'),
+			generate: (context, rhs) => {
+					rhs.generate(context);
+					context.emit('unary NOT');
+				},
 			},
 		'*': {
-			generate: context => context.emit('fetch'),
+			generate: (context, rhs) => {
+					rhs.generate(context);
+					context.emit('fetch');
+				},
+			},
+		'.': {
+			generate: (context, rhs) => {
+					if (rhs.literal) {
+						context.emit('fetch ' + (-8 - rhs.literal));
+					} else {
+						rhs.generate(context);
+						context.emit('unary NEG');
+						context.emit('sub 8');
+						context.emit('fetch');
+					}
+				},
 			}
 	};
 
@@ -740,8 +766,7 @@ class PrefixExpression {
 	}
 
 	generate(context) {
-		this.rhs.generate(context);
-		this.operator.generate(context);
+		this.operator.generate(context, this.rhs.simplify(context));
 	}
 
 }
@@ -805,7 +830,7 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('unary NEGATE');
+				context.emit('unary NEG');
 				context.emit('shift');
 			},
 		},
@@ -1016,7 +1041,7 @@ class BinaryExpression {
 				context.emit('push');
 				context.emit('fetch');
 				rhs.generate(context);
-				context.emit('unary NEGATE');
+				context.emit('unary NEG');
 				context.emit('shift');
 				context.emit('store');
 			},
