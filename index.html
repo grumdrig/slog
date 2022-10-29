@@ -11,6 +11,8 @@
 <style>
 	/* Styling for the character sheet */
 
+	#sheet-window { width: 600px }
+
 	#sheet {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
@@ -71,6 +73,7 @@
 		height: 100%;
 		padding: 0;
 		margin: 0;
+		background-color: darkseagreen;
 	}
 
 </style>
@@ -222,7 +225,7 @@
 
 
 
-<div class=window>
+<div class=window id=sheet-window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Progress Quest Assembly - Character Sheet</div>
 	  <div class="title-bar-controls">
