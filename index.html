@@ -200,7 +200,7 @@ div.icon {
 </div>
 
 
-<div class=window  id=debugger-window>
+<div class=window hidden id=debugger-window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Debugger</div>
 	  <div class="title-bar-controls">
@@ -479,14 +479,40 @@ function rand(m) { return Math.floor(Math.random() * m) }
 function crand(s) { return s * (Math.random() - Math.random()) }
 
 
+function saveWindowState() {
+	let ws = {};
+	Array.from($$(".window")).forEach(w => {
+		ws[w.id] = {
+			id: w.id,
+			left: w.style.left,
+			top: w.style.top,
+			zIndex: w.style.zIndex,
+			hidden: w.hasAttribute('hidden') }
+	});
+	localStorage.windowState = JSON.stringify(ws);
+}
+
+
 function prepWindow(hwnd) {
-	console.log(hwnd);
   let handle = hwnd.$(".title-bar");
   const keepinside = false;
 
   hwnd.style.left = (hwnd.offsetLeft + 100) + 'px';
   hwnd.style.top = hwnd.offsetTop + 'px';
   hwnd.style.position = 'absolute';
+
+  // Load window state
+  let ws = JSON.parse(localStorage.windowState || '{}');
+  if (ws = ws[hwnd.id]) {
+	  hwnd.style.left = ws.left;
+	  hwnd.style.top = ws.top;
+	  let z = parseInt(ws.zIndex);
+	  if (!Number.isNaN(z)) {
+	  	hwnd.style.zIndex = z;
+	  	prepWindow.zIndex = Math.max(z, prepWindow.zIndex);
+	  }
+	  ws.hidden ? hwnd.setAttribute('hidden', true) : hwnd.removeAttribute('hidden');
+	}
 
 	(handle || hwnd).addEventListener("mousedown", e => {
 		hwnd.dragOrigin = { x: hwnd.offsetLeft - e.pageX,
@@ -495,6 +521,7 @@ function prepWindow(hwnd) {
   });
   hwnd.addEventListener("mousedown", e => {
     hwnd.style.zIndex = prepWindow.zindex = (prepWindow.zindex || 1) + 1;
+    saveWindowState();
     // e.preventDefault();
 	});
 	window.addEventListener("mousemove", e => {
@@ -508,6 +535,7 @@ function prepWindow(hwnd) {
 			}
 			hwnd.style.left = `${x}px`;
 			hwnd.style.top  = `${y}px`;
+	    saveWindowState();
 		}
 	});
 }
@@ -560,10 +588,12 @@ window.addEventListener("DOMContentLoaded", _ => {
 	  	win.style.top = rand(100) + 'px';
 	  }
     win.style.zIndex = prepWindow.zindex = (prepWindow.zindex || 1) + 1;
+    saveWindowState();
   }));
 
   $$(".close").forEach(element => element.addEventListener('click', e => {
   	element.parentElement.parentElement.parentElement.setAttribute('hidden', true);
+    saveWindowState();
   }));
 
 	Array.from($$(".window")).reverse().forEach(prepWindow);
