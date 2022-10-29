@@ -11,11 +11,6 @@
 <style>
 	/* Styling for the character sheet */
 
-	 .window {
-	 	width: 600px;
-	 }
-
-
 	#sheet {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
@@ -98,7 +93,8 @@
 	 #machinestate {
 		margin: 10px 0;
 	 	display: grid;
-	 	grid-template-columns: 250px 100px 370px 250px 250px;
+	 	grid-template-columns: 370px 250px;
+	 	width: auto;
 	 }
 
 	 #machinestate button { width: 100%; }
@@ -109,12 +105,13 @@
 	 #machinestate > div.nobo {
 	 		border: none;
 	 	}
+	 	#stack { background-color: white }
 		.brain {
 			overflow: auto;
 			max-height: 112px;
 		}
 
-	.err {
+	.err, #errors {
 		color: red;
 	}
 
@@ -146,11 +143,17 @@
 	 	padding: 1px 6px;
 	 }
 
+	 .window#controls {
+	 	width: 500px;
+	 }
+
+
+
 </style>
 </head>
 <body>
 
-<div class=window id="sources">
+<div class=window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Source Code Editor</div>
 	  <div class="title-bar-controls">
@@ -158,7 +161,7 @@
 	  </div>
 	</div>
 
-	<div class="window-body">
+	<div class="window-body" id="sources">
 		<section class="tabs" style="XXmax-width: 500px">
 		  <menu role="tablist" aria-label="Sample Tabs">
 		    <button role="tab" aria-selected="true" aria-controls="tab-A">Source</button>
@@ -166,44 +169,55 @@
 		    <button role="tab" aria-controls="tab-C">Disassembly</button>
 		  </menu>
 		  <article role="tabpanel" id="tab-A">
-				<textarea rows=16 cols=80 id=source></textarea>
+				<textarea rows=16 cols=50 id=source></textarea>
 				<button onclick="comp()">Compile</button>
+				<span style="margin-left: 10px">&nbsp;</span>
+				<input type=checkbox id=autorun ><label for=autorun>Autorun</label></input>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-B">
-				<textarea rows=16 cols=15 id=asm></textarea>
+				<textarea rows=16 cols=50 id=asm></textarea>
 				<button onclick="assemble()">Assemble</button>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-C">
-				<textarea rows=18 cols=25 id=machine></textarea>
+				<textarea rows=18 cols=50 id=machine></textarea>
 		  </article>
 		</section>
 		<div class="status-bar">
-	    <p class="status-bar-field" id=errors>Press F1 for help</p>
+	    <p class="status-bar-field" id=errors></p>
 	  </div>
 	</div>
 </div>
 
 
-<div id=machinestate>
-	<span>Registers</span>
-	<span></span>
-	<span>Execution point</span>
-	<span>Stack [<span id=stackdepth></span>]</span>
-	<span>Memory</span>
-
-	<div class=brain><div id=registers></div></div>
-	<div class=nobo>
-		<button onclick="step()">Step</button><br/>
-		<button onclick="runimate()">Runimate</button><br/>
-		<button onclick="run()">Run</button><br/>
-		<div id=automom>
-			<input type=checkbox id=autorun><label for=autorun>Autorun</label></input><br/>
-		</div>
-		<button onclick="reset()">Reset</button>
+<div class=window>
+	<div class="title-bar">
+	  <div class="title-bar-text">Debugger</div>
+	  <div class="title-bar-controls">
+	    <button aria-label="Close"></button>
+	  </div>
 	</div>
-	<div id=codepoint></div>
-	<div id=stack></div>
-	<div class=brain><div id=memory></div></div>
+
+	<div class="window-body">
+		<div id=machinestate>
+			<span>Execution point</span>
+			<span>Stack [<span id=stackdepth></span>]</span>
+
+			<div id=codepoint></div>
+			<div id=stack></div>
+
+			<span>Registers</span>
+			<span>Memory</span>
+
+			<div class=brain><div id=registers></div></div>
+			<div class=brain><div id=memory></div></div>
+		</div>
+		<div class=nobo>
+			<button onclick="step()">Step</button>
+			<button onclick="runimate()">Runimate</button>
+			<button onclick="run()">Run</button>
+			<button onclick="reset()">Reset</button>
+		</div>
+	</div>
 </div>
 
 
@@ -299,7 +313,7 @@
 
 <br/>
 
-<div class=window>
+<div class=window id=controls>
 	<div class="title-bar">
 	  <div class="title-bar-text">Controls</div>
 	  <div class="title-bar-controls">
@@ -317,13 +331,6 @@
 <br/>
 <br/>
 <button onclick="gameplay(train)">train(stat)</button>
-<button onclick="gameplay(train, STAT_STRENGTH)">+Strength</button>
-<button onclick="gameplay(train, STAT_AGILITY)">+Agility</button>
-<button onclick="gameplay(train, STAT_CONSTITUTION)">+Constitution</button>
-<button onclick="gameplay(train, STAT_INTELLIGENCE)">+Intelligence</button>
-<button onclick="gameplay(train, STAT_WISDOM)">+Wisdom</button>
-<button onclick="gameplay(train, STAT_CHARISMA)">+Charisma</button>
-<br/>
 <button onclick="gameplay(study)">study(spell)</button>
 <button onclick="gameplay(initialize)">initialize(slot,value)</button>
 <button onclick="gameplay(travel)">travel(destination)</button>
@@ -355,6 +362,7 @@ let asm, vm;
 function comp() {
 	localStorage.source = $("#source").value;
 	localStorage.autorun = JSON.stringify($("#autorun").checked);
+	$("#errors").innerHTML = '&nbsp;';
 	try {
 		$("#asm").classList.remove("err");
 		$("#asm").value = compile(generateInterface() + $("#source").value);
@@ -364,7 +372,7 @@ function comp() {
 	} catch (e) {
 		console.log(e);
 		$("#asm").classList.add("err");
-		$("#asm").value = e.message;
+		$("#errors").innerText = e.message;
 	}
 }
 
