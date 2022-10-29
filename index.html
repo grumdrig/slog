@@ -115,7 +115,7 @@
 		}
 		#debugbar p { font: 13px monospace }
 
-	.err, #errors {
+	.err {
 		color: red;
 	}
 
@@ -420,30 +420,32 @@ function comp() {
 	localStorage.source = $("#source").value;
 	localStorage.autorun = JSON.stringify($("#autorun").checked);
 	$("#errors").innerHTML = '&nbsp;';
+	$("#errors").classList.remove("err");
 	try {
-		$("#asm").classList.remove("err");
 		$("#asm").value = compile(generateInterface() + $("#source").value);
 		assemble();
 		if ($("#autorun").checked)
 			run();
+		$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${asm.code.length})`;
 	} catch (e) {
 		console.log(e);
-		$("#asm").classList.add("err");
-		$("#errors").innerText = e.message;
+		$("#errors").classList.add("err");
+		$("#errors").innerText = 'Compilation error: ' + e.toString();
 	}
 }
 
 
 function assemble() {
 	asm = new Assembler();
+	$("#errors").innerHTML = '&nbsp;';
+	$("#errors").classList.remove("err");
 	try {
 		asm.assemble($("#asm").value);
-		$("#machine").classList.remove("err");
 		$("#machine").value = asm.disassemble();
 		reset();
 	} catch (e) {
-		$("#machine").classList.add("err");
-		$("#machine").value = e.toString();
+		$("#errors").classList.add("err");
+		$("#errors").innerText = e.toString();
 	}
 
 }
