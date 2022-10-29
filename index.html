@@ -100,6 +100,8 @@
 	 	width: auto;
 	 }
 
+	 #debugger hr { margin: 0 }
+
 	 #debugger button { width: 100%; }
 	 #debugger > div {
 	 	border: solid 1px silver;
@@ -654,6 +656,8 @@ function updateDebuggerState(vm) {
 		if (r) r.innerText = d.innerText;
 	}
 
+	// State
+	$('#registers').appendChild(document.createElement('hr'));
 	for (let i = 0; i < vm.state.length; ++i) {
 		let d = $("#registers").appendChild(document.createElement('pre'));
 		d.innerText = regFmt(SLOTS[i] || i, vm.state[i]);
@@ -674,9 +678,10 @@ function updateDebuggerState(vm) {
 		if (i === vm.sp) d.style.backgroundColor="yellow";
 	}
 
-	$("#memory").innerText = '';
-	for (let i = 0; i < 100; ++i) {
-		let d = $("#memory").appendChild(document.createElement('pre'));
+	if (vm.memory.length < $("#memory").children.length)
+		$("#memory").innerText = '';  // in case the vm has changed sizes
+	for (let i = 0; i < vm.memory.length; ++i) {
+		let d = $("#memory").children[i] || $("#memory").appendChild(document.createElement('pre'));
 		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
 	}
 }
