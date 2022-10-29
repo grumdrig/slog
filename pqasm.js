@@ -988,6 +988,7 @@ class Game {
 			}
 		}
 
+		let levelDisadvantage = state[MOB_LEVEL] - state[LEVEL];
 		if (state[MOB_DAMAGE] >= mobMaxHP) {
 			state[XP] += 10 * Math.pow(1.5, levelDisadvantage);
 			let ndrops = Math.min(1, carryCapacity());
@@ -1010,7 +1011,6 @@ class Game {
 			return 1;
 		}
 
-		// let levelDisadvantage = state[MOBLEVEL] - state[LEVEL];
 		// let damage = Math.pow(1.5, levelDisadvantage);
 		// state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
 	}
