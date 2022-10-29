@@ -647,6 +647,8 @@ class Game {
 		return state;
 	}
 
+	static generateInterface = generateInterface;
+
 	static RACE_NAMES = RACES.map(r => (r && r.name) || 'TBD');
 	static TERRAIN_TYPES = TERRAIN_TYPES;
 	static MOBS = MOBS;
