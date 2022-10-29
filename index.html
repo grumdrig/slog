@@ -93,19 +93,19 @@
 	 	 margin-bottom: -1px;
 	 }
 
-	 #machinestate {
+	 #debugger {
 		margin: 10px 0;
 	 	display: grid;
-	 	grid-template-columns: 370px 250px;
+	 	grid-template-columns: 370px 180px;
 	 	width: auto;
 	 }
 
-	 #machinestate button { width: 100%; }
-	 #machinestate > div {
+	 #debugger button { width: 100%; }
+	 #debugger > div {
 	 	border: solid 1px silver;
 	 	padding: 4px;
 	 }
-	 #machinestate > div.nobo {
+	 #debugger > div.nobo {
 	 		border: none;
 	 	}
 	 	#stack { background-color: white }
@@ -113,6 +113,7 @@
 			overflow: auto;
 			max-height: 112px;
 		}
+		#debugbar p { font: 13px monospace }
 
 	.err, #errors {
 		color: red;
@@ -125,7 +126,7 @@
 	 /* defeat some xp.css for the machine area */
 
 	 div#sources pre,
-	 div#machinestate pre {
+	 div#debugger pre {
 	 	padding: 0;
 	 	font-size: 13px;
 	 	background-color: white;
@@ -135,13 +136,13 @@
 	 }
 
 	 div#sources textarea,
-	 div#machinestate textarea {
+	 div#debugger textarea {
 	 	font-family: monospace;
 	 	font-size: 13px;
 	 }
 
 	 div#sources button,
-	 div#machinestate button {
+	 div#debugger button {
 	 	min-width: 0px;;
 	 	padding: 1px 6px;
 	 }
@@ -199,7 +200,7 @@ div.icon {
 </div>
 
 
-<div class=window hidden id=debugger-window>
+<div class=window  id=debugger-window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Debugger</div>
 	  <div class="title-bar-controls">
@@ -208,18 +209,18 @@ div.icon {
 	</div>
 
 	<div class="window-body">
-		<div id=machinestate>
+		<div id=debugger>
 			<span>Execution point</span>
 			<span>Stack [<span id=stackdepth></span>]</span>
 
 			<div id=codepoint></div>
 			<div id=stack></div>
 
-			<span>Registers</span>
+			<span>Registers &amp; State</span>
 			<span>Memory</span>
 
 			<div class=brain><div id=registers></div></div>
-			<div class=brain><div id=memory></div></div>
+			<div class=brain><div id='memory'></div></div>
 		</div>
 		<div class=nobo>
 			<button onclick="step()">Step</button>
@@ -227,6 +228,13 @@ div.icon {
 			<button onclick="run()">Run</button>
 			<button onclick="reset()">Reset</button>
 		</div>
+		<div class="status-bar" id=debugbar>
+	    <p class="status-bar-field" id=r0>PC</p>
+	    <p class="status-bar-field" id=r1>SP</p>
+	    <p class="status-bar-field" id=r2>FP</p>
+	    <p class="status-bar-field" id=r3>AX</p>
+	    <p class="status-bar-field" id=r4>CK</p>
+	  </div>
 	</div>
 </div>
 
@@ -476,7 +484,7 @@ function prepWindow(hwnd) {
   let handle = hwnd.$(".title-bar");
   const keepinside = false;
 
-  hwnd.style.left = (hwnd.offsetLeft + 60) + 'px';
+  hwnd.style.left = (hwnd.offsetLeft + 100) + 'px';
   hwnd.style.top = hwnd.offsetTop + 'px';
   hwnd.style.position = 'absolute';
 
@@ -600,11 +608,23 @@ function changeTabs(e) {
 
 function updateDebuggerState(vm) {
 
+	function regFmt(name, value) {
+		return `${(name + ' '.repeat(23)).substr(0,23)} $${('0000'+value.toString(16)).substr(-4)} ${value}`;
+	}
+
 	$("#registers").innerText = '';
 	for (let i = 0; i < vm.registers.length; ++i) {
 		let address = -i - 1;
 		let d = $("#registers").appendChild(document.createElement('pre'));
-		d.innerText = `${((REGISTER_NAMES[address] || i) + ' '.repeat(12)).substr(0,12)} $${('0000'+vm.registers[i].toString(16)).substr(-4)} ${vm.registers[i]}`;
+		d.innerText = regFmt(REGISTER_NAMES[address] || i, vm.registers[i]);
+
+		let r = $("#r" + i);
+		if (r) r.innerText = d.innerText;
+	}
+
+	for (let i = 0; i < vm.state.length; ++i) {
+		let d = $("#registers").appendChild(document.createElement('pre'));
+		d.innerText = regFmt(SLOTS[i] || i, vm.state[i]);
 	}
 
 	$("#codepoint").innerText = '';
@@ -646,7 +666,7 @@ function updateCharacterSheet(state) {
 		if (elt.innerText !== value) {
 			elt.innerText = value;
 			if (!updateCharacterSheet.UNHILITE) {
-				updateCharacterSheet.UNHILITE = setTimeout(unhilite, 1000);
+				updateCharacterSheet.UNHILITE = setTimeout(unhilite, 2000);
 			}
 			elt.classList.add('changed');
 		}
