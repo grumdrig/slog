@@ -389,7 +389,7 @@ class VirtualMachine {
 
     this.clock += 1;
 
-    if (this.clock > 30) {
+    if (this.clock > 3000) {
       console.log("Debug limit");
       this.running = false;
     }

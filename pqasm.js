@@ -55,6 +55,7 @@ const SLOTS = [
 	'LOCATION',
 	'MOB_TYPE',
 	'MOB_LEVEL',
+	'MOB_DAMAGE',
 
 	'QUEST_OBJECT', // monster or item (by slot)
 	'QUEST_LOCATION', // location to perform the quest
@@ -341,6 +342,7 @@ TERRAIN_TYPES.forEach((info, index) => {
 
 
 const MOBS = [
+	null,
 	{
 		name: "Parakeet",
 		badassname: "Triplikeet",
@@ -760,6 +762,7 @@ class Game {
 			state[LOCATION] = remote.index;
 			state[MOB_TYPE] = 0;
 			state[MOB_LEVEL] = 0;
+			state[MOB_DAMAGE] = 0;
 			passTime(0, 1);
 			return 1;
 
@@ -893,8 +896,9 @@ class Game {
 			let target = arg1;
 			let qty;
 			if (target === MOB_TYPE) {
-				state[MOB_TYPE] = irand(MOBS.length); // location.mobtype;
+				state[MOB_TYPE] = 1 + irand(MOBS.length - 1); // location.mobtype;
 				state[MOB_LEVEL] = local.level;
+				state[MOB_DAMAGE] = 0;
 				qty = state[MOB_TYPE] ? 1 : 0;
 			} else if (isInventorySlot(target)) {
 				qty = Math.random() < 0.5 ? 1 : 0;
@@ -931,52 +935,83 @@ class Game {
 	}
 
 	static battle(state, invulnerable=false) {
-		if (!state[MOBTYPE]) return -1;
+		if (!state[MOB_TYPE]) return -1;
 
-		let info = MOB_INFO[state[MOBTYPE]];
+		let info = MOBS[state[MOB_TYPE]];
 		if (!info) return -1;
 
 		if (info.esteemSlot)
 			state[info.esteemSlot] = Math.max(state[info.esteemSlot] - 1, 0);
 
-		let levelDisadvantage = state[MOBLEVEL] - state[LEVEL];
-		let damage = Math.pow(1.5, levelDisadvantage);
-		state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
-		if (state[DAMAGE] >= state[HEALTH]) {
-			if (state[LIFEPOTIONS] > 0) {
-				state[LIFEPOTIONS] -= 1;
+		let mobLevel = info.hitdice;
+		let mobOffsense = info.hitdice;
+		let mobDefense = info.hitdice;
+		let mobSharpness = info.hitdice;
+		let mobMaxHP = info.hitdice * 2;
+
+		// Player attack
+		function rollAttack(offsense, defense, sharpness) {
+			let d = 10;
+			let attackRoll = irand(d) + 1;
+			let defenseRoll = irand(d) + 1;
+			if (attackRoll === 1) return 0;
+			if (attackRoll === d || attackRoll + offsense > defenseRoll + defense) {
+				let damage = 1 + irand(sharpness);
+				if (defenseRoll == d && damage > 1) damage = 1;
+				if (defenseRoll == 1) damage >>= 1;
+				return damage;
+			} else {
+				return 0;
+			}
+		}
+
+		function STR() { return state[STAT_CONSTITUTION] >> 8 }
+		function DEX() { return state[STAT_AGILITY] >> 8 }
+		function CON() { return state[STAT_CONSTITUTION] >> 8 }
+		function INT() { return state[STAT_INTELLIGENCE] >> 8 }
+		function WIS() { return state[STAT_WISDOM] >> 8 }
+		function CHA() { return state[STAT_CHARISMA] >> 8 }
+
+		let dealtToMob = rollAttack(DEX(), mobDefense, STR());
+		let dealtToPlayer = rollAttack(mobOffsense, DEX(), mobSharpness);
+
+		if (DEX() + irand(6) >= mobLevel + irand(6)) {
+			// Player attacks first
+			state[MOB_DAMAGE] += dealtToMob;
+			if (state[MOB_DAMAGE] < mobMaxHP) {
+				state[DAMAGE] += dealtToPlayer;
+			}
+		} else {
+			state[DAMAGE] += dealtToPlayer;
+			if (state[DAMAGE] < state[MAX_HP]) {
+				state[MOB_DAMAGE] += dealtToMob;
+			}
+		}
+
+		if (state[MOB_DAMAGE] >= mobMaxHP) {
+			state[XP] += 10 * Math.pow(1.5, levelDisadvantage);
+			let ndrops = Math.min(1, carryCapacity());
+			state[INVENTORY_DROPS] += ndrops;
+			state[MOB_DAMAGE] = 0;
+			state[MOB_TYPE] = 0;
+			state[MOB_LEVEL] = 0;
+		}
+
+		if (state[DAMAGE] >= state[MAX_HP]) {
+			state[DAMAGE] = state[MAX_HP];
+			if (state[INVENTORY_LIFE_POTIONS] > 0) {
+				state[INVENTORY_LIFE_POTIONS] -= 1;
 				state[DAMAGE] = state[HEALTH] - 1;  // or 0?
 			} else {
 				// dead. now what?
 			}
 			return 0;
 		} else {
-			state[XP] = 10 * Math.pow(1.5, levelDisadvantage);
-			let ndrops = Math.min(1, carryCapacity());
-			state[INVENTORY_DROPS] += ndrops;
 			return 1;
 		}
+
+		// let levelDisadvantage = state[MOBLEVEL] - state[LEVEL];
+		// let damage = Math.pow(1.5, levelDisadvantage);
+		// state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
 	}
 }
-
-/*
-state = new Array(SLOTS.length).fill(0);
-Game.initialize(state);
-Game.handleInstruction(state, study, 1, 1);
-Game.handleInstruction(state, train, 1, 1);
-Game.handleInstruction(state, initialize, 1, 1);
-Game.handleInstruction(state, travel, 1, 1);
-Game.handleInstruction(state, melee, 1, 1);
-Game.handleInstruction(state, buyItem, 1, 1);
-Game.handleInstruction(state, buyEquipment, 1, 1);
-Game.handleInstruction(state, sell, 1, 1);
-Game.handleInstruction(state, seekquest, 1, 1);
-Game.handleInstruction(state, completequest, 1, 1);
-Game.handleInstruction(state, cast, 1, 1);
-Game.handleInstruction(state, forage, 1, 1);
-Game.handleInstruction(state, levelup, 1, 1);
-Game.handleInstruction(state, startGame, 1, 1);
-Game.handleInstruction(state, give, 1, 1);
-Game.handleInstruction(state, drop, 1, 1);
-console.log(state);
-*/

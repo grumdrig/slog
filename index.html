@@ -237,6 +237,7 @@
 				<div>Locale</div><div id=locale></div>
 				<div>Terrain</div><div id=terrain></div>
 				<div>Creature</div><div id=mob></div>
+				<div>Damage</div><div id=mobDamage></div>
 			</div>
 			<div id=quest class=listview>
 				<div class=header>Quest</div>
@@ -452,6 +453,7 @@ function updateCharacterSheet(state) {
 	$("#terrain").innerText = Game.TERRAIN_TYPES[local.terrain].name;
 	$("#mob").innerText = state[MOB_TYPE] ?
 		`${Game.MOBS[state[MOB_TYPE]].name} (level ${state[MOB_LEVEL]})` : '';
+	$("#mobDamage").innerText = state[MOB_TYPE] ? state[MOB_DAMAGE] : '';
 
 	let questal = Game.MAP[state[QUEST_LOCATION]];
 	let original = Game.MAP[state[QUEST_ORIGIN]];
