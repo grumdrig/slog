@@ -66,6 +66,9 @@
 	border: outset 1px #ddd;
 	border-right: groove 1px #ddd;
 }
+
+	.changed { background-color: yellow }
+
 </style>
 <style>
 	/* Styling for the debug area */
@@ -108,6 +111,7 @@
 	.err {
 		color: red;
 	}
+
 
 	 /* defeat some xp.css for the machine area */
 
@@ -160,7 +164,8 @@
 		<button onclick="step()">Step</button><br/>
 		<button onclick="runimate()">Runimate</button><br/>
 		<button onclick="run()">Run</button><br/>
-		<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
+		<input type=checkbox id=autorun><label for=autorun>Autorun</label></input><br/>
+		<button onclick="reset()">Reset</button>
 	</div>
 	<div id=codepoint></div>
 	<div id=stack></div>
@@ -334,9 +339,7 @@ function assemble() {
 		asm.assemble($("#asm").value);
 		$("#machine").classList.remove("err");
 		$("#machine").value = asm.disassemble();
-		vm = new VirtualMachine(asm.code, Game);
-		updateDebuggerState(vm);
-		updateCharacterSheet(vm.state);
+		reset();
 	} catch (e) {
 		$("#machine").classList.add("err");
 		$("#machine").value = e.toString();
@@ -365,6 +368,11 @@ function run() {
 	updateCharacterSheet(vm.state);
 }
 
+function reset() {
+	vm = new VirtualMachine(asm.code, Game);
+	updateDebuggerState(vm);
+	updateCharacterSheet(vm.state);
+}
 
 function rand(m) { return Math.floor(Math.random() * m) }
 function crand(s) { return s * (Math.random() - Math.random()) }
@@ -414,57 +422,78 @@ function updateDebuggerState(vm) {
 	}
 }
 
+
 function updateCharacterSheet(state) {
-	$('#race').innerText = Game.RACE_NAMES[state[RACE]];
-	$('#level').innerText = state[LEVEL];
-	$('#xp').innerText = state[XP];
-	$('#health').innerText = `${state[MAX_HP]-state[DAMAGE]} / ${state[MAX_HP]}`;
-	$('#energy').innerText = `${state[MAX_MP]-state[FATIGUE]} / ${state[MAX_MP]}`;
+
+
+	function unhilite() {
+		$$('.changed').forEach(elt => elt.classList.remove('changed'));
+		updateCharacterSheet.UNHILITE = null;
+	}
+
+	unhilite();
+
+	function set(id, value) {
+		value = value.toString();
+		let elt = document.getElementById(id);
+		if (elt.innerText !== value) {
+			elt.innerText = value;
+			if (!updateCharacterSheet.UNHILITE) {
+				updateCharacterSheet.UNHILITE = setTimeout(unhilite, 1000);
+			}
+			elt.classList.add('changed');
+		}
+	}
+	set('race', Game.RACE_NAMES[state[RACE]]);
+	set('level', state[LEVEL]);
+	set('xp', state[XP]);
+	set('health', `${state[MAX_HP]-state[DAMAGE]} / ${state[MAX_HP]}`);
+	set('energy', `${state[MAX_MP]-state[FATIGUE]} / ${state[MAX_MP]}`);
 	for (let i = 0; i < STAT_COUNT; ++i) {
-		$("#s" + i).innerText = state[STAT_0 + i] >> 8;
+		set('s' + i, state[STAT_0 + i] >> 8);
 	}
 	let n_spells = 0;
 	for (let i = 0; i < SPELL_COUNT; ++i) {
 		let l = state[SPELL_0 + i] >> 8;
 		if (l) {
-			$("#bt" + n_spells).innerText = `Spell #${i}`;
-			$("#b" + n_spells).innerText = l;
+			set('bt' + n_spells, `Spell #${i}`);
+			set('b' + n_spells, l);
 			n_spells += 1;
 		}
 	}
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
-		$("#e" + i).innerText = `+${state[EQUIPMENT_0 + i]} dagger`;
+		set('e' + i, `+${state[EQUIPMENT_0 + i]} dagger`);
 	}
-	$("#armorClass").innerText = state[ARMOR_CLASS];
+	set('armorClass', state[ARMOR_CLASS]);
 
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
-		$("#i" + i).innerText = state[INVENTORY_0 + i];
+		set('i' + i, state[INVENTORY_0 + i]);
 	}
-	$("#encumbrance").innerText = state[ENCUMBRANCE];
-	$("#capacity").innerText = state[CAPACITY];
+	set('encumbrance', state[ENCUMBRANCE]);
+	set('capacity', state[CAPACITY]);
 
 	if (!state[LEVEL]) return;
 
 	let local = Game.MAP[state[LOCATION]];
-	$("#location").innerText = local.index;
-	$("#longitude").innerText = local.longitude || (local.index % 6);
-	$("#latitude").innerText = local.latitude || (local.index / 6) >> 0;
-	$("#locale").innerText = local.name;
-	$("#terrain").innerText = Game.TERRAIN_TYPES[local.terrain].name;
-	$("#mob").innerText = state[MOB_TYPE] ?
-		`${Game.MOBS[state[MOB_TYPE]].name} (level ${state[MOB_LEVEL]})` : '';
-	$("#mobDamage").innerText = state[MOB_TYPE] ? state[MOB_DAMAGE] : '';
+	set('location', local.index);
+	set('longitude', local.longitude || (local.index % 6));
+	set('latitude', local.latitude || (local.index / 6) >> 0);
+	set('locale', local.name);
+	set('terrain', Game.TERRAIN_TYPES[local.terrain].name);
+	set('mob', state[MOB_TYPE] ?
+		`${Game.MOBS[state[MOB_TYPE]].name} (level ${state[MOB_LEVEL]})` : '');
+	set('mobDamage', state[MOB_TYPE] ? state[MOB_DAMAGE] : '');
 
 	let questal = Game.MAP[state[QUEST_LOCATION]];
 	let original = Game.MAP[state[QUEST_ORIGIN]];
-	$("#questobject").innerText = state[QUEST_OBJECT];
-	$("#questlocation").innerText = questal && (questal.name + ' #' + questal.index) || '';
-	$("#questprogress").innerText = `${state[QUEST_PROGRESS]} / ${state[QUEST_QTY]}`;
-	$("#questorigin").innerText = original && (original.name + ' #' + original.index) || '';
+	set('questobject', state[QUEST_OBJECT]);
+	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
+	set('questprogress', `${state[QUEST_PROGRESS]} / ${state[QUEST_QTY]}`);
+	set('questorigin', original && (original.name + ' #' + original.index) || '');
 
-	$("#act").innerText = state[ACT] || 'Prologue';
-	$("#actprogress").innerText = `${state[ACT_PROGRESS]} / ${state[ACT_DURATION]}`;
-	$("#gameprogress").innerText = `${Math.round(100 * state[ACT] / 10)}%`;
+	set('act', state[ACT] || 'Prologue');
+	set('actprogress', `${state[ACT_PROGRESS]} / ${state[ACT_DURATION]}`);
+	set('gameprogress', `${Math.round(100 * state[ACT] / 10)}%`);
 
 }
 
