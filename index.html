@@ -146,21 +146,28 @@
 	 	padding: 1px 6px;
 	 }
 
-	 .window#controls {
+	 #controls-window {
 	 	width: 500px;
 	 }
 
+/* Icons */
+
+div.icon {
+	width: 64px;
+	text-align: center;
+	margin: 20px;
+}
 
 
 </style>
 </head>
 <body>
 
-<div class=window>
+<div class=window id=editor-window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Source Code Editor</div>
 	  <div class="title-bar-controls">
-	    <button aria-label="Close"></button>
+	    <button aria-label="Close" class=close></button>
 	  </div>
 	</div>
 
@@ -172,7 +179,7 @@
 		    <button role="tab" aria-controls="tab-C">Disassembly</button>
 		  </menu>
 		  <article role="tabpanel" id="tab-A">
-				<textarea rows=16 cols=50 id=source></textarea>
+				<textarea rows=16 cols=50 id=source></textarea><br/>
 				<button onclick="comp()">Compile</button>
 				<span style="margin-left: 10px">&nbsp;</span>
 				<input type=checkbox id=autorun ><label for=autorun>Autorun</label></input>
@@ -192,11 +199,11 @@
 </div>
 
 
-<div class=window>
+<div class=window hidden id=debugger-window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Debugger</div>
 	  <div class="title-bar-controls">
-	    <button aria-label="Close"></button>
+	    <button aria-label="Close" class=close></button>
 	  </div>
 	</div>
 
@@ -229,7 +236,7 @@
 	<div class="title-bar">
 	  <div class="title-bar-text">Progress Quest Assembly - Character Sheet</div>
 	  <div class="title-bar-controls">
-	    <button aria-label="Close"></button>
+	    <button aria-label="Close" class=close></button>
 	  </div>
 	</div>
 
@@ -316,11 +323,11 @@
 
 <br/>
 
-<div class=window id=controls>
+<div class=window hidden id=controls-window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Controls</div>
 	  <div class="title-bar-controls">
-	    <button aria-label="Close"></button>
+	    <button aria-label="Close" class=close></button>
 	  </div>
 	</div>
 
@@ -353,6 +360,25 @@
 	</div>
 </div>
 
+<div class=icon data-for=editor-window>
+	<img src=editor.png>
+	<div>Editor</div>
+</div>
+
+<div class=icon data-for=sheet-window>
+	<img src=game.png>
+	<div>Game</div>
+</div>
+
+<div class=icon data-for=debugger-window>
+	<img src=debugger.png>
+	<div>Debugger</div>
+</div>
+
+<div class=icon data-for=controls-window>
+	<img src=controls.png>
+	<div>Controls</div>
+</div>
 
 <script>
 
@@ -497,6 +523,20 @@ window.addEventListener("DOMContentLoaded", _ => {
     }
   });
   */
+
+  $$(".icon").forEach(element => element.addEventListener('click', e => {
+  	let win = document.getElementById(element.getAttribute('data-for'));
+  	if (win.getAttribute('hidden')) {
+	  	win.removeAttribute('hidden');
+	  	win.style.left = rand(100) + 'px';
+	  	win.style.top = rand(100) + 'px';
+	  }
+    win.style.zIndex = prepWindow.zindex = (prepWindow.zindex || 1) + 1;
+  }));
+
+  $$(".close").forEach(element => element.addEventListener('click', e => {
+  	element.parentElement.parentElement.parentElement.setAttribute('hidden', true);
+  }));
 
 	Array.from($$(".window")).reverse().forEach(prepWindow);
 
