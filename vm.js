@@ -200,21 +200,21 @@ class VirtualMachine {
   state;  // negative memory beyond registers
   running = true;
 
-  get pc() { return this.registers[1-REGISTERS.PC] }
-  set pc(v) { this.registers[1-REGISTERS.PC] = v }
+  get pc() { return this.registers[-1-REGISTERS.PC] }
+  set pc(v) { this.registers[-1-REGISTERS.PC] = v }
 
-  get sp() { return this.registers[1-REGISTERS.SP] }
-  set sp(v) { this.registers[1-REGISTERS.SP] = v }
+  get sp() { return this.registers[-1-REGISTERS.SP] }
+  set sp(v) { this.registers[-1-REGISTERS.SP] = v }
 
-  get fp() { return this.registers[1-REGISTERS.FP] }
-  set fp(v) { this.registers[1-REGISTERS.FP] = v }
+  get fp() { return this.registers[-1-REGISTERS.FP] }
+  set fp(v) { this.registers[-1-REGISTERS.FP] = v }
 
-  get ax() { return this.registers[1-REGISTERS.AX] }
-  set ax(v) { this.registers[1-REGISTERS.AX] = v }
-  set ax_fractional(f) { this.registers[1-REGISTERS.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
+  get ax() { return this.registers[-1-REGISTERS.AX] }
+  set ax(v) { this.registers[-1-REGISTERS.AX] = v }
+  set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
-  get clock() { return this.registers[1-REGISTERS.CLOCK] }
-  set clock(v) { this.registers[1-REGISTERS.CLOCK] = v }
+  get clock() { return this.registers[-1-REGISTERS.CLOCK] }
+  set clock(v) { this.registers[-1-REGISTERS.CLOCK] = v }
 
   get top() { return this.fetch(this.sp) }
   set top(v) { this.store(this.sp, v) }

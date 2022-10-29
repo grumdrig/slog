@@ -333,32 +333,47 @@ div.icon {
 
 	<div class="window-body">
 
-<label for=arg1>Arguments:</label>
-	<input id=arg1 type=text value=0></input>
-	<input id=arg2 type=text value=0></input>
-<br/>
-<span>Result: <code id=result>-</code></span>
-<br/>
-<br/>
-<button onclick="gameplay(train)">train(stat)</button>
-<button onclick="gameplay(study)">study(spell)</button>
-<button onclick="gameplay(initialize)">initialize(slot,value)</button>
-<button onclick="gameplay(travel)">travel(destination)</button>
-<button onclick="gameplay(melee)">melee()</button>
-<button onclick="gameplay(buy)">buyItem(slot,quantity)</button>
-<button onclick="gameplay(buy)">buyEquipment(slot,quality)</button>
-<button onclick="gameplay(sell)">sell(slot,quantity)</button>
-<button onclick="gameplay(seekquest)">seekquest()</button>
-<button onclick="gameplay(completequest)">completequest()</button>
-<button onclick="gameplay(cast)">cast(spell_slot)</button>
-<button onclick="gameplay(forage)">forage(target_slot)</button>
-<button onclick="gameplay(levelup)">levelup()</button>
-<button onclick="gameplay(start)">startGame()</button>
-<button onclick="gameplay(give)">give(slot,quantity)</button>
-<button onclick="gameplay(drop)">drop(slot,quantity)</button>
+		<label for=arg1>Arguments:</label>
+			<input id=arg1 type=text value=0></input>
+			<input id=arg2 type=text value=0></input>
+		<br/>
+		<span>Result: <code id=result>-</code></span>
+		<br/>
+		<br/>
+		<button onclick="gameplay(train)">train(stat)</button>
+		<button onclick="gameplay(study)">study(spell)</button>
+		<button onclick="gameplay(initialize)">initialize(slot,value)</button>
+		<button onclick="gameplay(travel)">travel(destination)</button>
+		<button onclick="gameplay(melee)">melee()</button>
+		<button onclick="gameplay(buy)">buyItem(slot,quantity)</button>
+		<button onclick="gameplay(buy)">buyEquipment(slot,quality)</button>
+		<button onclick="gameplay(sell)">sell(slot,quantity)</button>
+		<button onclick="gameplay(seekquest)">seekquest()</button>
+		<button onclick="gameplay(completequest)">completequest()</button>
+		<button onclick="gameplay(cast)">cast(spell_slot)</button>
+		<button onclick="gameplay(forage)">forage(target_slot)</button>
+		<button onclick="gameplay(levelup)">levelup()</button>
+		<button onclick="gameplay(start)">startGame()</button>
+		<button onclick="gameplay(give)">give(slot,quantity)</button>
+		<button onclick="gameplay(drop)">drop(slot,quantity)</button>
 
 	</div>
 </div>
+
+
+<div class=window hidden id=map-window>
+	<div class="title-bar">
+	  <div class="title-bar-text">Map</div>
+	  <div class="title-bar-controls">
+	    <button aria-label="Close" class=close></button>
+	  </div>
+	</div>
+
+	<div class="window-body">
+		<img src=pqasm_map.png width=800px></img>
+	</div>
+</div>
+
 
 <div class=icon data-for=editor-window>
 	<img src=editor.png>
@@ -378,6 +393,11 @@ div.icon {
 <div class=icon data-for=controls-window>
 	<img src=controls.png>
 	<div>Controls</div>
+</div>
+
+<div class=icon data-for=map-window>
+	<img src=map.png>
+	<div>Map</div>
 </div>
 
 <script>
@@ -526,7 +546,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 
   $$(".icon").forEach(element => element.addEventListener('click', e => {
   	let win = document.getElementById(element.getAttribute('data-for'));
-  	if (win.getAttribute('hidden')) {
+  	if (win.hasAttribute('hidden')) {
 	  	win.removeAttribute('hidden');
 	  	win.style.left = rand(100) + 'px';
 	  	win.style.top = rand(100) + 'px';
