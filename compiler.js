@@ -686,7 +686,7 @@ class IdentifierExpression {
 	generate(context) {
 		let reference = context.lookup(this.identifier);
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
-		if (reference) {
+		if (reference && !reference.static) {
 			context.emit('fetchlocal ' + reference.offset + ' ; ' + this.identifier);
 		} else {
 			// hopefully global
@@ -979,8 +979,9 @@ class BinaryExpression {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
 				context.assert(lhs.generateAddress, "addressable variable expected");
-				lhs.generateAddress(context);
 				rhs.generate(context);
+				context.emit('peek 0');
+				lhs.generateAddress(context);
 				context.emit('store');
 			},
 		},

@@ -315,7 +315,7 @@ class VirtualMachine {
       if (mnemonic === 'storelocal') address += this.fp;
       if (mnemonic === 'poke')  address += this.sp;
       if (address >= -this.registers.length)
-        this.store(address, this.pop());
+        this.store(address, value);
       // else illegal; can't manipulate state
 
     } else if (mnemonic === '_jmp') {
@@ -632,12 +632,12 @@ class Assembler {
   link() {
     for (let pc of Object.keys(this.forwardCodeReferences)) {
       let symbol = this.forwardCodeReferences[pc];
-      this.assert(typeof this.labels[symbol] !== 'undefined', "undefined label: " + symbol);
+      this.assert(typeof this.labels[symbol] !== 'undefined', "undefined code label: " + symbol);
       this.reemit(pc, this.code[pc] & 0x3f, this.labels[symbol]);
     }
     for (let pc of Object.keys(this.forwardDataReferences)) {
       let symbol = this.forwardDataReferences[pc];
-      this.assert(typeof this.labels[symbol] !== 'undefined', "undefined label: " + symbol);
+      this.assert(typeof this.labels[symbol] !== 'undefined', "undefined data label: " + symbol);
       this.redata(pc, this.labels[symbol]);
     }
   }
@@ -678,7 +678,7 @@ class Assembler {
                         isInlineModeInstruction(inst) ? ':::' :
                         (inst >> 6);
         if (['fetch','store'].includes(opcode))
-          immediate = REGISTER_NAMES[-immediate] || immediate;
+          immediate = REGISTER_NAMES[immediate] || immediate;
         disa = ('$' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
           + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-3)
           + ' ' + opcode

@@ -434,10 +434,11 @@ function comp() {
 	$("#errors").classList.remove("err");
 	try {
 		$("#asm").value = compile(Game.generateInterface(), $("#source").value);
-		assemble();
-		if ($("#autorun").checked)
-			run();
-		$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${asm.code.length})`;
+		if (assemble()) {
+			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${asm.code.length})`;
+			if ($("#autorun").checked)
+				run();
+		}
 	} catch (e) {
 		let message;
 		if (e instanceof ParseError) {
@@ -462,6 +463,7 @@ function assemble() {
 		asm.assemble($("#asm").value);
 		$("#machine").value = asm.disassemble();
 		reset();
+		return true;
 	} catch (e) {
 		$("#errors").classList.add("err");
 		$("#errors").innerText = e.toString();
