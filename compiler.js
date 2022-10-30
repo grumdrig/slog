@@ -414,6 +414,8 @@ class Statement {  // namespace only
 	static parse(source) {
 		if (source.tryConsume('break')) {
 			return new BreakStatement();
+		} else if (source.tryConsume('halt')) {
+			return new HaltStatement();
 		} else if (source.tryConsume('return')) {
 			return new ReturnStatement(Expression.parse(source));
 		} else if (source.lookahead('while')) {
@@ -431,7 +433,7 @@ class Statement {  // namespace only
 class BreakStatement {
 	generate(context) {
 		if (!context.enclosingLoopExit()) context.error('no enclosing loop for break');
-		emit('.stack ' + context.enclosingLoopExit());
+		context.emit('.stack ' + context.enclosingLoopExit());
 	}
 }
 
@@ -446,6 +448,12 @@ class ReturnStatement {
 		this.value.simplify(context).generate(context);
 		let func = context.enclosingScope().function;
 		func.generateReturn(context);
+	}
+}
+
+class HaltStatement {
+	generate(context) {
+		context.emit('halt 0');
 	}
 }
 

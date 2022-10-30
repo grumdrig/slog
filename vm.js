@@ -259,6 +259,13 @@ class VirtualMachine {
     this.state = world.create();
   }
 
+  bigstep() {
+    step();
+    while (this.running && ((this.memory[this.pc] & 0x3F) < 0x30)) {
+      step();
+    }
+  }
+
   step() {
     let result = false;
     const instruction = this.memory[this.pc];

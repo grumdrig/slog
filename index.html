@@ -234,6 +234,7 @@ div.icon {
 		</div>
 		<div class=nobo>
 			<button onclick="step()">Step</button>
+			<button onclick="bigstep()">Bigstep</button>
 			<button onclick="runimate()">Runimate</button>
 			<button onclick="run()">Run</button>
 			<button onclick="reset()">Reset</button>
@@ -475,6 +476,13 @@ function step() {
 	updateCharacterSheet(vm.state);
 }
 
+function bigstep() {
+	stopRunimation();
+	vm.bigstep();
+	updateDebuggerState(vm);
+	updateCharacterSheet(vm.state);
+}
+
 function stopRunimation() {
 	if (runimate.timer) {
 		clearTimeout(runimate.timer);
@@ -493,6 +501,7 @@ function runimate() {
 
 function run() {
 	stopRunimation();
+	vm.running = true;
   while (vm.alive()) {
 		vm.step();
 	}
@@ -676,20 +685,22 @@ function updateDebuggerState(vm) {
 		return `${(name + ' '.repeat(23)).substr(0,23)} $${('0000'+value.toString(16)).substr(-4)} ${value}`;
 	}
 
-	$("#registers").innerText = '';
-	for (let i = 0; i < vm.registers.length; ++i) {
+	// Registers & State
+	let n = 0;
+	for (let i = 0; i < vm.registers.length; ++i, ++n) {
 		let address = -i - 1;
-		let d = $("#registers").appendChild(document.createElement('pre'));
+		let d = $("#registers").children[n] ||
+						$("#registers").appendChild(document.createElement('pre'));
 		d.innerText = regFmt(REGISTER_NAMES[address] || i, vm.registers[i]);
 
 		let r = $("#r" + i);
 		if (r) r.innerText = d.innerText;
 	}
-
-	// State
-	$('#registers').appendChild(document.createElement('hr'));
-	for (let i = 0; i < vm.state.length; ++i) {
-		let d = $("#registers").appendChild(document.createElement('pre'));
+	if (!$("#registers").children[n])
+		$('#registers').appendChild(document.createElement('hr'));
+	for (let i = 0; i < vm.state.length; ++i, ++n) {
+		let d = $("#registers").children[n] ||
+						$("#registers").appendChild(document.createElement('pre'));
 		d.innerText = regFmt(SLOTS[i] || i, vm.state[i]);
 	}
 
