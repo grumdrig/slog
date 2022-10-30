@@ -899,7 +899,7 @@ class Game {
 			let qty;
 			if (target === MOB_TYPE) {
 				state[MOB_TYPE] = 1 + irand(MOBS.length - 1); // location.mobtype;
-				state[MOB_LEVEL] = local.level;
+				state[MOB_LEVEL] = local.level + irand(2) - irand(2);
 				state[MOB_DAMAGE] = 0;
 				qty = state[MOB_TYPE] ? 1 : 0;
 			} else if (isInventorySlot(target)) {

@@ -432,15 +432,23 @@ function comp() {
 	$("#errors").innerHTML = '&nbsp;';
 	$("#errors").classList.remove("err");
 	try {
-		$("#asm").value = compile(Game.generateInterface() + $("#source").value);
+		$("#asm").value = compile(Game.generateInterface(), $("#source").value);
 		assemble();
 		if ($("#autorun").checked)
 			run();
 		$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${asm.code.length})`;
 	} catch (e) {
+		let message;
+		if (e instanceof ParseError) {
+			message = 'Parse Error: ' + e.message;
+		} else if (e instanceof SemanticError) {
+			message = 'Semantic Error: ' + e.message;
+		} else {
+			message = 'Compilation Error: ' + e;
+		}
 		console.log(e);
 		$("#errors").classList.add("err");
-		$("#errors").innerText = 'Compilation error: ' + e.toString();
+		$("#errors").innerText = message
 	}
 }
 
@@ -461,19 +469,30 @@ function assemble() {
 }
 
 function step() {
+	stopRunimation();
 	vm.step();
 	updateDebuggerState(vm);
 	updateCharacterSheet(vm.state);
 }
 
+function stopRunimation() {
+	if (runimate.timer) {
+		clearTimeout(runimate.timer);
+		runimate.timer = null
+	}
+}
+
 function runimate() {
   if (vm.alive()) {
-    step();
-  	setTimeout(runimate, 100);
+		let calledOut = vm.step();
+		updateDebuggerState(vm);
+		if (calledOut) updateCharacterSheet(vm.state);
+  	runimate.timer = setTimeout(runimate, 100);
   }
 }
 
 function run() {
+	stopRunimation();
   while (vm.alive()) {
 		vm.step();
 	}
@@ -482,6 +501,7 @@ function run() {
 }
 
 function reset() {
+	stopRunimation();
 	vm = new VirtualMachine(asm.code, Game);
 	updateDebuggerState(vm);
 	updateCharacterSheet(vm.state);

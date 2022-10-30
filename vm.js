@@ -260,6 +260,7 @@ class VirtualMachine {
   }
 
   step() {
+    let result = false;
     const instruction = this.memory[this.pc];
     const opcode = instruction & 0x3F;
     const mnemonic = OPCODES[opcode];
@@ -377,10 +378,10 @@ class VirtualMachine {
         this.ax = result[1];
       }
 
-    // "Real"-world instructions, all of which advance character age and set
-    //  a boolean value in AX indication if the instruction completed
+    // "Real"-world instructions, all of which advance character age
 
     } else if (opcode >= 0x30) {
+      result = true;
       this.top = this.world.handleInstruction(this.state, opcode, this.top, operand);
 
     } else {
@@ -389,10 +390,12 @@ class VirtualMachine {
 
     this.clock += 1;
 
-    if (this.clock > 3000) {
+    if (this.clock > 30000) {
       console.log("Debug limit");
       this.running = false;
     }
+
+    return result;
   }
 
   alive() {

@@ -634,6 +634,10 @@ Nerflings Hardwarf Eff
 Eff       Nerfling Hardwarf
 Hardwarf  Eff      Nerfling
 
+Maybe should have human too, even though no such home town. Or make Bompton human.
+
+Maybe should allow monster races too, though it will be hard on the player.
+
 
 ### Character class
 

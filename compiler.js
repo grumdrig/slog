@@ -9,8 +9,12 @@ class Source {
 	lexemes = [];
 	// Lexemes are { line_no, text, TYPE } plus maybe a numeric value
 
-	constructor(text) {
+	constructor(...texts) {
+		for (let text of texts)
+			this.process(text);
+	}
 
+	process(text) {
 		let lines = text.split('\n');
 		lines.forEach((line, l) => {
 			let line_no = l + 1;
@@ -40,9 +44,9 @@ class Source {
 					lexeme.value = parseInt(lexeme.text);
 				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
 					lexeme.identifier = true;
-				} else if (lexeme.text = take(/^[-+=<>*/%^&|]+/i)) {
+				} else if (lexeme.text = take(/^[-+=<>*/%^&|!]+/i)) {
 					lexeme.operator = true;
-				} else if (lexeme.text = take(/^[.,~!@#(){}[\]]/i)) {
+				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/i)) {
 					lexeme.punctuation = true;
 				} else {
 					this.error(`unrecognized character al line ${line_no}: '${line[0]}'`);
@@ -481,13 +485,13 @@ class WhileStatement {
 		context.emit('unary NOT');
 
 		// Exit loop if it's false
-		context.emit('.branch ' + breakLabel);
+		context.emit('.branch ' + context.breakLabel);
 
 		this.body.generate(context);
 
 		context.emit('.jump ' + loopStartLabel);
 
-		context.emit(breakLabel + ':');
+		context.emit(context.breakLabel + ':');
 	}
 }
 
@@ -1217,8 +1221,8 @@ class PostfixExpression {
 	}
 }
 
-function compile(text) {
-	let source = new Source(text);
+function compile(...texts) {
+	let source = new Source(...texts);
 	// console.log(source);
 
 	let m = Module.parse(source);
