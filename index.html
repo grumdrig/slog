@@ -424,6 +424,7 @@ div.icon {
 function $(s) { return document.querySelector(s) }
 function $$(s) { return document.querySelectorAll(s) }
 HTMLElement.prototype.$ = HTMLElement.prototype.querySelector;
+function $id(s) { return document.getElementById(s) }
 
 let asm, vm;
 
@@ -751,15 +752,23 @@ function updateCharacterSheet(state) {
 			elt.classList.add('changed');
 		}
 	}
+
+	function setProgress(id, value, end, start = 0) {
+		set(id, `${value} / ${end}`);
+		let progress = Math.round(100 * value / (end - start));
+		let bi = `linear-gradient(left, #afa, #afa ${progress}%, transparent ${progress}%, transparent 100%)`
+		$id(id).style.backgroundImage = bi;
+		$id(id).style.backgroundImage = '-webkit-' + bi;
+	}
+
 	set('race', Game.RACE_NAMES[state[RACE]]);
 	set('level', state[LEVEL]);
-	set('xp', state[XP]);
-	set('health', `${state[MAX_HP]-state[DAMAGE]} / ${state[MAX_HP]}`);
+	setProgress('xp', state[XP],
+			Game.xpNeededForLevel(state[LEVEL] + 1),
+			Game.xpNeededForLevel(state[LEVEL]));
+	setProgress('health', state[MAX_HP]-state[DAMAGE], state[MAX_HP]);
+	setProgress('energy', state[MAX_MP]-state[FATIGUE], state[MAX_MP]);
 
-	$("#health").style.backgroundImage = 'linear-gradient(left, #4f4, #4f4 70%, transparent 70%, transparent 100%)';
-	$("#health").style.backgroundImage = '-webkit-linear-gradient(left, #4f4, #4f4 70%, transparent 70%, transparent 100%)';
-
-	set('energy', `${state[MAX_MP]-state[FATIGUE]} / ${state[MAX_MP]}`);
 	for (let i = 0; i < STAT_COUNT; ++i) {
 		set('s' + i, state[STAT_0 + i] >> 8);
 	}
@@ -799,13 +808,13 @@ function updateCharacterSheet(state) {
 	let original = Game.MAP[state[QUEST_ORIGIN]];
 	set('questobject', state[QUEST_OBJECT]);
 	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
-	set('questprogress', `${state[QUEST_PROGRESS]} / ${state[QUEST_QTY]}`);
+	setProgress('questprogress', state[QUEST_PROGRESS], state[QUEST_QTY]);
 	set('questorigin', original && (original.name + ' #' + original.index) || '');
 
 	set('act', state[ACT] || 'Prologue');
-	set('actprogress', `${state[ACT_PROGRESS]} / ${state[ACT_DURATION]}`);
+	setProgress('actprogress', state[ACT_PROGRESS], state[ACT_DURATION]);
+	setProgress('gameprogress', state[ACT], 10);
 	set('gameprogress', `${Math.round(100 * state[ACT] / 10)}%`);
-
 }
 
 

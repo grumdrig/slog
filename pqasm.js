@@ -5,7 +5,6 @@ const SLOTS = [
 	'AGE',
 	'LEVEL',
 	'XP',
-	'XP_NEEDED',
 
 	'MAX_HP',
 	'DAMAGE',
@@ -925,10 +924,9 @@ class Game {
 			return qty;
 
 		} else if (opcode === levelup) {
-			if (state[XP] <= state[XP_NEEDED])
+			if (state[XP] <= this.xpNeededForLevel(state[LEVEL] + 1))
 				return -1;
 			state[LEVEL] += 1;
-			state[XP_NEEDED] = xpNeededForLevel(state[LEVEL] + 1);
 			passTime(1, 0);
 			return 1;
 		}
@@ -937,6 +935,10 @@ class Game {
 	       	state[AGE] >= 0x7FFF) {
 			TODO("were dead. now what? have to stop the machine somehow.")
 		}
+	}
+
+	static xpNeededForLevel(level) {
+		return 0 + Math.floor(Math.pow(level - 1, 1.6)) * 200;
 	}
 
 	static armorClass(state) {
