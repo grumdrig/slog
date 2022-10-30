@@ -353,7 +353,7 @@ const MOBS = [
 		bigname: "Spectral Pig",
 		badassname: "Supersow",
 		domain: HILLS,
-		hitditce: 2,
+		hitdice: 2,
 	}, {
 		name: "Gegnome",
 		badassname: "Megegnome",
@@ -894,12 +894,24 @@ class Game {
 			}
 			return level;
 
-		} else if (opcode === forage) {
+		} else if (opcode === forage) {  // or hunt
 			let target = arg1;
 			let qty;
 			if (target === MOB_TYPE) {
-				state[MOB_TYPE] = 1 + irand(MOBS.length - 1); // location.mobtype;
-				state[MOB_LEVEL] = local.level + irand(2) - irand(2);
+				state[MOB_TYPE] = 0;
+				state[MOB_LEVEL] = 0;
+				state[MOB_DAMAGE] = 0;
+				for (let i = 0; i < 4; ++i) {
+					// location.mobtype;
+					let t = 1 + irand(MOBS.length - 1);
+					let l = MOBS[t].hitdice + irand(2) - irand(2);
+					if (!state[MOB_TYPE] || Math.abs(l - local.level) <
+											Math.abs(state[MOB_LEVEL] - local.level)) {
+						state[MOB_TYPE] = t;
+						state[MOB_LEVEL] = l;
+					}
+				}
+				console.log('HUNT', state[MOB_TYPE], state[MOB_LEVEL]);
 				state[MOB_DAMAGE] = 0;
 				qty = state[MOB_TYPE] ? 1 : 0;
 			} else if (isInventorySlot(target)) {

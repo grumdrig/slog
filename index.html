@@ -755,6 +755,10 @@ function updateCharacterSheet(state) {
 	set('level', state[LEVEL]);
 	set('xp', state[XP]);
 	set('health', `${state[MAX_HP]-state[DAMAGE]} / ${state[MAX_HP]}`);
+
+	$("#health").style.backgroundImage = 'linear-gradient(left, #4f4, #4f4 70%, transparent 70%, transparent 100%)';
+	$("#health").style.backgroundImage = '-webkit-linear-gradient(left, #4f4, #4f4 70%, transparent 70%, transparent 100%)';
+
 	set('energy', `${state[MAX_MP]-state[FATIGUE]} / ${state[MAX_MP]}`);
 	for (let i = 0; i < STAT_COUNT; ++i) {
 		set('s' + i, state[STAT_0 + i] >> 8);
