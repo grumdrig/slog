@@ -237,6 +237,7 @@ div.icon {
 			<button onclick="bigstep()">Bigstep</button>
 			<button onclick="runimate()">Runimate</button>
 			<button onclick="run()">Run</button>
+			<button onclick="play()">Play</button>
 			<button onclick="reset()">Reset</button>
 		</div>
 		<div class="status-bar" id=debugbar>
@@ -336,8 +337,10 @@ div.icon {
 				<div>Game Progress</div> <div id=gameprogress>50%</div>
 			</div>
 		</div>
-
 	</div>
+	<div class="status-bar">
+    <p class="status-bar-field" id=task>Task...</p>
+  </div>
 </div>
 
 <br/>
@@ -511,6 +514,38 @@ function run() {
 	updateDebuggerState(vm);
 	updateCharacterSheet(vm.state);
 }
+
+function play() {
+	stopRunimation();
+	vm.running = true;
+	playmation();
+}
+
+function playmation() {
+	let before = vm.state[AGE];
+  while (vm.alive() && vm.state[AGE] == before) {
+		vm.step();
+	}
+	animate.duration = 1000 * Math.round(Math.sqrt(vm.state[AGE] - before));
+	animate.progress = 0;
+	$id('task').innerText = TASK;
+	setBar('task', animate.progress, animate.duration);
+	setTimeout(animate, 10);
+}
+
+function animate() {
+	animate.progress += 10;
+	setBar('task', animate.progress, animate.duration);
+	if (animate.progress >= animate.duration) {
+		updateDebuggerState(vm);
+		updateCharacterSheet(vm.state);
+		if (vm.alive)
+			setTimeout(playmation, 1);
+	} else {
+		setTimeout(animate, 10);
+	}
+}
+
 
 function reset() {
 	stopRunimation();
@@ -731,6 +766,15 @@ function updateDebuggerState(vm) {
 }
 
 
+function setBar(id, value, end, start=0) {
+	let progress = Math.round(100 * value / (end - start));
+	let bi = `linear-gradient(left, #afa, #afa ${progress}%, transparent ${progress}%, transparent 100%)`
+	$id(id).style.backgroundImage = bi;
+	$id(id).style.backgroundImage = '-webkit-' + bi;
+}
+
+
+
 function updateCharacterSheet(state) {
 
 
@@ -755,10 +799,7 @@ function updateCharacterSheet(state) {
 
 	function setProgress(id, value, end, start = 0) {
 		set(id, `${value} / ${end}`);
-		let progress = Math.round(100 * value / (end - start));
-		let bi = `linear-gradient(left, #afa, #afa ${progress}%, transparent ${progress}%, transparent 100%)`
-		$id(id).style.backgroundImage = bi;
-		$id(id).style.backgroundImage = '-webkit-' + bi;
+		setBar(id, value, end, start);
 	}
 
 	set('race', Game.RACE_NAMES[state[RACE]]);
@@ -813,8 +854,8 @@ function updateCharacterSheet(state) {
 
 	set('act', state[ACT] || 'Prologue');
 	setProgress('actprogress', state[ACT_PROGRESS], state[ACT_DURATION]);
-	setProgress('gameprogress', state[ACT], 10);
 	set('gameprogress', `${Math.round(100 * state[ACT] / 10)}%`);
+	setBar('gameprogress', state[ACT], 10);
 }
 
 

@@ -637,6 +637,7 @@ function armorClass(state) {
 			state[EQUIPMENT_FOOTWEAR];
 }
 
+let TASK = '';
 
 class Game {
 	static create() {
@@ -711,7 +712,8 @@ class Game {
 		let local = this.MAP[state[LOCATION]];
 		let questal = this.MAP[state[QUEST_LOCATION]];
 
-		function passTime(hours, days) {
+		function passTime(task, hours, days) {
+			TASK = task;  // TODO this is inelegant
 			const HOURS_PER_DAY = 24;
 			if (days) hours += HOURS_PER_DAY * days;
 			state[AGE] += hours;
@@ -764,10 +766,11 @@ class Game {
 			state[MOB_TYPE] = 0;
 			state[MOB_LEVEL] = 0;
 			state[MOB_DAMAGE] = 0;
-			passTime(0, 1);
+			passTime('Travelling', 0, 1);
 			return 1;
 
 		} else if (opcode === melee) {
+			passTime('Fighting', 1);
 			return this.battle(state);
 
 		} else if (opcode === buyItem) {
@@ -789,7 +792,7 @@ class Game {
 
 			if (arg2 === 0) {
 				// It's a price check only
-				passTime(1);
+				passTime('Checking prices', 1);
 				return price;
 			}
 
@@ -800,7 +803,7 @@ class Game {
 			// You may proceed with the purchase
 			state[GOLD] -= price;
 			state[slot] = levelToBe;
-			passTime(1);
+			passTime('Buying', 1);
 			return qty;
 
 		} else if (opcode === sell || opcode === give) {
@@ -819,11 +822,11 @@ class Game {
 				state[QUEST_PROGRESS] += qty;
 			}
 			state[slot] -= qty;
-			passTime(1, 0);
+			passTime('Selling', 1, 0);
 			return qty;
 
 		} else if (opcode === seekquest) {
-			passTime(1, 0);
+			passTime('Asking around about quests', 1, 0);
 			if (local.terrain !== TOWN) return -1;
 			if (irand(2) == 0) {
 				// Exterminate the ___
@@ -864,7 +867,7 @@ class Game {
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
 			if (state[slot] >> 8 >= 99) return 0;
-			passTime(0, 1);
+			passTime(opcode === training ? 'Training' : 'Studying', 0, 1);
 			let learns = Math.round(256 * Math.exp(1/5, 1.5));
 			// TODO other factors, like race, stats
 			state[slot] += learns;
@@ -876,7 +879,7 @@ class Game {
 			let level = state[spell];
 			if (level < 1) return -1;
 			const manaused = 1;
-			passTime(1);
+			passTime('Casting', 1);
 			if (state[FATIGUE] + manaused > state[ENERGY])
 				return -1;
 			state[FATIGUE] += manaused;
@@ -920,14 +923,14 @@ class Game {
 			} else {
 				return -1;
 			}
-			passTime(1);
+			passTime(target === MOB_TYPE ? 'Hunting' : 'Foraging', 1);
 			return qty;
 
 		} else if (opcode === levelup) {
 			if (state[XP] <= this.xpNeededForLevel(state[LEVEL] + 1))
 				return -1;
 			state[LEVEL] += 1;
-			passTime(1, 0);
+			passTime('Levelling up', 1, 0);
 			return 1;
 		}
 
