@@ -809,11 +809,9 @@ seekquest()
 travel(16)
 forage(INVENTORY_REAGENTS)
 forage(INVENTORY_REAGENTS)
-var misses
 while .MOB_LEVEL != 1 {
   hunt()
-  misses = misses + 1
 }
-while .MOB_LEVEL {
+while .MOB_LEVEL && .DAMAGE < (.MAX_HP / 2) {
   melee()
 }

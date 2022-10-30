@@ -76,6 +76,8 @@
 		background-color: darkseagreen;
 	}
 
+	#task { background-color: white }
+
 </style>
 <style>
 	/* Styling for the debug area */
@@ -526,7 +528,7 @@ function playmation() {
   while (vm.alive() && vm.state[AGE] == before) {
 		vm.step();
 	}
-	animate.duration = 1000 * Math.round(Math.sqrt(vm.state[AGE] - before));
+	animate.duration = 1000 * Math.round(Math.sqrt(2 * (vm.state[AGE] - before)));
 	animate.progress = 0;
 	$id('task').innerText = TASK;
 	setBar('task', animate.progress, animate.duration);
