@@ -517,11 +517,10 @@ function comp() {
 
 
 function assemble() {
-	asm = new Assembler();
 	$("#errors").innerHTML = '&nbsp;';
 	$("#errors").classList.remove("err");
 	try {
-		asm.assemble($("#asm").value);
+		asm = Assembler.assemble($("#asm").value);
 		$("#machine").value = asm.disassemble();
 		reset();
 		return true;

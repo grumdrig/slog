@@ -1,6 +1,9 @@
 
-# -x node test_compiler.js -- compiler.js vm.js
-
+# compile
 -x -i grumdrig.asm node compiler.js -i ./pqasm.js -o grumdrig.asm grumdrig.pqpp
 
--i grumdrig.bin node asm.js -o grumdrig.bin grumdrig.asm
+# assemble
+-i grumdrig.bin -i grumdrig.dasm node vm.js -a grumdrig.asm -d grumdrig.dasm -o grumdrig.bin
+
+# execute
+node vm.js -i ./pqasm.js -l grumdrig.bin -v -r

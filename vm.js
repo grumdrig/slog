@@ -674,9 +674,9 @@ class Assembler {
 
   disassemble(address) {
     if (typeof address === 'number') {
-      let inst = this.code[address];
+      let inst = this.code[address] || 0;
       let disa;
-      if (address > 0 && isInlineModeInstruction(this.code[address - 1])) {
+      if (address > 0 && isInlineModeInstruction(this.code[address - 1] || 0)) {
         disa = '.data ' + inst;
       } else {
         let opcode = OPCODES[inst & 0x3f] || '??';
@@ -738,45 +738,93 @@ if (typeof module !== 'undefined' && !module.parent) {
   const { parseArgs } = require('util');
   const { readFileSync, writeFileSync } = require('fs');
 
-  const { values: { assemble, output }, positionals } = parseArgs({
+  const { values, positionals } = parseArgs({
     options: {
       assemble: {
-        type: "string",
-        short: "a",
+        type: 'string',
+        short: 'a',
       },
       output: {
-        type: "string",
-        short: "o",
+        type: 'string',
+        short: 'o',
       },
-      // interface: {
-      //   type: 'string',
-      //   short: 'i',
-      //   multiple: true,
-      // },
+      disassemble: {
+        type: 'string',
+        short: 'd',
+      },
+      load: {
+        type: 'string',
+        short: 'l',
+      },
+      interface: {
+        type: 'string',
+        short: 'i',
+      },
+      verbose: {
+        type: 'boolean',
+        short: 'v',
+      },
+      run: {
+        type: 'boolean',
+        short: 'r',
+      },
     },
     // allowPositionals: true,
   });
+  const flags = values;
 
   // let interfaces = interface.map(filename => require(filename).generateInterface());
 
-  // if (positionals.length !== 1) {
-  //   console.error('One assembly source is required');
-  //   process.exit(-1);
-  // }
-  if (assemble) {
-    let source = readFileSync(assemble, 'utf8');
+  let code;
+
+  if (flags.assemble) {
+    let source = readFileSync(flags.assemble, 'utf8');
 
     let asm;
     try {
       asm = Assembler.assemble(source);
+      code = asm.code;
     } catch (e) {
       console.error('Assembly Error: ' + e);
       process.exit(-1);
     }
 
-    if (output) {
-      // console.log(Array.from(asm.code.slice(0,10)).map(x => (0xffff & x).toString(16)));
-      writeFileSync(output, asm.code);
+    if (flags.disassemble) {
+      writeFileSync(flags.disassemble, asm.disassemble(), 'utf8');
     }
+
+    if (flags.output) {
+      writeFileSync(flags.output, asm.code);
+    }
+  }
+
+  if (flags.load) {
+    let buffer = readFileSync(flags.load);
+    var ab = new ArrayBuffer(buffer.length);
+    let view = new Uint8Array(ab);
+    for (var i = 0; i < buffer.length; ++i)
+        view[i] = buffer[i];
+    code = new Int16Array(ab);
+  }
+
+  let Game;
+  if (flags.interface) {
+    Game = require(flags.interface).Game;
+  }
+
+  if (flags.run) {
+    if (!code) {
+      console.error('To run the machine, specify assembly source with `-a FILENAME` or binary with `-l FILENAME`');
+      process.exit(-2);
+    }
+    if (!code) {
+      console.error('To run the machine, specify game with `-i PATH/FILENAME`');
+      process.exit(-2);
+    }
+    let vm = new VirtualMachine(code, Game);
+    if (flags.verbose) vm.trace = true;
+    vm.run();
+    Game.dumpState(vm.state);
+    console.log(`PC: ${vm.pc}  CK: ${vm.clock}`);
   }
 }

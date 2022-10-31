@@ -658,6 +658,12 @@ class Game {
 	static MOBS = MOBS;
 	static MAP = MAP;
 
+	static dumpState(state) {
+		for (let i = 0; i < SLOTS.length; ++i)
+			if (state[i])
+				console.log(SLOTS[i] + ': ' + state[i]);
+	}
+
 	static handleInstruction(state, opcode, arg1, arg2) {
 		let result = this._handleInstruction(state, opcode, arg1, arg2);
 		state[CAPACITY] = carryCapacity(state);
@@ -765,7 +771,8 @@ class Game {
 			}
 			let hours = 24;
 			// TODO hours = statMod(hours, speed(state));
-			hours *= terrain.movementCost || 1;
+			let terrain = TERRAIN_TYPES[remote.terrain];
+			hours *= terrain.moveCost || 1;
 			state[LOCATION] = remote.index;
 			state[MOB_TYPE] = 0;
 			state[MOB_LEVEL] = 0;
@@ -917,7 +924,6 @@ class Game {
 						state[MOB_LEVEL] = l;
 					}
 				}
-				console.log('HUNT', state[MOB_TYPE], state[MOB_LEVEL]);
 				state[MOB_DAMAGE] = 0;
 				qty = state[MOB_TYPE] ? 1 : 0;
 			} else if (target === DAMAGE) {
@@ -940,7 +946,7 @@ class Game {
 			return qty;
 
 		} else if (opcode === levelup) {
-			if (state[XP] <= this.xpNeededForLevel(state[LEVEL] + 1))
+			if (state[XP] < this.xpNeededForLevel(state[LEVEL] + 1))
 				return -1;
 			state[LEVEL] += 1;
 			passTime('Levelling up', 1, 0);
