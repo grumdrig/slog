@@ -1,0 +1,21 @@
+initialize(RACE, 1)
+initialize(STAT_STRENGTH, 10)
+startGame()
+seekquest()
+while .XP < 200 {
+  travel(11)
+  forage(INVENTORY_REAGENTS)
+  while !.DAMAGE {
+    while .MOB_LEVEL != 1 {
+      hunt()
+    }
+    while .MOB_LEVEL && .DAMAGE < (.MAX_HP / 2) {
+      melee()
+    }
+  }
+  travel(17)
+  while .DAMAGE {
+    rest()
+  }
+}
+levelup()

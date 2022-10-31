@@ -798,20 +798,3 @@ I just changed to XP styling. You have to
 
 	npm install xp.css
 
-
-Script in Progress
-------------------
-
-initialize(RACE, 1)
-initialize(STAT_STRENGTH, 10)
-startGame()
-seekquest()
-travel(16)
-forage(INVENTORY_REAGENTS)
-forage(INVENTORY_REAGENTS)
-while .MOB_LEVEL != 1 {
-  hunt()
-}
-while .MOB_LEVEL && .DAMAGE < (.MAX_HP / 2) {
-  melee()
-}

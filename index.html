@@ -479,9 +479,18 @@ function $id(s) { return document.getElementById(s) }
 
 let asm, vm;
 
-function comp() {
+
+function saveChanges() {
 	localStorage.source = $("#source").value;
 	localStorage.autorun = JSON.stringify($("#autorun").checked);
+}
+
+
+window.addEventListener('unload', saveChanges);
+
+
+function comp() {
+	saveChanges();
 	$("#errors").innerHTML = '&nbsp;';
 	$("#errors").classList.remove("err");
 	try {
@@ -541,8 +550,9 @@ function stopRunimation() {
 	if (runimate.timer) {
 		clearTimeout(runimate.timer);
 		runimate.timer = null
-		$id('task').innerHTML = '&nbsp;';
-		setBar('task', 0, 1);
+		$id('task').innerHTML = 'Paused';
+		animate.progress = 0;
+		setTaskBar();
 	}
 }
 
@@ -686,42 +696,7 @@ function prepWindow(hwnd) {
 // window.addEventListener('load', e => {
 
 window.addEventListener("DOMContentLoaded", _ => {
-  const tabs = document.querySelectorAll('[role="tab"]');
-  const tabList = document.querySelector('[role="tablist"]');
-
-  // Add a click event handler to each tab
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", changeTabs);
-  });
-
-	/*
-  // Enable arrow navigation between tabs in the tab list
-  let tabFocus = 0;
-
-  tabList.addEventListener("keydown", (e) => {
-    // Move right
-    if (e.keyCode === 39 || e.keyCode === 37) {
-      tabs[tabFocus].setAttribute("tabindex", -1);
-      if (e.keyCode === 39) {
-        tabFocus++;
-        // If we're at the end, go to the start
-        if (tabFocus >= tabs.length) {
-          tabFocus = 0;
-        }
-        // Move left
-      } else if (e.keyCode === 37) {
-        tabFocus--;
-        // If we're at the start, move to the end
-        if (tabFocus < 0) {
-          tabFocus = tabs.length - 1;
-        }
-      }
-
-      tabs[tabFocus].setAttribute("tabindex", 0);
-      tabs[tabFocus].focus();
-    }
-  });
-  */
+  $$('[role="tab"]').forEach(tab => tab.addEventListener("click", changeTabs));
 
   $("#interface").value = Game.generateInterface();
 
@@ -755,6 +730,7 @@ $("#source").addEventListener('keypress', e => {
 $("#asm").addEventListener('keypress', e => {
 	if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) assemble();
 });
+
 
 function changeTabs(e) {
   const target = e.target;

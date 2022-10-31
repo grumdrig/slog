@@ -157,6 +157,10 @@ limited to only four spells, so choose wisely.`,
 		parameters: 'target_slot',
 		opcode: 0x38,
 	},
+	rest: {
+		parameters: DAMAGE,
+		opcode: 0x38,
+	},
 	hunt: {
 		parameters: '$' + MOB_TYPE.toString(16),
 		opcode: 0x38,
@@ -896,7 +900,7 @@ class Game {
 			}
 			return level;
 
-		} else if (opcode === forage) {  // or hunt
+		} else if (opcode === forage) {  // or hunt, or rest
 			let target = arg1;
 			let qty;
 			if (target === MOB_TYPE) {
@@ -916,6 +920,15 @@ class Game {
 				console.log('HUNT', state[MOB_TYPE], state[MOB_LEVEL]);
 				state[MOB_DAMAGE] = 0;
 				qty = state[MOB_TYPE] ? 1 : 0;
+			} else if (target === DAMAGE) {
+				passTime('Resting', 0, 1);
+				let heal = irand(CON()) + 1;
+				if (local.terrain !== TOWN)
+					heal = Math.round(heal * Math.random() * Math.random());
+				heal = Math.min(heal, state[DAMAGE]);
+				state[DAMAGE] -= heal;
+				return heal;
+
 			} else if (isInventorySlot(target)) {
 				qty = Math.random() < 0.5 ? 1 : 0;
 				qty = Math.min(qty, inventoryCapacity());
