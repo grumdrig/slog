@@ -117,6 +117,13 @@ class Source {
 }
 
 
+uniqueLabel.UNIQUE = 1;
+function uniqueLabel(realm) {
+	return `@${realm || ''}_${uniqueLabel.UNIQUE++}`;
+}
+
+
+
 class CompilationContext {
 	symbols = {};
 	parent;
@@ -131,7 +138,7 @@ class CompilationContext {
 		if (functionDefinition) {
 			this.function = functionDefinition;
 			functionDefinition.parameters.forEach((parameter, i) => {
-				this.symbols[parameter] = { variable: true, local: true, offset: i + 1, count: 1 };
+				this.symbols[parameter] = { variable: true, local: true, offset: -i - 1, count: 1 };
 				// this.symbols['_return_position'] = { variable: true, local: true, offset: functionParameters.count + 1, count: 1 };
 			});
 		}
@@ -163,10 +170,11 @@ class CompilationContext {
 			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
 			this.symbols[identifier] = { variable: true, static: true, identifier };
 		} else {
+			// Stack declaration
 			let scope = this.enclosingScope();
 			this.assert(scope, "no enclosing scope"); // seems impossible
 			let offset = 0;
-			for (let i in scope.symbols) offset += scope.symbols[i].count;
+			for (let i in scope.symbols) offset -= scope.symbols[i].count;
 			scope.symbols[identifier] = { variable: true, local: true, identifier, offset, count, initializer };
 		}
 	}
@@ -182,10 +190,6 @@ class CompilationContext {
 	// 		this.code[forwards[f]] = this.symbols[f];  // or something
 	// 	}
 	// }
-
-	uniqueLabel(realm) { return this.parent ? this.parent.uniqueLabel(realm) :
-		`@${realm}_${this.unique++}`;
-	}
 
 	error(message) { throw new SemanticError(message) }
 	assert(cond, mess) { if (!cond) this.error(mess) }
@@ -364,17 +368,18 @@ class FunctionDefinition {
 		context.emit(this.name + ':');
 		context = new CompilationContext(context, this);
 		// context.returnValueDepth = this.parameters.length + 1;
-		// context.returnLabel = context.uniqueLabel(this.name + '_return');
+		// context.returnLabel = uniqueLabel(this.name + '_return');
 		// for (let p of this.parameters) {
 		// 	context.define(p);
 		// }
 		this.body.generate(context);
 
-		this.generateReturn(context);
+		this.generateReturn(context, false);
 	}
 
-	generateReturn(context) {
-		context.emit('storelocal -3  ; result');
+	generateReturn(context, withResult) {
+		if (withResult)
+			context.emit('storelocal -2  ; result');
 		context.emit('fetch FP');
 		context.emit('store SP');
 		context.emit('store FP');
@@ -447,7 +452,7 @@ class ReturnStatement {
 	generate(context) {
 		this.value.simplify(context).generate(context);
 		let func = context.enclosingScope().function;
-		func.generateReturn(context);
+		func.generateReturn(context, true);
 	}
 }
 
@@ -483,9 +488,9 @@ class WhileStatement {
 
 	generate(context) {
 		context = new CompilationContext(context);
-		context.breakLabel = context.uniqueLabel('endwhile');
+		context.breakLabel = uniqueLabel('endwhile');
 
-		let loopStartLabel = context.uniqueLabel('while');
+		let loopStartLabel = uniqueLabel('while');
 		context.emit(loopStartLabel + ':');
 
 		// Test loop condition
@@ -528,7 +533,7 @@ class IfStatement {
 	}
 
 	generate(context) {
-		let elseLabel = context.uniqueLabel('else');
+		let elseLabel = uniqueLabel('else');
 		this.condition.simplify(context).generate(context);
 		context.emit('unary NOT');
 		context.emit('.branch ' + elseLabel);
@@ -1088,14 +1093,17 @@ class PostfixExpression {
 					context.emit('ext' + func.opcode.toString(16) + '  ; ' + lhs.identifier);
 				} else {
 					context.assert(func.parameters.length === args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${args.length}`);
-					context.emit('.stack 0 ; return value');
-					context.emit('fetch PC');
+					const returnLabel = uniqueLabel('return');
+					context.emit(`.stack 0 ${returnLabel}  ; result, returnAddr`);
 					context.emit('fetch FP');
 					for (let a of args) { a.generate(context) }
+					// now position FP right before the arguments
 					context.emit('fetch SP');
-					context.emit('sub ' + args.length);
-					context.emit('store FP');
+					context.emit('add ' + (0 + args.length));
+					context.emit('store FP');  // set frame pointer
 					context.emit('.jump ' + lhs.identifier);
+					context.emit(returnLabel + ':')
+					// stack: ..., RESULT, RETURN_ADDRESS, OLD_FP, ARGS... ]
 				}
 			},
 		},

@@ -796,6 +796,7 @@ function updateDebuggerState(vm) {
 		let d = $("#stack").appendChild(document.createElement('pre'));
 		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
 		if (i === vm.sp) d.style.backgroundColor="yellow";
+		if (i === vm.fp) d.style.border='solid 1px black';
 	}
 
 	if (vm.memory.length < $("#memory").children.length)

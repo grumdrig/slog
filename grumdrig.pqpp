@@ -5,7 +5,7 @@ seekquest()
 while .XP < 200 {
   travel(11)
   forage(INVENTORY_REAGENTS)
-  while !.DAMAGE {
+  while !.DAMAGE && .XP < 200 {
     while .MOB_LEVEL != 1 {
       hunt()
     }
