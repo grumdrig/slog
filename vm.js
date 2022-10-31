@@ -467,10 +467,12 @@ class Assembler {
     }
   }
 
-  assemble(text) {
-    let lines = this.lex(text);
-    this.parse(lines, clone(REGISTERS, MNEMONICS, UNARY_SYMBOLS));
-    this.link();
+  static assemble(text) {
+    let asm = new Assembler();
+    let lines = asm.lex(text);
+    asm.parse(lines, clone(REGISTERS, MNEMONICS, UNARY_SYMBOLS));
+    asm.link();
+    return asm;
   }
 
   lex(text) {
@@ -642,6 +644,8 @@ class Assembler {
       this.assert(typeof this.labels[symbol] !== 'undefined', "undefined data label: " + symbol);
       this.redata(pc, this.labels[symbol]);
     }
+    let lastNontrivialIndex = this.code.reduce((n, v, i) => v ? i : n);
+    this.code = this.code.slice(0, lastNontrivialIndex + 1);
   }
 
   emit(opcode, parameter) {
@@ -726,4 +730,53 @@ function reverseMapIntoArray(m) {
 if (typeof exports !== 'undefined') {
   exports.VirtualMachine = VirtualMachine;
   exports.Assembler = Assembler;
+}
+
+
+if (typeof module !== 'undefined' && !module.parent) {
+  // Called with node as main module
+  const { parseArgs } = require('util');
+  const { readFileSync, writeFileSync } = require('fs');
+
+  const { values: { assemble, output }, positionals } = parseArgs({
+    options: {
+      assemble: {
+        type: "string",
+        short: "a",
+      },
+      output: {
+        type: "string",
+        short: "o",
+      },
+      // interface: {
+      //   type: 'string',
+      //   short: 'i',
+      //   multiple: true,
+      // },
+    },
+    // allowPositionals: true,
+  });
+
+  // let interfaces = interface.map(filename => require(filename).generateInterface());
+
+  // if (positionals.length !== 1) {
+  //   console.error('One assembly source is required');
+  //   process.exit(-1);
+  // }
+  if (assemble) {
+    let source = readFileSync(assemble, 'utf8');
+
+    let asm;
+    try {
+      asm = Assembler.assemble(source);
+    } catch (e) {
+      console.error('Assembly Error: ' + e);
+      process.exit(-1);
+    }
+
+    if (output) {
+      // console.log(Array.from(asm.code.slice(0,10)).map(x => (0xffff & x).toString(16)));
+      writeFileSync(output, asm.code);
+    }
+  }
 }
