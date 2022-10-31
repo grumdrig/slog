@@ -632,7 +632,8 @@ function carryCapacity(state) {
 }
 
 function encumbrance(state) {
-	return state.slice(INVENTORY_0, INVENTORY_0 + INVENTORY_COUNT).reduce(
+	// Gold doesn't count agains encumbrance
+	return state.slice(INVENTORY_GOLD + 1, INVENTORY_0 + INVENTORY_COUNT).reduce(
 		(q, v) => q + v);
 }
 
@@ -647,9 +648,8 @@ let TASK = '';
 
 class Game {
 	static create() {
-		let state = new Array(SLOTS.length).fill(0);
+		let state = new Int16Array(SLOTS.length);
 		state[LOCATION] = -1;
-		state[QUEST_LOCATION] = -1;
 		return state;
 	}
 
@@ -828,9 +828,13 @@ class Game {
 			} else {
 				return -1;
 			}
+			function marketValue(slot) {
+				// TODO
+				return 1;
+			}
 			let price = qty * 0.5 * marketValue(slot);
 			if (opcode !== give) {
-				state[GOLD] += price;
+				state[INVENTORY_GOLD] += price;
 			} else if (state[QUEST_OBJECT] === slot) {
 				state[QUEST_PROGRESS] += qty;
 			}
@@ -938,6 +942,7 @@ class Game {
 				return heal;
 
 			} else if (isInventorySlot(target)) {
+				if (!inventoryCapacity()) return -1;
 				qty = Math.random() < 0.5 ? 1 : 0;
 				qty = Math.min(qty, inventoryCapacity());
 				state[target] += qty;

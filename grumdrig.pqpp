@@ -4,7 +4,7 @@ startGame()
 seekquest()
 while .XP < 200 {
   travel(11)
-  forage(INVENTORY_REAGENTS)
+  while !forage(INVENTORY_REAGENTS) { }  // count raids
   while !.DAMAGE && .XP < 200 {
     while .MOB_LEVEL != 1 {
       hunt()
@@ -17,5 +17,6 @@ while .XP < 200 {
   while .DAMAGE {
     rest()
   }
+  sell(INVENTORY_SPOILS, .INVENTORY_SPOILS)
 }
 levelup()
