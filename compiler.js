@@ -164,19 +164,22 @@ class CompilationContext {
 	}
 
 	declareVariable(identifier, count, initializer) {
+		let result;
 		if (!this.parent) {
 			// Global declaration
 			this.emit(identifier + ':');
 			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
-			this.symbols[identifier] = { variable: true, static: true, identifier };
+			this.symbols[identifier] = result = { variable: true, static: true, identifier };
 		} else {
 			// Stack declaration
 			let scope = this.enclosingScope();
 			this.assert(scope, "no enclosing scope"); // seems impossible
-			let offset = 0;
+			// FP points at OLD_FP. Then come arguments, then local vars
+			let offset = -1;// - scope.function.parameters.length;
 			for (let i in scope.symbols) offset -= scope.symbols[i].count;
-			scope.symbols[identifier] = { variable: true, local: true, identifier, offset, count, initializer };
+			scope.symbols[identifier] = result = { variable: true, local: true, identifier, offset, count, initializer };
 		}
+		return result;
 	}
 
 	declareFunction(identifier, declaration) {
@@ -299,7 +302,11 @@ class VariableDeclaration {
 				context.error('literal initializer expected');
 			initializer = i.literal;
 		}
-		context.declareVariable(this.name, count, initializer);
+		let record = context.declareVariable(this.name, count, initializer);
+
+		if (record.local) {
+			context.emit(`.stack ${record.initializer || 0}${record.count !== 1 ? '*' + record.count : ''}  ; declare ${record.identifier}`);
+		}
 	}
 }
 
@@ -704,8 +711,8 @@ class IdentifierExpression {
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
 		if (reference && reference.local) {
 			// TODO should this be an opcode?
-			context.emit('.stack ' + reference.offset + '  ; ' + this.identifier);
-			context.emit('add FP  ; ...');
+			context.emit('fetch FP  ; addr of...' );
+			context.emit('add ' + reference.offset + '  ; ...' + this.identifier);
 		} else {
 			// hopefully global
 			context.emit('.stack ' + this.identifier);
