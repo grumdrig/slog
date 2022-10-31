@@ -1199,7 +1199,7 @@ if (typeof exports !== 'undefined') {
 if (typeof module !== 'undefined' && !module.parent) {
 	// Called with node as main module
 	const { parseArgs } = require('util');
-	const { readFile } = require('fs');
+	const { readFileSync, writeFileSync } = require('fs');
 
 	const { values: { output, interface }, positionals } = parseArgs({
 		options: {
@@ -1218,31 +1218,25 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 	let interfaces = interface.map(filename => require(filename).generateInterface());
 
-	let reads = positionals.map(filename =>
-		new Promise((resolve, reject) => {
-        	readFile(filename, 'utf8', (err, data) => {
-	            if (err) {
-    	            console.log(err);
-        	        reject(err);
-           		 } else {
-	                resolve(data);
-    	        }
-     	   });
-    	}));
+	let sources = positionals.map(filename => readFileSync(filename, 'utf8'));
 
-	Promise.all(reads)
-	.then(sources => {
-		try {
-			let code = compile(...interfaces.concat(sources));
-			console.log(code);
-		} catch (e) {
-			if (e instanceof ParseError) {
-				console.error('Parse Error: ' + e.message);
-			} else if (e instanceof SemanticError) {
-				console.error('Semantic Error: ' + e.message);
-			} else {
-				console.error('Compilation Error: ' + e);
-			}
+	let code;
+	try {
+		code = compile(...interfaces.concat(sources));
+	} catch (e) {
+		if (e instanceof ParseError) {
+			console.error('Parse Error: ' + e.message);
+		} else if (e instanceof SemanticError) {
+			console.error('Semantic Error: ' + e.message);
+		} else {
+			console.error('Compilation Error: ' + e);
 		}
-	});
+		process.exit(-1);
+	}
+
+	if (output) {
+		writeFileSync(output, code, 'utf8');
+	} else {
+		console.log(code);
+	}
 }
