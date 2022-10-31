@@ -379,7 +379,7 @@ class FunctionDefinition {
 
 	generateReturn(context, withResult) {
 		if (withResult)
-			context.emit('storelocal -2  ; result');
+			context.emit('storelocal 2  ; result');
 		context.emit('fetch FP');
 		context.emit('store SP');
 		context.emit('store FP');
@@ -1099,7 +1099,8 @@ class PostfixExpression {
 					for (let a of args) { a.generate(context) }
 					// now position FP right before the arguments
 					context.emit('fetch SP');
-					context.emit('add ' + (0 + args.length));
+					if (args.length)
+						context.emit('add ' + args.length);
 					context.emit('store FP');  // set frame pointer
 					context.emit('.jump ' + lhs.identifier);
 					context.emit(returnLabel + ':')
