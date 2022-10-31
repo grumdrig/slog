@@ -101,11 +101,12 @@ const opcodes = [
   { opcode: 0x25, mnemonic: 'atan2' },
   { opcode: 0x26, mnemonic: 'pow' },
   { opcode: 0x27, mnemonic: 'div' },  // AX = mod(X,Y)
+  { opcode: 0x28, mnemonic: 'mod' },
   // bitwise
-  { opcode: 0x28, mnemonic: 'or' },
-  { opcode: 0x29, mnemonic: 'and' },
-  { opcode: 0x2A, mnemonic: 'xor' },
-  { opcode: 0x2B, mnemonic: 'shift' },
+  { opcode: 0x29, mnemonic: 'or' },
+  { opcode: 0x2A, mnemonic: 'and' },
+  { opcode: 0x2B, mnemonic: 'xor' },
+  { opcode: 0x2C, mnemonic: 'shift' },
   // similar for these binary ops
 
   { opcode: 0x30, mnemonic: 'ext30' },
@@ -168,6 +169,7 @@ const BINARY_OPERATORS = {
       return [ Math.floor(t), fractional(t - Math.floor(t)) ];
     },
     div: (a, b) => [ Math.floor(a / b), a % b ],
+    mod: (a, b) => a % b,
     or: (a, b) => a | b,
     and: (a, b) => a & b,
     xor: (a, b) => a ^ b,

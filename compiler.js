@@ -783,6 +783,20 @@ class PrefixExpression {
 
 }
 
+
+function opassign(context, lhs, rhs, ...ops) {
+	context.assert(lhs.generateAddress, "addressable variable expected");
+	lhs.generateAddress(context); // [ &lhs ...
+	context.emit('peek 0');       // [ &lhs, &lhs, ...
+	context.emit('fetch');        // [ lhs, &lhs, ...
+	rhs.generate(context);        // [ rhs, lhs, &lhs, ...
+	ops.forEach(op => context.emit(op)) // [ result, &lhs, ...
+	context.emit('peek 1');       // [ &lhs, result, &lhs, ...
+	context.emit('store');        // [ &lhs, ...
+	context.emit('fetch');        // [ result, ...
+}
+
+
 class BinaryExpression {
 	lhs;
 	operator;
@@ -985,129 +999,47 @@ class BinaryExpression {
 				context.emit('store');
 			},
 		},
-		/*
 		'+=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('add');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'add'),
 		},
 		'-=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('sub');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'sub'),
 		},
 		'*=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('mul');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'mul'),
 		},
 		'/=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('div');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'div'),
 		},
 		'%=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('mod');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'mod'),
 		},
 		'<<=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('unary NEG');
-				context.emit('shift');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'unary NEG', 'shift'),
 		},
 		'>>=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('shift');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'shift'),
 		},
 		'&=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('and');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'and'),
 		},
 		'^=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('xor');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'xor'),
 		},
 		'|=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => {
-				context.assert(lhs.identifier, "identifier expected at left hand side of assignment");
-				context.emit(lhs.identifier + ':');
-				context.emit('push');
-				context.emit('fetch');
-				rhs.generate(context);
-				context.emit('or');
-				context.emit('store');
-			},
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'or'),
 		},
-		*/
+
 	};
 
 	simplify(context) {

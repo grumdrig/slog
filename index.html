@@ -718,7 +718,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 
 	Array.from($$(".window")).reverse().forEach(prepWindow);
 
-	$("#source").value = localStorage.source || "main {\n}";
+	$("#source").value = localStorage.source || "// hello, world!";
 	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
 	comp();
 });
@@ -776,6 +776,7 @@ function updateDebuggerState(vm) {
 	}
 	if (!$("#registers").children[n])
 		$('#registers').appendChild(document.createElement('hr'));
+	n += 1;
 	for (let i = 0; i < vm.state.length; ++i, ++n) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
