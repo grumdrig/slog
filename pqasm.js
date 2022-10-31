@@ -1,6 +1,8 @@
 // PQAsm
 
 const SLOTS = [
+	'GAMEOVER',
+
 	'RACE',
 	'AGE',
 	'LEVEL',
@@ -745,7 +747,7 @@ class Game {
 		}
 
 		function inventoryCapacity() {
-			return carryCapacity(state) - encumbrance(state);
+			return Math.max(0, carryCapacity(state) - encumbrance(state));
 		}
 
 		if (opcode === travel) {
@@ -953,9 +955,12 @@ class Game {
 			return 1;
 		}
 
-		if (state[DAMAGE] >= state[MAX_HP] ||
-	       	state[AGE] >= 0x7FFF) {
-			TODO("were dead. now what? have to stop the machine somehow.")
+		if (state[DAMAGE] >= state[MAX_HP]) {
+			state[GAMEOVER] = 0xDEAD;
+		} else if (state[AGE] >= 0x7FFF) {
+			state[GAMEOVER] = 0xA9ED;
+		} else if (state[ACT] > 9) {
+			state[GAMEOVER] = 0x1;
 		}
 	}
 

@@ -408,13 +408,17 @@ class VirtualMachine {
   }
 
   alive() {
-    return this.running;
+    return this.running && !this.state[0];
   }
 
   run() {
     while (this.alive()) {
       this.step();
     }
+  }
+
+  dumpState() {
+    console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  CK: ${this.clock}`);
   }
 }
 
@@ -703,7 +707,6 @@ class Assembler {
       return result.join('\n');
     }
   }
-
 }
 
 function isInlineModeInstruction(inst) {
@@ -763,18 +766,22 @@ if (typeof module !== 'undefined' && !module.parent) {
       verbose: {
         type: 'boolean',
         short: 'v',
+        multiple: true,
+      },
+      quiet: {
+        type: 'boolean',
+        short: 'q',
+        multiple: true,
       },
       run: {
         type: 'boolean',
         short: 'r',
       },
     },
-    // allowPositionals: true,
   });
   const flags = values;
 
-  // let interfaces = interface.map(filename => require(filename).generateInterface());
-
+  const verbosity = 1 + (flags.verbose || []).length - (flags.quiet || []).length;
   let code;
 
   if (flags.assemble) {
@@ -822,9 +829,11 @@ if (typeof module !== 'undefined' && !module.parent) {
       process.exit(-2);
     }
     let vm = new VirtualMachine(code, Game);
-    if (flags.verbose) vm.trace = true;
+    if (verbosity > 1) vm.trace = true;
     vm.run();
-    Game.dumpState(vm.state);
-    console.log(`PC: ${vm.pc}  CK: ${vm.clock}`);
+    if (verbosity > 0) {
+      Game.dumpState(vm.state);
+      vm.dumpState();
+    }
   }
 }

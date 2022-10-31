@@ -6,4 +6,4 @@
 -i grumdrig.bin -i grumdrig.dasm node vm.js -a grumdrig.asm -d grumdrig.dasm -o grumdrig.bin
 
 # execute
-node vm.js -i ./pqasm.js -l grumdrig.bin -v -r
+node vm.js -i ./pqasm.js -l grumdrig.bin -r

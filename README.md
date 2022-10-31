@@ -798,3 +798,9 @@ I just changed to XP styling. You have to
 
 	npm install xp.css
 
+
+Game Over
+---------
+
+The first state variable is required to be GAME_OVER. The game stops running
+once it's non-zero.
