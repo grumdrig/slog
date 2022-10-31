@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 class ParseError {
 	message;
@@ -1081,7 +1082,7 @@ class PostfixExpression {
 				let func = lhs;
 				if (func.identifier) {
 					func = context.lookup(func.identifier);
-					context.assert(func, 'unknown identifier ' + func.identifier);
+					context.assert(func, 'unknown identifier ' + lhs.identifier);
 				}
 				if (func.external) {
 					let named_params = func.parameters.filter(p => typeof p !== 'number').length;
@@ -1192,4 +1193,56 @@ function compile(...texts) {
 
 if (typeof exports !== 'undefined') {
 	exports.compile = compile;
+}
+
+
+if (typeof module !== 'undefined' && !module.parent) {
+	// Called with node as main module
+	const { parseArgs } = require('util');
+	const { readFile } = require('fs');
+
+	const { values: { output, interface }, positionals } = parseArgs({
+		options: {
+			output: {
+				type: "string",
+				short: "o",
+			},
+			interface: {
+				type: 'string',
+				short: 'i',
+				multiple: true,
+			},
+		},
+		allowPositionals: true,
+	});
+
+	let interfaces = interface.map(filename => require(filename).generateInterface());
+
+	let reads = positionals.map(filename =>
+		new Promise((resolve, reject) => {
+        	readFile(filename, 'utf8', (err, data) => {
+	            if (err) {
+    	            console.log(err);
+        	        reject(err);
+           		 } else {
+	                resolve(data);
+    	        }
+     	   });
+    	}));
+
+	Promise.all(reads)
+	.then(sources => {
+		try {
+			let code = compile(...interfaces.concat(sources));
+			console.log(code);
+		} catch (e) {
+			if (e instanceof ParseError) {
+				console.error('Parse Error: ' + e.message);
+			} else if (e instanceof SemanticError) {
+				console.error('Semantic Error: ' + e.message);
+			} else {
+				console.error('Compilation Error: ' + e);
+			}
+		}
+	});
 }

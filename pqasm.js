@@ -1047,3 +1047,9 @@ class Game {
 		// state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
 	}
 }
+
+if (typeof exports !== 'undefined') {
+	exports.Game = Game;
+	exports.generateInterface = generateInterface;
+}
+
