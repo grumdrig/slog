@@ -73,10 +73,50 @@
 		height: 100%;
 		padding: 0;
 		margin: 0;
-		background-color: darkseagreen;
+		background-color: #afdeee;
 	}
 
-	#task { background-color: white }
+
+[role="progressbar"] {
+	height: 15px;
+	border: 1px solid #888;
+	border-radius: 3px;
+	overflow: hidden;
+	background-color: white;
+}
+[role="progressbar"] > div {
+	overflow: hidden;
+	height: 13px;
+	margin: 1px;
+}
+[role="progressbar"] > div:first-child {
+	/*box-shadow: inset 0 0 1px #fff;*/
+	background-color: #ace97c;
+}
+[role="progressbar"] > div:nth-child(2) {
+	text-align: center;
+	width: 100%;
+}
+
+[role="progressbar"] {
+	position: relative;
+}
+[role="progressbar"] > * {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+#task { margin: 1px 0 2px 0; }
+
+.prog {
+	border: 1px solid #888;
+	border-radius: 3px;
+	height: 11px; /* TODO this needs to be 12px to properly fit text inside but that's one pixel too big for the current space alloted to the other rows with just text, so we need to resolve that somehow */
+	text-align: center;
+	margin-right: 1px;
+}
+
 
 </style>
 <style>
@@ -268,9 +308,9 @@ div.icon {
 				<div class=header>Vital Statistics</div>
 				<div>Race</div><div id="race"></div>
 				<div>Level</div><div id="level">1</div>
-				<div>XP</div><div id="xp">0</div>
-				<div>Health</div><div id="health">1</div>
-				<div>Energy</div><div id="energy">1</div>
+				<div>XP</div><div id="xp" class=prog>0</div>
+				<div>Health</div><div id="health" class=prog>1</div>
+				<div>Energy</div><div id="energy" class=prog>1</div>
 			</div>
 
 			<div id=stats class=listview>
@@ -329,20 +369,26 @@ div.icon {
 				<div class=header>Quest</div>
 				<div>Object</div> <div id=questobject>Kill the selkies</div>
 				<div>Location</div> <div id=questlocation>Chump woods</div>
-				<div>Progress</div> <div id=questprogress>50%</div>
+				<div>Progress</div> <div id=questprogress class=prog>50%</div>
 				<div>Origin</div> <div id=questorigin>Dojo town</div>
 			</div>
 			<div id=plot class=listview>
 				<div class=header>Game Progress</div>
 				<div>Act</div> <div id=act>II</div>
-				<div>Act Progress</div> <div id=actprogress>50%</div>
-				<div>Game Progress</div> <div id=gameprogress>50%</div>
+				<div>Act Progress</div> <div id=actprogress class=prog>50%</div>
+				<div>Game Progress</div> <div id=gameprogress class=prog>50%</div>
 			</div>
 		</div>
 	</div>
-	<div class="status-bar">
-    <p class="status-bar-field" id=task>Task...</p>
-  </div>
+	<div id=task-area class=status-bar>
+		<div class=status-bar-field>
+			<div id=task >Loading...</div>
+			<div id=taskbar role="progressbar" aria-valuemin=0 aria-valuemax=100 aria-valuenow=90>
+				<div></div>
+				<div></div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <br/>
@@ -525,6 +571,20 @@ function play() {
 	playmation();
 }
 
+function setTaskBar() {
+	// setBar('task', animate.progress, animate.duration, 0, '#ace97c');
+	let bar  = $('#taskbar > div:nth-child(1)');
+	let text = $('#taskbar > div:nth-child(2)');
+	if (animate.duration > 0) {
+		let pct = 100 * animate.progress / animate.duration;
+		bar.style.width = pct.toFixed(2) + "%";
+		text.innerText = Math.round(pct) + '%';
+	} else {
+		bar.style.width = 0;
+		text.innerText = "";
+	}
+}
+
 function playmation() {
 	let before = vm.state[AGE];
   while (vm.alive() && vm.state[AGE] == before) {
@@ -533,13 +593,13 @@ function playmation() {
 	animate.duration = 1000 * Math.round(Math.sqrt(2 * (vm.state[AGE] - before)));
 	animate.progress = 0;
 	$id('task').innerText = TASK;
-	setBar('task', animate.progress, animate.duration);
+	setTaskBar();
 	runimate.timer = setTimeout(animate, 10);
 }
 
 function animate() {
 	animate.progress += 10;
-	setBar('task', animate.progress, animate.duration);
+	setTaskBar();
 	if (animate.progress >= animate.duration) {
 		updateDebuggerState(vm);
 		updateCharacterSheet(vm.state);
@@ -770,13 +830,12 @@ function updateDebuggerState(vm) {
 }
 
 
-function setBar(id, value, end, start=0) {
+function setBar(id, value, end, start=0, color='#ace97c') {
 	let progress = Math.round(100 * value / (end - start));
-	let bi = `linear-gradient(left, #afa, #afa ${progress}%, transparent ${progress}%, transparent 100%)`
+	let bi = `linear-gradient(left, ${color}, ${color} ${progress}%, transparent ${progress}%, transparent 100%)`
 	$id(id).style.backgroundImage = bi;
 	$id(id).style.backgroundImage = '-webkit-' + bi;
 }
-
 
 
 function updateCharacterSheet(state) {
@@ -860,6 +919,11 @@ function updateCharacterSheet(state) {
 	setProgress('actprogress', state[ACT_PROGRESS], state[ACT_DURATION]);
 	set('gameprogress', `${Math.round(100 * state[ACT] / 10)}%`);
 	setBar('gameprogress', state[ACT], 10);
+
+	if (!vm.running) {
+			$id('task').innerText = 'Halted.';
+	}
+	setTaskBar();
 }
 
 
