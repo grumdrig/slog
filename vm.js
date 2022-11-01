@@ -201,8 +201,8 @@ class VirtualMachine {
   set ax(v) { this.registers[-1-REGISTERS.AX] = v }
   set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
-  get clock() { return this.registers[-1-REGISTERS.CK] }
-  set clock(v) { this.registers[-1-REGISTERS.CK] = v }
+  get ck() { return this.registers[-1-REGISTERS.CK] }
+  set ck(v) { this.registers[-1-REGISTERS.CK] = v }
 
   get top() { return this.fetch(this.sp) }
   set top(v) { this.store(this.sp, v) }
@@ -360,10 +360,10 @@ class VirtualMachine {
       throw `${this.pc}: invalid opcode ${opcode} ${mnemonic}`;
     }
 
-    this.clock += 1;
+    this.ck += 1;
 
-    if (this.clock > 30000) {
-      console.log("Debug limit");
+    if (this.ck > 30000) {
+      console.log("**************** Debug limit reached");
       this.running = false;
     }
 
@@ -381,7 +381,7 @@ class VirtualMachine {
   }
 
   dumpState() {
-    console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  CK: ${this.clock}`);
+    console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  CK: ${this.ck}`);
   }
 }
 

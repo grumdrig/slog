@@ -180,7 +180,10 @@ class CompilationContext {
 		if (!this.parent) {
 			// Global declaration
 			this.emit(identifier + ':');
-			this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
+			if (typeof initializer === 'number')
+				this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
+			else
+				this.emit('.data ' + initializer.join(' ') + '  ; ' + identifier);
 			this.symbols[identifier] = result = { variable: true, static: true, identifier };
 		} else {
 			// Stack declaration
@@ -310,9 +313,21 @@ class VariableDeclaration {
 		// context.define(this.name, decl);
 		if (this.initializer) {
 			let i = this.initializer.simplify(context);
-			if (typeof i.literal === 'undefined')
+			initializer = i.members || i.literal;
+			if (typeof i.literal === 'number') {
+				initializer = i.literal;
+			} else if (i.members) {
+				initializer = i.members.map(m => {
+					if (typeof m.literal !== 'number')
+						context.error('literal array initializer expected');
+					return m.literal;
+				});
+				if (this.count && count !== initializer.length)
+					context.error('array length mismatch with initializer');
+				count = initializer.length;
+			} else {
 				context.error('literal initializer expected');
-			initializer = i.literal;
+			}
 		}
 		let record = context.declareVariable(this.name, count, initializer);
 
@@ -486,7 +501,8 @@ class ExpressionStatement {
 	constructor(expression) { this.expression = expression }
 
 	generate(context) {
-		this.expression.simplify(context).generate(context);
+		this.expression.simplify(context);
+		this.expression.generate(context);
 		context.emit('adjust -1'); // throw away resulting value
 	}
 }
@@ -590,6 +606,13 @@ class Expression {
 		if (source.tryConsume('(')) {
 			lhs = Expression.parse(source);
 			source.consume(')');
+		} else if (source.tryConsume('[')) {
+			lhs = new ArrayLiteralExpression();
+			while (true) {
+				lhs.members.push(Expression.parse(source));
+				if (source.tryConsume(']')) break;
+				source.consume(',');
+			}
 		} else {
 			lhs = ExternalFunctionExpression.tryParse(source) ||
 				ExternalIndexExpression.tryParse(source) ||
@@ -668,6 +691,15 @@ class ExternalIndexExpression {
 		this.simplify(context); //?
 		context.assert(this.index.literal);
 		context.emit('fetch ' + -this.index.literal);
+	}
+}
+
+class ArrayLiteralExpression {
+	members = [];
+
+	simplify(context) {
+		this.members = this.members.map(a => a.simplify(context));
+		return this;
 	}
 }
 
@@ -1109,7 +1141,7 @@ class PostfixExpression {
 				if (!source.tryConsume(')')) {
 					while (true) {
 						lhs.args.push(Expression.parse(source));
-						if (source.tryConsume(op.closer)) break;
+						if (source.tryConsume(')')) break;
 						source.consume(',');
 					}
 				}
@@ -1172,6 +1204,7 @@ class FunctionCallExpression {
 	simplify(context) {
 		this.lhs = this.lhs.simplify(context);
 		this.args = this.args.map(arg => arg.simplify(context));
+		return this;
 	}
 }
 
@@ -1183,24 +1216,33 @@ class IndexExpression {
 
 	constructor(lhs) { this.lhs = lhs }
 
-	generate(context) {
-		this.generateAddress(context);
-		context.emit('fetch');
-	}
-
 	generateAddress(context) {
 		this.lhs.generateAddress(context);
 		this.index.generate(context);
 		context.emit('add');
 	}
 
+	generate(context) {
+		if (this.lhs.members) {
+			context.error('array literal constant not available at runtime; use a var');
+		} else {
+			this.generateAddress(context);
+			context.emit('fetch');
+		}
+	}
+
 	simplify(context) {
 		this.lhs = this.lhs.simplify(context);
 		this.index = this.index.simplify(context);
-		if (this.lhs.literal && this.index.literal)
+		if (this.lhs.literal && this.index.literal) {
 			return new LiteralExpression(this.lhs.literal + this.index.literal);
-		else
+		} else if (this.lhs.members && this.index.literal) {
+			if (this.index.literal < 0 || this.index.literal >= this.lhs.members.length)
+				context.error('index out of range');
+			return this.lhs.members[this.index.literal];
+		} else {
 			return this;
+		}
 	}
 }
 

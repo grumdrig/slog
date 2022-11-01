@@ -1,16 +1,21 @@
-var x[5]
-x[2] = 20
 
-/*
 initialize(RACE, 1)
 initialize(STAT_STRENGTH, 10)
 startGame()
-seekquest()
 
-while .XP < 200 {
-  travel(11)
-  while !forage(INVENTORY_REAGENTS) { }  // count raids
-  while !.DAMAGE && .XP < 200 {
+func goto(dest) {
+  while travel(dest) > 0 { }
+}
+
+var raids = 0
+
+var huntingGrounds = [11, 11, 16, 9, 15, 14, 32, 5]
+
+seekquest()
+while .LEVEL < 4 {
+  goto(huntingGrounds[.LEVEL])
+  raids += 1
+  while !.DAMAGE && .ENCUMBRANCE < .CAPACITY {
     while .MOB_LEVEL != 1 {
       hunt()
     }
@@ -18,11 +23,10 @@ while .XP < 200 {
       melee()
     }
   }
-  travel(17)
+  goto(17)
   while .DAMAGE {
     rest()
   }
   sell(INVENTORY_SPOILS, .INVENTORY_SPOILS)
+  levelup()
 }
-levelup()
-*/
