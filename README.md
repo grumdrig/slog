@@ -819,4 +819,6 @@ lesser-used operators.
 
 And with that, can get under 32 ops and have 11-bit immediates.
 
-_jmp to jmp, _br to br. Too ugly.
+	_jmp to jmp, _br to br. Too ugly.
+
+Output a symbol table for the debugger
