@@ -575,17 +575,17 @@ class AssertionStatement {
 
 class Expression {
 	static parse(source, precedence = 100) {
+		let lhs;
 		if (source.tryConsume('(')) {
-			let result = Expression.parse(source);
+			lhs = Expression.parse(source);
 			source.consume(')');
-			return result;
+		} else {
+			lhs = ExternalFunctionExpression.tryParse(source) ||
+				ExternalIndexExpression.tryParse(source) ||
+				PrefixExpression.tryParse(source) ||
+				LiteralExpression.tryParse(source) ||
+				IdentifierExpression.tryParse(source);
 		}
-		let lhs =
-			ExternalFunctionExpression.tryParse(source) ||
-			ExternalIndexExpression.tryParse(source) ||
-			PrefixExpression.tryParse(source) ||
-			LiteralExpression.tryParse(source) ||
-			IdentifierExpression.tryParse(source);
 		if (!lhs) source.error('expression expected');
 		lhs = PostfixExpression.tryPostParse(lhs, source);
 		let binop = BinaryExpression.operators[source.peek()];
