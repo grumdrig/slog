@@ -167,13 +167,13 @@ const BINARY_OPERATORS = {
 
 // Machine registers
 const REGISTERS = {
-  PC: -1,        // Program counter register
-  SP: -2,        // Stack pointer register
-  FP: -3,        // Frame pointer
-  AX: -4,        // Auxilliary register, gets some results
-  CLOCK: -5,     // Counts clock cycles from startup
-  REGISTER6: -6, // Reserved
-  REGISTER7: -7, // Reserved
+  PC: -1,  // Program counter
+  SP: -2,  // Stack pointer
+  FP: -3,  // Frame pointer
+  AX: -4,  // Auxilliary results of some operations
+  CK: -5,  // Counts clock cycles from startup
+  R6: -6,  // Reserved
+  R7: -7,  // Reserved
 };
 
 const REGISTER_NAMES = reverseMapIntoArray(REGISTERS);
@@ -201,8 +201,8 @@ class VirtualMachine {
   set ax(v) { this.registers[-1-REGISTERS.AX] = v }
   set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
 
-  get clock() { return this.registers[-1-REGISTERS.CLOCK] }
-  set clock(v) { this.registers[-1-REGISTERS.CLOCK] = v }
+  get clock() { return this.registers[-1-REGISTERS.CK] }
+  set clock(v) { this.registers[-1-REGISTERS.CK] = v }
 
   get top() { return this.fetch(this.sp) }
   set top(v) { this.store(this.sp, v) }
