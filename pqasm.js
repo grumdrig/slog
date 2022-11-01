@@ -953,8 +953,9 @@ class Game {
 			return qty;
 
 		} else if (opcode === levelup) {
+			if (state[LEVEL] >= 99) return 0;
 			if (state[XP] < this.xpNeededForLevel(state[LEVEL] + 1))
-				return -1;
+				return 0;
 			state[LEVEL] += 1;
 			passTime('Levelling up', 1, 0);
 			return 1;

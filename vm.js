@@ -149,7 +149,7 @@ const BINARY_OPERATORS = {
     add: (a, b) => a + b,
     sub: (a, b) => a - b,
     mul: (a, b) => a * b,
-    exp: (a, b) => Math.pow(a, b),
+    pow: (a, b) => [Math.pow(a, b), Math.pow(a, 1/b)],
     atan2: (a, b) => {
       let t = Math.atan2(a, b) * 180 / Math.PI;
       return [ Math.floor(t), fractional(t - Math.floor(t)) ];

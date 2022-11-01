@@ -16,6 +16,7 @@ class Source {
 	}
 
 	process(text) {
+		let comment = 0;
 		let lines = text.split('\n');
 		lines.forEach((line, l) => {
 			let line_no = l + 1;
@@ -35,7 +36,6 @@ class Source {
 				if (line.length === 0) break;
 
 				let lexeme = { line_no };
-				this.lexemes.push(lexeme);
 
 				if (lexeme.text = take(/^[$][\da-f]+/i)) {
 					lexeme.literal = true;
@@ -49,8 +49,19 @@ class Source {
 					lexeme.operator = true;
 				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/i)) {
 					lexeme.punctuation = true;
-				} else {
+				} else if (!comment) {
 					this.error(`unrecognized character al line ${line_no}: '${line[0]}'`);
+				}
+
+				if (lexeme.text === '/*') comment += 1;
+
+				if (!comment) {
+					this.lexemes.push(lexeme);
+				}
+
+				if (lexeme.text === '*/') {
+					comment -= 1;
+					if (comment < 0) this.error('unmatched block comment ender')
 				}
 			}
 		});
@@ -828,7 +839,7 @@ class BinaryExpression {
 				context.emit('pow');
 			},
 		},
-		'*/': {
+		'%%': {  // would like to use // or */ but conflicts with notions of comments
 			precedence: 2.5,
 			precompute: (x,y) => x * y,
 			generate: (context, lhs, rhs) => {
@@ -1090,114 +1101,109 @@ class BinaryExpression {
 }
 
 class PostfixExpression {
-	lhs;
-	operator;
-	args = [];
-
-	static operators = {
-		'(': {
-			// Function call
-			closer: ')',
-			generate: (context, lhs, args) => {
-				let func = lhs;
-				if (func.identifier) {
-					func = context.lookup(func.identifier);
-					context.assert(func, 'unknown identifier ' + lhs.identifier);
-				}
-				if (func.external) {
-					let named_params = func.parameters.filter(p => typeof p !== 'number').length;
-					context.assert(named_params === args.length, `mismatch in number of arguments; expected ${named_params}, got ${args.length}`);
-					for (let a of args) a.generate(context);
-					if (args.length < 2) {
-						let inst = '.stack ';
-						if (args.length == 0) {
-							inst += typeof func.parameters[0] === 'number' ? func.parameters[0] : 0;
-							inst += ' ';
-						}
-						inst += typeof func.parameters[1] === 'number' ? func.parameters[1] : 0;
-						inst += '  ; default arg';
-						context.emit(inst);
-					}
-					context.emit('ext' + func.opcode.toString(16) + '  ; ' + lhs.identifier);
-				} else {
-					context.assert(func.parameters.length === args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${args.length}`);
-					const returnLabel = uniqueLabel('return');
-					context.emit(`.stack 0 ${returnLabel}  ; result, returnAddr`);
-					context.emit('fetch FP');
-					for (let a of args) { a.generate(context) }
-					// now position FP right before the arguments
-					context.emit('fetch SP');
-					if (args.length)
-						context.emit('add ' + args.length);
-					context.emit('store FP');  // set frame pointer
-					context.emit('.jump ' + lhs.identifier);
-					context.emit(returnLabel + ':')
-					// stack: ..., RESULT, RETURN_ADDRESS, OLD_FP, ARGS... ]
-				}
-			},
-		},
-		'[': {
-			// Array indexing
-			closer: ']',
-			generate: (context, lhs, args) => {
-				lhs.generateAddress(context);
-				context.assert(args.length === 1, 'expected index expression');
-				args[0].generate(context);
-				context.emit('add');
-				context.emit('fetch');
-			},
-			numargs: 1,
-			precompute: (lhs, args) => lhs + args[0],
-		},
-		/*
-		'.': {
-			generate: (context, lhs, args) => {
-				// Not sure what to do here but it doesn't seem like we need structs
-			},
-			numargs: 1,
-		}
-		*/
-	};
-
-	constructor(lhs, operator) {
-		this.lhs = lhs;
-		this.operator = operator;
-	}
-
 	static tryPostParse(lhs, source) {
 		let op;
-		while (op = PostfixExpression.operators[source.peek()]) {
-			source.next();  // skip past op
-			lhs = new PostfixExpression(lhs, op);
-			if (op.closer) {
-				while (!source.tryConsume(op.closer)) {
-					lhs.args.push(Expression.parse(source));
-					if (source.tryConsume(op.closer)) break;
-					source.consume(',');
+		while (true) {
+			if (source.tryConsume('(')) {
+				lhs = new FunctionCallExpression(lhs);
+				if (!source.tryConsume(')')) {
+					while (true) {
+						lhs.args.push(Expression.parse(source));
+						if (source.tryConsume(op.closer)) break;
+						source.consume(',');
+					}
 				}
+			} else if (source.tryConsume('[')) {
+				lhs = new IndexExpression(lhs);
+				lhs.index = Expression.parse(source);
+				source.consume(']');
 			} else {
-				lhs.args.push(source.consumeIdentifier());
+				// Don't see a need for member access operator '.'
+				return lhs;
 			}
-			if (op.numargs && op.numargs !== lhs.args.length)
-				source.error(op.numargs + " arguments expected");
 		}
-		return lhs;
+	}
+}
+
+class FunctionCallExpression {
+	lhs;
+	args = [];
+
+	constructor(lhs) { this.lhs = lhs }
+
+	generate(context) {
+		let func = this.lhs;
+		if (func.identifier) {
+			func = context.lookup(func.identifier);
+			context.assert(func, 'unknown identifier ' + this.lhs.identifier);
+		}
+		if (func.external) {
+			let named_params = func.parameters.filter(p => typeof p !== 'number').length;
+			context.assert(named_params === this.args.length, `mismatch in number of arguments; expected ${named_params}, got ${this.args.length}`);
+			for (let a of this.args) a.generate(context);
+			if (this.args.length < 2) {
+				let inst = '.stack ';
+				if (this.args.length == 0) {
+					inst += typeof func.parameters[0] === 'number' ? func.parameters[0] : 0;
+					inst += ' ';
+				}
+				inst += typeof func.parameters[1] === 'number' ? func.parameters[1] : 0;
+				inst += '  ; default arg';
+				context.emit(inst);
+			}
+			context.emit('ext' + func.opcode.toString(16) + '  ; ' + this.lhs.identifier);
+		} else {
+			context.assert(func.parameters.length === this.args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${this.args.length}`);
+			const returnLabel = uniqueLabel('return');
+			context.emit(`.stack 0 ${returnLabel}  ; result, returnAddr`);
+			context.emit('fetch FP');
+			for (let a of this.args) { a.generate(context) }
+			// now position FP right before the arguments
+			context.emit('fetch SP');
+			if (this.args.length)
+				context.emit('add ' + this.args.length);
+			context.emit('store FP');  // set frame pointer
+			context.emit('.jump ' + this.lhs.identifier);
+			context.emit(returnLabel + ':')
+			// stack: ..., RESULT, RETURN_ADDRESS, OLD_FP, ARGS... ]
+		}
 	}
 
 	simplify(context) {
 		this.lhs = this.lhs.simplify(context);
 		this.args = this.args.map(arg => arg.simplify(context));
+	}
+}
 
-		if (this.lhs.literal && this.operator.precompute && this.args.filter(arg => !arg.literal).length === 0)
-			return new LiteralExpression(this.operator.precompute(this.lhs.literal, this.rhs.literal, this.args.map(arg => arg.literal)));
+
+
+class IndexExpression {
+	lhs;
+	index;
+
+	constructor(lhs) { this.lhs = lhs }
+
+	generate(context) {
+		this.generateAddress(context);
+		context.emit('fetch');
+	}
+
+	generateAddress(context) {
+		this.lhs.generateAddress(context);
+		this.index.generate(context);
+		context.emit('add');
+	}
+
+	simplify(context) {
+		this.lhs = this.lhs.simplify(context);
+		this.index = this.index.simplify(context);
+		if (this.lhs.literal && this.index.literal)
+			return new LiteralExpression(this.lhs.literal + this.index.literal);
 		else
 			return this;
 	}
-
-	generate(context) {
-		this.operator.generate(context, this.lhs, this.args);
-	}
 }
+
 
 function compile(...texts) {
 	let source = new Source(...texts);
