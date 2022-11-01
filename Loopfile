@@ -1,9 +1,23 @@
+# Grumdrig game
 
 # compile
--x -i grumdrig.asm node compiler.js -i ./pqasm.js -o grumdrig.asm grumdrig.pqpp
+-i grumdrig.asm node compiler.js -i ./pqasm.js -o grumdrig.asm grumdrig.pqpp
 
 # assemble
 -i grumdrig.bin -i grumdrig.dasm node vm.js -a grumdrig.asm -d grumdrig.dasm -o grumdrig.bin
 
 # execute
 node vm.js -i ./pqasm.js -l grumdrig.bin -r
+
+
+# tests
+
+# compile
+-i test.asm node compiler.js -o test.asm test.pqpp
+
+# assemble
+-i test.bin -i test.dasm node vm.js -a test.asm -d test.dasm -o test.bin
+
+# execute
+node vm.js -l test.bin -r
+

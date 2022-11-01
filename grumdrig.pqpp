@@ -12,7 +12,8 @@ var raids = 0
 var huntingGrounds = [11, 11, 16, 9, 15, 14, 32, 5]
 
 seekquest()
-while .LEVEL < 4 {
+while .LEVEL < 5 {
+  if .LEVEL == 4 { break }
   goto(huntingGrounds[.LEVEL])
   raids += 1
   while !.DAMAGE && .ENCUMBRANCE < .CAPACITY {

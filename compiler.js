@@ -180,10 +180,10 @@ class CompilationContext {
 		if (!this.parent) {
 			// Global declaration
 			this.emit(identifier + ':');
-			if (typeof initializer === 'number')
-				this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
-			else
+			if (Array.isArray(initializer))
 				this.emit('.data ' + initializer.join(' ') + '  ; ' + identifier);
+			else
+				this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
 			this.symbols[identifier] = result = { variable: true, static: true, identifier };
 		} else {
 			// Stack declaration
@@ -471,8 +471,12 @@ class Statement {  // namespace only
 
 class BreakStatement {
 	generate(context) {
-		if (!context.enclosingLoopExit()) context.error('no enclosing loop for break');
-		context.emit('.stack ' + context.enclosingLoopExit());
+		let loopContext = context;
+		while (!loopContext.breakLabel) {
+			loopContext = loopContext.parent;
+			if (!loopContext) context.error('no enclosing loop for break');
+		}
+		context.emit('.jump ' + loopContext.breakLabel);
 	}
 }
 
@@ -592,7 +596,7 @@ class AssertionStatement {
 	}
 
 	generate(context) {
-		this.test = this.test.simplify();
+		this.test = this.test.simplify(context);
 		this.test.generate(context);
 		context.emit('unary NOT');
 		context.emit('assert 0');
@@ -602,36 +606,35 @@ class AssertionStatement {
 
 class Expression {
 	static parse(source, precedence = 100) {
-		let lhs;
+		let expr;
 		if (source.tryConsume('(')) {
-			lhs = Expression.parse(source);
+			expr = Expression.parse(source);
 			source.consume(')');
 		} else if (source.tryConsume('[')) {
-			lhs = new ArrayLiteralExpression();
+			expr = new ArrayLiteralExpression();
 			while (true) {
-				lhs.members.push(Expression.parse(source));
+				expr.members.push(Expression.parse(source));
 				if (source.tryConsume(']')) break;
 				source.consume(',');
 			}
 		} else {
-			lhs = ExternalFunctionExpression.tryParse(source) ||
+			expr = ExternalFunctionExpression.tryParse(source) ||
 				ExternalIndexExpression.tryParse(source) ||
 				PrefixExpression.tryParse(source) ||
 				LiteralExpression.tryParse(source) ||
 				IdentifierExpression.tryParse(source);
 		}
-		if (!lhs) source.error('expression expected');
-		lhs = PostfixExpression.tryPostParse(lhs, source);
-		let binop = BinaryExpression.operators[source.peek()];
-		if (binop && binop.precedence < precedence) {
-			let result = new BinaryExpression();
-			result.lhs = lhs;
-			result.operator = binop;
-			source.next();
-			result.rhs = Expression.parse(source, binop.precedence);
-			return result;
-		} else {
-			return lhs;
+		if (!expr) source.error('expression expected');
+		while (true) {
+			expr = PostfixExpression.tryPostParse(expr, source);
+
+			let binop = BinaryExpression.operators[source.peek()];
+			if (binop && binop.precedence < precedence) {
+				source.next();  // skip the operator
+				expr = new BinaryExpression(expr, binop, Expression.parse(source, binop.precedence));
+			} else {
+				return expr;
+			}
 		}
 	}
 }
@@ -859,7 +862,10 @@ class BinaryExpression {
 	operator;
 	rhs;
 
-	// borrowing operators and precedence rules from C
+	constructor(lhs, operator, rhs) { this.lhs = lhs; this.operator = operator; this.rhs = rhs }
+
+	// Borrowing operators and precedence rules from C, except bitwise operators have higher
+	// precedence than comparisons
 	// TODO: associativity
 	static operators = {
 		'**': {
@@ -873,7 +879,7 @@ class BinaryExpression {
 		},
 		'%%': {  // would like to use // or */ but conflicts with notions of comments
 			precedence: 2.5,
-			precompute: (x,y) => x * y,
+			precompute: (x,y) => Math.pow(x, 1/y),
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
@@ -945,9 +951,36 @@ class BinaryExpression {
 				context.emit('shift');
 			},
 		},
+		'&': {
+			precedence: 5.08,
+			precompute: (x,y) => x & y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('and');
+			},
+		},
+		'^': {
+			precedence: 5.09,
+			precompute: (x,y) => x ^ y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('xor');
+			},
+		},
+		'|': {
+			precedence: 5.10,
+			precompute: (x,y) => x | y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('or');
+			},
+		},
 		'<': {
 			precedence: 6,
-			precompute: (x,y) => x < y,
+			precompute: (x,y) => x < y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
@@ -957,17 +990,18 @@ class BinaryExpression {
 		},
 		'<=': {
 			precedence: 6,
-			precompute: (x,y) => x <= y,
+			precompute: (x,y) => x <= y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
-				rhs.generate(context);
 				lhs.generate(context);
+				rhs.generate(context);
 				context.emit('sub');
 				context.emit('max 0');
+				context.emit('unary NOT');
 			},
 		},
 		'>': {
 			precedence: 6,
-			precompute: (x,y) => x > y,
+			precompute: (x,y) => x > y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
@@ -977,17 +1011,18 @@ class BinaryExpression {
 		},
 		'>=': {
 			precedence: 6,
-			precompute: (x,y) => x >= y,
+			precompute: (x,y) => x >= y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
-				rhs.generate(context);
 				lhs.generate(context);
+				rhs.generate(context);
 				context.emit('sub');
 				context.emit('min 0');
+				context.emit('unary NOT');
 			},
 		},
 		'==': {
 			precedence: 7,
-			precompute: (x,y) => x == y,
+			precompute: (x,y) => x == y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
@@ -997,7 +1032,7 @@ class BinaryExpression {
 		},
 		'!=': {
 			precedence: 7,
-			precompute: (x,y) => x != y,
+			precompute: (x,y) => x != y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
@@ -1005,36 +1040,9 @@ class BinaryExpression {
 				context.emit('unary BOOL');
 			},
 		},
-		'&': {
-			precedence: 8,
-			precompute: (x,y) => x & y,
-			generate: (context, lhs, rhs) => {
-				lhs.generate(context);
-				rhs.generate(context);
-				context.emit('unary AND');
-			},
-		},
-		'^': {
-			precedence: 9,
-			precompute: (x,y) => x ^ y,
-			generate: (context, lhs, rhs) => {
-				lhs.generate(context);
-				rhs.generate(context);
-				context.emit('unary XOR');
-			},
-		},
-		'|': {
-			precedence: 10,
-			precompute: (x,y) => x | y,
-			generate: (context, lhs, rhs) => {
-				lhs.generate(context);
-				rhs.generate(context);
-				context.emit('unary OR');
-			},
-		},
 		'&&': {
 			precedence: 11,
-			precompute: (x,y) => x && y,
+			precompute: (x,y) => x && y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				context.emit('unary BOOL');
@@ -1045,7 +1053,7 @@ class BinaryExpression {
 		},
 		'^^': {
 			precedence: 12,
-			precompute: (x,y) => x || y,
+			precompute: (x,y) => (x && !y) || (!x && y) ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				context.emit('unary BOOL');
@@ -1056,7 +1064,7 @@ class BinaryExpression {
 		},
 		'||': {
 			precedence: 13,
-			precompute: (x,y) => x || y,
+			precompute: (x,y) => x || y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				context.emit('unary BOOL');
@@ -1284,7 +1292,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		allowPositionals: true,
 	});
 
-	let interfaces = interface.map(filename => require(filename).generateInterface());
+	let interfaces = (interface || []).map(filename => require(filename).generateInterface());
 
 	let sources = positionals.map(filename => readFileSync(filename, 'utf8'));
 

@@ -187,6 +187,7 @@ class VirtualMachine {
   registers = new Int16Array(7);
   state;  // negative memory beyond registers
   running = true;
+  clock = 0;  // actual elapsed cycles (since CK register is 16 bit)
 
   get pc() { return this.registers[-1-REGISTERS.PC] }
   set pc(v) { this.registers[-1-REGISTERS.PC] = v }
@@ -244,7 +245,7 @@ class VirtualMachine {
       this.memory[i] = program[i];
     }
     this.sp = this.memory.length;  // stack size is 0
-    this.state = world.create();
+    this.state = world ? world.create() : [0];
   }
 
   bigstep() {
@@ -307,7 +308,7 @@ class VirtualMachine {
       // else illegal; can't manipulate state
 
     } else if (mnemonic === 'swap') {
-      let t = top;
+      let t = this.top;
       if (operand > 0) {
         this.top = this.fetch(this.sp + operand);
         this.store(this.sp + operand, t);
@@ -361,8 +362,9 @@ class VirtualMachine {
     }
 
     this.ck += 1;
+    this.clock += 1;
 
-    if (this.ck > 30000) {
+    if (this.clock > 30000) {
       console.log("**************** Debug limit reached");
       this.running = false;
     }
@@ -795,7 +797,8 @@ if (typeof module !== 'undefined' && !module.parent) {
     if (verbosity > 1) vm.trace = true;
     vm.run();
     if (verbosity > 0) {
-      Game.dumpState(vm.state);
+      if (Game)
+        Game.dumpState(vm.state);
       vm.dumpState();
     }
   }

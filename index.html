@@ -33,9 +33,8 @@
 		display: grid;
 		grid-template-columns: 2fr 1fr;
 	}
-	#col2 > #equipment {
-		grid-template-columns: 1fr 1fr;
-	}
+	#col1 > #vitals { grid-template-columns: 3fr 3fr }
+	#col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
 	#col3 > #environment { grid-template-columns: 2fr 3fr; }
 	#col3 > #quest { grid-template-columns: 2fr 3fr; }
 	#col3 > #plot { grid-template-columns: 1fr 1fr; }
@@ -232,7 +231,8 @@ div.icon {
 				<textarea rows=16 cols=50 id=source></textarea><br/>
 				<button onclick="comp()">Compile</button>
 				<span style="margin-left: 10px">&nbsp;</span>
-				<input type=checkbox id=autorun ><label for=autorun>Autorun</label></input>
+				<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
+				<input type=checkbox id=interface checked><label for=interface>Import interface</label></input>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-B">
 				<textarea rows=16 cols=50 id=asm></textarea>
@@ -494,9 +494,11 @@ function comp() {
 	$("#errors").innerHTML = '&nbsp;';
 	$("#errors").classList.remove("err");
 	try {
-		$("#asm").value = compile(Game.generateInterface(), $("#source").value);
+		let sources = [$("#source").value];
+		if ($('#interface').checked) sources.unshift(Game.generateInterface());
+		$("#asm").value = compile(...sources);
 		if (assemble()) {
-			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${asm.code.length})`;
+			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
 			if ($("#autorun").checked)
 				run();
 		}
@@ -661,7 +663,7 @@ function prepWindow(hwnd) {
 	  let z = parseInt(ws.zIndex);
 	  if (!Number.isNaN(z)) {
 	  	hwnd.style.zIndex = z;
-	  	prepWindow.zIndex = Math.max(z, prepWindow.zIndex);
+	  	prepWindow.zindex = Math.max(z, prepWindow.zindex);
 	  }
 	  ws.hidden ? hwnd.setAttribute('hidden', true) : hwnd.removeAttribute('hidden');
 	}
@@ -829,7 +831,7 @@ function updateCharacterSheet(state) {
 		value = value.toString();
 		let elt = document.getElementById(id);
 		if (elt.innerText !== value) {
-			elt.innerText = value;
+			elt.innerHTML = value;
 			if (!updateCharacterSheet.UNHILITE) {
 				updateCharacterSheet.UNHILITE = setTimeout(unhilite, 2000);
 			}
@@ -838,7 +840,7 @@ function updateCharacterSheet(state) {
 	}
 
 	function setProgress(id, value, end, start = 0) {
-		set(id, `${value} / ${end}`);
+		set(id, `${value}&nbsp;/&nbsp;${end}`);
 		setBar(id, value, end, start);
 	}
 
