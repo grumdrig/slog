@@ -56,6 +56,10 @@ const opcodes = [
   // poke
   // ... X A => ... ; [SP + A] = X, SP -= 2
 
+  { opcode: 0xA, mnemonic: 'swap' },
+  // Swap values. If the operand is > 0 swap with a value that deep on the stack.
+  // If operand < 0 swap with register or state variable
+  // swap 0 is a noop
 
   { opcode: 0xB, mnemonic: '_br' },
   // _br if nonzero
@@ -66,24 +70,6 @@ const opcodes = [
 
   { opcode: 0x2, mnemonic: '_jmp' },
   // Unconditional branch, which we *could* handle by just setting PC
-
-  // { opcode: 0xA, mnemonic: 'bury' },  // TODO: not so sure this is useful
-  // rotate stack
-  // bury N (N > 0)
-  // ... X1 ... XN => ... XN X1 ... X(N-1), PP?
-  // bury (N > 0)
-  // ... X1 ... XN N => ... XN X1 ... X(N-1), PP?
-  // bury -N (N > 0)
-  // ... X1 ... XN => ... X2 ... XN X1
-  // bury (N > 0)
-  // ... X1 ... XN -N => ... X2 ... XN X1
-  // bury 0 is a noop
-
-  // { opcode: 0x12, mnemonic: 'call' },
-  // Call a subroutine, saving and adjusting the frame pointer
-
-  // { opcode: 0x13, mnemonic: 'ret' },
-  // Return from a function, restoring the frame pointer
 
   { opcode: 0x11, mnemonic: 'unary' },
   // unary OP
@@ -99,7 +85,7 @@ const opcodes = [
   { opcode: 0x23, mnemonic: 'sub' },
   { opcode: 0x24, mnemonic: 'mul' },
   { opcode: 0x25, mnemonic: 'atan2' },
-  { opcode: 0x26, mnemonic: 'pow' },
+  { opcode: 0x26, mnemonic: 'pow' },  // AX = X ^ 1/Y
   { opcode: 0x27, mnemonic: 'div' },  // AX = mod(X,Y)
   { opcode: 0x28, mnemonic: 'mod' },
   // bitwise
@@ -320,6 +306,18 @@ class VirtualMachine {
         this.store(address, value);
       // else illegal; can't manipulate state
 
+    } else if (mnemonic === 'swap') {
+      let t = top;
+      if (operand > 0) {
+        this.top = this.fetch(this.sp + operand);
+        this.store(this.sp + operand, t);
+      } else if (operand < 0) {
+        this.top = this.fetch(operand);
+        this.store(operand, t);
+      } else {
+        // noop
+      }
+
     } else if (mnemonic === '_jmp') {
       if (immediateMode) operand += this.pc;
       this.pc = operand;
@@ -328,41 +326,6 @@ class VirtualMachine {
       // with immediate addressing mode, the value is an offset not an absolute
       if (immediateMode) operand += this.pc;
       if (this.pop()) this.pc = operand;
-
-/*
-    } else if (mnemonic === 'call') {
-      this.push(this.pc);
-      this.push(this.fp);
-      let frameSP = this.pc;
-
-      push arg1
-      ...
-      push arg2
-      FP = oldSP
-      PC = a
-
-
-    } else if (mnemonic === 'ret') {
-    [FP-3] = v  ; return value
-    SP = FP
-    FP = pop()
-    PC = pop()
-    push(v)  ; this is another way to do it
-    */
-
-      /*
-    } else if (mnemonic === 'bury') {
-      // TODO might be backwards
-      let offset = operand < 0 ? -1 : 1;
-      let depth = Math.abs(operand);
-      for (let i = 0; i < depth; ++i) {
-        let a1 = this.sp + i;
-        let a2 = this.sp + (i + offset + depth) % depth
-        let tmp = this.fetch(a1);
-        this.store(this.a1, this.fetch(this.a2));
-        this.store(this.a2, tmp);
-      }
-      */
 
     // Unary operators
     } else if (mnemonic === 'unary') {

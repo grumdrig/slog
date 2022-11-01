@@ -2,21 +2,28 @@ initialize(RACE, 1)
 initialize(STAT_STRENGTH, 10)
 startGame()
 seekquest()
-while .XP < 200 {
-  travel(11)
-  while !forage(INVENTORY_REAGENTS) { }  // count raids
-  while !.DAMAGE && .XP < 200 {
-    while .MOB_LEVEL != 1 {
-      hunt()
-    }
-    while .MOB_LEVEL && .DAMAGE < (.MAX_HP / 2) {
-      melee()
-    }
-  }
-  travel(17)
-  while .DAMAGE {
-    rest()
-  }
-  sell(INVENTORY_SPOILS, .INVENTORY_SPOILS)
+
+func xpForLevel(level) {
+  return ((level - 1) ** 8) */ 5) * 200
 }
-levelup()
+
+var x = xpForLevel(2)
+
+//while .XP < 200 {
+//  travel(11)
+//  while !forage(INVENTORY_REAGENTS) { }  // count raids
+//  while !.DAMAGE && .XP < 200 {
+//    while .MOB_LEVEL != 1 {
+//      hunt()
+//    }
+//    while .MOB_LEVEL && .DAMAGE < (.MAX_HP / 2) {
+//      melee()
+//    }
+//  }
+//  travel(17)
+//  while .DAMAGE {
+//    rest()
+//  }
+//  sell(INVENTORY_SPOILS, .INVENTORY_SPOILS)
+//}
+//levelup()

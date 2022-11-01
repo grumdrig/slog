@@ -807,6 +807,7 @@ function opassign(context, lhs, rhs, ...ops) {
 	context.emit('peek 1');       // [ &lhs, result, &lhs, ...
 	context.emit('store');        // [ &lhs, ...
 	context.emit('fetch');        // [ result, ...
+	// TODO now that i have swap, don't have to fetch the result - work that out
 }
 
 
@@ -818,6 +819,25 @@ class BinaryExpression {
 	// borrowing operators and precedence rules from C
 	// TODO: associativity
 	static operators = {
+		'**': {
+			precedence: 2.5,
+			precompute: (x,y) => Math.pow(x, y),
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('pow');
+			},
+		},
+		'*/': {
+			precedence: 2.5,
+			precompute: (x,y) => x * y,
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('pow');
+				context.emit('swap AX');
+			},
+		},
 		'*': {
 			precedence: 3,
 			precompute: (x,y) => x * y,
