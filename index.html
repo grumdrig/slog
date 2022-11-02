@@ -642,12 +642,19 @@ function saveWindowState() {
 			id: w.id,
 			left: w.style.left,
 			top: w.style.top,
-			zIndex: w.style.zIndex,
+			zIndex: w.style.zIndex ?? '',
 			hidden: w.hasAttribute('hidden') }
 	});
 	localStorage.windowState = JSON.stringify(ws);
 }
 
+function bringToFront(hwnd) {
+  	let hiz = 0;
+  	Array.from($$('.window'))
+  		.filter(w => w != hwnd)
+  		.forEach(w => hiz = Math.max(parseInt(w.style.zIndex ?? 0), hiz));
+    hwnd.style.zIndex = hiz + 1;
+}
 
 function prepWindow(hwnd) {
   let handle = hwnd.$(".title-bar");
@@ -665,7 +672,6 @@ function prepWindow(hwnd) {
 	  let z = parseInt(ws.zIndex);
 	  if (!Number.isNaN(z)) {
 	  	hwnd.style.zIndex = z;
-	  	prepWindow.zindex = Math.max(z, prepWindow.zindex);
 	  }
 	  ws.hidden ? hwnd.setAttribute('hidden', true) : hwnd.removeAttribute('hidden');
 	}
@@ -676,7 +682,7 @@ function prepWindow(hwnd) {
 		e.preventDefault();
   });
   hwnd.addEventListener("mousedown", e => {
-    hwnd.style.zIndex = prepWindow.zindex = (prepWindow.zindex || 1) + 1;
+  	bringToFront(hwnd);
     saveWindowState();
     // e.preventDefault();
 	});
@@ -709,7 +715,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 	  	win.style.left = rand(100) + 'px';
 	  	win.style.top = rand(100) + 'px';
 	  }
-    win.style.zIndex = prepWindow.zindex = (prepWindow.zindex || 1) + 1;
+	  bringToFront(win);
     saveWindowState();
   }));
 
