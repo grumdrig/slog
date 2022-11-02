@@ -60,7 +60,8 @@ const SLOTS = [
 	'MOB_LEVEL',
 	'MOB_DAMAGE',
 
-	'QUEST_OBJECT', // monster or item (by slot)
+	'QUEST_OBJECT', // item, by slot, or 0
+	'QUEST_MOB', // monster (by id)
 	'QUEST_LOCATION', // location to perform the quest
 	'QUEST_QTY', // qty # required
 	'QUEST_PROGRESS', // # completed
@@ -74,7 +75,6 @@ const SLOTS = [
 	'ESTEEM_HARDWARVES',
 	'ESTEEM_EFFS',
 ];
-
 
 function define(symbol, value) {
 	if (!symbol) return;
@@ -744,8 +744,7 @@ class Game {
 		}
 
 		function randomMob() {
-			return 1;
-			// TODO consider questal
+			return irand(MOBS.length - 1);
 		}
 
 		function coordinates(locale) {
@@ -855,12 +854,14 @@ class Game {
 			if (irand(2) == 0) {
 				// Exterminate the ___
 				state[QUEST_LOCATION] = randomLocation();
-				state[QUEST_OBJECT] = randomMob();
+				state[QUEST_MOB] = randomMob();
+				state[QUEST_OBJECT] = 0;
 				state[QUEST_QTY] = 5 + irand(10);
 			} else {
 				// Bring me N of SOMETHING
 				state[QUEST_LOCATION] = -1;
 				state[QUEST_OBJECT] = INVENTORY_0 + irand(INVENTORY_COUNT);
+				state[QUEST_MOB] = 0;
 				state[QUEST_QTY] = 5 * irand(10);
 			}
 			state[QUEST_PROGRESS] = 0;
@@ -868,7 +869,7 @@ class Game {
 			return 1;
 
 		} else if (opcode === completequest) {
-			if (!state[QUEST_OBJECT]) return -1;
+			if (!state[QUEST_OBJECT] && !state[QUEST_MOB]) return -1;
 			if (state[QUEST_ORIGIN] != state[LOCATION]) return -1;
 			if (state[QUEST_PROGRESS] < state[QUEST_QTY]) return -1;
 			state[XP] += 100;
@@ -879,6 +880,7 @@ class Game {
 				state[ACTPROGRESS] = 0;
 			}
 			state[QUEST_OBJECT] = 0;
+			state[QUEST_MOB] = 0;
 			state[QUEST_LOCATION] = -1;
 			state[QUEST_ORIGIN] = -1;
 			state[QUEST_PROGRESS] = 0;
@@ -1049,6 +1051,7 @@ class Game {
 			state[XP] += 10 * state[MOB_LEVEL] * Math.pow(1.5, levelDisadvantage);
 			let ndrops = Math.min(1, carryCapacity(state));
 			state[INVENTORY_SPOILS] += ndrops;
+			if (state[MOB_TYPE] == state[QUEST_MOB]) state[QUEST_PROGRESS] += 1;
 			state[MOB_DAMAGE] = 0;
 			state[MOB_TYPE] = 0;
 			state[MOB_LEVEL] = 0;

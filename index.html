@@ -367,7 +367,7 @@ div.icon {
 			</div>
 			<div id=quest class=listview>
 				<div class=header>Quest</div>
-				<div>Object</div> <div id=questobject>Kill the selkies</div>
+				<div>Object</div> <div id=questgoal>Kill the selkies</div>
 				<div>Location</div> <div id=questlocation>Chump woods</div>
 				<div>Progress</div> <div id=questprogress class=prog>50%</div>
 				<div>Origin</div> <div id=questorigin>Dojo town</div>
@@ -598,11 +598,12 @@ function setTaskBar() {
 }
 
 function playmation() {
-	let before = vm.state[AGE];
-  while (vm.alive() && vm.state[AGE] == before) {
+	function age() { return vm.state[YEARS] * 24 * 365 + vm.state[HOURS] }
+	let before = age();
+  while (vm.alive() && age() == before) {
 		vm.step();
 	}
-	animate.duration = 1000 * Math.round(Math.sqrt(2 * (vm.state[AGE] - before)));
+	animate.duration = 1000 * Math.round(Math.sqrt(2 * (age() - before)));
 	animate.progress = 0;
 	$id('task').innerText = TASK;
 	setTaskBar();
@@ -831,7 +832,7 @@ function updateCharacterSheet(state) {
 	function set(id, value) {
 		value = value.toString();
 		let elt = document.getElementById(id);
-		if (elt.innerText !== value) {
+		if (elt.innerHTML !== value) {
 			elt.innerHTML = value;
 			if (!updateCharacterSheet.UNHILITE) {
 				updateCharacterSheet.UNHILITE = setTimeout(unhilite, 2000);
@@ -890,7 +891,19 @@ function updateCharacterSheet(state) {
 
 	let questal = Game.MAP[state[QUEST_LOCATION]];
 	let original = Game.MAP[state[QUEST_ORIGIN]];
-	set('questobject', state[QUEST_OBJECT]);
+	let friendlySlotNames = {
+		INVENTORY_GOLD: 'gold',
+		INVENTORY_SPOILS: 'spoils',
+		INVENTORY_REAGENTS: 'reagents',
+		INVENTORY_RESOURCES: 'resources',
+		INVENTORY_FOOD: 'food',
+		INVENTORY_TREASURES: 'treasures',
+		INVENTORY_POTIONS: 'healing potions',
+		INVENTORY_LIFE_POTIONS: 'life potions',
+	};
+	set('questgoal', state[QUEST_OBJECT] ?
+		`Deliver ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]]] : state[QUEST_MOB] ?
+		`Exterminate the ` + MOBS[state[QUEST_MOB]].name : '');
 	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
 	setProgress('questprogress', state[QUEST_PROGRESS], state[QUEST_QTY]);
 	set('questorigin', original && (original.name + ' #' + original.index) || '');
