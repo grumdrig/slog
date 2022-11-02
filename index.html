@@ -36,7 +36,7 @@
 	#col1 > #vitals { grid-template-columns: 3fr 3fr }
 	#col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
 	#col3 > #environment { grid-template-columns: 2fr 3fr; }
-	#col3 > #quest { grid-template-columns: 2fr 3fr; }
+	#col3 > #quest { grid-template-columns: 4fr 7fr; }
 	#col3 > #plot { grid-template-columns: 1fr 1fr; }
 
 	div.header {
@@ -892,6 +892,7 @@ function updateCharacterSheet(state) {
 	let questal = Game.MAP[state[QUEST_LOCATION]];
 	let original = Game.MAP[state[QUEST_ORIGIN]];
 	let friendlySlotNames = {
+		EQUIPMENT_TOTEM: 'totem',
 		INVENTORY_GOLD: 'gold',
 		INVENTORY_SPOILS: 'spoils',
 		INVENTORY_REAGENTS: 'reagents',
@@ -901,8 +902,9 @@ function updateCharacterSheet(state) {
 		INVENTORY_POTIONS: 'healing potions',
 		INVENTORY_LIFE_POTIONS: 'life potions',
 	};
-	set('questgoal', state[QUEST_OBJECT] ?
-		`Deliver ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]]] : state[QUEST_MOB] ?
+	set('questgoal', state[QUEST_OBJECT] === EQUIPMENT_TOTEM ?
+		(state[QUEST_QTY] ? 'Seek the totem' : 'Deliver the totem') :	state[QUEST_OBJECT] ?
+		`Bring me ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]]] : state[QUEST_MOB] ?
 		`Exterminate the ` + MOBS[state[QUEST_MOB]].name : '');
 	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
 	setProgress('questprogress', state[QUEST_PROGRESS], state[QUEST_QTY]);

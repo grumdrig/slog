@@ -716,7 +716,7 @@ Morning Star
 +1 Blessed Mace
 +2 Bloodthirsty Club
 +3 Animated Mace
-+4
++4 Gunpowder Hammer
 +5 Medusa Mace
 +6 Vampyric Hammer
 +7 Doomsday Warhammer
@@ -737,8 +737,8 @@ Culverin
 +2 Fire Bow
 +3 Destruction Bow
 +4 Heatseeking Bow
-+5
-+6
++5 Mindbender Bow
++6 Bow of Terror
 +7 Doomsayer Bow
 
 
@@ -752,6 +752,15 @@ Baddleaxe
 Kreen
 War Axe
 Double Axe
+Filigreed Axe
++1 Mithril Axe
++2 Whirling Axe
++3 Strike Waraxe
++4 Bombastic Adze
++5 Howling Kreen
++6 Fireedge Axe
++7 Galaxy Axe
+
 
 
 POKE
@@ -759,21 +768,100 @@ POKE
 Sharpened stick
 Eelspear
 Spear
-Longiron
 Pole-adze
 Spontoon
-Peen-arm
 Lance
 Halberd
 Poleax
 Bandyclef
 +1 Enchanted Javelin
 +2 Cobra Spear
++3 Hungry Eelspear
++4 Deadly Peen-arm
++5 Nightmare Longiron
++6 Nuclear Poleax
++7 Doommaker Spear
+
+
+### Armor
+
+HEADGEAR
+
+Cap
+Helmet
+Warhelm
+Tower Helm
++1
++2
 +3
 +4
 +5
-+6 Nuclear Poleax
-+7 Doommaker Spear
+
+ARMOR
+
+Clothing
+Cloth Armor
+Leather Suit
+Chainmail
+Split Mail
+Plate Mail
++1 Safety Mail
++2 Holy Mail
++3 Shimmering Mail
++4 Phase Armor
++5 Midnight Plate
++6 Horrorplate
+
+SHIELD
+
+Cookie Sheet
+Round Shield
+Battle Shield
+War Shield
+Tower Shield
++1 Lucky Shield
++2 Shield of Nope
++3 Plasma Shield
++4 Mecha Barrier
++5 Dimension Door
+
+FOOTWEAR
+
+Shoes
+Boots
+Chainmail Boots
+Platemail Leggings
++1 Dragoon Boots
++2 Dragon Boots
++3 Magic Slippers
++4 Superboots
++5 Moon Skippers
+
+MOUNT
+
+Increases speed, capacity, maybe attack/defend
+
+Tricycle
+Goat
+Donkey
+Mule
+Horse
+Warhorse
++1 Fancy Horse
++2 Pseudogoat
++3 Hammerhorse
++4 Firehorse
++5 Kelpie
+
+
+RING
+
+boost stats or other factors. Just use the slot value to index its effect
+
+
+TOTEM
+
+just for quests I guess
 
 
 ### Combat

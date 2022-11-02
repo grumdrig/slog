@@ -627,16 +627,18 @@ const MAP = [{
 
 
 function irand(n) { return Math.floor(Math.random() * n) }
+function randomPick(a) { return a[irand(a.length)] }
 
 
 function carryCapacity(state) {
-	return state[STAT_STRENGTH] >> 8;
+	return state[STAT_STRENGTH] >> 8 + state[EQUIPMENT_MOUNT];
 }
 
 function encumbrance(state) {
-	// Gold doesn't count agains encumbrance
-	return state.slice(INVENTORY_GOLD + 1, INVENTORY_0 + INVENTORY_COUNT).reduce(
-		(q, v) => q + v);
+	// Gold doesn't count much against encumbrance
+	return state[INVENTORY_GOLD] >> 8 +
+		state.slice(INVENTORY_GOLD + 1, INVENTORY_0 + INVENTORY_COUNT)
+			  .reduce((q, v) => q + v);
 }
 
 function armorClass(state) {
@@ -851,19 +853,32 @@ class Game {
 		} else if (opcode === seekquest) {
 			passTime('Asking around about quests', 1, 0);
 			if (local.terrain !== TOWN) return -1;
-			if (irand(2) == 0) {
+			let questTypes = [_ => {
 				// Exterminate the ___
 				state[QUEST_LOCATION] = randomLocation();
 				state[QUEST_MOB] = randomMob();
 				state[QUEST_OBJECT] = 0;
 				state[QUEST_QTY] = 5 + irand(10);
-			} else {
+			}, _ => {
 				// Bring me N of SOMETHING
 				state[QUEST_LOCATION] = -1;
 				state[QUEST_OBJECT] = INVENTORY_0 + irand(INVENTORY_COUNT);
 				state[QUEST_MOB] = 0;
 				state[QUEST_QTY] = 5 * irand(10);
-			}
+			}, _ => {
+				if (state[EQUIPMENT_TOTEM]) {
+					// Deliver this totem
+					state[QUEST_OBJECT] = EQUIPMENT_TOTEM;
+					state[QUEST_LOCATION] = randomLocation();
+					state[QUEST_QTY] = 0;
+				} else {
+					// Seek the totem
+					state[QUEST_OBJECT] = EQUIPMENT_TOTEM;
+					state[QUEST_LOCATION] = randomLocation();
+					state[QUEST_QTY] = 1;
+				}
+			}];
+			randomPick(questTypes)();
 			state[QUEST_PROGRESS] = 0;
 			state[QUEST_ORIGIN] = state[LOCATION];
 			return 1;
