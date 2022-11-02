@@ -239,12 +239,136 @@ if (typeof process !== 'undefined' && process.argv.includes('--generate-interfac
 	process.exit();
 }
 
+/////////// Weapons
 
+const WEAPON_DB = [null, {
+	name: 'Smash',
+	list: [
+			'Piece of Firewood',
+			'Claw Hammer',
+			'Club',
+			'Great Club',
+			'Mace',
+			'Maul',
+			'Spikemace',
+			'Warhammer',
+			'Morning Star',
+			'+1 Blessed Mace',
+			'+2 Bloodthirsty Club',
+			'+3 Animated Mace',
+			'+4 Gunpowder Hammer',
+			'+5 Medusa Mace',
+			'+6 Vampyric Hammer',
+			'+7 Doomsday Warhammer'
+		],
+	}, {
+		name: 'Slash',
+		list: [
+			'Steak knife',
+			'Dirk',
+			'Dagger',
+			'Short Sword',
+			'Long Sword',
+			'Broadsword',
+			'Claymore',
+			'Bastard sword',
+			'Two-handed sword',
+			'+1 Magic Sword',
+			'+2 Vicious Sword',
+			'+3 Stabbity Sword',
+			'+4 Dancing Sword',
+			'+5 Invisible Sword',
+			'+6 Vorpal Sword',
+			'+7 Doom Sword'],
+	}, {
+		name: 'Shoot',
+		list:  [
+			'Bag of Rocks',
+			'Sling',
+			'Short Bow',
+			'Blunderbuss',
+			'Longbow',
+			'Crankbow',
+			'Crossbow',
+			'Compound Bow',
+			'Culverin',
+			'+1 Precision Bow',
+			'+2 Fire Bow',
+			'+3 Destruction Bow',
+			'+4 Heatseeking Bow',
+			'+5 Mindbender Bow',
+			'+6 Bow of Terror',
+			'+7 Doomsayer Bow'
+			],
+	}, {
+		name: 'Chop',
+		list: [
+			'Hatchet',
+			'Tomahawk',
+			'Axe',
+			'Battleadze',
+			'Baddleaxe',
+			'Kreen',
+			'War Axe',
+			'Double Axe',
+			'Filigreed Axe',
+			'+1 Mithril Axe',
+			'+2 Whirling Axe',
+			'+3 Strike Waraxe',
+			'+4 Bombastic Adze',
+			'+5 Howling Kreen',
+			'+6 Fireedge Axe',
+			'+7 Galaxy Axe'
+			],
+	}, {
+		name: 'Poke',
+		list: [
+			'Sharpened stick',
+			'Eelspear',
+			'Spear',
+			'Pole-adze',
+			'Spontoon',
+			'Lance',
+			'Halberd',
+			'Poleax',
+			'Bandyclef',
+			'+1 Enchanted Javelin',
+			'+2 Cobra Spear',
+			'+3 Hungry Eelspear',
+			'+4 Deadly Peen-arm',
+			'+5 Nightmare Longiron',
+			'+6 Nuclear Poleax',
+			'+7 Doommaker Spear'
+		],
+	}
+];
+
+function interleaveArrays(...as) {
+	for (let a of as) if (a.length != as[0].length) throw "Weapon lists are different lengths";
+	let result = new Array(as[0].length * as.length);
+	let n = 0;
+	for (let i = 0; i < as[0].length; ++i)
+		for (let a of as)
+			result[n++] = a[i];
+	return result;
+}
+
+const WEAPON_NAMES = [''].concat(interleaveArrays(...WEAPON_DB.filter(x=>x).map(w => w.list)));
 // Weapon types
 const SMASH = 1;
 const SLASH = 2;
 const SHOOT = 3;
 const POKE = 4;
+const AXE = 5;
+const NUM_WEAPON_TYPES = 5;
+
+function weaponPower(n) {
+	return Math.floor((n + NUM_WEAPON_TYPES - 1) / NUM_WEAPON_TYPES);
+}
+
+function weaponType(n) { return (n - 1) % NUM_WEAPON_TYPES }
+
+///////// Races
 
 const RACES = [
 	null,
@@ -263,7 +387,11 @@ const RACES = [
 			WIS: -2,
 		},
 		description: "Likable, lithe creatures of small stature, often underestimated",
-		startingitems: { weapon: 2, hat: 1, food: 1 },
+		startingitems: [
+			{ slot: EQUIPMENT_WEAPON, value: 2},
+			{ slot: EQUIPMENT_HEADGEAR, value: 1},
+			{ slot: INVENTORY_FOOD, value: 1 },
+		],
 	},
 	{
 		name: "Hardwarf",
@@ -280,7 +408,11 @@ const RACES = [
 			INT: -2,
 		},
 		description: "Sturdy sorts with a...direct approch to problems",
-		startingitem: { weapon: 1, shield: 1, gold: 1 },
+		startingitems: [
+			{ slot: EQUIPMENT_WEAPON, value: 1},
+			{ slot: EQUIPMENT_SHIELD, value: 1},
+			{ slot: INVENTORY_GOLD, value: 1 },
+		],
 	},
 	{
 		name: "Eff",
@@ -296,7 +428,11 @@ const RACES = [
 			CHA: -2,
 		},
 		description: "Proud, sometimes haughty, intellectuals",
-		startingitem: { weapon: 3, shoes: 1, reagent: 1 },
+		startingitems: [
+			{ slot: EQUIPMENT_WEAPON, value: 3},
+			{ slot: EQUIPMENT_FOOTWEAR, value: 1},
+			{ slot: INVENTORY_REAGENTS, value: 1 },
+		],
 	}
 ];
 
@@ -306,6 +442,8 @@ const HARDWARF = 2;
 const EFF = 3;
 const GAST = 4;
 
+
+///////////////// Map
 
 const TERRAIN_TYPES = [
 	null, {
@@ -631,6 +769,7 @@ MAP.filter(t => t).forEach(t => {
 });
 
 
+///////////////
 
 function irand(n) { return Math.floor(Math.random() * n) }
 function randomPick(a) { return a[irand(a.length)] }
@@ -667,6 +806,7 @@ class Game {
 	static TERRAIN_TYPES = TERRAIN_TYPES;
 	static MOBS = MOBS;
 	static MAP = MAP;
+	static WEAPONS = WEAPON_NAMES;
 
 	static dumpState(state) {
 		for (let i = 0; i < SLOTS.length; ++i)
@@ -718,8 +858,8 @@ class Game {
 				state[LOCATION] = 18;
 				state[MAX_HP] = 6 + CON();
 				state[MAX_MP] = 6 + INT();
-				for (let slot in raceinfo.startingitems) {
-					state[slot] = raceinfo.startingitems[slot];
+				for (let { slot, value } of raceinfo.startingitems) {
+					state[slot] = value;
 				}
 
 				return 1;
@@ -998,15 +1138,6 @@ class Game {
 		return 0 + Math.floor(Math.pow(level - 1, 1.6)) * 200;
 	}
 
-	static armorClass(state) {
-		// accumulated armor rating
-		return TODO;
-	}
-
-	static encumbrance(state) {
-		return TODO;
-	}
-
 	static battle(state, invulnerable=false) {
 		if (!state[MOB_TYPE]) return -1;
 
@@ -1044,6 +1175,8 @@ class Game {
 		function INT() { return state[STAT_INTELLIGENCE] >> 8 }
 		function WIS() { return state[STAT_WISDOM] >> 8 }
 		function CHA() { return state[STAT_CHARISMA] >> 8 }
+
+		const playerAttack = DEX() + weaponPower(state[EQUIPMENT_WEAPON]);
 
 		let dealtToMob = rollAttack(DEX(), mobDefense, STR());
 		let dealtToPlayer = rollAttack(mobOffsense, DEX(), mobSharpness);

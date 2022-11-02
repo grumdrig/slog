@@ -683,104 +683,6 @@ where they can get quests to fight some adversaries (minions of the final
 boss), and finally fight the boss. Resources in the final island are limited and/or expensive, and there's no returning.
 
 
-### Weapons
-
-SLASH
-
-Steak knife
-Dirk
-Dagger
-Short Sword
-Long Sword
-Broadsword
-Claymore
-Bastard sword
-Two-handed sword
-+1 Magic Sword
-+2 Vicious Sword
-+3 Stabbity Sword
-+4 Dancing Sword
-+5 Invisible Sword
-+6 Vorpal Sword
-+7 Doom Sword
-
-SMASH
-
-Firewood
-Claw Hammer
-Club
-Mace
-Spikemace
-War Hammer
-Morning Star
-+1 Blessed Mace
-+2 Bloodthirsty Club
-+3 Animated Mace
-+4 Gunpowder Hammer
-+5 Medusa Mace
-+6 Vampyric Hammer
-+7 Doomsday Warhammer
-
-
-RANGED
-
-Bag of Rocks
-Sling
-Short Bow
-Blunderbuss
-Longbow
-Crankbow
-Crossbow
-Compound Bow
-Culverin
-+1 Precision Bow
-+2 Fire Bow
-+3 Destruction Bow
-+4 Heatseeking Bow
-+5 Mindbender Bow
-+6 Bow of Terror
-+7 Doomsayer Bow
-
-
-AXES
-
-Hatchet
-Tomahawk
-Axe
-Battleadze
-Baddleaxe
-Kreen
-War Axe
-Double Axe
-Filigreed Axe
-+1 Mithril Axe
-+2 Whirling Axe
-+3 Strike Waraxe
-+4 Bombastic Adze
-+5 Howling Kreen
-+6 Fireedge Axe
-+7 Galaxy Axe
-
-
-
-POKE
-
-Sharpened stick
-Eelspear
-Spear
-Pole-adze
-Spontoon
-Lance
-Halberd
-Poleax
-Bandyclef
-+1 Enchanted Javelin
-+2 Cobra Spear
-+3 Hungry Eelspear
-+4 Deadly Peen-arm
-+5 Nightmare Longiron
-+6 Nuclear Poleax
-+7 Doommaker Spear
 
 
 ### Armor
@@ -879,6 +781,12 @@ Health = CON
 Spell attack = INT + spell level
 
 
+### Predictablility
+
+Use a predictable PRNG with a seed based on code checksum, so the game is
+always exactly the same with the same binary.
+
+
 Styling
 -------
 
@@ -907,6 +815,9 @@ lesser-used operators.
 
 And with that, can get under 32 ops and have 11-bit immediates.
 
-	_jmp to jmp, _br to br. Too ugly.
+`_jmp` to jmp, `_br` to br. Too ugly.
 
 Output a symbol table for the debugger
+
+I don't think the assembler knows about how jmp and br work?
+

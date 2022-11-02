@@ -337,11 +337,11 @@ div.icon {
 				<div>Weapon</div>   <div id=e0></div>
 				<div>Armor</div>    <div id=e1></div>
 				<div>Shield</div>   <div id=e2></div>
-				<div>Backpack</div> <div id=e3></div>
+				<div>Headgear</div> <div id=e3></div>
 				<div>Footwear</div> <div id=e4></div>
-				<div>Ring</div>     <div id=e5></div>
-				<div>Amulet</div>   <div id=e6></div>
-				<div>Mount</div>    <div id=e7></div>
+				<div>Mount</div>    <div id=e5></div>
+				<div>Ring</div>     <div id=e6></div>
+				<div>Totem</div>    <div id=e7></div>
 			</div>
 			<div id=inventory class=listview>
 				<div class=header>Inventory
@@ -696,9 +696,8 @@ function prepWindow(hwnd) {
 	});
 }
 
-// window.addEventListener('load', e => {
-
-window.addEventListener("DOMContentLoaded", _ => {
+window.addEventListener('load', e => {
+// window.addEventListener("DOMContentLoaded", _ => {
   $$('[role="tab"]').forEach(tab => tab.addEventListener("click", changeTabs));
 
   $("#interface").value = Game.generateInterface();
@@ -881,8 +880,10 @@ function updateCharacterSheet(state) {
 			n_spells += 1;
 		}
 	}
+	const names = [Game.WEAPONS, [], [], [], [], [], [], []];
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
-		set('e' + i, `+${state[EQUIPMENT_0 + i]} dagger`);
+		let v = state[EQUIPMENT_0 + i];
+		set('e' + i, names[i][v] || v || '');
 	}
 	set('armorClass', state[ARMOR_CLASS]);
 
