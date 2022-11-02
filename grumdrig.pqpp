@@ -9,15 +9,15 @@ func goto(dest) {
 
 var raids = 0
 
-var huntingGrounds = [11, 11, 16, 9, 15, 14, 32, 5]
+var huntingGrounds[8] = [11, 11, 16, 9, 15, 14, 32, 5]
 
 seekquest()
-while .LEVEL < 5 {
-  if .LEVEL == 4 { break }
+while .LEVEL < 8 {
+  // if .LEVEL == 4 { break }
   goto(huntingGrounds[.LEVEL])
   raids += 1
   while !.DAMAGE && .ENCUMBRANCE < .CAPACITY {
-    while .MOB_LEVEL != 1 {
+    while .MOB_LEVEL != .LEVEL {
       hunt()
     }
     while .MOB_LEVEL && .DAMAGE < (.MAX_HP / 2) {

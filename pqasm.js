@@ -4,9 +4,11 @@ const SLOTS = [
 	'GAMEOVER',
 
 	'RACE',
-	'AGE',
 	'LEVEL',
 	'XP',
+
+	'HOURS',
+	'YEARS',
 
 	'MAX_HP',
 	'DAMAGE',
@@ -494,7 +496,7 @@ const MAP = [{
 		index: 15,
 		name: "Krack Mountain",
 		terrain: MOUNTAINS,
-		level: 7,
+		level: 4,
 	}, {
 		index: 16,
 		name: "Sprue Forest",
@@ -728,7 +730,12 @@ class Game {
 			TASK = task;  // TODO this is inelegant
 			const HOURS_PER_DAY = 24;
 			if (days) hours += HOURS_PER_DAY * days;
-			state[AGE] += hours;
+			const hoursPerYear = 24 * 365;
+			state[HOURS] += hours;
+			while (state[HOURS] > hoursPerYear) {
+				state[HOURS] -= hoursPerYear;
+				state[YEARS] += 1;
+			}
 		}
 
 		function randomLocation() {
@@ -963,7 +970,7 @@ class Game {
 
 		if (state[DAMAGE] >= state[MAX_HP]) {
 			state[GAMEOVER] = 0xDEAD;
-		} else if (state[AGE] >= 0x7FFF) {
+		} else if (state[YEARS] >= 10) {
 			state[GAMEOVER] = 0xA9ED;
 		} else if (state[ACT] > 9) {
 			state[GAMEOVER] = 0x1;
@@ -1039,7 +1046,7 @@ class Game {
 
 		let levelDisadvantage = state[MOB_LEVEL] - state[LEVEL];
 		if (state[MOB_DAMAGE] >= mobMaxHP) {
-			state[XP] += 10 * Math.pow(1.5, levelDisadvantage);
+			state[XP] += 10 * state[MOB_LEVEL] * Math.pow(1.5, levelDisadvantage);
 			let ndrops = Math.min(1, carryCapacity(state));
 			state[INVENTORY_SPOILS] += ndrops;
 			state[MOB_DAMAGE] = 0;

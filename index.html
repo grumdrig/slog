@@ -542,6 +542,7 @@ function step() {
 
 function bigstep() {
 	stopRunimation();
+	vm.running = true;
 	vm.bigstep();
 	updateDebuggerState(vm);
 	updateCharacterSheet(vm.state);
