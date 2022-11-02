@@ -1122,7 +1122,11 @@ class Game {
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
 			if (state[slot] >> 8 >= 99) return 0;
-			passTime(opcode === training ? 'Training' : 'Studying', 0, 1);
+			if (isSpellSlot(slot) && state.filter((v, s) => isSpellSlot(s) &&
+					((v >> 8) || (s === slot))).length > 4) {
+				return -1;  // max spells already learned
+			}
+			passTime(opcode === train ? 'Training' : 'Studying', 0, 1);
 			let learns = Math.round(256 * Math.exp(1/5, 1.5));
 			// TODO other factors, like race, stats
 			state[slot] += learns;

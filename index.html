@@ -325,10 +325,10 @@ div.icon {
 
 			<div id=spells class=listview>
 				<div class=header>Spell Book</div>
-				<div id=bt0>(none)</div> <div id="b0"></div>
-				<div id=bt1>(none)</div> <div id="b1"></div>
-				<div id=bt2>(none)</div> <div id="b2"></div>
-				<div id=bt3>(none)</div> <div id="b3"></div>
+				<div id=bt0>&nbsp;</div> <div id="b0"></div>
+				<div id=bt1>&nbsp;</div> <div id="b1"></div>
+				<div id=bt2>&nbsp;</div> <div id="b2"></div>
+				<div id=bt3>&nbsp;</div> <div id="b3"></div>
 			</div>
 		</div>
 		<div id=col2>
@@ -812,7 +812,7 @@ function updateDebuggerState(vm) {
 
 
 function setBar(id, value, end, start=0, color='#ace97c') {
-	let progress = Math.round(100 * value / (end - start));
+	let progress = Math.round(100 * (value - start) / (end - start));
 	let bi = `linear-gradient(left, ${color}, ${color} ${progress}%, transparent ${progress}%, transparent 100%)`
 	$id(id).style.backgroundImage = bi;
 	$id(id).style.backgroundImage = '-webkit-' + bi;
@@ -832,6 +832,46 @@ function plural(s) {
     return s.slice(0,-2) + 'en';
   else return s + 's';
 }
+
+function properCase(s) {
+	return s[0].toUpperCase() + s.substr(1).toLowerCase();
+}
+
+function toRoman(n) {
+  if (!n) return "N";
+  var s = "";
+  function _rome(dn,ds) {
+    if (n >= dn) {
+      n -= dn;
+      s += ds;
+      return true;
+    } else return false;
+  }
+  if (n < 0) {
+    s = "-";
+    n = -n;
+  }
+
+  while (_rome(10000,"T")) {0;}
+  _rome(9000,"MT");
+  _rome(5000,"A");
+  _rome(4000,"MA");
+  while (_rome(1000,"M")) {0;}
+  _rome(900,"CM");
+  _rome(500,"D");
+  _rome(400,"CD");
+  while (_rome(100,"C")) {0;}
+  _rome(90,"XC");
+  _rome(50,"L");
+  _rome(40,"XL");
+  while (_rome(10,"X")) {0;}
+  _rome(9,"IX");
+  _rome(5,"V");
+  _rome(4,"IV");
+  while (_rome(1,"I")) {0;}
+  return s;
+}
+
 
 
 function updateCharacterSheet(state) {
@@ -874,13 +914,16 @@ function updateCharacterSheet(state) {
 	}
 	let n_spells = 0;
 	for (let i = 0; i < SPELL_COUNT; ++i) {
-		let l = state[SPELL_0 + i] >> 8;
+		const slot = SPELL_0 + i;
+		let l = state[slot] >> 8;
 		if (l) {
-			set('bt' + n_spells, `Spell #${i}`);
-			set('b' + n_spells, l);
+			set('bt' + n_spells, properCase(SLOTS[slot].split('_').slice(-1)[0]));
+			set('b' + n_spells, toRoman(l));
 			n_spells += 1;
 		}
 	}
+	for ( ; n_spells < 4; ++n_spells) set('bt' + n_spells, '&nbsp;');
+
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
 		const names = Game.EQUIPMENT_NAMES[i] || [];
 		let slot = EQUIPMENT_0 + i;
