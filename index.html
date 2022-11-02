@@ -882,8 +882,14 @@ function updateCharacterSheet(state) {
 	}
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
 		const names = Game.EQUIPMENT_NAMES[i] || [];
-		let v = state[EQUIPMENT_0 + i];
-		set('e' + i, names[v] || v || '');
+		let slot = EQUIPMENT_0 + i;
+		let v = state[slot];
+		if (!v)
+			set('e' + i, '');
+		else if (slot === EQUIPMENT_RING)
+			set('e' + i, 'Ring of ' + SLOTS[slot]);
+		else
+			set('e' + i, names[v] || v);
 	}
 	set('armorClass', state[ARMOR_CLASS]);
 
