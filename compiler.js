@@ -45,7 +45,7 @@ class Source {
 					lexeme.value = parseInt(lexeme.text);
 				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
 					lexeme.identifier = true;
-				} else if (lexeme.text = take(/^[-+=<>*/%^&|!]+/i)) {
+				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/i)) {
 					lexeme.operator = true;
 				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/i)) {
 					lexeme.punctuation = true;
@@ -300,17 +300,10 @@ class VariableDeclaration {
 
 	declare(context) {
 		let count = 1, initializer;
-		// let decl = {
-		// 	offset: context.symbols.length,
-		// };
 		if (this.count) {
 			let c = this.count.simplify(context);
-			if (typeof c.literal === 'undefined')
-				context.error('literal array length expected');
-			// decl.count = this.count.literal;
-			count = c.literal;
+			count = c.literal ?? context.error('literal array length expected');
 		}
-		// context.define(this.name, decl);
 		if (this.initializer) {
 			let i = this.initializer.simplify(context);
 			initializer = i.members || i.literal;
@@ -911,7 +904,8 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('mod');
+				context.emit('div');
+				context.emit('swap AX');
 			},
 		},
 		'+': {
@@ -984,8 +978,9 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub');
-				context.emit('min 0');
+				context.emit('sub  ; <');
+				context.emit('max 0');
+				context.emit('swap AX');
 			},
 		},
 		'<=': {
@@ -994,7 +989,7 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub');
+				context.emit('sub  ; <=');
 				context.emit('max 0');
 				context.emit('unary NOT');
 			},
@@ -1005,7 +1000,7 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub');
+				context.emit('sub  ; >');
 				context.emit('max 0');
 			},
 		},
@@ -1015,8 +1010,9 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub');
-				context.emit('min 0');
+				context.emit('sub  ; >=');
+				context.emit('max 0');
+				context.emit('swap AX');
 				context.emit('unary NOT');
 			},
 		},
@@ -1026,7 +1022,7 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub');
+				context.emit('sub  ; ==');
 				context.emit('unary NOT');
 			},
 		},
@@ -1036,19 +1032,18 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub');
+				context.emit('sub  ; !=');
 				context.emit('unary BOOL');
 			},
 		},
 		'&&': {
 			precedence: 11,
-			precompute: (x,y) => x && y ? 1 : 0,
+			precompute: (x,y) => x && y,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
-				context.emit('unary BOOL');
 				rhs.generate(context);
-				context.emit('unary BOOL');
-				context.emit('and');
+				context.emit('and  ; &&');
+				context.emit('swap AX');
 			},
 		},
 		'^^': {
@@ -1056,21 +1051,19 @@ class BinaryExpression {
 			precompute: (x,y) => (x && !y) || (!x && y) ? 1 : 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
-				context.emit('unary BOOL');
 				rhs.generate(context);
-				context.emit('unary BOOL');
-				context.emit('xor');
+				context.emit('xor  ; ^^');
+				context.emit('swap AX');
 			},
 		},
 		'||': {
 			precedence: 13,
-			precompute: (x,y) => x || y ? 1 : 0,
+			precompute: (x,y) => x || y,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
-				context.emit('unary BOOL');
 				rhs.generate(context);
-				context.emit('unary BOOL');
-				context.emit('or');
+				context.emit('or  ; ||');
+				context.emit('swap AX');
 			},
 		},
 		'=': {
@@ -1101,7 +1094,7 @@ class BinaryExpression {
 		},
 		'%=': {
 			precedence: 14,
-			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'mod'),
+			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'div', 'swap AX'),
 		},
 		'<<=': {
 			precedence: 14,

@@ -61,38 +61,34 @@ const opcodes = [
   // If operand < 0 swap with register or state variable
   // swap 0 is a noop
 
-  { opcode: 0xB, mnemonic: '_br' },
-  // _br if nonzero
-  // _br
+  { opcode: 0xB, mnemonic: 'br' },
+  // br if nonzero
+  // br
   // ... V A => ... ; SP -= 2, if V != 0 then PC = A
-  // _br D
+  // br D
   // ... V => ... ; SP -= 1, if V != 0 the PC += D
 
-  { opcode: 0x2, mnemonic: '_jmp' },
+  { opcode: 0x2, mnemonic: 'jmp' },
   // Unconditional branch, which we *could* handle by just setting PC
 
   { opcode: 0x11, mnemonic: 'unary' },
   // unary OP
   // ... X => ... OP(X)
 
-  { opcode: 0x20, mnemonic: 'max' },
-  // max Y
-  // ... X => ... max(X, Y)
-  // max
-  // ... X Y => ... max(X, Y) ; SP -= 1
-  { opcode: 0x21, mnemonic: 'min' },
-  { opcode: 0x22, mnemonic: 'add' },
-  { opcode: 0x23, mnemonic: 'sub' },
-  { opcode: 0x24, mnemonic: 'mul' },
-  { opcode: 0x25, mnemonic: 'atan2' },
+  // binaryOp operand
+  // ... X => ... max(X, operand)
+  { opcode: 0x20, mnemonic: 'max' },  // AX = min
+  { opcode: 0x22, mnemonic: 'add' },  // AX = overflow
+  { opcode: 0x23, mnemonic: 'sub' },  // AX = overflow
+  { opcode: 0x24, mnemonic: 'mul' },  // AX = overflow
+  { opcode: 0x25, mnemonic: 'atan2' },// AX = fixed point result (atan2 * 256)
   { opcode: 0x26, mnemonic: 'pow' },  // AX = X ^ 1/Y
   { opcode: 0x27, mnemonic: 'div' },  // AX = mod(X,Y)
-  { opcode: 0x28, mnemonic: 'mod' },
   // bitwise
-  { opcode: 0x29, mnemonic: 'or' },
-  { opcode: 0x2A, mnemonic: 'and' },
-  { opcode: 0x2B, mnemonic: 'xor' },
-  { opcode: 0x2C, mnemonic: 'shift' },
+  { opcode: 0x2A, mnemonic: 'or' },   // AX = logical or
+  { opcode: 0x2B, mnemonic: 'and' },  // AX = logical and
+  { opcode: 0x2C, mnemonic: 'xor' },  // AX = logical xor
+  { opcode: 0x2D, mnemonic: 'shift' }, // AX = rotated-out bits
   // similar for these binary ops
 
   { opcode: 0x30, mnemonic: 'ext30' },
@@ -141,24 +137,25 @@ const UNARY_OPERATORS = {
 let UNARY_SYMBOLS = {};
 for (let u in UNARY_OPERATORS) UNARY_SYMBOLS[UNARY_OPERATORS[u].mnemonic] = parseInt(u);
 
+const MIN_INT = -0x8000;
+const MAX_INT =  0x7FFF;
 
-// having second thoughts about this
+function overflow(x) { return x < MIN_INT ? x - MIN_INT : x > MAX_INT ? x - MAX_INT : 0 }
+
 const BINARY_OPERATORS = {
-    max: (a, b) => Math.max(a, b),
-    min: (a, b) => Math.min(a, b),
-    add: (a, b) => a + b,
-    sub: (a, b) => a - b,
-    mul: (a, b) => a * b,
+    max: (a, b) => [Math.max(a, b), Math.min(a, b)],
+    add: (a, b) => [a + b, overflow(a + b)],
+    sub: (a, b) => [a - b, overflow(a - b)],
+    mul: (a, b) => [a * b, overflow(a * b)],
+    div: (a, b) => [Math.floor(a / b), a % b],
     pow: (a, b) => [Math.pow(a, b), Math.pow(a, 1/b)],
     atan2: (a, b) => {
       let t = Math.atan2(a, b) * 180 / Math.PI;
-      return [ Math.floor(t), fractional(t - Math.floor(t)) ];
+      return [Math.round(t), Math.round(t * 256)];
     },
-    div: (a, b) => [ Math.floor(a / b), a % b ],
-    mod: (a, b) => a % b,
-    or: (a, b) => a | b,
-    and: (a, b) => a & b,
-    xor: (a, b) => a ^ b,
+    or: (a, b) => [a | b, a || b],
+    and: (a, b) => [a & b, a && b],
+    xor: (a, b) => [a ^ b, ((a || b) && !(a && b)) ? 1 : 0],
     shift: (a, b) => (b < 0) ?
       [ a << -b, ((1 << -b) - 1) & (a >> (16 - b)) ] :
       [ a >> b, 0xffff & (a << (16 - b)) ],
@@ -318,11 +315,12 @@ class VirtualMachine {
         // noop
       }
 
-    } else if (mnemonic === '_jmp') {
+    } else if (mnemonic === 'jmp') {
+      // with immediate addressing mode, the value is an offset not an absolute
       if (immediateMode) operand += this.pc;
       this.pc = operand;
 
-    } else if (mnemonic === '_br') {
+    } else if (mnemonic === 'br') {
       // with immediate addressing mode, the value is an offset not an absolute
       if (immediateMode) operand += this.pc;
       if (this.pop()) this.pc = operand;
@@ -356,7 +354,7 @@ class VirtualMachine {
       this.top = this.world.handleInstruction(this.state, opcode, this.top, operand);
 
     } else {
-      error(`${this.pc}: invalid opcode ${opcode} ${mnemonic}`);
+      this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic}`);
     }
 
     this.ck += 1;
@@ -476,7 +474,7 @@ class Assembler {
       this.line = line.line;
       let tokens = line.tokens;
 
-      tokens = tokens.map(t => typeof symbols[t] === 'undefined' ? t : symbols[t]);
+      tokens = tokens.map(t => symbols[t] ?? t);
 
       let inst = tokens[0];   // though it may also not be an actual inst
       let operand = tokens[1];    // though it may also be an operator
@@ -555,14 +553,14 @@ class Assembler {
           this.assert(tokens.length === 2, "label of target for jump (only) expected");
           this.assert(typeof operand === 'string', "label of target for jump expected");
           // TODO: immediate mode
-          this.emit(MNEMONICS._jmp, INLINE_MODE_FLAG);
+          this.emit(MNEMONICS.jmp, INLINE_MODE_FLAG);
           this.data(operand);
 
         } else if (inst === toLowerCase('.branch')) {
           this.assert(tokens.length === 2, "label of target for branch (only) expected");
           this.assert(typeof operand === 'string', "label of target for branch expected");
           // TODO: immediate mode
-          this.emit(MNEMONICS._br, INLINE_MODE_FLAG);
+          this.emit(MNEMONICS.br, INLINE_MODE_FLAG);
           this.data(operand);
 
         } else if (this.macros[inst]) {
