@@ -881,8 +881,8 @@ function updateCharacterSheet(state) {
 
 	let local = Game.MAP[state[LOCATION]];
 	set('location', local.index);
-	set('longitude', local.longitude || (local.index % 6));
-	set('latitude', local.latitude || (local.index / 6) >> 0);
+	set('longitude', local.longitude || ((local.index - 1) % 6));
+	set('latitude', local.latitude || ((local.index - 1) / 6) >> 0);
 	set('locale', local.name);
 	set('terrain', Game.TERRAIN_TYPES[local.terrain].name);
 	set('mob', state[MOB_TYPE] ?

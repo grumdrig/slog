@@ -9,7 +9,7 @@ func goto(dest) {
 
 var raids = 0
 
-var huntingGrounds[8] = [11, 11, 16, 9, 15, 14, 32, 5]
+var huntingGrounds[8] = [12, 12, 17, 10, 16, 15, 33, 6]
 
 seekquest()
 while .LEVEL < 8 {
@@ -24,7 +24,7 @@ while .LEVEL < 8 {
       melee()
     }
   }
-  goto(17)
+  goto(18)
   while .DAMAGE {
     rest()
   }

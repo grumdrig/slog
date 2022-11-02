@@ -415,215 +415,215 @@ const MOBS = [
 ];
 
 
-const MAP = [{
-		index: 0,
+const MAP = [null,
+	{
+		index: 1,
 		name: "Watha",
 		terrain: TUNDRA,
 		level: 7
 	}, {
-		index: 1,
+		index: 2,
 		name: "Maak",
 		terrain: TUNDRA,
 		level: 5,
 	}, {
-		index: 2,
+		index: 3,
 		name: "Wolfin Forest",
 		terrain: FOREST,
 		level: 2,
 	}, {
-		index: 3,
+		index: 4,
 		name: "Hohamp",
 		terrain: TOWN,
 		level: 0,
 	}, {
-		index: 4,
+		index: 5,
 		name: "Skiddo",
 		terrain: HILLS,
 		level: 1,
 	}, {
-		index: 5,
+		index: 6,
 		name: "Chinbreak Cliff",
 		terrain: MOUNTAINS,
 		level: 7,
 
 	}, {
-		index: 6,
+		index: 7,
 		name: "Yar",
 		terrain: TOWN,
 		level: 0,
 	}, {
-		index: 7,
+		index: 8,
 		name: "Deepni Woods",
 		terrain: FOREST,
 		level: 7,
 	}, {
-		index: 8,
+		index: 9,
 		name: "Barkmot Forest",
 		terrain: FOREST,
 		level: 7,
 	}, {
-		index: 9,
+		index: 10,
 		name: "Goldona Hills",
 		terrain: HILLS,
 		level: 3,
 	}, {
-		index: 10,
+		index: 11,
 		name: "Breezeby Peak",
 		terrain: MOUNTAINS,
 		level: 5,
 	}, {
-		index: 11,
+		index: 12,
 		name: "Iperko Forest",
 		terrain: FOREST,
 		level: 1,
 
 	}, {
-		index: 12,
+		index: 13,
 		name: "Blesh Grove",
 		terrain: FOREST,
 		level: 2,
 	}, {
-		index: 13,
+		index: 14,
 		name: "Donday Hill",
 		terrain: HILLS,
 		level: 3,
 	}, {
-		index: 14,
+		index: 15,
 		name: "Skidge Mountain",
 		terrain: MOUNTAINS,
 		level: 5,
 	}, {
-		index: 15,
-		name: "Krack Mountain",
+		index: 16,
+		name: "Edl Mountain",
 		terrain: MOUNTAINS,
 		level: 4,
 	}, {
-		index: 16,
+		index: 17,
 		name: "Sprue Forest",
 		terrain: FOREST,
 		level: 2,
 	}, {
-		index: 17,
+		index: 18,
 		name: "Bompton",
 		terrain: TOWN,
 		denizen: DUNKLING,
 		level: 0,
 
 	}, {
-		index: 18,
+		index: 19,
 		name: "Terfu Plain",
 		terrain: PLAINS,
 		level: 3,
 	}, {
-		index: 19,
+		index: 20,
 		name: "Blue Mist Mountains",
 		terrain: MOUNTAINS,
 		level: 1,
 	}, {
-		index: 20,
+		index: 21,
 		name: "Pillary",
 		terrain: TOWN,
 		civilization: HARDWARF,
 		level: 0,
 	}, {
-		index: 21,
+		index: 22,
 		name: "Grein Hills",
 		terrain: HILLS,
 		level: 3,
 	}, {
-		index: 22,
+		index: 23,
 		name: "Woofa Plain",
 		terrain: PLAINS,
 		level: 2,
 	}, {
-		index: 23,
+		index: 24,
 		name: "Hallon Prairie",
 		terrain: PLAINS,
 		level: 1,
 
 	}, {
-		index: 24,
+		index: 25,
 		name: "Donga Marsh",
 		terrain: MARSH,
 		level: 1,
 	}, {
-		index: 25,
+		index: 26,
 		name: "Panar Plain",
 		terrain: PLAINS,
 		level: 2,
 	}, {
-		index: 26,
+		index: 27,
 		name: "Owlholm Woods",
 		terrain: FOREST,
 		level: 4,
 	}, {
-		index: 27,
+		index: 28,
 		name: "Papay Forest",
 		terrain: FOREST,
 		level: 3,
 	}, {
-		index: 28,
+		index: 29,
 		name: "Delial",
 		terrain: TOWN,
 		civilization: DUNKLING,
 		level: 0,
 	}, {
-		index: 29,
+		index: 30,
 		name: "Solla Desert",
 		terrain: DESERT,
 		level: 1,
 
 	}, {
-		index: 30,
+		index: 31,
 		name: "Cholar",
 		terrain: TOWN,
 		civilization: DUNKLING,
 		level: 0,
 	}, {
-		index: 31,
+		index: 32,
 		name: "Ritoli Marsh",
 		terrain: MARSH,
 		level: 4,
 	}, {
-		index: 32,
+		index: 33,
 		name: "Arapet Plains",
 		terrain: PLAINS,
 		level: 6,
 	}, {
-		index: 33,
+		index: 34,
 		name: "Wheewit Forest",
 		terrain: FOREST,
 		level: 5,
 	}, {
-		index: 34,
+		index: 35,
 		name: "Enotar Plains",
 		terrain: PLAINS,
 		level: 4,
 	}, {
-		index: 35,
+		index: 36,
 		name: "Noonaf Wastes",
 		terrain: DESERT,
 		level: 5,
 
 	}, {
-		index: 36,
+		index: 37,
 		name: "Emkell Peak",
 		latitude: 3,
 		longitude: 8,
-		neighbors: [37],
+		neighbors: [38],
 		terrain: MOUNTAINS,
 		level: 9,
 	}, {
-		index: 37,
+		index: 38,
 		name: "Sygnon Tower",
 		latitude: 4,
 		longitude: 8,
-		neighbors: [36],
+		neighbors: [37],
 		terrain: TOWN,
 		civilization: GAST,
 		level: 0,
 	}];
-
 
 
 function irand(n) { return Math.floor(Math.random() * n) }
@@ -652,9 +652,7 @@ let TASK = '';
 
 class Game {
 	static create() {
-		let state = new Int16Array(SLOTS.length);
-		state[LOCATION] = -1;
-		return state;
+		return new Int16Array(SLOTS.length);
 	}
 
 	static generateInterface = generateInterface;
@@ -711,7 +709,7 @@ class Game {
 					state[stat] += (3 + (raceinfo.stat_mods[SLOTS[stat]] || 0)) << 8;
 				}
 				state[LEVEL] = 1;
-				state[LOCATION] = 17;
+				state[LOCATION] = 18;
 				state[MAX_HP] = 6 + CON();
 				state[MAX_MP] = 6 + INT();
 				for (let slot in raceinfo.startingitems) {
@@ -741,8 +739,9 @@ class Game {
 		}
 
 		function randomLocation() {
+			// A random location on the main island
 			// TODO consider local
-			return irand(36);
+			return 1 + irand(36);
 		}
 
 		function randomMob() {
@@ -750,8 +749,8 @@ class Game {
 		}
 
 		function coordinates(locale) {
-			return [locale.longitude || (locale.index % 6),
-					locale.latitude || (locale.index / 6) >> 0];
+			return [locale.longitude || ((locale.index - 1) % 6),
+					locale.latitude || ((locale.index - 1) / 6) >> 0];
 		}
 
 		function inventoryCapacity() {
@@ -776,7 +775,7 @@ class Game {
 					x1 = x0;
 					y1 = (y1 < y0) ? y0 - 1 : y0 + 1;
 				}
-				remote = this.MAP[x1 + 6 * y1];
+				remote = this.MAP[x1 + 6 * y1 + 1];
 				if (!remote) return -1;  // but shouldn't happen
 			}
 			let hours = 24;
@@ -861,7 +860,7 @@ class Game {
 				state[QUEST_QTY] = 5 + irand(10);
 			}, _ => {
 				// Bring me N of SOMETHING
-				state[QUEST_LOCATION] = -1;
+				state[QUEST_LOCATION] = 0;
 				state[QUEST_OBJECT] = INVENTORY_0 + irand(INVENTORY_COUNT);
 				state[QUEST_MOB] = 0;
 				state[QUEST_QTY] = 5 * irand(10);
@@ -896,8 +895,8 @@ class Game {
 			}
 			state[QUEST_OBJECT] = 0;
 			state[QUEST_MOB] = 0;
-			state[QUEST_LOCATION] = -1;
-			state[QUEST_ORIGIN] = -1;
+			state[QUEST_LOCATION] = 0;
+			state[QUEST_ORIGIN] = 0;
 			state[QUEST_PROGRESS] = 0;
 			state[QUEST_QTY] = 0;
 			return 1;
