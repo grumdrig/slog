@@ -346,14 +346,14 @@ div.icon {
 			<div id=inventory class=listview>
 				<div class=header>Inventory
 					(Encumbrance: <span id=encumbrance></span>/<span id=capacity></span>)</div>
-				<div>Gold</div>            <div id=i0>10</div>
-				<div>Drops</div>           <div id=i1>10</div>
-				<div>Reagents</div>        <div id=i2>10</div>
-				<div>Healing potions</div> <div id=i3>10</div>
-				<div>Energy potions</div>  <div id=i4>10</div>
-				<div>Rations</div>         <div id=i5>10</div>
-				<div>Gems</div>            <div id=i6>10</div>
-				<div>Sand</div>            <div id=i7>10</div>
+				<div>Gold</div><div id=i0></div>
+				<div>Drops</div><div id=i1></div>
+				<div>Reagents</div><div id=i2></div>
+				<div>Resources</div><div id=i3></div>
+				<div>Rations</div><div id=i4></div>
+				<div>Treasures</div><div id=i5></div>
+				<div>Healing Potions</div><div id=i6></div>
+				<div>Life Potions</div><div id=i7></div>
 			</div>
 		</div>
 		<div id=col3>
@@ -819,6 +819,21 @@ function setBar(id, value, end, start=0, color='#ace97c') {
 }
 
 
+function plural(s) {
+  if (s.endsWith('y'))
+    return s.slice(0,-1) + 'ies';
+  else if (s.endsWith('us'))
+    return s.slice(0,-2) + 'i';
+  else if (s.endsWith('ch') || s.endsWith('x') || s.endsWith('s') || s.endsWith( 'sh'))
+    return s + 'es';
+  else if (s.endsWith('f'))
+    return s.slice(0,-1) + 'ves';
+  else if (s.endsWith('man') || s.endsWith('Man'))
+    return s.slice(0,-2) + 'en';
+  else return s + 's';
+}
+
+
 function updateCharacterSheet(state) {
 
 
@@ -905,7 +920,7 @@ function updateCharacterSheet(state) {
 	set('questgoal', state[QUEST_OBJECT] === EQUIPMENT_TOTEM ?
 		(state[QUEST_QTY] ? 'Seek the totem' : 'Deliver the totem') :	state[QUEST_OBJECT] ?
 		`Bring me ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]]] : state[QUEST_MOB] ?
-		`Exterminate the ` + MOBS[state[QUEST_MOB]].name : '');
+		`Exterminate the ` + plural(MOBS[state[QUEST_MOB]].name) : '');
 	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
 	setProgress('questprogress', state[QUEST_PROGRESS], state[QUEST_QTY]);
 	set('questorigin', original && (original.name + ' #' + original.index) || '');

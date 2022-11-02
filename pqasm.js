@@ -625,6 +625,12 @@ const MAP = [null,
 		level: 0,
 	}];
 
+MAP.filter(t => t).forEach(t => {
+	t.longitude = (t.index - 1) % 6;
+	t.latitude = ((t.index - 1) / 6) >> 0;
+});
+
+
 
 function irand(n) { return Math.floor(Math.random() * n) }
 function randomPick(a) { return a[irand(a.length)] }
@@ -748,11 +754,6 @@ class Game {
 			return irand(MOBS.length - 1);
 		}
 
-		function coordinates(locale) {
-			return [locale.longitude || ((locale.index - 1) % 6),
-					locale.latitude || ((locale.index - 1) / 6) >> 0];
-		}
-
 		function inventoryCapacity() {
 			return Math.max(0, carryCapacity(state) - encumbrance(state));
 		}
@@ -766,8 +767,8 @@ class Game {
 				if (!local.neighbors.includes(destination)) return -1;
 			} else {
 				// we're in the 6x6 grid
-				let [x0, y0] = coordinates(local);
-				let [x1, y1] = coordinates(remote);
+				let [x0, y0] = [local.longitude, local.latitude];
+				let [x1, y1] = [remote.longitude, remote.latitude];
 				if (Math.abs(x1 - x0) > Math.abs(y1 - y0)) {
 					y1 = y0;
 					x1 = (x1 < x0) ? x0 - 1 : x0 + 1;
