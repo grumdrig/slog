@@ -232,7 +232,7 @@ div.icon {
 				<button onclick="comp()">Compile</button>
 				<span style="margin-left: 10px">&nbsp;</span>
 				<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
-				<input type=checkbox id=interface checked><label for=interface>Import interface</label></input>
+				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-B">
 				<textarea rows=16 cols=50 id=asm></textarea>
@@ -495,7 +495,7 @@ function comp() {
 	$("#errors").classList.remove("err");
 	try {
 		let sources = [$("#source").value];
-		if ($('#interface').checked) sources.unshift(Game.generateInterface());
+		if ($('#importinterface').checked) sources.unshift(Game.generateInterface());
 		$("#asm").value = compile(...sources);
 		if (assemble()) {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
