@@ -21,3 +21,8 @@ node vm.js -i ./pqasm.js -l grumdrig.bin -r
 # execute
 node vm.js -l test.bin -r
 
+
+
+# Map
+
+node pqasm.js --generate-map > map.html

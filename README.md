@@ -487,112 +487,61 @@ Key:
 
 Some places might have min requirements to enter (equipment, spell, level, etc)
 
-Can you travel to anywhere? Or do you have to go step by step?
 
-Locations are the usual (6 * row + column) coordinate
-
-
-### Terrain types
-
-Normal move cost is 1 day, say. Some are slower
-
-* Tundra
-* Forest
-	- Move cost 3
-* Town
-* Hill
-	- Move cost 2
-* Mountain
-	- Move cost 4
-* Plain
-	- Better food forage
-* Marsh
-	- Move cost 2.5
-	- No food forage
-* Desert
-	- No food forage
 
 
 ### Mobs (say 12 but with different variations that make them stronger?)
 
+Naybe the buffer version have greaterlevel = ceil(lesserlevel * 1.5)
+
 Maybe just level 1, level 2, etc. But I've got here some scarier names to sub
-in at higher levels:
+in at higher levels
 
-* Parakeet / Triplikeet
-
-plains
-
-* Pig / Supersow
-
-hills
-
-* Gegnome / Megegnome
-
-forest
-
-* Giant Flea / Flealord
-
-desert
-
-* Zorc / Zigzorc
-
-mountains
-
-* Baklakesh / Wuntrakesh
-
-marsh
-
-* Plasterbear / Fasterbear
-
-tundra
 
 Monster brainstorm with Andy, transformed:
 
-1 Owlcub
-3 Bunisaur
-5 Randroid
-4 Objectifist
-3 Wist-o-the-Hill
-5 Gelidode
-6 Blood Pudding
-4 Misplacer
-7 Trall
-8 Munt
+1 Owlcub / Olowala
+3 Bunisaur / Bountisaur
+5 Randroid / Exactoid
+4 Objectifist / Injectifist
+3 Wist-o-the-Hill / Wist-o-the-Willow
+5 Gelidode / Hardode
+6 Blood Pudding / Blood Meal
+4 Misplacer / Relocator
+7 Trall / Tange
+8 Munt / Moonit
 4 Knolling / Knollon
-4 Proboscan
-6 Deevil
-7 Clamerus
-5 Pleshy
-6 Boglard
-2 Quince
-6 Deddy
-5 Komeek
-6 Supernumari
-3 Swan-at-Arms
-7 Timelisk
+4 Proboscan / Oberscan
+7 Clamerus / Clameron
+5 Pleshy / Pot Pleshy
+6 Boglard / Bognivore
+2 Quince / Squince
+6 Deddy / Grendeddy
+5 Komeek / Mokomeko
+3 Swan-at-Arms / Draken-at-Arms
+7 Timelisk / Metalisk
 8 Betagorgon / Alfagorgon
-3 Dust Monster
-2 Noteti
-4 Dwoks
-6 Dancigun
-6 Psinon
-7 Werewat
-3 Chespian
-8 Kashasa
-1 Featherless
-1 Multibar
-2 Air Cucumber
-3 Landale
-2 Seamole
-1 Biznit
-8 Botherbear
-2 Blinker
-3 Polycorn
-6 Umbertine
-7 Sadilla
-3 Night Smurf
-4 Pecadinus
-6 Fish Lich
+3 Dust Monster / Void Monster
+2 Noteti / Innoteti
+4 Dwoks / Dwoken
+6 Psinon / Onpsinon
+7 Werewat / Huwerewat
+3 Chespian / Crosspian
+8 Kashasa / Kashasfas
+1 Featherless / King Featherless
+1 Multibar / Macrobar
+2 Air Cucumber / Amphi Cucumber
+3 Landale / Amphidale
+2 Seamole / Mole Shark
+1 Bisquit / Cisquit
+8 Botherbear / Scissorbear
+2 Blinker / Strober
+3 Polycorn / Expicorn
+6 Umbertine / Sepitine
+7 Sadilla / Ohmlaut
+3 Night Smurf / Midnight Smurf
+4 Pecadinus / Rockadinus
+6 Fish Lich / Paradox Lich
 
 
 

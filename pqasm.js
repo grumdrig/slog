@@ -236,11 +236,6 @@ function generateInterface() {
 	return interface.join('\n');
 }
 
-if (typeof process !== 'undefined' && process.argv.includes('--generate-interface')) {
-	console.log(generateInterface());
-	process.exit();
-}
-
 /////////// Weapons
 
 const WEAPON_DB = [null, {
@@ -515,27 +510,35 @@ const GAST = 4;
 const TERRAIN_TYPES = [
 	null, {
 		name: 'Tundra',
+		color: 'white',
 	}, {
 		name: 'Forest',
+		color: 'green',
 		moveCost: 3,
 	}, {
 		name: 'Town',
+		color: 'violet',
 	}, {
 		name: 'Hills',
+		color: 'peru',
 		moveCost: 2,
 	}, {
 		name: 'Mountains',
+		color: 'sienna',
 		moveCost: 4,
 	}, {
 		name: 'Plains',
-		forage: 2,
+		color: 'lightgreen',
+		forage: { item: INVENTORY_FOOD, rate: 2 },
 	}, {
 		name: 'Marsh',
+		color: 'olive',
 		moveCost: 2.5,
-		forage: 0,
+		forage: { item: INVENTORY_FOOD, rate: 0 },
 	}, {
 		name: 'Desert',
-		forage: 0,
+		color: 'yellow',
+		forage: { item: INVENTORY_FOOD, rate: 0 },
 	}];
 
 TERRAIN_TYPES.forEach((info, index) => {
@@ -831,10 +834,49 @@ const MAP = [null,
 	}];
 
 MAP.filter(t => t).forEach(t => {
-	t.longitude = (t.index - 1) % 6;
-	t.latitude = ((t.index - 1) / 6) >> 0;
+	t.longitude ??= (t.index - 1) % 6;
+	t.latitude ??= ((t.index - 1) / 6) >> 0;
 });
 
+
+function generateMap() {
+	let result = [];
+	let cols = MAP.slice(1).reduce((a,tile) => Math.max(a, tile.longitude+1), 0);
+	result.push(`<div class=themap style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px">`);
+	MAP.slice(1).forEach(tile => {
+		result.push(`<div style="grid-column:${tile.longitude+1};grid-row:${tile.latitude+1};background-color:${TERRAIN_TYPES[tile.terrain].color}">
+			<div>#${tile.index}</div>
+			<div>${tile.name.split(' ')[0]}<br/>
+			${TERRAIN_TYPES[tile.terrain].name}</div>
+			<div>level ${tile.level}</div>
+		</div>`);
+	});
+	result.push('</div>');
+
+	let preinfo = `<style>
+		div.themap {
+			display: grid;
+			grid-template-columns: repeat(${cols} 1fr);
+			gap: 4px;
+			width: 800px;
+			margin: 12px auto;
+		}
+		div.themap > div {
+			border: solid 1px black;
+			border-radius: 6px;
+			padding: 4px;
+			font: 14px sans-serif;
+		}
+		div.themap > div > div:first-child {
+			text-align: right;
+		}
+		div.themap > div > div:nth-child(2) {
+			text-align: center;
+		}
+	</style>`;
+
+	return preinfo + result.join('\n');
+}
 
 ///////////////
 
@@ -1346,5 +1388,18 @@ class Game {
 if (typeof exports !== 'undefined') {
 	exports.Game = Game;
 	exports.generateInterface = generateInterface;
+}
+
+if (typeof module !== 'undefined' && !module.parent) {
+	// Opened by nodejs as main module
+	if (process.argv.includes('--generate-interface')) {
+		console.log(generateInterface());
+		process.exit();
+	}
+
+	if (process.argv.includes('--generate-map')) {
+		console.log(generateMap());
+		process.exit();
+	}
 }
 
