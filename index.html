@@ -696,8 +696,8 @@ function prepWindow(hwnd) {
 	});
 }
 
-window.addEventListener('load', e => {
-// window.addEventListener("DOMContentLoaded", _ => {
+// window.addEventListener('load', e => {
+window.addEventListener("DOMContentLoaded", _ => {
   $$('[role="tab"]').forEach(tab => tab.addEventListener("click", changeTabs));
 
   $("#interface").value = Game.generateInterface();
