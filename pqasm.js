@@ -74,6 +74,8 @@ const SLOTS = [
 	'ESTEEM_DUNKLINGS',
 	'ESTEEM_HARDWARVES',
 	'ESTEEM_EFFS',
+
+	'SEED',  // PRNG seed
 ];
 
 function define(symbol, value) {
@@ -836,9 +838,6 @@ MAP.filter(t => t).forEach(t => {
 
 ///////////////
 
-function irand(n) { return Math.floor(Math.random() * n) }
-function randomPick(a) { return a[irand(a.length)] }
-
 
 function carryCapacity(state) {
 	return state[STAT_STRENGTH] >> 8 + state[EQUIPMENT_MOUNT];
@@ -858,11 +857,23 @@ function armorClass(state) {
 			state[EQUIPMENT_FOOTWEAR];
 }
 
+// Generalized hopefully well from
+// https://stackoverflow.com/a/12996028/167531
+function hash(...keys) {
+	let x = 0;
+	for (let k of keys) x = ((x ^ (k >> 16) ^ k) * 0x45d9f3b) & 0x7fffffff;
+    x = (((x >> 16) ^ x) * 0x45d9f3b) & 0x7fffffff;
+    x = (x >> 16) ^ x;
+    return x ;
+}
+
 let TASK = '';
 
 class Game {
-	static create() {
-		return new Int16Array(SLOTS.length);
+	static create(code) {
+		let state = new Int16Array(SLOTS.length);
+		state[SEED] = hash(0x3FB9, ...code);
+		return state;
 	}
 
 	static generateInterface = generateInterface;
@@ -885,8 +896,6 @@ class Game {
 				console.log(SLOTS[i] + ': ' + state[i]);
 	}
 
-	static d(n) { return irand(n) + 1 }
-
 	static handleInstruction(state, opcode, arg1, arg2) {
 		let result = this._handleInstruction(state, opcode, arg1, arg2);
 		state[CAPACITY] = carryCapacity(state);
@@ -897,12 +906,119 @@ class Game {
 
 	static _handleInstruction(state, opcode, arg1, arg2) {
 
+		let seed = hash(state[SEED], 0x5EED, opcode, arg1, arg2);
+		state[SEED] = seed;
+
+		// seed and key are integers on [0, 0x7fffffff]
+		// result is real on [0, 1)
+		function rand(...keys) {
+			seed = hash(seed, 0xf70a75);
+			if (seed < 0) throw "Bad random algorithm";
+			return seed / 0x7fffffff;
+		}
+
+		// random integer given keys on [0, ..., scale-1]
+		function irand(scale) {
+			seed = hash(seed, 0x147e9e7);
+			if (seed < 0) throw "Bad random algorithm";
+			return seed % scale;
+		}
+
+		function d(pips) { return irand(pips) + 1 }
+
+		function randomPick(a) { return a[irand(a.length)] }
+
 		function STR() { return state[STAT_CONSTITUTION] >> 8 }
 		function DEX() { return state[STAT_AGILITY] >> 8 }
 		function CON() { return state[STAT_CONSTITUTION] >> 8 }
 		function INT() { return state[STAT_INTELLIGENCE] >> 8 }
 		function WIS() { return state[STAT_WISDOM] >> 8 }
 		function CHA() { return state[STAT_CHARISMA] >> 8 }
+
+		function battle(invulnerable=false) {
+			if (!state[MOB_TYPE]) return -1;
+
+			let info = MOBS[state[MOB_TYPE]];
+			if (!info) return -1;
+
+			if (info.esteemSlot)
+				state[info.esteemSlot] = Math.max(state[info.esteemSlot] - 1, 0);
+
+			let mobLevel = info.hitdice;
+			let mobOffsense = info.hitdice;
+			let mobDefense = info.hitdice;
+			let mobSharpness = info.hitdice;
+			let mobMaxHP = info.hitdice * 2;
+
+			// Player attack
+			function rollAttack(offsense, defense, sharpness) {
+				let DIE = 10;
+				let attackRoll = d(DIE);
+				let defenseRoll = d(DIE);
+				if (attackRoll === 1) return 0;
+				if (attackRoll === DIE || attackRoll + offsense > defenseRoll + defense) {
+					let damage = d(sharpness);
+					if (defenseRoll == DIE && damage > 1) damage = 1;
+					if (defenseRoll == 1) damage >>= 1;
+					return damage;
+				} else {
+					return 0;
+				}
+			}
+
+			function STR() { return state[STAT_CONSTITUTION] >> 8 }
+			function DEX() { return state[STAT_AGILITY] >> 8 }
+			function CON() { return state[STAT_CONSTITUTION] >> 8 }
+			function INT() { return state[STAT_INTELLIGENCE] >> 8 }
+			function WIS() { return state[STAT_WISDOM] >> 8 }
+			function CHA() { return state[STAT_CHARISMA] >> 8 }
+
+			const playerAttack = DEX() + weaponPower(state[EQUIPMENT_WEAPON]);
+
+			let dealtToMob = rollAttack(DEX(), mobDefense, STR());
+			let dealtToPlayer = rollAttack(mobOffsense, DEX(), mobSharpness);
+
+			if (DEX() + d(6) >= mobLevel + d(6)) {
+				// Player attacks first
+				state[MOB_DAMAGE] += dealtToMob;
+				if (state[MOB_DAMAGE] < mobMaxHP) {
+					state[DAMAGE] += dealtToPlayer;
+				}
+			} else {
+				state[DAMAGE] += dealtToPlayer;
+				if (state[DAMAGE] < state[MAX_HP]) {
+					state[MOB_DAMAGE] += dealtToMob;
+				}
+			}
+
+			let levelDisadvantage = state[MOB_LEVEL] - state[LEVEL];
+			if (state[MOB_DAMAGE] >= mobMaxHP) {
+				state[XP] += 10 * state[MOB_LEVEL] * Math.pow(1.5, levelDisadvantage);
+				let ndrops = Math.min(1, carryCapacity(state));
+				state[INVENTORY_SPOILS] += ndrops;
+				if (state[MOB_TYPE] == state[QUEST_MOB]) state[QUEST_PROGRESS] += 1;
+				state[MOB_DAMAGE] = 0;
+				state[MOB_TYPE] = 0;
+				state[MOB_LEVEL] = 0;
+			}
+
+			if (state[DAMAGE] >= state[MAX_HP]) {
+				state[DAMAGE] = state[MAX_HP];
+				if (state[INVENTORY_LIFE_POTIONS] > 0) {
+					state[INVENTORY_LIFE_POTIONS] -= 1;
+					state[DAMAGE] = state[HEALTH] - 1;  // or 0?
+				} else {
+					// dead. now what?
+				}
+				return 0;
+			} else {
+				return 1;
+			}
+
+			// let damage = Math.pow(1.5, levelDisadvantage);
+			// state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
+		}
+
 
 		if (state[LEVEL] === 0) {
 			// game hasn't begun
@@ -960,11 +1076,11 @@ class Game {
 		function randomLocation() {
 			// A random location on the main island
 			// TODO consider local
-			return 1 + irand(36);
+			return d(36);
 		}
 
 		function randomMob() {
-			return irand(MOBS.length - 1);
+			return d(MOBS.length - 1);
 		}
 
 		function inventoryCapacity() {
@@ -1006,7 +1122,7 @@ class Game {
 
 		} else if (opcode === melee) {
 			passTime('Fighting', 1);
-			return this.battle(state);
+			return battle();
 
 		} else if (opcode === buyItem) {
 			let slot = arg1;
@@ -1072,13 +1188,13 @@ class Game {
 				state[QUEST_LOCATION] = randomLocation();
 				state[QUEST_MOB] = randomMob();
 				state[QUEST_OBJECT] = 0;
-				state[QUEST_QTY] = 5 + irand(10);
+				state[QUEST_QTY] = 5 + d(10);
 			}, _ => {
 				// Bring me N of SOMETHING
 				state[QUEST_LOCATION] = 0;
 				state[QUEST_OBJECT] = INVENTORY_0 + irand(INVENTORY_COUNT);
 				state[QUEST_MOB] = 0;
-				state[QUEST_QTY] = 5 * irand(10);
+				state[QUEST_QTY] = 5 * d(10);
 			}, _ => {
 				if (state[EQUIPMENT_TOTEM]) {
 					// Deliver this totem
@@ -1128,7 +1244,7 @@ class Game {
 			}
 			passTime(opcode === train ? 'Training' : 'Studying', 0, 1);
 			let learns = Math.round(256 * Math.exp(1/5, 1.5));
-			// TODO other factors, like race, stats
+			// TODO other factors, like race, stats, random chance?
 			state[slot] += learns;
 			return state[slot];
 
@@ -1145,7 +1261,7 @@ class Game {
 			if (spell === HEAL) {
 				state[DAMAGE] = Math.min(state[DAMAGE] - level, 0);
 			} else if (spell === FIREBALL) {
-				return this.battle(state, true);
+				return battle(true);
 			} else if (spell === HASTE || spell === BUFF || spell === INVISIBILITY || spell === LUCK) {
 				state[ENCHANTMENT] = spell;
 				state[ENCHANTMENTLEVEL] = spell;
@@ -1164,8 +1280,8 @@ class Game {
 				state[MOB_DAMAGE] = 0;
 				for (let i = 0; i < 4; ++i) {
 					// location.mobtype;
-					let t = 1 + irand(MOBS.length - 1);
-					let l = MOBS[t].hitdice + irand(2) - irand(2);
+					let t = randomMob();
+					let l = MOBS[t].hitdice + d(2) - d(2);
 					if (!state[MOB_TYPE] || Math.abs(l - local.level) <
 											Math.abs(state[MOB_LEVEL] - local.level)) {
 						state[MOB_TYPE] = t;
@@ -1176,16 +1292,16 @@ class Game {
 				qty = state[MOB_TYPE] ? 1 : 0;
 			} else if (target === DAMAGE) {
 				passTime('Resting', 0, 1);
-				let heal = irand(CON()) + 1;
+				let heal = d(CON());
 				if (local.terrain !== TOWN)
-					heal = Math.round(heal * Math.random() * Math.random());
+					heal = Math.round(heal * rand() * rand());
 				heal = Math.min(heal, state[DAMAGE]);
 				state[DAMAGE] -= heal;
 				return heal;
 
 			} else if (target === EQUIPMENT_TOTEM) {
 				passTime('Hunting for the totem', 6);
-				if (this.d(20) <= INT()) {
+				if (d(20) <= INT()) {
 					state[EQUIPMENT_TOTEM] = state[LOCATION];
 					return 1;
 				} else {
@@ -1194,7 +1310,7 @@ class Game {
 
 			} else if (isInventorySlot(target)) {
 				if (!inventoryCapacity()) return -1;
-				qty = Math.random() < 0.5 ? 1 : 0;
+				qty = rand() < 0.5 ? 1 : 0;
 				qty = Math.min(qty, inventoryCapacity());
 				state[target] += qty;
 			} else {
@@ -1225,89 +1341,6 @@ class Game {
 		return 0 + Math.floor(Math.pow(level - 1, 1.6)) * 200;
 	}
 
-	static battle(state, invulnerable=false) {
-		if (!state[MOB_TYPE]) return -1;
-
-		let info = MOBS[state[MOB_TYPE]];
-		if (!info) return -1;
-
-		if (info.esteemSlot)
-			state[info.esteemSlot] = Math.max(state[info.esteemSlot] - 1, 0);
-
-		let mobLevel = info.hitdice;
-		let mobOffsense = info.hitdice;
-		let mobDefense = info.hitdice;
-		let mobSharpness = info.hitdice;
-		let mobMaxHP = info.hitdice * 2;
-
-		// Player attack
-		function rollAttack(offsense, defense, sharpness) {
-			let d = 10;
-			let attackRoll = irand(d) + 1;
-			let defenseRoll = irand(d) + 1;
-			if (attackRoll === 1) return 0;
-			if (attackRoll === d || attackRoll + offsense > defenseRoll + defense) {
-				let damage = 1 + irand(sharpness);
-				if (defenseRoll == d && damage > 1) damage = 1;
-				if (defenseRoll == 1) damage >>= 1;
-				return damage;
-			} else {
-				return 0;
-			}
-		}
-
-		function STR() { return state[STAT_CONSTITUTION] >> 8 }
-		function DEX() { return state[STAT_AGILITY] >> 8 }
-		function CON() { return state[STAT_CONSTITUTION] >> 8 }
-		function INT() { return state[STAT_INTELLIGENCE] >> 8 }
-		function WIS() { return state[STAT_WISDOM] >> 8 }
-		function CHA() { return state[STAT_CHARISMA] >> 8 }
-
-		const playerAttack = DEX() + weaponPower(state[EQUIPMENT_WEAPON]);
-
-		let dealtToMob = rollAttack(DEX(), mobDefense, STR());
-		let dealtToPlayer = rollAttack(mobOffsense, DEX(), mobSharpness);
-
-		if (DEX() + irand(6) >= mobLevel + irand(6)) {
-			// Player attacks first
-			state[MOB_DAMAGE] += dealtToMob;
-			if (state[MOB_DAMAGE] < mobMaxHP) {
-				state[DAMAGE] += dealtToPlayer;
-			}
-		} else {
-			state[DAMAGE] += dealtToPlayer;
-			if (state[DAMAGE] < state[MAX_HP]) {
-				state[MOB_DAMAGE] += dealtToMob;
-			}
-		}
-
-		let levelDisadvantage = state[MOB_LEVEL] - state[LEVEL];
-		if (state[MOB_DAMAGE] >= mobMaxHP) {
-			state[XP] += 10 * state[MOB_LEVEL] * Math.pow(1.5, levelDisadvantage);
-			let ndrops = Math.min(1, carryCapacity(state));
-			state[INVENTORY_SPOILS] += ndrops;
-			if (state[MOB_TYPE] == state[QUEST_MOB]) state[QUEST_PROGRESS] += 1;
-			state[MOB_DAMAGE] = 0;
-			state[MOB_TYPE] = 0;
-			state[MOB_LEVEL] = 0;
-		}
-
-		if (state[DAMAGE] >= state[MAX_HP]) {
-			state[DAMAGE] = state[MAX_HP];
-			if (state[INVENTORY_LIFE_POTIONS] > 0) {
-				state[INVENTORY_LIFE_POTIONS] -= 1;
-				state[DAMAGE] = state[HEALTH] - 1;  // or 0?
-			} else {
-				// dead. now what?
-			}
-			return 0;
-		} else {
-			return 1;
-		}
-
-		// let damage = Math.pow(1.5, levelDisadvantage);
-		// state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
-	}
 }
 
 if (typeof exports !== 'undefined') {

@@ -245,7 +245,7 @@ class VirtualMachine {
       this.memory[i] = program[i];
     }
     this.sp = this.memory.length;  // stack size is 0
-    this.state = world ? world.create() : [0];
+    this.state = world ? world.create(program) : [0];
   }
 
   bigstep() {
@@ -278,8 +278,7 @@ class VirtualMachine {
 
     } else if (mnemonic === 'assert') {
       if(this.top !== operand) {
-        console.log(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != operand ${operand}`);
-        throw "assertion failure";
+        this.error(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != operand ${operand}`);
       }
 
     } else if (mnemonic === 'push') {
@@ -337,8 +336,7 @@ class VirtualMachine {
         this.push(Math.floor(result));
         this.ax_fractional = result - Math.floor(result);
       } else {
-        throw "invalid unary operator"
-        this.push(0xBAD);
+        error("invalid unary operator");
       }
 
     // Binary operators
@@ -358,7 +356,7 @@ class VirtualMachine {
       this.top = this.world.handleInstruction(this.state, opcode, this.top, operand);
 
     } else {
-      throw `${this.pc}: invalid opcode ${opcode} ${mnemonic}`;
+      error(`${this.pc}: invalid opcode ${opcode} ${mnemonic}`);
     }
 
     this.ck += 1;
@@ -380,6 +378,11 @@ class VirtualMachine {
     while (this.alive()) {
       this.step();
     }
+  }
+
+  error(message) {
+    console.log(message);
+    throw message;
   }
 
   dumpState() {
