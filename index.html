@@ -880,10 +880,10 @@ function updateCharacterSheet(state) {
 			n_spells += 1;
 		}
 	}
-	const names = [Game.WEAPONS, [], [], [], [], [], [], []];
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
+		const names = Game.EQUIPMENT_NAMES[i] || [];
 		let v = state[EQUIPMENT_0 + i];
-		set('e' + i, names[i][v] || v || '');
+		set('e' + i, names[v] || v || '');
 	}
 	set('armorClass', state[ARMOR_CLASS]);
 

@@ -368,6 +368,58 @@ function weaponPower(n) {
 
 function weaponType(n) { return (n - 1) % NUM_WEAPON_TYPES }
 
+/////// Armor and other equipment
+
+const HEADGEAR_NAMES = ['',
+	'Cap',
+	'Helmet',
+	'Warhelm',
+	'Tower Helm',
+	'+1 Shield Helm',
+	'+2 Winged Helm',
+	'+3 Horned Helm',
+	'+4 Disruption Helm',
+	'+5 Apocalypse Cap'];
+
+const ARMOR_NAMES = ['',
+	'Clothing',
+	'Cloth Armor',
+	'Leather Suit',
+	'Chainmail',
+	'Split Mail',
+	'Plate Mail',
+	'+1 Safety Mail',
+	'+2 Holy Mail',
+	'+3 Shimmering Mail',
+	'+4 Phase Armor',
+	'+5 Midnight Plate',
+	'+6 Horrorplate'];
+
+const SHIELD_NAMES = ['',
+	'Cookie Sheet',
+	'Round Shield',
+	'Battle Shield',
+	'War Shield',
+	'Tower Shield',
+	'+1 Lucky Shield',
+	'+2 Shield of Nope',
+	'+3 Plasma Shield',
+	'+4 Mecha Barrier',
+	'+5 Dimension Door'];
+
+const FOOTWEAR_NAMES = ['',
+	'Shoes',
+	'Boots',
+	'Chainmail Boots',
+	'Platemail Leggings',
+	'+1 Dragoon Boots',
+	'+2 Dragon Boots',
+	'+3 Magic Slippers',
+	'+4 Superboots',
+	'+5 Moon Skippers'];
+
+
+
 ///////// Races
 
 const RACES = [
@@ -806,7 +858,12 @@ class Game {
 	static TERRAIN_TYPES = TERRAIN_TYPES;
 	static MOBS = MOBS;
 	static MAP = MAP;
-	static WEAPONS = WEAPON_NAMES;
+	static EQUIPMENT_NAMES = [
+		WEAPON_NAMES,
+		ARMOR_NAMES,
+		SHIELD_NAMES,
+		HEADGEAR_NAMES,
+		FOOTWEAR_NAMES];
 
 	static dumpState(state) {
 		for (let i = 0; i < SLOTS.length; ++i)

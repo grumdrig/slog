@@ -693,11 +693,11 @@ Cap
 Helmet
 Warhelm
 Tower Helm
-+1
-+2
-+3
-+4
-+5
++1 Shield Helm
++2 Winged Helm
++3 Horned Helm
++4 Disruption Helm
++5 Apocalypse Cap
 
 ARMOR
 
