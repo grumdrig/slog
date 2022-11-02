@@ -786,7 +786,7 @@ class PrefixExpression {
 				},
 			},
 		'!': {
-			precompute: x => !x,
+			precompute: x => x ? 0 : 1,
 			generate: (context, rhs) => {
 					rhs.generate(context);
 					context.emit('unary NOT');

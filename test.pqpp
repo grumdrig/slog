@@ -1,3 +1,7 @@
+// Test suite for expressions
+
+
+// Using variables avoids precomputation
 var v0 = 0
 var v1 = 1
 var v2 = 2
@@ -12,6 +16,7 @@ var v10 = 10
 var v11 = 11
 var v12 = 12
 
+///////////////////
 // Binary operators
 ///////////////////
 
@@ -120,3 +125,34 @@ assert (x >>= v1) == v4
 assert (x |= v2) == v6
 assert (x &= v3) == v2
 assert (x ^= v7) == v5
+
+
+/////////////////////
+// Prefix operators
+/////////////////////
+
+assert +6 == 6
+assert +6 == + 6
+assert +6 == +(6)
+assert -6 == -(6)
+assert ~7 == -8
+assert ~-8 == 7
+assert ~0 == -1
+assert ~(~11) == 11
+assert !6 == 0
+assert !0 == 1
+assert ! !0 == 0
+assert ! ! -1 == 1
+
+assert +v6 == v6
+assert +v6 == + v6
+assert +v6 == +(v6)
+assert -v6 == -(v6)
+assert ~v7 == -v8
+assert ~-v8 == v7
+assert ~v0 == -v1
+assert ~(~v11) == v11
+assert !v6 == v0
+assert !v0 == v1
+assert ! !v0 == v0
+assert ! ! -v1 == v1
