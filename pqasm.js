@@ -885,6 +885,8 @@ class Game {
 				console.log(SLOTS[i] + ': ' + state[i]);
 	}
 
+	static d(n) { return irand(n) + 1 }
+
 	static handleInstruction(state, opcode, arg1, arg2) {
 		let result = this._handleInstruction(state, opcode, arg1, arg2);
 		state[CAPACITY] = carryCapacity(state);
@@ -1176,6 +1178,15 @@ class Game {
 				heal = Math.min(heal, state[DAMAGE]);
 				state[DAMAGE] -= heal;
 				return heal;
+
+			} else if (target === EQUIPMENT_TOTEM) {
+				passTime('Hunting for the totem', 6);
+				if (this.d(20) <= INT()) {
+					state[EQUIPMENT_TOTEM] = state[LOCATION];
+					return 1;
+				} else {
+					return 0;
+				}
 
 			} else if (isInventorySlot(target)) {
 				if (!inventoryCapacity()) return -1;

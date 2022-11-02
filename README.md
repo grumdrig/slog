@@ -683,63 +683,7 @@ where they can get quests to fight some adversaries (minions of the final
 boss), and finally fight the boss. Resources in the final island are limited and/or expensive, and there's no returning.
 
 
-
-
-### Armor
-
-HEADGEAR
-
-Cap
-Helmet
-Warhelm
-Tower Helm
-+1 Shield Helm
-+2 Winged Helm
-+3 Horned Helm
-+4 Disruption Helm
-+5 Apocalypse Cap
-
-ARMOR
-
-Clothing
-Cloth Armor
-Leather Suit
-Chainmail
-Split Mail
-Plate Mail
-+1 Safety Mail
-+2 Holy Mail
-+3 Shimmering Mail
-+4 Phase Armor
-+5 Midnight Plate
-+6 Horrorplate
-
-SHIELD
-
-Cookie Sheet
-Round Shield
-Battle Shield
-War Shield
-Tower Shield
-+1 Lucky Shield
-+2 Shield of Nope
-+3 Plasma Shield
-+4 Mecha Barrier
-+5 Dimension Door
-
-FOOTWEAR
-
-Shoes
-Boots
-Chainmail Boots
-Platemail Leggings
-+1 Dragoon Boots
-+2 Dragon Boots
-+3 Magic Slippers
-+4 Superboots
-+5 Moon Skippers
-
-
+### Equipment
 
 RING
 

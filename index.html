@@ -722,7 +722,8 @@ window.addEventListener("DOMContentLoaded", _ => {
 
 	$("#source").value = localStorage.source || "// hello, world!";
 	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
-	comp();
+
+	setTimeout(comp, 1);
 });
 
 $("#source").addEventListener('keypress', e => {
@@ -887,7 +888,9 @@ function updateCharacterSheet(state) {
 		if (!v)
 			set('e' + i, '');
 		else if (slot === EQUIPMENT_RING)
-			set('e' + i, 'Ring of ' + SLOTS[slot]);
+			set('e' + i, 'Ring of ' + SLOTS[v]);
+		else if (slot === EQUIPMENT_TOTEM)
+			set('e' + i, MAP[v].name.split(' ')[0] + ' Totem');
 		else
 			set('e' + i, names[v] || v);
 	}
