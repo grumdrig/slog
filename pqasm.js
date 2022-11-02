@@ -418,6 +418,19 @@ const FOOTWEAR_NAMES = ['',
 	'+4 Superboots',
 	'+5 Moon Skippers'];
 
+const MOUNT_NAMES = ['',
+	'Tricycle',
+	'Goat',
+	'Donkey',
+	'Mule',
+	'Horse',
+	'Warhorse',
+	'+1 Fancy Horse',
+	'+2 Pseudogoat',
+	'+3 Hammerhorse',
+	'+4 Firehorse',
+	'+5 Kelpie'];
+
 
 
 ///////// Races
@@ -863,7 +876,8 @@ class Game {
 		ARMOR_NAMES,
 		SHIELD_NAMES,
 		HEADGEAR_NAMES,
-		FOOTWEAR_NAMES];
+		FOOTWEAR_NAMES,
+		MOUNT_NAMES];
 
 	static dumpState(state) {
 		for (let i = 0; i < SLOTS.length; ++i)
@@ -977,14 +991,15 @@ class Game {
 				if (!remote) return -1;  // but shouldn't happen
 			}
 			let hours = 24;
-			// TODO hours = statMod(hours, speed(state));
+			let travelspeed = (CON() + state[EQUIPMENT_MOUNT]) / 5;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
+			hours = Math.round(hours / travelspeed);
 			state[LOCATION] = remote.index;
 			state[MOB_TYPE] = 0;
 			state[MOB_LEVEL] = 0;
 			state[MOB_DAMAGE] = 0;
-			passTime('Travelling', 0, 1);
+			passTime('Travelling', hours);
 			return 1;
 
 		} else if (opcode === melee) {

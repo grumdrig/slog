@@ -739,21 +739,6 @@ Platemail Leggings
 +4 Superboots
 +5 Moon Skippers
 
-MOUNT
-
-Increases speed, capacity, maybe attack/defend
-
-Tricycle
-Goat
-Donkey
-Mule
-Horse
-Warhorse
-+1 Fancy Horse
-+2 Pseudogoat
-+3 Hammerhorse
-+4 Firehorse
-+5 Kelpie
 
 
 RING
