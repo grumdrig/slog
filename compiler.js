@@ -926,6 +926,25 @@ class BinaryExpression {
 				context.emit('sub');
 			},
 		},
+		'<?': {
+			precedence: 4.5,
+			precompute: (x, y) => Math.min(x, y),
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('max  ; <?');
+				context.emit('swap AX');
+			},
+		},
+		'>?': {
+			precedence: 4.5,
+			precompute: (x, y) => Math.max(x, y),
+			generate: (context, lhs, rhs) => {
+				lhs.generate(context);
+				rhs.generate(context);
+				context.emit('max  ; >?');
+			},
+		},
 		'<<': {
 			precedence: 5,
 			precompute: (x,y) => x << y,
