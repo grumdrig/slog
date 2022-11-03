@@ -410,23 +410,8 @@ div.icon {
 		<span>Result: <code id=result>-</code></span>
 		<br/>
 		<br/>
-		<button onclick="gameplay(train)">train(stat)</button>
-		<button onclick="gameplay(study)">study(spell)</button>
-		<button onclick="gameplay(initialize)">initialize(slot,value)</button>
-		<button onclick="gameplay(travel)">travel(destination)</button>
-		<button onclick="gameplay(melee)">melee()</button>
-		<button onclick="gameplay(buy)">buyItem(slot,quantity)</button>
-		<button onclick="gameplay(buy)">buyEquipment(slot,quality)</button>
-		<button onclick="gameplay(sell)">sell(slot,quantity)</button>
-		<button onclick="gameplay(seekquest)">seekquest()</button>
-		<button onclick="gameplay(completequest)">completequest()</button>
-		<button onclick="gameplay(cast)">cast(spell_slot)</button>
-		<button onclick="gameplay(forage)">forage(target_slot)</button>
-		<button onclick="gameplay(levelup)">levelup()</button>
-		<button onclick="gameplay(start)">startGame()</button>
-		<button onclick="gameplay(give)">give(slot,quantity)</button>
-		<button onclick="gameplay(drop)">drop(slot,quantity)</button>
-
+		<div id="control-buttons">
+		</div>
 	</div>
 </div>
 
@@ -728,6 +713,14 @@ window.addEventListener("DOMContentLoaded", _ => {
 
 	$("#source").value = localStorage.source || "// hello, world!";
 	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
+
+	for (let call in CALLS) {
+		let { parameters, opcode, description } = CALLS[call];
+		let b = $("#control-buttons").appendChild(document.createElement('button'));
+		b.addEventListener('click', _ => gameplay(opcode));
+		b.innerText = `${call}(${parameters ?? ''})`;
+		b.hint = description ?? '';
+	}
 
 	setTimeout(comp, 1);
 });
