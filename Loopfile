@@ -1,13 +1,13 @@
 # Grumdrig game
 
 # compile
--i grumdrig.asm node compiler.js -i ./pqasm.js -o grumdrig.asm grumdrig.pqpp
+-i grumdrig.asm node compiler.js -i ./bompton.js -o grumdrig.asm grumdrig.pqpp
 
 # assemble
 -i grumdrig.bin -i grumdrig.dasm node vm.js -a grumdrig.asm -d grumdrig.dasm -o grumdrig.bin
 
 # execute
-node vm.js -i ./pqasm.js -l grumdrig.bin -r
+node vm.js -i ./bompton.js -l grumdrig.bin -r
 
 
 # tests
@@ -25,7 +25,7 @@ node vm.js -l test.bin -r
 
 # Map
 
-# node pqasm.js --generate-map > map.html
+# node bompton.js --generate-map > map.html
 
 
 # Manuals
