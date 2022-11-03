@@ -1297,14 +1297,14 @@ class Game {
 			if (level < 1) return -1;
 			const manaused = 1;
 			passTime('Casting', 1);
-			if (state[FATIGUE] + manaused > state[ENERGY])
+			if (state[FATIGUE] + manaused > state[MAX_MP])
 				return -1;
 			state[FATIGUE] += manaused;
-			if (spell === HEAL) {
-				state[DAMAGE] = Math.min(state[DAMAGE] - level, 0);
-			} else if (spell === FIREBALL) {
+			if (spell === SPELL_HEAL) {
+				state[DAMAGE] = Math.max(state[DAMAGE] - level, 0);
+			} else if (spell === SPELL_FIREBALL) {
 				return battle(true);
-			} else if (spell === HASTE || spell === BUFF || spell === INVISIBILITY || spell === LUCK) {
+			} else if (spell === SPELL_HASTE || spell === SPELL_BUFF || spell === SPELL_INVISIBILITY || spell === SPELL_LUCK) {
 				state[ENCHANTMENT] = spell;
 				state[ENCHANTMENTLEVEL] = spell;
 				// TODO: effects of these
@@ -1334,12 +1334,19 @@ class Game {
 				qty = state[MOB_TYPE] ? 1 : 0;
 			} else if (target === DAMAGE) {
 				passTime('Resting', 0, 1);
-				let heal = d(CON());
+				let hp = d(CON());
 				if (local.terrain !== TOWN)
-					heal = Math.round(heal * rand() * rand());
-				heal = Math.min(heal, state[DAMAGE]);
-				state[DAMAGE] -= heal;
-				return heal;
+					hp = Math.round(hp * rand() * rand());
+				hp = Math.min(hp, state[DAMAGE]);
+				state[DAMAGE] -= hp;
+
+				let mp = d(WIS());
+				if (local.terrain !== TOWN)
+					mp = Math.round(mp * rand() * rand());
+				mp = Math.min(mp, state[FATIGUE]);
+				state[FATIGUE] -= mp;
+
+				return hp + mp;
 
 			} else if (target === EQUIPMENT_TOTEM) {
 				passTime('Hunting for the totem', 6);
