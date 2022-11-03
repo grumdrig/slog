@@ -607,7 +607,13 @@ class Assembler {
     for (let pc of Object.keys(this.forwardCodeReferences)) {
       let symbol = this.forwardCodeReferences[pc];
       this.assert(typeof this.labels[symbol] !== 'undefined', "undefined code label: " + symbol);
-      this.reemit(pc, this.code[pc] & 0x3f, this.labels[symbol]);
+      let opcode = this.code[pc] & 0x3f;
+      let operand = this.labels[symbol];
+      if (['jmp', 'br'].includes(OPCODES[opcode])) {
+        // In immediate mode, jmp and br are relative to the (post-instruction) pc
+        operand = operand - (pc + 1);
+      }
+      this.reemit(pc, opcode, operand);
     }
     for (let pc of Object.keys(this.forwardDataReferences)) {
       let symbol = this.forwardDataReferences[pc];
