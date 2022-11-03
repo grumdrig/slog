@@ -859,7 +859,7 @@ function generateMap() {
 			grid-template-columns: repeat(${cols} 1fr);
 			gap: 4px;
 			width: 740px;
-			margin: 24px auto 0 auto;
+			margin: 0 auto 0 auto;
 		}
 		div.themap > div {
 			border: solid 1px black;
@@ -919,6 +919,7 @@ class Game {
 	}
 
 	static generateInterface = generateInterface;
+	static generateMap = generateMap;
 
 	static RACE_NAMES = RACES.map(r => (r && r.name) || 'TBD');
 	static TERRAIN_TYPES = TERRAIN_TYPES;
@@ -1399,7 +1400,6 @@ class Game {
 
 if (typeof exports !== 'undefined') {
 	exports.Game = Game;
-	exports.generateInterface = generateInterface;
 }
 
 if (typeof module !== 'undefined' && !module.parent) {

@@ -200,7 +200,7 @@
 
 iframe {
 	width: 800px;
-	height: 480px;
+	height: 390px;
 	background-color: #fff;
 }
 
@@ -487,8 +487,7 @@ prove!
 		  	<iframe src="data:,Game%20Reference"></iframe>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-map">
-		  	<iframe src="map.html"></iframe>
-		  	<p><a href=map.html target=_blank>External link</a>
+		  	<div id='worldmap'></div>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-compiler">
 		  	<iframe src="compiler.html"></iframe>
@@ -774,6 +773,7 @@ window.addEventListener("DOMContentLoaded", _ => {
   $$('[role="tab"]').forEach(tab => tab.addEventListener("click", changeTabs));
 
   $("#interface").value = Game.generateInterface();
+  $("#worldmap").innerHTML = Game.generateMap();
 
   $$(".icon").forEach(element => element.addEventListener('click', e => {
   	let win = document.getElementById(element.getAttribute('data-for'));
