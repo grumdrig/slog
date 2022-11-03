@@ -977,10 +977,10 @@ function updateCharacterSheet(state) {
 	setProgress('questprogress', state[QUEST_PROGRESS], state[QUEST_QTY]);
 	set('questorigin', original && (original.name + ' #' + original.index) || '');
 
-	set('act', state[ACT] || 'Prologue');
+	set('act', toRoman(state[ACT]));
 	setProgress('actprogress', state[ACT_PROGRESS], state[ACT_DURATION]);
-	set('gameprogress', `${Math.round(100 * state[ACT] / 10)}%`);
-	setBar('gameprogress', state[ACT], 10);
+	set('gameprogress', `${Math.round(100 * (state[ACT] - 1) / 10)}%`);
+	setBar('gameprogress', state[ACT] - 1, 10);
 
 	if (!vm.running) {
 			$id('task').innerText = 'Halted.';

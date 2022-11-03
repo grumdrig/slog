@@ -1061,6 +1061,15 @@ class Game {
 			// state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
 		}
 
+		function actUp() {
+			if (state[ACT_PROGRESS] >= state[ACT_DURATION]) {
+				state[ACT] += 1;
+				const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
+				state[ACT_DURATION] = ACT_LENGTHS[state[ACT] - 1];
+				state[ACT_PROGRESS] = 0;
+			}
+		}
+
 
 		if (state[LEVEL] === 0) {
 			// game hasn't begun
@@ -1089,6 +1098,7 @@ class Game {
 				state[LOCATION] = 18;
 				state[MAX_HP] = 6 + CON();
 				state[MAX_MP] = 6 + INT();
+				actUp();
 				for (let { slot, value } of raceinfo.startingitems) {
 					state[slot] = value;
 				}
@@ -1257,15 +1267,11 @@ class Game {
 
 		} else if (opcode === completequest) {
 			if (!state[QUEST_OBJECT] && !state[QUEST_MOB]) return -1;
-			if (state[QUEST_ORIGIN] != state[LOCATION]) return -1;
+			if (state[QUEST_ORIGIN] && (state[QUEST_ORIGIN] != state[LOCATION])) return -1;
 			if (state[QUEST_PROGRESS] < state[QUEST_QTY]) return -1;
 			state[XP] += 100;
-			state[ACTPROGRESS] += 1;
-			if (state[ACTPROGRESS] >= state[ACTDURATION]) {
-				state[ACT] += 1;
-				state[ACTDURATION] = ACT_LENGTHS[state[ACT]];
-				state[ACTPROGRESS] = 0;
-			}
+			state[ACT_PROGRESS] += 1;
+			actUp();
 			state[QUEST_OBJECT] = 0;
 			state[QUEST_MOB] = 0;
 			state[QUEST_LOCATION] = 0;
