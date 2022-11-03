@@ -798,6 +798,12 @@ class PrefixExpression {
 					context.emit('fetch');
 				},
 			},
+		'&': {
+			generate: (context, rhs) => {
+					context.assert(rhs.generateAddress, "addressable expression expected");
+					rhs.generateAddress(context);
+				},
+			},
 		'.': {
 			generate: (context, rhs) => {
 					if (rhs.literal) {
@@ -837,7 +843,7 @@ class PrefixExpression {
 
 
 function opassign(context, lhs, rhs, ...ops) {
-	context.assert(lhs.generateAddress, "addressable variable expected");
+	context.assert(lhs.generateAddress, "addressable expression expected");
 	lhs.generateAddress(context); // [ &lhs ...
 	context.emit('peek 0');       // [ &lhs, &lhs, ...
 	context.emit('fetch');        // [ lhs, &lhs, ...
@@ -1088,7 +1094,7 @@ class BinaryExpression {
 		'=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {
-				context.assert(lhs.generateAddress, "addressable variable expected");
+				context.assert(lhs.generateAddress, "addressable expression expected");
 				rhs.generate(context);
 				context.emit('peek 0');
 				lhs.generateAddress(context);

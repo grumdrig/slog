@@ -697,6 +697,8 @@ Output a symbol table for the debugger
 
 I don't think the assembler knows about how jmp and br work?
 
+Change 'var' to 'let'?
+
 
 Backstory
 =========
