@@ -109,83 +109,70 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 
 const CALLS = {
 	initialize: {
-		parameters: 'slot,value',
-		opcode: 236,
+		extcode: 236, parameters: 'slot,value',
 		description: `Before the game starts, the character may assign up to
 a total of ten points to their six stat slots using this function. Also, the
 character's race much be assigned using this function with the slot value
 RACE.`,
 	},
 	startGame: {
-		opcode:  39,
+		extcode:  39,
 	},
 	train: {
-		parameters: 'stat',
-		opcode: 136,
+		extcode: 136, parameters: 'stat',
 	},
 	study: {
-		parameters: 'spell',
-		opcode: 136,
+		extcode: 136, parameters: 'spell',
 		description: `Study a spell. Repeated study sessions will enable the
 character to learn the spell or increase thier mastery of it. The character is
 limited to only four spells, so choose wisely.`,
 	},
 	travel: {
-		parameters: 'destination',
-		opcode: 130,
+		extcode: 130, parameters: 'destination',
 	},
 	melee: {
-		opcode:  31,
+		extcode:  31,
 	},
 	buyItem: {
-		parameters: 'slot,quantity',
-		opcode: 232,
+		extcode: 232, parameters: 'slot,quantity',
 	},
 	buyEquipment: {
-		parameters: 'slot,quality',
-		opcode: 232,
+		extcode: 232, parameters: 'slot,quality',
 	},
 	sell: {
-		parameters: 'slot,quantity',
-		opcode: 233,
+		extcode: 233, parameters: 'slot,quantity',
 	},
 	seekquest: {
-		opcode:  34,
+		extcode:  34,
 	},
 	completequest: {
-		opcode:  35,
+		extcode:  35,
 	},
 	cast: {
-		parameters: 'spell_slot',
-		opcode: 137,
+		extcode: 137, parameters: 'spell_slot',
 	},
 	forage: {
-		parameters: 'target_slot',
-		opcode: 138,
+		extcode: 138, parameters: 'target_slot',
 	},
 	rest: {
-		parameters: DAMAGE,
-		opcode: 138,
+		extcode:  20,
 	},
 	hunt: {
-		parameters: '$' + MOB_TYPE.toString(16),
-		opcode: 138,
+		extcode:  21,
 	},
 	levelup: {
-		opcode:  39,
+		extcode:  39,
 	},
 	give: {
-		parameters: 'slot,quantity',
-		opcode: 244,
+		extcode: 244, parameters: 'slot,quantity',
 	},
 	drop: {
-		parameters: 'slot,quantity',
-		opcode: 244,
+		extcode: 244, parameters: 'slot,quantity',
 	},
 };
 
 for (let call in CALLS) {
-	define(call, CALLS[call].opcode);
+	define(call, CALLS[call].extcode);
 }
 
 /*
@@ -222,8 +209,8 @@ function generateInterface() {
 	let interface = [];
 
 	for (let call in CALLS) {
-		let { opcode, parameters } = CALLS[call];
-		let externalDef = `external ${call}(${parameters || ''}) = ${opcode}`;
+		let { extcode, parameters } = CALLS[call];
+		let externalDef = `external ${call}(${parameters || ''}) = ${extcode}`;
 		interface.push(externalDef);
 	}
 
@@ -939,17 +926,17 @@ class Game {
 				console.log(SLOTS[i] + ': ' + state[i]);
 	}
 
-	static handleInstruction(state, opcode, arg1, arg2) {
-		let result = this._handleInstruction(state, opcode, arg1, arg2);
+	static handleInstruction(state, extcode, arg1, arg2) {
+		let result = this._handleInstruction(state, extcode, arg1, arg2);
 		state[CAPACITY] = carryCapacity(state);
 		state[ENCUMBRANCE] = encumbrance(state);
 		state[ARMOR_CLASS] = armorClass(state);
 		return result;
 	}
 
-	static _handleInstruction(state, opcode, arg1, arg2) {
+	static _handleInstruction(state, extcode, arg1, arg2) {
 
-		let seed = hash(state[SEED], 0x5EED, opcode, arg1, arg2);
+		let seed = hash(state[SEED], 0x5EED, extcode, arg1, arg2);
 		state[SEED] = seed;
 
 		// seed and key are integers on [0, 0x7fffffff]
@@ -1074,7 +1061,7 @@ class Game {
 
 		if (state[LEVEL] === 0) {
 			// game hasn't begun
-			if (opcode === initialize) {
+			if (extcode === initialize) {
 				let [slot, value] = [arg1, arg2];
 				if (value < 0) return -1
 				if (slot === RACE) {
@@ -1086,7 +1073,7 @@ class Game {
 				}
 				return state[slot];
 
-			} else if (opcode === startGame) {
+			} else if (extcode === startGame) {
 				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) >> 8 > 10) return -1;
 				let raceinfo = RACES[state[RACE]];
 				if (!raceinfo) return -1;
@@ -1140,7 +1127,7 @@ class Game {
 			return Math.max(0, carryCapacity(state) - encumbrance(state));
 		}
 
-		if (opcode === travel) {
+		if (extcode === travel) {
 			const destination = arg1;
 			if (destination === state[LOCATION]) return 0;
 			let remote = this.MAP[destination];
@@ -1173,11 +1160,11 @@ class Game {
 			passTime('Travelling', hours);
 			return 1;
 
-		} else if (opcode === melee) {
+		} else if (extcode === melee) {
 			passTime('Fighting', 1);
 			return battle();
 
-		} else if (opcode === buyItem) {
+		} else if (extcode === buyItem) {
 			let slot = arg1;
 			let qty, levelToBe, capacity;
 			if (isEquipmentSlot(slot)) {
@@ -1210,7 +1197,7 @@ class Game {
 			passTime('Buying', 1);
 			return qty;
 
-		} else if (opcode === sell || opcode === give) {
+		} else if (extcode === sell || extcode === give) {
 			let [slot, qty] = [arg1, arg2];
 			if (isEquipmentSlot(slot)) {
 				qty = Math.max(qty, 1);
@@ -1224,7 +1211,7 @@ class Game {
 				return 1;
 			}
 			let price = qty * 0.5 * marketValue(slot);
-			if (opcode !== give) {
+			if (extcode !== give) {
 				state[INVENTORY_GOLD] += price;
 			} else if (state[QUEST_OBJECT] === slot) {
 				state[QUEST_PROGRESS] += qty;
@@ -1233,7 +1220,7 @@ class Game {
 			passTime('Selling', 1, 0);
 			return qty;
 
-		} else if (opcode === seekquest) {
+		} else if (extcode === seekquest) {
 			passTime('Asking around about quests', 1, 0);
 			if (local.terrain !== TOWN) return -1;
 			let questTypes = [_ => {
@@ -1266,7 +1253,7 @@ class Game {
 			state[QUEST_ORIGIN] = state[LOCATION];
 			return 1;
 
-		} else if (opcode === completequest) {
+		} else if (extcode === completequest) {
 			if (!state[QUEST_OBJECT] && !state[QUEST_MOB]) return -1;
 			if (state[QUEST_ORIGIN] && (state[QUEST_ORIGIN] != state[LOCATION])) return -1;
 			if (state[QUEST_PROGRESS] < state[QUEST_QTY]) return -1;
@@ -1281,7 +1268,7 @@ class Game {
 			state[QUEST_QTY] = 0;
 			return 1;
 
-		} else  if (opcode === train) { // or study
+		} else  if (extcode === train) { // or study
 			let slot = arg1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
@@ -1290,13 +1277,13 @@ class Game {
 					((v >> 8) || (s === slot))).length > 4) {
 				return -1;  // max spells already learned
 			}
-			passTime(opcode === train ? 'Training' : 'Studying', 0, 1);
+			passTime(extcode === train ? 'Training' : 'Studying', 0, 1);
 			let learns = Math.round(6 * (3 + WIS()) * Math.pow(0.6, state[slot] / 256));
 			// TODO other factors, like race, stats, random chance?
 			state[slot] += learns;
 			return state[slot];
 
-		} else if (opcode === cast) {
+		} else if (extcode === cast) {
 			let spell = arg1;
 			if (!isSpellSlot(spell)) return -1;
 			let level = state[spell];
@@ -1319,62 +1306,64 @@ class Game {
 			}
 			return level;
 
-		} else if (opcode === forage) {  // or hunt, or rest
+		} else if (extcode === hunt) {
+			passTime('Hunting', 1);
+			state[MOB_TYPE] = 0;
+			state[MOB_LEVEL] = 0;
+			state[MOB_DAMAGE] = 0;
+			for (let i = 0; i < 4; ++i) {
+				// location.mobtype;
+				let t = randomMob();
+				let l = MOBS[t].hitdice + d(2) - d(2);
+				if (!state[MOB_TYPE] || Math.abs(l - local.level) <
+										Math.abs(state[MOB_LEVEL] - local.level)) {
+					state[MOB_TYPE] = t;
+					state[MOB_LEVEL] = l;
+				}
+			}
+			state[MOB_DAMAGE] = 0;
+			return state[MOB_TYPE] ? 1 : 0;
+
+		} else if (extcode === rest) {
+			passTime('Resting', 0, 1);
+			let hp = d(CON());
+			if (local.terrain !== TOWN)
+				hp = Math.round(hp * rand() * rand());
+			hp = Math.min(hp, state[DAMAGE]);
+			state[DAMAGE] -= hp;
+
+			let mp = d(WIS());
+			if (local.terrain !== TOWN)
+				mp = Math.round(mp * rand() * rand());
+			mp = Math.min(mp, state[FATIGUE]);
+			state[FATIGUE] -= mp;
+
+			return hp + mp;
+
+		} else if (extcode === forage) {
 			let target = arg1;
 			let qty;
-			if (target === MOB_TYPE) {
-				state[MOB_TYPE] = 0;
-				state[MOB_LEVEL] = 0;
-				state[MOB_DAMAGE] = 0;
-				for (let i = 0; i < 4; ++i) {
-					// location.mobtype;
-					let t = randomMob();
-					let l = MOBS[t].hitdice + d(2) - d(2);
-					if (!state[MOB_TYPE] || Math.abs(l - local.level) <
-											Math.abs(state[MOB_LEVEL] - local.level)) {
-						state[MOB_TYPE] = t;
-						state[MOB_LEVEL] = l;
-					}
-				}
-				state[MOB_DAMAGE] = 0;
-				qty = state[MOB_TYPE] ? 1 : 0;
-			} else if (target === DAMAGE) {
-				passTime('Resting', 0, 1);
-				let hp = d(CON());
-				if (local.terrain !== TOWN)
-					hp = Math.round(hp * rand() * rand());
-				hp = Math.min(hp, state[DAMAGE]);
-				state[DAMAGE] -= hp;
-
-				let mp = d(WIS());
-				if (local.terrain !== TOWN)
-					mp = Math.round(mp * rand() * rand());
-				mp = Math.min(mp, state[FATIGUE]);
-				state[FATIGUE] -= mp;
-
-				return hp + mp;
-
-			} else if (target === EQUIPMENT_TOTEM) {
-				passTime('Hunting for the totem', 6);
+			if (target === EQUIPMENT_TOTEM) {
+				passTime('Seeking the local totem', 6);
 				if (d(20) <= INT()) {
 					state[EQUIPMENT_TOTEM] = state[LOCATION];
 					return 1;
 				} else {
 					return 0;
 				}
-
-			} else if (isInventorySlot(target)) {
-				if (!inventoryCapacity()) return -1;
-				qty = rand() < 0.5 ? 1 : 0;
-				qty = Math.min(qty, inventoryCapacity());
-				state[target] += qty;
-			} else {
-				return -1;
 			}
-			passTime(target === MOB_TYPE ? 'Hunting' : 'Foraging', 1);
+
+			if (!isInventorySlot(target)) return -1;
+			if (!inventoryCapacity()) return -1;
+
+			qty = rand() < 0.5 ? 1 : 0;
+			qty = Math.min(qty, inventoryCapacity());
+			state[target] += qty;
+
+			passTime('Foraging', 1);
 			return qty;
 
-		} else if (opcode === levelup) {
+		} else if (extcode === levelup) {
 			if (state[LEVEL] >= 99) return 0;
 			if (state[XP] < this.xpNeededForLevel(state[LEVEL] + 1))
 				return 0;
