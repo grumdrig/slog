@@ -170,9 +170,9 @@ class CompilationContext {
 		this.symbols[identifier] = { constant: true, value };
 	}
 
-	defineExternal(identifier, opcode, parameters) {
+	defineExternal(identifier, operand, parameters) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
-		this.symbols[identifier] = { external: true, opcode, parameters };
+		this.symbols[identifier] = { external: true, operand, parameters };
 	}
 
 	declareVariable(identifier, count, initializer) {
@@ -332,8 +332,8 @@ class VariableDeclaration {
 
 class ExternalDefinition {
 	name;
-	parameters = [];  // ignored
-	opcode;
+	parameters = [];
+	operand;
 
 	static tryParse(source) {
 		if (!source.lookahead('external', {identifier:true})) return false;
@@ -348,16 +348,15 @@ class ExternalDefinition {
 				source.consume(',');
 			}
 		}
-		if (result.parameters.length > 2) source.error("excess parameters in exteral definition; limit is two");
+		if (result.parameters.length > 2) source.error("more than two parameters in external definition");
 		source.consume('=');
-		result.opcode = Expression.parse(source);
+		result.operand = Expression.parse(source);
 		return result;
 	}
 
 	define(context) {
-		let opcode = this.opcode.simplify(context);
-		context.assert(opcode.literal, "literal opcode value expected");
-		context.defineExternal(this.name, this.opcode.literal, this.parameters);
+		let operand = this.operand.simplify(context).literal ?? context.error('constant operand value expected');
+		context.defineExternal(this.name, operand, this.parameters);
 	}
 }
 
@@ -612,10 +611,9 @@ class Expression {
 			}
 		} else {
 			expr = ExternalFunctionExpression.tryParse(source) ||
-				ExternalIndexExpression.tryParse(source) ||
-				PrefixExpression.tryParse(source) ||
-				LiteralExpression.tryParse(source) ||
-				IdentifierExpression.tryParse(source);
+				   PrefixExpression.tryParse(source) ||
+				   LiteralExpression.tryParse(source) ||
+				   IdentifierExpression.tryParse(source);
 		}
 		if (!expr) source.error('expression expected');
 		while (true) {
@@ -633,60 +631,42 @@ class Expression {
 }
 
 
+// Kind of unneccessary
 class ExternalFunctionExpression {
-	opcode;
+	operand;
 	arg1;
 	arg2;
 
 	static tryParse(source) {
 		if (!source.tryConsume('external', '(')) return;
 		let result = new ExternalFunctionExpression();
-		result.opcode = Expression.parse(source);
-		source.consume(')');
-		source.consume('(');
-		result.arg1 = Expression.parse(source);
-		source.consume(',');
-		result.arg2 = Expression.parse(source);
+		result.operand = Expression.parse(source);
+		if (source.tryConsume(',')) {
+			result.arg1 = Expression.parse(source);
+			if (source.tryConsume(',')) {
+				result.arg2 = Expression.parse(source);
+			}
+		}
 		source.consume(')');
 		return result;
 	}
 
 	simplify(context) {
-		this.opcode = this.opcode.simplify(context);
-		this.arg1 = this.arg1.simplify(context);
-		this.arg2 = this.arg2.simplify(context);
+		this.operand = this.operand.simplify(context);
+		if (this.arg1) this.arg1 = this.arg1.simplify(context);
+		if (this.arg2) this.arg2 = this.arg2.simplify(context);
 		return this;
 	}
 
 	generate(context) {
 		this.simplify(context);  // needed?
-		context.assert(this.opcode.literal, 'literal value expected');
-		this.arg1.generate(context);
-		this.arg2.generate(context);
-		context.emit('ext' + this.opcode.literal.toString(16));
-	}
-}
-
-class ExternalIndexExpression {
-	index;
-
-	static tryParse(source) {
-		if (!source.tryConsume('external', '[')) return;
-		let result = new ExternalIndexExpression();
-		result.index = Expression.parse(source);
-		source.consume(']');
-		return result;
-	}
-
-	simplify(context) {
-		this.index = this.index.simplify(context);
-		return this;
-	}
-
-	generate(context) {
-		this.simplify(context); //?
-		context.assert(this.index.literal);
-		context.emit('fetch ' + -this.index.literal);
+		let operand = this.operand.literal;
+		operand ?? context.error('literal value expected');
+		context.assert(!!this.arg2 == (operand >= 200), 'two arguments expected');
+		context.assert(!!this.arg1 == (operand >= 100), 'at least one argument expected');
+		if (this.arg2) this.arg2.generate(context);
+		if (this.arg1) this.arg1.generate(context);
+		context.emit('ext $' + operand.toString(16));
 	}
 }
 
@@ -1196,20 +1176,22 @@ class FunctionCallExpression {
 			context.assert(func, 'unknown identifier ' + this.lhs.identifier);
 		}
 		if (func.external) {
-			let named_params = func.parameters.filter(p => typeof p !== 'number').length;
-			context.assert(named_params === this.args.length, `mismatch in number of arguments; expected ${named_params}, got ${this.args.length}`);
-			for (let a of this.args) a.generate(context);
-			if (this.args.length < 2) {
-				let inst = '.stack ';
-				if (this.args.length == 0) {
-					inst += typeof func.parameters[0] === 'number' ? func.parameters[0] : 0;
-					inst += ' ';
-				}
-				inst += typeof func.parameters[1] === 'number' ? func.parameters[1] : 0;
-				inst += '  ; default arg';
-				context.emit(inst);
+			// let named_params = func.parameters.filter(p => typeof p !== 'number').length;
+			// context.assert(named_params === this.args.length, `mismatch in number of arguments; expected ${named_params}, got ${this.args.length}`);
+			let a = 0;
+			let reargs = func.parameters.map(p => typeof p === 'number' ? new LiteralExpression(p) : this.args[a++]);
+			context.assert(a == this.args.length, `mismatch in number of arguments`);
+
+			if (func.operand >= 200) {
+				context.assert(reargs.length == 2, 'two arguments expected');
+				reargs[1].generate(context);
 			}
-			context.emit('ext' + func.opcode.toString(16) + '  ; ' + this.lhs.identifier);
+			if (func.operand >= 100) {
+				context.assert(reargs.length >= 1, 'argument(s) expected');
+				reargs[0].generate(context);
+			}
+			context.emit('ext $' + func.operand.toString(16) + '  ; ' + this.lhs.identifier);
+
 		} else {
 			context.assert(func.parameters.length === this.args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${this.args.length}`);
 			const returnLabel = uniqueLabel('return');
@@ -1310,7 +1292,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		allowPositionals: true,
 	});
 
-	let interfaces = (interface || []).map(filename => require(filename).generateInterface());
+	let interfaces = (interface || []).map(filename => require(filename).Game.generateInterface());
 
 	let sources = positionals.map(filename => readFileSync(filename, 'utf8'));
 

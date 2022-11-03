@@ -91,22 +91,7 @@ const opcodes = [
   { opcode: 0x2D, mnemonic: 'shift' }, // AX = rotated-out bits
   // similar for these binary ops
 
-  { opcode: 0x30, mnemonic: 'ext30' },
-  { opcode: 0x31, mnemonic: 'ext31' },
-  { opcode: 0x32, mnemonic: 'ext32' },
-  { opcode: 0x33, mnemonic: 'ext33' },
-  { opcode: 0x34, mnemonic: 'ext34' },
-  { opcode: 0x35, mnemonic: 'ext35' },
-  { opcode: 0x36, mnemonic: 'ext36' },
-  { opcode: 0x37, mnemonic: 'ext37' },
-  { opcode: 0x38, mnemonic: 'ext38' },
-  { opcode: 0x39, mnemonic: 'ext39' },
-  { opcode: 0x3A, mnemonic: 'ext3A' },
-  { opcode: 0x3B, mnemonic: 'ext3B' },
-  { opcode: 0x3C, mnemonic: 'ext3C' },
-  { opcode: 0x3D, mnemonic: 'ext3D' },
-  { opcode: 0x3E, mnemonic: 'ext3E' },
-  { opcode: 0x3F, mnemonic: 'ext3F' },
+  { opcode: 0x3, mnemonic: 'ext' },
 ];
 
 
@@ -247,7 +232,7 @@ class VirtualMachine {
 
   bigstep() {
     step();
-    while (this.running && ((this.memory[this.pc] & 0x3F) < 0x30)) {
+    while (this.running && ((this.memory[this.pc] & 0x3F) != 0x3)) {
       step();
     }
   }
@@ -349,9 +334,12 @@ class VirtualMachine {
 
     // "Real"-world instructions, all of which advance character age
 
-    } else if (opcode >= 0x30) {
+    } else if (mnemonic == 'ext') {
       result = true;
-      this.top = this.world.handleInstruction(this.state, opcode, this.top, operand);
+      let arg1 = 0, arg2 = 0;
+      if (operand >= 100) arg1 = this.pop();
+      if (operand >= 200) arg2 = this.pop();
+      this.push(this.world.handleInstruction(this.state, operand, arg1, arg2));
 
     } else {
       this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic}`);

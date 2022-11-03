@@ -408,7 +408,7 @@ The nitty gritty.
 
 	code-block := (constant-definition | variable-declaration | statement)*
 
-	external-definition := 'external' identifier '(' external-parameter-list? ')' '=' number
+	external-definition := 'external' identifier ('(' external-parameter-list? ')')? '=' number
 
 	external-parameter-list := (number | identifier) (',' external-parameter-list)?
 

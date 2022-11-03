@@ -110,77 +110,77 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 const CALLS = {
 	initialize: {
 		parameters: 'slot,value',
-		opcode: 0x36,
+		opcode: 236,
 		description: `Before the game starts, the character may assign up to
 a total of ten points to their six stat slots using this function. Also, the
 character's race much be assigned using this function with the slot value
 RACE.`,
 	},
 	startGame: {
-		opcode: 0x39,
+		opcode:  39,
 	},
 	train: {
 		parameters: 'stat',
-		opcode: 0x36,
+		opcode: 136,
 	},
 	study: {
 		parameters: 'spell',
-		opcode: 0x36,
+		opcode: 136,
 		description: `Study a spell. Repeated study sessions will enable the
 character to learn the spell or increase thier mastery of it. The character is
 limited to only four spells, so choose wisely.`,
 	},
 	travel: {
 		parameters: 'destination',
-		opcode: 0x30,
+		opcode: 130,
 	},
 	melee: {
-		opcode: 0x31,
+		opcode:  31,
 	},
 	buyItem: {
 		parameters: 'slot,quantity',
-		opcode: 0x32,
+		opcode: 232,
 	},
 	buyEquipment: {
 		parameters: 'slot,quality',
-		opcode: 0x32,
+		opcode: 232,
 	},
 	sell: {
 		parameters: 'slot,quantity',
-		opcode: 0x33,
+		opcode: 233,
 	},
 	seekquest: {
-		opcode: 0x34,
+		opcode:  34,
 	},
 	completequest: {
-		opcode: 0x35,
+		opcode:  35,
 	},
 	cast: {
 		parameters: 'spell_slot',
-		opcode: 0x37,
+		opcode: 137,
 	},
 	forage: {
 		parameters: 'target_slot',
-		opcode: 0x38,
+		opcode: 138,
 	},
 	rest: {
 		parameters: DAMAGE,
-		opcode: 0x38,
+		opcode: 138,
 	},
 	hunt: {
 		parameters: '$' + MOB_TYPE.toString(16),
-		opcode: 0x38,
+		opcode: 138,
 	},
 	levelup: {
-		opcode: 0x39,
+		opcode:  39,
 	},
 	give: {
 		parameters: 'slot,quantity',
-		opcode: 0x3A,
+		opcode: 244,
 	},
 	drop: {
 		parameters: 'slot,quantity',
-		opcode: 0x3A,
+		opcode: 244,
 	},
 };
 
@@ -223,7 +223,7 @@ function generateInterface() {
 
 	for (let call in CALLS) {
 		let { opcode, parameters } = CALLS[call];
-		let externalDef = `external ${call}(${parameters || ''}) = $${opcode.toString(16)}`;
+		let externalDef = `external ${call}(${parameters || ''}) = ${opcode}`;
 		interface.push(externalDef);
 	}
 

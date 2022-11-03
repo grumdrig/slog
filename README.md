@@ -697,29 +697,7 @@ Output a symbol table for the debugger
 
 Change 'var' to 'let'?
 
-
-Backstory
-=========
-
-Life on Bompton had been generally peaceful for as long as anyone there could
-remember, with Hardwarf and Eff, Dunkling and Human, living in relative
-harmony. But in the year 526, dangerous monsters of all different sorts began
-to appear around the island, causing no head of mayhem to travellers and
-homesteaders alike.
-
-Some supposed that this alarming change could be related to the goings on
-observed at nearby Grayhame Isle, where odd plumes, eerie noises, and flashes
-of light were all noted by those who dwelled on the coast opposite it, along
-with noxious odors carried on winds from that direction.  The fact is that
-such speculation was correct. An evil presence had taken up residence high on
-Mt Emkell on Grayhame Isle, and was practicing such magics as to cook up
-trouble on Bompton.
-
-Unfortunately, time was very limited for the Bomptonites. As the evil one's
-power grew, so did the suffering of the once happy people.
-
-But one hero, little more than a child, would prove to be the only hope for
-the dwellers on Bompton. Would this person be able to build their power,
-training and studying, enough to defeat this threat? That's up to you to
-prove!
-
+It would seem more natural if function call argments were pushed on the stack
+from last to first? Or am I thinking about this wrong right now? I guess it's
+the opposite of how binary operators work. I'm doing external function calls
+that way in any case.
