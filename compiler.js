@@ -172,6 +172,8 @@ class CompilationContext {
 
 	defineExternal(identifier, operand, parameters) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
+		if (Object.values(this.symbols).filter(s => s.external && s.operand === operand).length)
+			this.error(`duplicate external index ${operand} used for ${identifier}`);
 		this.symbols[identifier] = { external: true, operand, parameters };
 	}
 

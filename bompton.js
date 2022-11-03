@@ -122,7 +122,7 @@ RACE.`,
 		extcode: 136, parameters: 'stat',
 	},
 	study: {
-		extcode: 136, parameters: 'spell',
+		extcode: 146, parameters: 'spell',
 		description: `Study a spell. Repeated study sessions will enable the
 character to learn the spell or increase thier mastery of it. The character is
 limited to only four spells, so choose wisely.`,
@@ -134,7 +134,7 @@ limited to only four spells, so choose wisely.`,
 		extcode:  31,
 	},
 	buyItem: {
-		extcode: 232, parameters: 'slot,quantity',
+		extcode: 231, parameters: 'slot,quantity',
 	},
 	buyEquipment: {
 		extcode: 232, parameters: 'slot,quality',
@@ -161,13 +161,13 @@ limited to only four spells, so choose wisely.`,
 		extcode:  21,
 	},
 	levelup: {
-		extcode:  39,
+		extcode:  99,
 	},
 	give: {
 		extcode: 244, parameters: 'slot,quantity',
 	},
 	drop: {
-		extcode: 244, parameters: 'slot,quantity',
+		extcode: 245, parameters: 'slot,quantity',
 	},
 };
 
@@ -1164,7 +1164,7 @@ class Game {
 			passTime('Fighting', 1);
 			return battle();
 
-		} else if (extcode === buyItem) {
+		} else if (extcode === buyItem || extcode === buyEquipment) {
 			let slot = arg1;
 			let qty, levelToBe, capacity;
 			if (isEquipmentSlot(slot)) {
@@ -1197,7 +1197,7 @@ class Game {
 			passTime('Buying', 1);
 			return qty;
 
-		} else if (extcode === sell || extcode === give) {
+		} else if (extcode === sell || extcode === give || extcode === drop) {
 			let [slot, qty] = [arg1, arg2];
 			if (isEquipmentSlot(slot)) {
 				qty = Math.max(qty, 1);
@@ -1268,7 +1268,7 @@ class Game {
 			state[QUEST_QTY] = 0;
 			return 1;
 
-		} else  if (extcode === train) { // or study
+		} else  if (extcode === train || extcode == study) {
 			let slot = arg1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
