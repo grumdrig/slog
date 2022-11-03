@@ -1274,8 +1274,7 @@ class Game {
 			state[QUEST_QTY] = 0;
 			return 1;
 
-		} else  if (opcode === train) {
-			// aka study
+		} else  if (opcode === train) { // or study
 			let slot = arg1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
@@ -1285,7 +1284,7 @@ class Game {
 				return -1;  // max spells already learned
 			}
 			passTime(opcode === train ? 'Training' : 'Studying', 0, 1);
-			let learns = Math.round(256 * Math.exp(1/5, 1.5));
+			let learns = Math.round(6 * (3 + WIS()) * Math.pow(0.6, state[slot] / 256));
 			// TODO other factors, like race, stats, random chance?
 			state[slot] += learns;
 			return state[slot];

@@ -994,6 +994,7 @@ function gameplay(inst, arg1, arg2) {
 	arg2 = arg2 || eval($("#arg2").value);
 	let result = Game.handleInstruction(vm.state, inst, arg1, arg2);
 	$("#result").innerText = result;
+	updateDebuggerState(vm);
 	updateCharacterSheet(vm.state);
 }
 </script>
