@@ -26,3 +26,9 @@ node vm.js -l test.bin -r
 # Map
 
 node pqasm.js --generate-map > map.html
+
+
+# Manuals
+
+-i vm.html node_modules/marked/bin/marked.js -i pqvm.md -o vm.html
+-i asm.html node_modules/marked/bin/marked.js -i assembler_manual.md -o asm.html

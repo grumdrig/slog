@@ -858,14 +858,14 @@ function generateMap() {
 			display: grid;
 			grid-template-columns: repeat(${cols} 1fr);
 			gap: 4px;
-			width: 800px;
-			margin: 12px auto;
+			width: 740px;
+			margin: 24px auto 0 auto;
 		}
 		div.themap > div {
 			border: solid 1px black;
 			border-radius: 6px;
 			padding: 4px;
-			font: 14px sans-serif;
+			font: 13px sans-serif;
 		}
 		div.themap > div > div:first-child {
 			text-align: right;

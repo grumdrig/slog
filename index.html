@@ -198,6 +198,12 @@
 	 	width: 500px;
 	 }
 
+iframe {
+	width: 800px;
+	height: 480px;
+	background-color: #fff;
+}
+
 /* Icons */
 
 div.icon {
@@ -218,10 +224,9 @@ div.icon {
 	    <button aria-label="Close" class=close></button>
 	  </div>
 	</div>
-
 	<div class="window-body" id="sources">
-		<section class="tabs" style="XXmax-width: 500px">
-		  <menu role="tablist" aria-label="Sample Tabs">
+		<section class="tabs">
+		  <menu role="tablist" aria-label="Editor Tabs">
 		    <button role="tab" aria-selected="true" aria-controls="tab-A">Source</button>
 		    <button role="tab" aria-controls="tab-B">Assembly</button>
 		    <button role="tab" aria-controls="tab-C">Disassembly</button>
@@ -307,20 +312,20 @@ div.icon {
 			<div id=vitals class=listview>
 				<div class=header>Vital Statistics</div>
 				<div>Race</div><div id="race"></div>
-				<div>Level</div><div id="level">1</div>
-				<div>XP</div><div id="xp" class=prog>0</div>
-				<div>Health</div><div id="health" class=prog>1</div>
-				<div>Energy</div><div id="energy" class=prog>1</div>
+				<div>Level</div><div id="level"></div>
+				<div>XP</div><div id="xp" class=prog></div>
+				<div>Health</div><div id="health" class=prog></div>
+				<div>Energy</div><div id="energy" class=prog></div>
 			</div>
 
 			<div id=stats class=listview>
 				<div class=header>Stats</div>
-				<div>Strength</div>     <div id="s0">1</div>
-				<div>Agility</div>      <div id="s1">1</div>
-				<div>Constitution</div> <div id="s2">1</div>
-				<div>Intelligence</div> <div id="s3">1</div>
-				<div>Wisdom</div>       <div id="s4">1</div>
-				<div>Charisma</div>     <div id="s5">1</div>
+				<div>Strength</div>     <div id="s0"></div>
+				<div>Agility</div>      <div id="s1"></div>
+				<div>Constitution</div> <div id="s2"></div>
+				<div>Intelligence</div> <div id="s3"></div>
+				<div>Wisdom</div>       <div id="s4"></div>
+				<div>Charisma</div>     <div id="s5"></div>
 			</div>
 
 			<div id=spells class=listview>
@@ -367,16 +372,16 @@ div.icon {
 			</div>
 			<div id=quest class=listview>
 				<div class=header>Quest</div>
-				<div>Object</div> <div id=questgoal>Kill the selkies</div>
-				<div>Location</div> <div id=questlocation>Chump woods</div>
-				<div>Progress</div> <div id=questprogress class=prog>50%</div>
-				<div>Origin</div> <div id=questorigin>Dojo town</div>
+				<div>Object</div> <div id=questgoal></div>
+				<div>Location</div> <div id=questlocation></div>
+				<div>Progress</div> <div id=questprogress class=prog></div>
+				<div>Origin</div> <div id=questorigin></div>
 			</div>
 			<div id=plot class=listview>
 				<div class=header>Game Progress</div>
-				<div>Act</div> <div id=act>II</div>
-				<div>Act Progress</div> <div id=actprogress class=prog>50%</div>
-				<div>Game Progress</div> <div id=gameprogress class=prog>50%</div>
+				<div>Act</div> <div id=act></div>
+				<div>Act Progress</div> <div id=actprogress class=prog></div>
+				<div>Game Progress</div> <div id=gameprogress class=prog></div>
 			</div>
 		</div>
 	</div>
@@ -430,6 +435,76 @@ div.icon {
 </div>
 
 
+<div class=window id=docs-window>
+	<div class="title-bar">
+	  <div class="title-bar-text">Documentation</div>
+	  <div class="title-bar-controls">
+	    <button aria-label="Close" class=close></button>
+	  </div>
+	</div>
+	<div class="window-body" id="sources">
+		<section class="tabs" style="max-width: 1000px;max-height: 480px">
+		  <menu role="tablist" aria-label="Documentation Tabs">
+		    <button role="tab" aria-selected="true" aria-controls="tab-about">About</button>
+		    <button role="tab" aria-controls="tab-backstory">Backstory</button>
+		    <button role="tab" aria-controls="tab-game-reference">Game Reference</button>
+		    <button role="tab" aria-controls="tab-map">Map</button>
+		    <button role="tab" aria-controls="tab-compiler">Compiler Reference</button>
+		    <button role="tab" aria-controls="tab-assembler">Assembler Reference</button>
+		    <button role="tab" aria-controls="tab-vm">Virtual Machine Reference</button>
+		  </menu>
+		  <article role="tabpanel" id="tab-about">
+		  	<div>
+		  		What this is, etc.
+		  	</div>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-backstory">
+		  	<div>
+<p>Life on Bompton had been generally peaceful for as long as anyone there could
+remember, with Hardwarf and Eff, Dunkling and Human, living in relative
+harmony. But in the year 526, dangerous monsters of all different sorts began
+to appear around the island, causing no head of mayhem to travellers and
+homesteaders alike.
+
+<p>Some supposed that this alarming change could be related to the goings on
+observed at nearby Grayhame Isle, where odd plumes, eerie noises, and flashes
+of light were all noted by those who dwelled on the coast opposite it, along
+with noxious odors carried on winds from that direction.  The fact is that
+such speculation was correct. An evil presence had taken up residence high on
+Mt Emkell on Grayhame Isle, and was practicing such magics as to cook up
+trouble on Bompton.
+
+<p>Unfortunately, time was very limited for the Bomptonites. As the evil one's
+power grew, so did the suffering of the once happy people.
+
+<p>But one hero, little more than a child, would prove to be the only hope for
+the dwellers on Bompton. Would this person be able to build their power,
+training and studying, enough to defeat this threat? That's up to you to
+prove!
+</div>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-game-reference">
+		  	<iframe src="data:,Game%20Reference"></iframe>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-map">
+		  	<iframe src="map.html"></iframe>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-compiler">
+		  	<iframe src="data:,Compiler%20Reference"></iframe>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-assembler">
+		  	<iframe src="asm.html"></iframe>
+		  </article>
+		  <article role="tabpanel" hidden id="tab-vm">
+		  	<iframe src="vm.html"></iframe>
+		  	<p>
+		  	<a href=vm.html target=_blank>External link</a>
+		  </article>
+		</section>
+	</div>
+</div>
+
+
 <div class=icon data-for=editor-window>
 	<img src=editor.png>
 	<div>Editor</div>
@@ -453,6 +528,11 @@ div.icon {
 <div class=icon data-for=map-window>
 	<img src=map.png>
 	<div>Map</div>
+</div>
+
+<div class=icon data-for=docs-window>
+	<img src=docs.png>
+	<div>Documentation</div>
 </div>
 
 <script>
