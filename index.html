@@ -921,7 +921,10 @@ function updateCharacterSheet(state) {
 			n_spells += 1;
 		}
 	}
-	for ( ; n_spells < 4; ++n_spells) set('bt' + n_spells, '&nbsp;');
+	for ( ; n_spells < 4; ++n_spells) {
+		set('bt' + n_spells, '&nbsp;');
+		set('b' + n_spells, '');
+	}
 
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
 		const names = Game.EQUIPMENT_NAMES[i] || [];
