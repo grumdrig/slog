@@ -303,7 +303,7 @@ class VariableDeclaration {
 		let count = 1, initializer;
 		if (this.count) {
 			let c = this.count.simplify(context);
-			count = c.literal ?? context.error('literal array length expected');
+			count = c.literal ?? context.error('literal vector length expected');
 		}
 		if (this.initializer) {
 			let i = this.initializer.simplify(context);
@@ -313,11 +313,11 @@ class VariableDeclaration {
 			} else if (i.members) {
 				initializer = i.members.map(m => {
 					if (typeof m.literal !== 'number')
-						context.error('literal array initializer expected');
+						context.error('literal vector initializer expected');
 					return m.literal;
 				});
 				if (this.count && count !== initializer.length)
-					context.error('array length mismatch with initializer');
+					context.error('vector length mismatch with initializer');
 				count = initializer.length;
 			} else {
 				context.error('literal initializer expected');
@@ -634,7 +634,7 @@ class Expression {
 			expr = Expression.parse(source);
 			source.consume(')');
 		} else {
-			expr = ArrayLiteralExpression.tryParse(source) ||
+			expr = VectorLiteralExpression.tryParse(source) ||
 				   ExternalFunctionExpression.tryParse(source) ||
 				   PrefixExpression.tryParse(source) ||
 				   LiteralExpression.tryParse(source) ||
@@ -695,12 +695,12 @@ class ExternalFunctionExpression {
 	}
 }
 
-class ArrayLiteralExpression {
+class VectorLiteralExpression {
 	members = [];
 
 	static tryParse(source) {
 		if (source.tryConsume('[')) {
-			let expr = new ArrayLiteralExpression();
+			let expr = new VectorLiteralExpression();
 			while (true) {
 				expr.members.push(Expression.parse(source));
 				if (source.tryConsume(']')) break;
@@ -708,7 +708,7 @@ class ArrayLiteralExpression {
 			}
 			return expr;
 		} else if (source.isString()) {
-			let expr = new ArrayLiteralExpression();
+			let expr = new VectorLiteralExpression();
 			for (let c of source.next().text.slice(1, -1))
 				expr.members.push(new LiteralExpression(c.charCodeAt(0)));
 			expr.members.push(new LiteralExpression(0));
@@ -722,7 +722,7 @@ class ArrayLiteralExpression {
 	}
 
 	generate(context) {
-		context.error("an array literal/string is not a valid expression in this context");
+		context.error("an vector literal/string is not a valid expression in this context");
 	}
 }
 
@@ -1252,7 +1252,7 @@ class IndexExpression {
 
 	generate(context) {
 		if (this.lhs.members) {
-			context.error('array literal constant not available at runtime; use a var');
+			context.error('vector literal constant not available at runtime; use a var');
 		} else {
 			this.generateAddress(context);
 			context.emit('fetch');
