@@ -149,6 +149,10 @@ function uniqueLabel(realm) {
 }
 
 
+function indent(s) {
+	if (s.split(';')[0].search(':') >= 0) return s;
+	return '\t' + s;
+}
 
 class CompilationContext {
 	symbols = {};
@@ -186,6 +190,7 @@ class CompilationContext {
 			else
 				this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
 			this.symbols[identifier] = result = { variable: true, static: true, identifier };
+			this.emit('');
 		} else {
 			// Stack declaration
 			let scope = this.enclosingScope();
@@ -202,7 +207,7 @@ class CompilationContext {
 		this.symbols[declaration.name] = { function: declaration };
 	}
 
-	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
+	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(indent(s)) }
 
 	// link() {
 	// 	for (let f in forwards) {
@@ -249,6 +254,7 @@ class Module {
 		let context = new CompilationContext();
 
 		context.emit('.jump @main');
+		context.emit('');
 
 		for (let d of this.constants) d.define(context);
 		for (let d of this.variables) d.declare(context);
@@ -413,6 +419,7 @@ class FunctionDefinition extends MacroDefinition {
 			this.expr.generate(context);
 			this.generateReturn(context, true);
 		}
+		context.emit('');
 	}
 
 	generateCall(context, args) {
@@ -584,10 +591,10 @@ class IfStatement {
 		source.consume('}');
 		if (source.tryConsume('else')) {
 			if (source.lookahead('if')) {
-				elsebody = IfStatement.parse(source);
+				this.elsebody = IfStatement.parse(source);
 			} else {
 				source.consume('{');
-				elsebody = CodeBlock.parse(source);
+				this.elsebody = CodeBlock.parse(source);
 				source.consume('}');
 			}
 		}
