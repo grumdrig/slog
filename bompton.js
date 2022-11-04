@@ -71,6 +71,9 @@ const SLOTS = [
 	'ACT_DURATION', // # of something required
 	'ACT_PROGRESS', // as advanced by quests
 
+	'BALANCE_GOLD',      // bank of Bompton...
+	'BALANCE_TREASURES', // ...balances
+
 	'ESTEEM_DUNKLINGS',
 	'ESTEEM_HARDWARVES',
 	'ESTEEM_EFFS',
@@ -135,6 +138,8 @@ limited to only four spells, so choose wisely.`,
 	levelup: {},
 	give: { parameters: 'slot,quantity', },
 	drop: { parameters: 'slot,quantity', },
+	deposit: { parameters: 'slot,quantity', },
+	withdraw: { parameters: 'slot,quantity', },
 };
 
 Object.values(CALLS).forEach((c, i) => c.operation = 65 + i);
@@ -772,6 +777,8 @@ MAP.filter(t => t).forEach(t => {
 	t.latitude ??= ((t.index - 1) / 6) >> 0;
 });
 
+const BOMPTON_TOWN = 18;
+
 
 function generateMap() {
 	let result = [];
@@ -1030,7 +1037,7 @@ class Game {
 					state[stat] += (3 + (raceinfo.stat_mods[SLOTS[stat]] || 0)) << 8;
 				}
 				state[LEVEL] = 1;
-				state[LOCATION] = 18;
+				state[LOCATION] = BOMPTON_TOWN;
 				state[MAX_HP] = 6 + CON();
 				state[MAX_MP] = 6 + INT();
 				actUp();
@@ -1163,6 +1170,45 @@ class Game {
 			}
 			state[slot] -= qty;
 			passTime('Selling', 1, 0);
+			return qty;
+
+		} else if (operation === deposit || operation == withdraw) {
+
+			let [slot, qty] = [arg1, arg2];
+
+			if (qty < 0) return -1;  // nice try hacker
+			if (state[LOCATION] != BOMPTON_TOWN) return -1;  // you're not at the bank
+
+			if (state[INVENTORY_GOLD] + state[BALANCE_GOLD] <= 0)
+				return -1;  // Can't afford it
+
+			let bankSlot;
+			if (slot == INVENTORY_GOLD) bankSlot = BALANCE_GOLD;
+			else if (slot == INVENTORY_TREASURES) bankSlot = BALANCE_TREASURES;
+			else return -1;  // Bank doesn't deal in this item
+
+			let fromSlot = operation === deposit ? slot : bankSlot;
+			let toSlot = operation === withdrawl ? slot : bankSlot;
+
+			qty = Math.min(qty, state[fromSlot]);
+
+			let availableCapacity = deposit ? MAX_INT - slot[toSlot] : state[CAPACITY] - state[ENCUMBRANCE];
+			qty = Math.min(qty, availableCapacity);
+
+			if (qty > 0) {
+				state[fromSlot] -= qty;
+				state[toSlot] += qty;
+
+				// Charge a 1 gold commission per transaction
+				if (operation == deposit) {
+					state[state[INVENTORY_GOLD] > 0 ? INVENTORY_GOLD : BALANCE_GOLD] -= 1;
+				} else {
+					state[state[BALANCE_GOLD] > 0 ? BALANCE_GOLD : INVENTORY_GOLD] -= 1;
+				}
+
+				passTime('Making a bank ' + (operation == deposit ? 'deposit' : 'withdrawal'), 1);
+			}
+
 			return qty;
 
 		} else if (operation === seekquest) {
