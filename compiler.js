@@ -126,6 +126,10 @@ class Source {
 		return this.lexemes[0].literal;
 	}
 
+	isString() {
+		return this.lexemes[0].string;
+	}
+
 	next() {
 		if (!this.lexemes.length) {
 			this.error('unexpected end of file');
@@ -629,15 +633,9 @@ class Expression {
 		if (source.tryConsume('(')) {
 			expr = Expression.parse(source);
 			source.consume(')');
-		} else if (source.tryConsume('[')) {
-			expr = new ArrayLiteralExpression();
-			while (true) {
-				expr.members.push(Expression.parse(source));
-				if (source.tryConsume(']')) break;
-				source.consume(',');
-			}
 		} else {
-			expr = ExternalFunctionExpression.tryParse(source) ||
+			expr = ArrayLiteralExpression.tryParse(source) ||
+				   ExternalFunctionExpression.tryParse(source) ||
 				   PrefixExpression.tryParse(source) ||
 				   LiteralExpression.tryParse(source) ||
 				   IdentifierExpression.tryParse(source);
@@ -700,9 +698,31 @@ class ExternalFunctionExpression {
 class ArrayLiteralExpression {
 	members = [];
 
+	static tryParse(source) {
+		if (source.tryConsume('[')) {
+			let expr = new ArrayLiteralExpression();
+			while (true) {
+				expr.members.push(Expression.parse(source));
+				if (source.tryConsume(']')) break;
+				source.consume(',');
+			}
+			return expr;
+		} else if (source.isString()) {
+			let expr = new ArrayLiteralExpression();
+			for (let c of source.next().text.slice(1, -1))
+				expr.members.push(new LiteralExpression(c.charCodeAt(0)));
+			expr.members.push(new LiteralExpression(0));
+			return expr;
+		}
+	}
+
 	simplify(context) {
 		this.members = this.members.map(a => a.simplify(context));
 		return this;
+	}
+
+	generate(context) {
+		context.error("an array literal/string is not a valid expression in this context");
 	}
 }
 

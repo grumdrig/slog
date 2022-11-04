@@ -2,11 +2,13 @@
 // Test suite for compiler //
 /////////////////////////////
 
+var x
+
 // Character literals
 
 assert 'a' == 97
 assert 'ab' == 97 * 256 + 98
-
+assert "hello"[1] == 'e'
 
 /////////////////
 // Expressions //
@@ -112,7 +114,6 @@ assert (v0 || v3) == v3
 assert !(v0 || v0)
 
 // Assignment operators
-var x
 assert (x = 3) == 3
 assert (x += 4) == 7
 assert (x -= 4) == 3
