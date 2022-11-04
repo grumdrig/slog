@@ -192,5 +192,13 @@ assert ! !v0 == v0
 assert ! ! -v1 == v1
 
 
-//func factorial(n) (n <= 1 && 1) || factorial(n - 1)
-//assert factorial(3) == 6
+////////////////////
+// Functions
+///////////////////
+
+func factorial(n) (n <= 1 && 1) || n * factorial(n - 1)
+assert factorial(3) == 6
+
+macro plusFive(v) v + 5
+assert plusFive(1) == 6
+assert plusFive(v1) == v6

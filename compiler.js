@@ -341,9 +341,7 @@ class MacroDefinition {
 
 	static tryParse(source) {
 		if (!source.tryConsume('macro')) return;
-		let result = new MacroDefinition().continueParsing(source);
-		result.macro = true;
-		return result;
+		return new MacroDefinition().continueParsing(source);
 	}
 
 	continueParsing(source) {
@@ -874,10 +872,9 @@ function opassign(context, lhs, rhs, ...ops) {
 	context.emit('fetch');        // [ lhs, &lhs, ...
 	rhs.generate(context);        // [ rhs, lhs, &lhs, ...
 	ops.forEach(op => context.emit(op)) // [ result, &lhs, ...
-	context.emit('peek 1');       // [ &lhs, result, &lhs, ...
-	context.emit('store');        // [ &lhs, ...
-	context.emit('fetch');        // [ result, ...
-	// TODO now that i have swap, don't have to fetch the result - work that out
+	context.emit('peek 0');       // [ result, result, &lhs, ...
+	context.emit('swap 2');       // [ &lhs, result, result, ...
+	context.emit('store');        // [ result, ...
 }
 
 
@@ -1238,6 +1235,7 @@ class FunctionCallExpression {
 	simplify(context) {
 		this.lhs = this.lhs.simplify(context);
 		this.args = this.args.map(arg => arg.simplify(context));
+		// TODO if this is a call to a macro with literals, expand it
 		return this;
 	}
 }
