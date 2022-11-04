@@ -1,5 +1,16 @@
-// Test suite for expressions
+/////////////////////////////
+// Test suite for compiler //
+/////////////////////////////
 
+// Character literals
+
+assert 'a' == 97
+assert 'ab' == 97 * 256 + 98
+
+
+/////////////////
+// Expressions //
+/////////////////
 
 // Using variables avoids precomputation
 var v0 = 0

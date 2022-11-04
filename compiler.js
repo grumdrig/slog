@@ -45,8 +45,14 @@ class Source {
 					lexeme.value = parseInt(lexeme.text);
 				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
 					lexeme.identifier = true;
-				} else if (lexeme.text = take(/^'.+?'/)) {
-					lexeme.character = true;
+				} else if (lexeme.text = take(/^'.*?'/)) {
+					if (lexeme.text.length < 3 || lexeme.text.length > 4)
+						this.error('invalid character literal length ' + (lexeme.text.length - 2));
+					lexeme.literal = true;
+					lexeme.value = lexeme.text.charCodeAt(1);
+					if (lexeme.text.length > 3) {
+						lexeme.value = lexeme.value * 256 + lexeme.text.charCodeAt(2);
+					}
 				} else if (lexeme.text = take(/^".+?"/)) {
 					lexeme.string = true;
 				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/)) {
@@ -54,7 +60,7 @@ class Source {
 				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/)) {
 					lexeme.punctuation = true;
 				} else if (!comment) {
-					this.error(`unrecognized character al line ${line_no}: '${line[0]}'`);
+					this.error(`unrecognized character at line ${line_no}: '${line[0]}'`);
 				}
 
 				if (lexeme.text === '/*') comment += 1;
