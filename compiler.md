@@ -249,9 +249,8 @@ Functions
 =========
 
 Functions may be defined using the `func` keyword and an identifier to name
-the function. A parenthesized, comma-separated parameter list optionally
-follows, then a block of code which is executes when the function is
-called.
+the function. A parenthesized, comma-separated parameter list follows, then a
+block of code which is executes when the function is called.
 
 The function is called by passing a parenthesized list of comma-separated
 arguments to the function.
@@ -270,6 +269,21 @@ For example:
 
 All functions return a number. Absent an explicit `return` statement, a value
 of zero will be returned if execution reaches the end of the code block.
+
+Rather than a brace-enclosed block of code, a single expression may stand in
+as the function body. In this case, the value of the expression is implicitly
+returned by the function. For example:
+
+	func factorialAlso(x) x <= 1 && 1 || x * factorialAlso(x - 1)
+
+
+Macros
+======
+
+Macro definitions exactly mirror those of functions, except that the keyword
+`macro` is used in place of `func`. Macros differ from function in that the
+body is placed inline where the macro is called, rather than using function
+call semantics.
 
 
 Expressions
@@ -350,8 +364,8 @@ addressible expression on their left hand side: variables and vector index
 expressions.
 
 
-State Variables and External Functions
-======================================
+State Variables and the External Function
+=========================================
 
 Per the design of the Slog virtual machine, Slog programs have access to the
 game in which they are embedded in two ways: external function calls, and
@@ -371,13 +385,16 @@ So for example:
 		activateCarefulMode()
 	}
 
-As for external function calls, they will be also be defined by the interface
-provided by the embedding game or program, and may then be called just like
-any function. So:
+The external function call is a special function named `external`, the first
+parameter of which is an opaque code number defining the effect of the
+function call. The call is dispatched to the embedding game or application.
+
+The embedding game should provide macro definitions give semantic meaning to
+the code numbers. So:
 
 	// Interface definition:
-	external hunt(quarry) = 135
-	external eat(quarry) = 136
+	macro hunt(quarry) external(135, quarry)
+	macro eat(quarry) external(136, quarry)
 	const HUNGER = 10
 	const RABBITS = 11
 
@@ -402,15 +419,17 @@ The nitty gritty.
 
 	variable-declaration := 'var' identifier ('[' expr ']')? ('=' expr)
 
-	function-definition := 'func' identifier ('(' function-parameter-list? ')')? '{' code-block '}'
+	function-definition := 'func' function-def-tail
+
+	function-def-tail := identifier '(' function-parameter-list? ')' function-body
+
+	function-body := '{' code-block '}' | expr
 
 	function-parameter-list := identifier (',' function-parameter-list)?
 
 	code-block := (constant-definition | variable-declaration | statement)*
 
-	external-definition := 'external' identifier ('(' external-parameter-list? ')')? '=' number
-
-	external-parameter-list := (number | identifier) (',' external-parameter-list)?
+	macro-definition := 'macro' function-def-tail
 
 	statement := while-statement | if-statement | expression-statement | return-statement | break-statement | halt-statement | assertion-statement
 
@@ -444,9 +463,7 @@ The nitty gritty.
 
 	binary-operator := '**' | '%%' | '*' | '/' | '%' | '+' | '-' | '<?' | '>?' | '<<' | '>>' | '&' | '^' | '|' | '<' | '<=' | '>' | '>=' | '==' | '!=' | '&&' | '^^' | '||' | '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '<<=' | '>>=' | '&=' | '^=' | '|='
 
-	external-function-expression := 'external' '(' expr ')' function-call-operation  [obsolescent]
-
-	external-index-expression := 'external' vector-index-operation  [very obsolescent]
+	external-function-expression := 'external' '(' argument-list ')'
 
 	argument-list := expr (',' argument-list)?
 

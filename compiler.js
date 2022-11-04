@@ -45,9 +45,13 @@ class Source {
 					lexeme.value = parseInt(lexeme.text);
 				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
 					lexeme.identifier = true;
-				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/i)) {
+				} else if (lexeme.text = take(/^'.+?'/)) {
+					lexeme.character = true;
+				} else if (lexeme.text = take(/^".+?"/)) {
+					lexeme.string = true;
+				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/)) {
 					lexeme.operator = true;
-				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/i)) {
+				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/)) {
 					lexeme.punctuation = true;
 				} else if (!comment) {
 					this.error(`unrecognized character al line ${line_no}: '${line[0]}'`);
@@ -140,26 +144,13 @@ class CompilationContext {
 	symbols = {};
 	parent;
 
-	constructor(parent, functionDefinition) {
+	constructor(parent) {
 		this.parent = parent;
 		if (!parent) {
 			this.code = [];
 			this.unique = 1;
 		}
-
-		if (functionDefinition) {
-			this.function = functionDefinition;
-			functionDefinition.parameters.forEach((parameter, i) => {
-				this.symbols[parameter] = { variable: true, local: true, offset: -i - 1, count: 1 };
-				// this.symbols['_return_position'] = { variable: true, local: true, offset: functionParameters.count + 1, count: 1 };
-			});
-		}
 	}
-
-	// define(symbol, info) {
-	// 	if (this.symbols[symbol]) this.error('duplicate definition ' + symbol);
-	// 	this.symbols[symbol] = info;
-	// }
 
 	enclosingScope() { return (this.function && this) || (this.parent && this.parent.enclosingScope()) }
 
@@ -170,11 +161,9 @@ class CompilationContext {
 		this.symbols[identifier] = { constant: true, value };
 	}
 
-	defineExternal(identifier, operand, parameters) {
+	defineAlias(identifier, value) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
-		if (Object.values(this.symbols).filter(s => s.external && s.operand === operand).length)
-			this.error(`duplicate external index ${operand} used for ${identifier}`);
-		this.symbols[identifier] = { external: true, operand, parameters };
+		this.symbols[identifier] = { alias: true, value };
 	}
 
 	declareVariable(identifier, count, initializer) {
@@ -199,8 +188,8 @@ class CompilationContext {
 		return result;
 	}
 
-	declareFunction(identifier, declaration) {
-		this.symbols[identifier] = { function: true, parameters: declaration.parameters };
+	declareFunction(declaration) {
+		this.symbols[declaration.name] = { function: declaration };
 	}
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(s) }
@@ -222,8 +211,8 @@ class SemanticError {
 
 class Module {
 	constants = [];
-	externals = [];
 	variables = [];
+	macros = [];
 	functions = [];
 	statements = [];
 
@@ -235,8 +224,8 @@ class Module {
 				result.constants.push(item);
 			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
-			} else if (item = ExternalDefinition.tryParse(source)) {
-				result.externals.push(item);
+			} else if (item = MacroDefinition.tryParse(source)) {
+				result.macros.push(item);
 			} else if (item = FunctionDefinition.tryParse(source)) {
 				result.functions.push(item);
 			} else {
@@ -252,8 +241,8 @@ class Module {
 		context.emit('.jump @main');
 
 		for (let d of this.constants) d.define(context);
-		for (let d of this.externals) d.define(context);
 		for (let d of this.variables) d.declare(context);
+		for (let d of this.macros)    d.declare(context);
 		for (let d of this.functions) d.declare(context);
 
 		for (let d of this.functions) d.generate(context);
@@ -332,86 +321,112 @@ class VariableDeclaration {
 	}
 }
 
-class ExternalDefinition {
-	name;
-	parameters = [];
-	operand;
 
-	static tryParse(source) {
-		if (!source.lookahead('external', {identifier:true})) return false;
-		let result = new ExternalDefinition;
-		source.consume('external');
-		result.name = source.consumeIdentifier();
-		if (source.tryConsume('(')) {
-			if (!source.tryConsume(')')) while (true) {
-				let param = source.isLiteral() ? source.consumeLiteral() : source.consumeIdentifier();
-				result.parameters.push(param);
-				if (source.tryConsume(')')) break;
-				source.consume(',');
-			}
-		}
-		if (result.parameters.length > 2) source.error("more than two parameters in external definition");
-		source.consume('=');
-		result.operand = Expression.parse(source);
-		return result;
-	}
-
-	define(context) {
-		let operand = this.operand.simplify(context).literal ?? context.error('constant operand value expected');
-		context.defineExternal(this.name, operand, this.parameters);
-	}
-}
-
-// Yeah I may want a 'func' keyword. We'll see. Also the parameter syntax is weird. Or maybe
-// I should use juxtaposition for arguments as well.
-class FunctionDefinition {
+class MacroDefinition {
 	name;
 	parameters = [];
 	body;
+	expr;
+
+	static tryParse(source) {
+		if (!source.tryConsume('macro')) return;
+		let result = new MacroDefinition().continueParsing(source);
+		result.macro = true;
+		return result;
+	}
+
+	continueParsing(source) {
+		this.name = source.consumeIdentifier();
+		source.consume('(');
+		if (!source.tryConsume(')')) while (true) {
+			this.parameters.push(source.consumeIdentifier());
+			if (source.tryConsume(')')) break;
+			source.consume(',');
+		}
+		if (source.tryConsume('{')) {
+			this.body = CodeBlock.parse(source);
+			source.consume('}');
+		} else {
+			this.expr = Expression.parse(source);
+		}
+		return this;
+	}
+
+	// TODO declare or define? pick one
+	declare(context) {
+		context.declareFunction(this);
+	}
+
+	generateCall(context, args) {
+		context = new CompilationContext(context);
+		args.map((arg, i) => context.defineAlias(this.parameters[i], arg));
+		if (this.body) {
+			context.emit(uniqueLabel(this.name) + ':');
+			context.function = this;
+			context.macroReturnLabel = uniqueLabel(this.name + '_return');
+			this.body.generate(context);
+			if (!this.body.endsWithReturn())
+				context.emit('push 0  ; default macro return value');
+			context.emit(context.macroReturnLabel + ':');
+		} else {
+			this.expr.generate(context);
+		}
+	}
+
+	generateReturn(context) {
+		context.emit('.jump ' + context.enclosingScope().macroReturnLabel);
+	}
+}
+
+
+class FunctionDefinition extends MacroDefinition {
 
 	static tryParse(source) {
 		if (!source.tryConsume('func')) return;
-		let result = new FunctionDefinition();
-		result.name = source.consumeIdentifier();
-		if (source.tryConsume('(')) {
-			if (!source.tryConsume(')')) while (true) {
-				result.parameters.push(source.consumeIdentifier());
-				if (source.tryConsume(')')) break;
-				source.consume(',');
-			}
-		}
-		source.consume('{');
-		result.body = CodeBlock.parse(source);
-		source.consume('}');
-		return result;
+		return new FunctionDefinition().continueParsing(source);
 	}
 
 	stackFrameSize() { return this.parameters.length }
 
-	declare(context) {
-		context.declareFunction(this.name, this);
-	}
-
 	generate(context) {
 		context.emit(this.name + ':');
-		context = new CompilationContext(context, this);
-		// context.returnValueDepth = this.parameters.length + 1;
-		// context.returnLabel = uniqueLabel(this.name + '_return');
-		// for (let p of this.parameters) {
-		// 	context.define(p);
-		// }
-		this.body.generate(context);
-
-		this.generateReturn(context, false);
+		context = new CompilationContext(context);
+		this.parameters.forEach((parameter, i) => {
+			context.symbols[parameter] = { variable: true, local: true, offset: -i - 1, count: 1 };
+		});
+		if (this.body) {
+			context.function = this;
+			this.body.generate(context);
+			if (!this.body.endsWithReturn())
+				this.generateReturn(context, false);
+		} else {
+			this.expr.generate(context);
+			this.generateReturn(context, true);
+		}
 	}
 
-	generateReturn(context, withResult) {
-		if (withResult)
+	generateCall(context, args) {
+		const returnLabel = uniqueLabel('return');
+		context.emit(`.stack 0 ${returnLabel}  ; result, returnAddr`);
+		context.emit('fetch FP');
+		for (let a of args) { a.generate(context) }
+		// now position FP right before the arguments
+		context.emit('fetch SP');
+		if (args.length)
+			context.emit('add ' + args.length);
+		context.emit('store FP');  // set frame pointer
+		context.emit('.jump ' + this.name);
+		// stack: ..., RESULT, RETURN_ADDRESS, OLD_FP, ARGS... ]
+		context.emit(returnLabel + ':')
+	}
+
+	generateReturn(context, setResult) {
+		if (setResult)
 			context.emit('storelocal 2  ; result');
 		context.emit('fetch FP');
 		context.emit('store SP');
 		context.emit('store FP');
-		context.emit('store PC  ; return'); // aka jump
+		context.emit('jmp  ; return');
 	}
 }
 
@@ -433,6 +448,10 @@ class CodeBlock {
 			}
 		}
 		return result;
+	}
+
+	endsWithReturn() {
+		return this.statements[this.statements.length - 1] instanceof ReturnStatement
 	}
 
 	generate(context) {
@@ -668,7 +687,7 @@ class ExternalFunctionExpression {
 		context.assert(!!this.arg1 == (operand >= 100), 'at least one argument expected');
 		if (this.arg2) this.arg2.generate(context);
 		if (this.arg1) this.arg1.generate(context);
-		context.emit('ext $' + operand.toString(16));
+		context.emit('ext ' + operand);
 	}
 }
 
@@ -720,7 +739,9 @@ class IdentifierExpression {
 	generate(context) {
 		let reference = context.lookup(this.identifier);
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
-		if (reference && !reference.static) {
+		if (reference && reference.alias) {
+			reference.value.generate(context);
+		} else if (reference && !reference.static) {
 			context.emit('fetchlocal ' + reference.offset + ' ; ' + this.identifier);
 		} else {
 			// hopefully global
@@ -1174,41 +1195,12 @@ class FunctionCallExpression {
 	generate(context) {
 		let func = this.lhs;
 		if (func.identifier) {
-			func = context.lookup(func.identifier);
-			context.assert(func, 'unknown identifier ' + this.lhs.identifier);
+			func = context.lookup(func.identifier) ?? context.error(func, 'unknown identifier ' + this.lhs.identifier);
 		}
-		if (func.external) {
-			// let named_params = func.parameters.filter(p => typeof p !== 'number').length;
-			// context.assert(named_params === this.args.length, `mismatch in number of arguments; expected ${named_params}, got ${this.args.length}`);
-			let a = 0;
-			let reargs = func.parameters.map(p => typeof p === 'number' ? new LiteralExpression(p) : this.args[a++]);
-			context.assert(a == this.args.length, `mismatch in number of arguments`);
+		func = func.function ?? context.error('attempt to call non-function');
+		context.assert(func.parameters.length === this.args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${this.args.length}`);
 
-			if (func.operand >= 200) {
-				context.assert(reargs.length == 2, 'two arguments expected');
-				reargs[1].generate(context);
-			}
-			if (func.operand >= 100) {
-				context.assert(reargs.length >= 1, 'argument(s) expected');
-				reargs[0].generate(context);
-			}
-			context.emit('ext $' + func.operand.toString(16) + '  ; ' + this.lhs.identifier);
-
-		} else {
-			context.assert(func.parameters.length === this.args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${this.args.length}`);
-			const returnLabel = uniqueLabel('return');
-			context.emit(`.stack 0 ${returnLabel}  ; result, returnAddr`);
-			context.emit('fetch FP');
-			for (let a of this.args) { a.generate(context) }
-			// now position FP right before the arguments
-			context.emit('fetch SP');
-			if (this.args.length)
-				context.emit('add ' + this.args.length);
-			context.emit('store FP');  // set frame pointer
-			context.emit('.jump ' + this.lhs.identifier);
-			context.emit(returnLabel + ':')
-			// stack: ..., RESULT, RETURN_ADDRESS, OLD_FP, ARGS... ]
-		}
+		func.generateCall(context, this.args);
 	}
 
 	simplify(context) {
