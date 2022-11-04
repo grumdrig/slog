@@ -209,6 +209,8 @@ class CompilationContext {
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(indent(s)) }
 
+	emitLabel(l) { this.emit(l + ':') }
+
 	// link() {
 	// 	for (let f in forwards) {
 	// 		this.code[forwards[f]] = this.symbols[f];  // or something
@@ -309,24 +311,17 @@ class VariableDeclaration {
 		let count = 1, initializer;
 		if (this.count) {
 			let c = this.count.simplify(context);
-			count = c.literal ?? context.error('literal vector length expected');
+			count = c.value ?? context.error('literal vector length expected');
 		}
 		if (this.initializer) {
 			let i = this.initializer.simplify(context);
-			initializer = i.members || i.literal;
-			if (typeof i.literal === 'number') {
-				initializer = i.literal;
-			} else if (i.members) {
-				initializer = i.members.map(m => {
-					if (typeof m.literal !== 'number')
-						context.error('literal vector initializer expected');
-					return m.literal;
-				});
+			if (i.members) {
+				initializer = i.members.map(m => m.value ?? context.error('literal vector initializer expected'));
 				if (this.count && count !== initializer.length)
 					context.error('vector length mismatch with initializer');
 				count = initializer.length;
 			} else {
-				context.error('literal initializer expected');
+				initializer = i.value ?? context.error('literal initializer expected');
 			}
 		}
 		let record = context.declareVariable(this.name, count, initializer);
@@ -688,7 +683,7 @@ class ExternalFunctionExpression {
 	generate(context) {
 		// this.simplify(context);  // needed?
 		context.assert(this.args.length >= 1, "external function call requires at least one argument");
-		let operand = this.args[0].literal ?? context.error('literal value expected');
+		let operand = this.args[0].value ?? context.error('literal value expected');
 		operand += (this.args.length - 1) * 128;
 		for (let a of [...this.args.slice(1)].reverse()) {
 			a.generate(context);
@@ -721,18 +716,19 @@ class VectorLiteralExpression {
 	}
 
 	generate(context) {
-		context.error("an vector literal/string is not a valid expression in this context");
+		context.error("a vector literal/string is not a valid expression in this context");
 	}
 }
 
 
 class LiteralExpression {
-	literal;
+	get isLiteral() { return true }
+	value;
 
-	constructor(literal) {
-		if (typeof literal !== 'number' || Number.isNaN(literal))
-			throw "Invalid literal " + literal;
-		this.literal = literal;
+	constructor(value) {
+		if (typeof value !== 'number' || Number.isNaN(value))
+			throw "Invalid literal value " + value;
+		this.value = value;
 	}
 
 	static tryParse(source) {
@@ -743,7 +739,7 @@ class LiteralExpression {
 	simplify(context) { return this }
 
 	generate(context) {
-		context.emit('.stack ' + this.literal);
+		context.emit('.stack ' + this.value);
 	}
 }
 
@@ -835,8 +831,8 @@ class PrefixExpression {
 			},
 		'.': {
 			generate: (context, rhs) => {
-					if (rhs.literal) {
-						context.emit('fetch ' + (-8 - rhs.literal));
+					if (rhs.isLiteral) {
+						context.emit('fetch ' + (-8 - rhs.value));
 					} else {
 						rhs.generate(context);
 						context.emit('unary NEG');
@@ -858,8 +854,8 @@ class PrefixExpression {
 
 	simplify(context) {
 		this.rhs = this.rhs.simplify(context);
-		if (this.rhs.literal && this.operator.precompute)
-			return new LiteralExpression(this.operator.precompute(this.rhs.literal));
+		if (this.rhs.isLiteral && this.operator.precompute)
+			return new LiteralExpression(this.operator.precompute(this.rhs.value));
 		else
 			return this;
 	}
@@ -1043,8 +1039,8 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub        ; <=');
-				context.emit('max 0      ; <=');
+				context.emit('sub        ; <= ...');
+				context.emit('max 0      ; <= ...');
 				context.emit('unary NOT  ; <=');
 			},
 		},
@@ -1076,8 +1072,8 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub  ; ==');
-				context.emit('unary NOT');
+				context.emit('sub       ; == ...');
+				context.emit('unary NOT ; ==');
 			},
 		},
 		'!=': {
@@ -1095,9 +1091,12 @@ class BinaryExpression {
 			precompute: (x,y) => x && y,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
+				let cutLabel = uniqueLabel('and_shorcut');
+				context.emit('peek 0');
+				context.emit('unary NOT');
+				context.emit('.branch ' + cutLabel);
 				rhs.generate(context);
-				context.emit('and  ; &&');
-				context.emit('swap AX');
+				context.emitLabel(cutLabel);
 			},
 		},
 		'^^': {
@@ -1115,9 +1114,11 @@ class BinaryExpression {
 			precompute: (x,y) => x || y,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
+				let cutLabel = uniqueLabel('or_shortcut');
+				context.emit('peek 0'); // dup
+				context.emit('.branch ' + cutLabel);
 				rhs.generate(context);
-				context.emit('or  ; ||');
-				context.emit('swap AX');
+				context.emitLabel(cutLabel);
 			},
 		},
 		'=': {
@@ -1176,8 +1177,8 @@ class BinaryExpression {
 	simplify(context) {
 		this.lhs = this.lhs.simplify(context);
 		this.rhs = this.rhs.simplify(context);
-		if (this.lhs.literal && this.operator.precompute && this.rhs.literal)
-			return new LiteralExpression(this.operator.precompute(this.lhs.literal, this.rhs.literal));
+		if (this.lhs.isLiteral && this.operator.precompute && this.rhs.isLiteral)
+			return new LiteralExpression(this.operator.precompute(this.lhs.value, this.rhs.value));
 		else
 			return this;
 	}
@@ -1257,7 +1258,7 @@ class IndexExpression {
 
 	generate(context) {
 		if (this.lhs.members) {
-			context.error('vector literal constant not available at runtime; use a var');
+			context.error('literal vector constant not available at runtime; use a var');
 		} else {
 			this.generateAddress(context);
 			context.emit('fetch');
@@ -1267,12 +1268,12 @@ class IndexExpression {
 	simplify(context) {
 		this.lhs = this.lhs.simplify(context);
 		this.index = this.index.simplify(context);
-		if (this.lhs.literal && this.index.literal) {
-			return new LiteralExpression(this.lhs.literal + this.index.literal);
-		} else if (this.lhs.members && this.index.literal) {
-			if (this.index.literal < 0 || this.index.literal >= this.lhs.members.length)
+		if (this.lhs.isLiteral && this.index.isLiteral) {
+			return new LiteralExpression(this.lhs.value + this.index.value);
+		} else if (this.lhs.members && this.index.isLiteral) {
+			if (this.index.value < 0 || this.index.value >= this.lhs.members.length)
 				context.error('index out of range');
-			return this.lhs.members[this.index.literal];
+			return this.lhs.members[this.index.value];
 		} else {
 			return this;
 		}

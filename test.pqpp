@@ -87,6 +87,7 @@ assert v5 == v5
 assert v4 != v5
 
 // Bitwise operators
+
 assert 6 & 3 == 2
 assert 6 ^ 3 == 5
 assert 6 | 3 == 7
@@ -113,7 +114,24 @@ assert (v6 || v3) == v6
 assert (v0 || v3) == v3
 assert !(v0 || v0)
 
+// Shortcutting
+
+x = 0
+func incX(r) {
+	x += 1
+	return r
+}
+incX(0)
+assert x == 1
+assert incX(1) || incX(1)
+assert x == 2
+assert incX(1) && incX(1)
+assert x == 4
+assert !(incX(0) && incX(1))
+assert x == 5
+
 // Assignment operators
+
 assert (x = 3) == 3
 assert (x += 4) == 7
 assert (x -= 4) == 3
