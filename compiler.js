@@ -162,13 +162,6 @@ class CompilationContext {
 		this.symbols[identifier] = { alias: true, value };
 	}
 
-	defineExternal(identifier, operand, parameters) {
-		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
-		if (Object.values(this.symbols).filter(s => s.external && s.operand === operand).length)
-			this.error(`duplicate external index ${operand} used for ${identifier}`);
-		this.symbols[identifier] = { external: true, operand, parameters };
-	}
-
 	declareVariable(identifier, count, initializer) {
 		let result;
 		if (!this.parent) {
@@ -214,7 +207,6 @@ class SemanticError {
 
 class Module {
 	constants = [];
-	externals = [];
 	variables = [];
 	macros = [];
 	functions = [];
@@ -228,8 +220,6 @@ class Module {
 				result.constants.push(item);
 			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
-			} else if (item = ExternalDefinition.tryParse(source)) {
-				result.externals.push(item);
 			} else if (item = MacroDefinition.tryParse(source)) {
 				result.macros.push(item);
 			} else if (item = FunctionDefinition.tryParse(source)) {
@@ -247,7 +237,6 @@ class Module {
 		context.emit('.jump @main');
 
 		for (let d of this.constants) d.define(context);
-		for (let d of this.externals) d.define(context);
 		for (let d of this.variables) d.declare(context);
 		for (let d of this.macros)    d.declare(context);
 		for (let d of this.functions) d.declare(context);
@@ -325,36 +314,6 @@ class VariableDeclaration {
 		if (record.local) {
 			context.emit(`.stack ${record.initializer || 0}${record.count !== 1 ? '*' + record.count : ''}  ; declare ${record.identifier}`);
 		}
-	}
-}
-
-class ExternalDefinition {
-	name;
-	parameters = [];
-	operand;
-
-	static tryParse(source) {
-		if (!source.lookahead('external', {identifier:true})) return false;
-		let result = new ExternalDefinition;
-		source.consume('external');
-		result.name = source.consumeIdentifier();
-		if (source.tryConsume('(')) {
-			if (!source.tryConsume(')')) while (true) {
-				let param = source.isLiteral() ? source.consumeLiteral() : source.consumeIdentifier();
-				result.parameters.push(param);
-				if (source.tryConsume(')')) break;
-				source.consume(',');
-			}
-		}
-		if (result.parameters.length > 2) source.error("more than two parameters in external definition");
-		source.consume('=');
-		result.operand = Expression.parse(source);
-		return result;
-	}
-
-	define(context) {
-		let operand = this.operand.simplify(context).literal ?? context.error('constant operand value expected');
-		context.defineExternal(this.name, operand, this.parameters);
 	}
 }
 
