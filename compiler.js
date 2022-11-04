@@ -45,9 +45,13 @@ class Source {
 					lexeme.value = parseInt(lexeme.text);
 				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
 					lexeme.identifier = true;
-				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/i)) {
+				} else if (lexeme.text = take(/^'.+?'/)) {
+					lexeme.character = true;
+				} else if (lexeme.text = take(/^".+?"/)) {
+					lexeme.string = true;
+				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/)) {
 					lexeme.operator = true;
-				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/i)) {
+				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/)) {
 					lexeme.punctuation = true;
 				} else if (!comment) {
 					this.error(`unrecognized character al line ${line_no}: '${line[0]}'`);
