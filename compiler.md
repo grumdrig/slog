@@ -267,14 +267,14 @@ For example:
 
 	assert factorial(3) == 6
 
-All functions return a number. Absent an explicit `return` statement, a value
-of zero will be returned if execution reaches the end of the code block.
-
 Rather than a brace-enclosed block of code, a single expression may stand in
 as the function body. In this case, the value of the expression is implicitly
 returned by the function. For example:
 
 	func factorialAlso(x) x <= 1 && 1 || x * factorialAlso(x - 1)
+
+All functions return a number. Absent an explicit `return` statement, a value
+of zero will be returned when execution reaches the end of the code block.
 
 
 Macros
@@ -282,8 +282,8 @@ Macros
 
 Macro definitions exactly mirror those of functions, except that the keyword
 `macro` is used in place of `func`. Macros differ from function in that the
-body is placed inline where the macro is called, rather than using function
-call semantics.
+body replaces the macro call, at that point in the code, rather than jumping
+to another portion of code where the function body resides.
 
 
 Expressions

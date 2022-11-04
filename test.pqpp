@@ -156,3 +156,7 @@ assert !v6 == v0
 assert !v0 == v1
 assert ! !v0 == v0
 assert ! ! -v1 == v1
+
+
+//func factorial(n) (n <= 1 && 1) || factorial(n - 1)
+//assert factorial(3) == 6
