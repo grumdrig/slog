@@ -683,10 +683,6 @@ once it's non-zero.
 Architecture Changes
 --------------------
 
-Should probably change to one opcode for externals, with the operand giving
-operation code. They then pass floor(operand/100) additional parameters off
-the stack.
-
 Binary operators are taking up most of the opcodes. Should maybe have another
 that works like UNARY and takes both params from the stack, but only for the
 lesser-used operators.

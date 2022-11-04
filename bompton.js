@@ -108,101 +108,46 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 
 
 const CALLS = {
-	initialize: {
-		operation: 236, parameters: 'slot,value',
+	initialize: { parameters: 'slot,value',
 		description: `Before the game starts, the character may assign up to
 a total of ten points to their six stat slots using this function. Also, the
 character's race much be assigned using this function with the slot value
 RACE.`,
 	},
-	startGame: {
-		operation:  39,
-	},
-	train: {
-		operation: 136, parameters: 'stat',
-	},
-	study: {
-		operation: 146, parameters: 'spell',
+	startGame: {},
+	train: { parameters: 'stat', },
+	study: { parameters: 'spell',
 		description: `Study a spell. Repeated study sessions will enable the
 character to learn the spell or increase thier mastery of it. The character is
 limited to only four spells, so choose wisely.`,
 	},
-	travel: {
-		operation: 130, parameters: 'destination',
-	},
-	melee: {
-		operation:  31,
-	},
-	buyItem: {
-		operation: 231, parameters: 'slot,quantity',
-	},
-	buyEquipment: {
-		operation: 232, parameters: 'slot,quality',
-	},
-	sell: {
-		operation: 233, parameters: 'slot,quantity',
-	},
-	seekquest: {
-		operation:  34,
-	},
-	completequest: {
-		operation:  35,
-	},
-	cast: {
-		operation: 137, parameters: 'spell_slot',
-	},
-	forage: {
-		operation: 138, parameters: 'target_slot',
-	},
-	rest: {
-		operation:  20,
-	},
-	hunt: {
-		operation:  21,
-	},
-	levelup: {
-		operation:  99,
-	},
-	give: {
-		operation: 244, parameters: 'slot,quantity',
-	},
-	drop: {
-		operation: 245, parameters: 'slot,quantity',
-	},
+	travel: { parameters: 'destination', },
+	melee: {},
+	buyItem: { parameters: 'slot,quantity', },
+	buyEquipment: { parameters: 'slot,quality', },
+	sell: { parameters: 'slot,quantity', },
+	seekquest: {},
+	completequest: {},
+	cast: { parameters: 'spell_slot', },
+	forage: { parameters: 'target_slot', },
+	rest: {},
+	hunt: {},
+	levelup: {},
+	give: { parameters: 'slot,quantity', },
+	drop: { parameters: 'slot,quantity', },
 };
+
+Object.values(CALLS).forEach((c, i) => c.operation = 65 + i);
 
 for (let call in CALLS) {
 	define(call, CALLS[call].operation);
 }
 
-/*
-let EQUIPMENT_TYPES = {
-	weapon: {
-		slot: Equipment
-	},
-	armor: {
-		slot: Equipment
-	},
-	shield: {
-		slot: Equipment
-	},
-	headgear: {
-		slot: Equipment
-	},
-	footwear: {
-		slot: Equipment
-	},
-	amulet: {
-		slot: Equipment
-	},
-	ring: {
-		slot: Equipment
-	},
-	totem: {
-		slot: Equipment
-	},
-};
-*/
+
+const HOURS_PER_DAY = 24;
+const DAYS_PER_MONTH = 32;
+const MONTHS_PER_YEAR = 12;
+const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
 
 
 function generateInterface() {
@@ -1105,12 +1050,10 @@ class Game {
 
 		function passTime(task, hours, days) {
 			TASK = task;  // TODO this is inelegant
-			const HOURS_PER_DAY = 24;
 			if (days) hours += HOURS_PER_DAY * days;
-			const hoursPerYear = 24 * 365;
 			state[HOURS] += hours;
-			while (state[HOURS] > hoursPerYear) {
-				state[HOURS] -= hoursPerYear;
+			while (state[HOURS] > HOURS_PER_YEAR) {
+				state[HOURS] -= HOURS_PER_YEAR;
 				state[YEARS] += 1;
 			}
 		}
@@ -1372,6 +1315,9 @@ class Game {
 			state[LEVEL] += 1;
 			passTime('Levelling up', 1, 0);
 			return 1;
+
+		} else {
+			error("Invalid operation");
 		}
 
 		if (state[DAMAGE] >= state[MAX_HP]) {

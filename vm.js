@@ -332,14 +332,12 @@ class VirtualMachine {
         this.ax = result[1];
       }
 
-    // "Real"-world instructions, all of which advance character age
-
+    // External instruction handled by the embedding app
     } else if (mnemonic == 'ext') {
       result = true;
-      let arg1 = 0, arg2 = 0;
-      if (operand >= 100) arg1 = this.pop();
-      if (operand >= 200) arg2 = this.pop();
-      this.push(this.world.handleInstruction(this.state, operand, arg1, arg2));
+      let args = [];
+      for (let i = 0; i < operand >> 7; ++i) args.push(this.pop());
+      this.push(this.world.handleInstruction(this.state, operand & 0x7F, ...args));
 
     } else {
       this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic}`);

@@ -116,6 +116,12 @@
 	margin-right: 1px;
 }
 
+#elapsed {
+/*	grid-column: 1 / 3;
+	text-align: center;
+*/
+	float: right;
+}
 
 </style>
 <style>
@@ -202,6 +208,12 @@ iframe {
 	width: 800px;
 	height: 390px;
 	background-color: #fff;
+}
+
+#worldmap {
+	background-color: lightblue;
+	padding: 14px;
+	border: solid 1px blue;
 }
 
 /* Icons */
@@ -387,6 +399,7 @@ div.icon {
 	</div>
 	<div id=task-area class=status-bar>
 		<div class=status-bar-field>
+				<div id=elapsed></div>
 			<div id=task >Loading...</div>
 			<div id=taskbar role="progressbar" aria-valuemin=0 aria-valuemax=100 aria-valuenow=90>
 				<div></div>
@@ -664,7 +677,7 @@ function setTaskBar() {
 }
 
 function playmation() {
-	function age() { return vm.state[YEARS] * 24 * 365 + vm.state[HOURS] }
+	function age() { return vm.state[YEARS] * HOURS_PER_YEAR + vm.state[HOURS] }
 	let before = age();
   while (vm.alive() && age() == before) {
 		vm.step();
@@ -954,6 +967,25 @@ function toRoman(n) {
 }
 
 
+function readableTime(hours, years) {
+	let t = years * HOURS_PER_YEAR + hours;
+	let calendar = t % HOURS_PER_DAY + ' hours';
+	t = (t / HOURS_PER_DAY) >> 0;
+	if (t) {
+		calendar = t % DAYS_PER_MONTH + ' days, ' + calendar;
+		t = (t / DAYS_PER_MONTH) >> 0;
+		if (t) {
+			calendar = t % MONTHS_PER_YEAR + ' months, ' + calendar;
+			t = (t / MONTHS_PER_YEAR) >> 0;
+			if (t) {
+				calendar = t + ' years, ' + calendar;
+			}
+		}
+	}
+	return calendar;
+}
+
+
 
 function updateCharacterSheet(state) {
 
@@ -1032,6 +1064,9 @@ function updateCharacterSheet(state) {
 	if (!state[LEVEL]) return;
 
 	let local = Game.MAP[state[LOCATION]];
+
+	$id('gameprogress').title = readableTime(state[HOURS], state[YEARS]);
+	// set('elapsed', readableTime(state[HOURS], state[YEARS]));
 	set('location', local.index);
 	set('longitude', local.longitude || ((local.index - 1) % 6));
 	set('latitude', local.latitude || ((local.index - 1) / 6) >> 0);

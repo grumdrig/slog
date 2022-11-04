@@ -45,12 +45,22 @@ class Source {
 					lexeme.value = parseInt(lexeme.text);
 				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
 					lexeme.identifier = true;
-				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/i)) {
+				} else if (lexeme.text = take(/^'.*?'/)) {
+					if (lexeme.text.length < 3 || lexeme.text.length > 4)
+						this.error('invalid character literal length ' + (lexeme.text.length - 2));
+					lexeme.literal = true;
+					lexeme.value = lexeme.text.charCodeAt(1);
+					if (lexeme.text.length > 3) {
+						lexeme.value = lexeme.value * 256 + lexeme.text.charCodeAt(2);
+					}
+				} else if (lexeme.text = take(/^".+?"/)) {
+					lexeme.string = true;
+				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/)) {
 					lexeme.operator = true;
-				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/i)) {
+				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/)) {
 					lexeme.punctuation = true;
 				} else if (!comment) {
-					this.error(`unrecognized character al line ${line_no}: '${line[0]}'`);
+					this.error(`unrecognized character at line ${line_no}: '${line[0]}'`);
 				}
 
 				if (lexeme.text === '/*') comment += 1;
@@ -114,6 +124,10 @@ class Source {
 
 	isLiteral() {
 		return this.lexemes[0].literal;
+	}
+
+	isString() {
+		return this.lexemes[0].string;
 	}
 
 	next() {
@@ -289,7 +303,7 @@ class VariableDeclaration {
 		let count = 1, initializer;
 		if (this.count) {
 			let c = this.count.simplify(context);
-			count = c.literal ?? context.error('literal array length expected');
+			count = c.literal ?? context.error('literal vector length expected');
 		}
 		if (this.initializer) {
 			let i = this.initializer.simplify(context);
@@ -299,11 +313,11 @@ class VariableDeclaration {
 			} else if (i.members) {
 				initializer = i.members.map(m => {
 					if (typeof m.literal !== 'number')
-						context.error('literal array initializer expected');
+						context.error('literal vector initializer expected');
 					return m.literal;
 				});
 				if (this.count && count !== initializer.length)
-					context.error('array length mismatch with initializer');
+					context.error('vector length mismatch with initializer');
 				count = initializer.length;
 			} else {
 				context.error('literal initializer expected');
@@ -619,15 +633,9 @@ class Expression {
 		if (source.tryConsume('(')) {
 			expr = Expression.parse(source);
 			source.consume(')');
-		} else if (source.tryConsume('[')) {
-			expr = new ArrayLiteralExpression();
-			while (true) {
-				expr.members.push(Expression.parse(source));
-				if (source.tryConsume(']')) break;
-				source.consume(',');
-			}
 		} else {
-			expr = ExternalFunctionExpression.tryParse(source) ||
+			expr = VectorLiteralExpression.tryParse(source) ||
+				   ExternalFunctionExpression.tryParse(source) ||
 				   PrefixExpression.tryParse(source) ||
 				   LiteralExpression.tryParse(source) ||
 				   IdentifierExpression.tryParse(source);
@@ -648,53 +656,61 @@ class Expression {
 }
 
 
-// Kind of unneccessary
 class ExternalFunctionExpression {
-	operand;
-	arg1;
-	arg2;
+	args;
+
+	constructor(args) { this.args = args }
 
 	static tryParse(source) {
 		if (!source.tryConsume('external', '(')) return;
-		let result = new ExternalFunctionExpression();
-		result.operand = Expression.parse(source);
-		if (source.tryConsume(',')) {
-			result.arg1 = Expression.parse(source);
-			if (source.tryConsume(',')) {
-				result.arg2 = Expression.parse(source);
-			}
-		}
-		source.consume(')');
-		return result;
+		return new ExternalFunctionExpression(parseArgumentList(source, ')'));
 	}
 
 	simplify(context) {
-		this.operand = this.operand.simplify(context);
-		if (this.arg1) this.arg1 = this.arg1.simplify(context);
-		if (this.arg2) this.arg2 = this.arg2.simplify(context);
+		this.args = this.args.map(a => a.simplify(context));
 		return this;
 	}
 
 	generate(context) {
-		this.simplify(context);  // needed?
-		let operand = this.operand.literal;
-		operand ?? context.error('literal value expected');
-		context.assert(!!this.arg2 == (operand >= 200), 'two arguments expected');
-		context.assert(!!this.arg1 == (operand >= 100), 'at least one argument expected');
-		if (this.arg2) this.arg2.generate(context);
-		if (this.arg1) this.arg1.generate(context);
+		// this.simplify(context);  // needed?
+		context.assert(this.args.length >= 1, "external function call requires at least one argument");
+		let operand = this.args[0].literal ?? context.error('literal value expected');
+		operand += (this.args.length - 1) * 128;
+		for (let a of [...this.args.slice(1)].reverse()) {
+			a.generate(context);
+		}
 		context.emit('ext ' + operand);
 	}
 }
 
-class ArrayLiteralExpression {
+
+class VectorLiteralExpression {
 	members = [];
+
+	constructor(members) { this.members = members }
+
+	static tryParse(source) {
+		if (source.tryConsume('[')) {
+			return new VectorLiteralExpression(parseArgumentList(source, ']'));
+		} else if (source.isString()) {
+			let expr = new VectorLiteralExpression([]);
+			for (let c of source.next().text.slice(1, -1))
+				expr.members.push(new LiteralExpression(c.charCodeAt(0)));
+			expr.members.push(new LiteralExpression(0));
+			return expr;
+		}
+	}
 
 	simplify(context) {
 		this.members = this.members.map(a => a.simplify(context));
 		return this;
 	}
+
+	generate(context) {
+		context.error("an vector literal/string is not a valid expression in this context");
+	}
 }
+
 
 class LiteralExpression {
 	literal;
@@ -1157,19 +1173,24 @@ class BinaryExpression {
 	}
 }
 
+function parseArgumentList(source, ender) {
+	let args = [];
+	if (!source.tryConsume(ender)) {
+		while (true) {
+			args.push(Expression.parse(source));
+			if (!source.tryConsume(',')) break;
+		}
+		source.consume(ender);
+	}
+	return args;
+}
+
 class PostfixExpression {
 	static tryPostParse(lhs, source) {
 		let op;
 		while (true) {
 			if (source.tryConsume('(')) {
-				lhs = new FunctionCallExpression(lhs);
-				if (!source.tryConsume(')')) {
-					while (true) {
-						lhs.args.push(Expression.parse(source));
-						if (source.tryConsume(')')) break;
-						source.consume(',');
-					}
-				}
+				lhs = new FunctionCallExpression(lhs, parseArgumentList(source, ')'));
 			} else if (source.tryConsume('[')) {
 				lhs = new IndexExpression(lhs);
 				lhs.index = Expression.parse(source);
@@ -1184,9 +1205,9 @@ class PostfixExpression {
 
 class FunctionCallExpression {
 	lhs;
-	args = [];
+	args;
 
-	constructor(lhs) { this.lhs = lhs }
+	constructor(lhs, args) { this.lhs = lhs; this.args = args }
 
 	generate(context) {
 		let func = this.lhs;
@@ -1222,7 +1243,7 @@ class IndexExpression {
 
 	generate(context) {
 		if (this.lhs.members) {
-			context.error('array literal constant not available at runtime; use a var');
+			context.error('vector literal constant not available at runtime; use a var');
 		} else {
 			this.generateAddress(context);
 			context.emit('fetch');
