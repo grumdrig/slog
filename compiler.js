@@ -322,6 +322,7 @@ class MacroDefinition {
 	name;
 	parameters = [];
 	body;
+	expr;
 
 	static tryParse(source) {
 		if (!source.tryConsume('macro')) return;
@@ -332,16 +333,18 @@ class MacroDefinition {
 
 	continueParsing(source) {
 		this.name = source.consumeIdentifier();
-		if (source.tryConsume('(')) {
-			if (!source.tryConsume(')')) while (true) {
-				this.parameters.push(source.consumeIdentifier());
-				if (source.tryConsume(')')) break;
-				source.consume(',');
-			}
+		source.consume('(');
+		if (!source.tryConsume(')')) while (true) {
+			this.parameters.push(source.consumeIdentifier());
+			if (source.tryConsume(')')) break;
+			source.consume(',');
 		}
-		source.consume('{');
-		this.body = CodeBlock.parse(source);
-		source.consume('}');
+		if (source.tryConsume('{')) {
+			this.body = CodeBlock.parse(source);
+			source.consume('}');
+		} else {
+			this.expr = Expression.parse(source);
+		}
 		return this;
 	}
 
@@ -352,14 +355,18 @@ class MacroDefinition {
 
 	generateCall(context, args) {
 		context = new CompilationContext(context);
-		context.emit(uniqueLabel(this.name) + ':');
-		context.function = this;
-		context.macroReturnLabel = uniqueLabel(this.name + '_return');
 		args.map((arg, i) => context.defineAlias(this.parameters[i], arg));
-		this.body.generate(context);
-		if (!this.body.endsWithReturn())
-			context.emit('push 0  ; default macro return value');
-		context.emit(context.macroReturnLabel + ':');
+		if (this.body) {
+			context.emit(uniqueLabel(this.name) + ':');
+			context.function = this;
+			context.macroReturnLabel = uniqueLabel(this.name + '_return');
+			this.body.generate(context);
+			if (!this.body.endsWithReturn())
+				context.emit('push 0  ; default macro return value');
+			context.emit(context.macroReturnLabel + ':');
+		} else {
+			this.expr.generate(context);
+		}
 	}
 
 	generateReturn(context) {
@@ -380,13 +387,18 @@ class FunctionDefinition extends MacroDefinition {
 	generate(context) {
 		context.emit(this.name + ':');
 		context = new CompilationContext(context);
-		context.function = this;
 		this.parameters.forEach((parameter, i) => {
 			context.symbols[parameter] = { variable: true, local: true, offset: -i - 1, count: 1 };
 		});
-		this.body.generate(context);
-		if (!this.body.endsWithReturn())
-			this.generateReturn(context, false);
+		if (this.body) {
+			context.function = this;
+			this.body.generate(context);
+			if (!this.body.endsWithReturn())
+				this.generateReturn(context, false);
+		} else {
+			this.expr.generate(context);
+			this.generateReturn(context, true);
+		}
 	}
 
 	generateCall(context, args) {

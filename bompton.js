@@ -211,9 +211,9 @@ function generateInterface() {
 	for (let call in CALLS) {
 		let { operation, parameters } = CALLS[call];
 		if (parameters)
-			interface.push(`macro ${call}(${parameters}) { return external(${operation},${parameters}) }`);
+			interface.push(`macro ${call}(${parameters}) external(${operation},${parameters})`);
 		else
-			interface.push(`macro ${call} { return external(${operation}) }`);
+			interface.push(`macro ${call}() external(${operation})`);
 	}
 
 	interface.push('');

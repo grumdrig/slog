@@ -249,9 +249,8 @@ Functions
 =========
 
 Functions may be defined using the `func` keyword and an identifier to name
-the function. A parenthesized, comma-separated parameter list optionally
-follows, then a block of code which is executes when the function is
-called.
+the function. A parenthesized, comma-separated parameter list follows, then a
+block of code which is executes when the function is called.
 
 The function is called by passing a parenthesized list of comma-separated
 arguments to the function.
@@ -270,6 +269,12 @@ For example:
 
 All functions return a number. Absent an explicit `return` statement, a value
 of zero will be returned if execution reaches the end of the code block.
+
+Rather than a brace-enclosed block of code, a single expression may stand in
+as the function body. In this case, the value of the expression is implicitly
+returned by the function. For example:
+
+	func factorialAlso(x) x <= 1 && 1 || x * factorialAlso(x - 1)
 
 
 Macros
@@ -414,15 +419,17 @@ The nitty gritty.
 
 	variable-declaration := 'var' identifier ('[' expr ']')? ('=' expr)
 
-	function-definition := 'func' function-definition-body
+	function-definition := 'func' function-def-tail
 
-	function-definition-body := identifier ('(' function-parameter-list? ')')? '{' code-block '}'
+	function-def-tail := identifier '(' function-parameter-list? ')' function-body
 
-	macro-definition := 'macro' function-definition-body
+	function-body := '{' code-block '}' | expr
 
 	function-parameter-list := identifier (',' function-parameter-list)?
 
 	code-block := (constant-definition | variable-declaration | statement)*
+
+	macro-definition := 'macro' function-def-tail
 
 	statement := while-statement | if-statement | expression-statement | return-statement | break-statement | halt-statement | assertion-statement
 
