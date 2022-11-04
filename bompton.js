@@ -140,6 +140,7 @@ limited to only four spells, so choose wisely.`,
 	drop: { parameters: 'slot,quantity', },
 	deposit: { parameters: 'slot,quantity', },
 	withdraw: { parameters: 'slot,quantity', },
+	CHEAT: { parameters: 'slot,quantity', },
 };
 
 Object.values(CALLS).forEach((c, i) => c.operation = 65 + i);
@@ -1012,6 +1013,12 @@ class Game {
 			}
 		}
 
+		if (operation === CHEAT) {
+			// Remove this some time
+			let [slot, value] = [arg1, arg2];
+			state[slot] = value;
+			return value;
+		}
 
 		if (state[LEVEL] === 0) {
 			// game hasn't begun
@@ -1175,6 +1182,7 @@ class Game {
 		} else if (operation === deposit || operation == withdraw) {
 
 			let [slot, qty] = [arg1, arg2];
+			const isDeposit = (operation === deposit);
 
 			if (qty < 0) return -1;  // nice try hacker
 			if (state[LOCATION] != BOMPTON_TOWN) return -1;  // you're not at the bank
@@ -1187,12 +1195,13 @@ class Game {
 			else if (slot == INVENTORY_TREASURES) bankSlot = BALANCE_TREASURES;
 			else return -1;  // Bank doesn't deal in this item
 
-			let fromSlot = operation === deposit ? slot : bankSlot;
-			let toSlot = operation === withdrawl ? slot : bankSlot;
+			let fromSlot = isDeposit ? slot : bankSlot;
+			let toSlot =  isDeposit ? bankSlot : slot;
 
 			qty = Math.min(qty, state[fromSlot]);
 
-			let availableCapacity = deposit ? MAX_INT - slot[toSlot] : state[CAPACITY] - state[ENCUMBRANCE];
+			// TODO not considering weight of item
+			let availableCapacity = isDeposit ? MAX_INT - state[toSlot] : state[CAPACITY] - state[ENCUMBRANCE];
 			qty = Math.min(qty, availableCapacity);
 
 			if (qty > 0) {
@@ -1200,13 +1209,13 @@ class Game {
 				state[toSlot] += qty;
 
 				// Charge a 1 gold commission per transaction
-				if (operation == deposit) {
+				if (isDeposit) {
 					state[state[INVENTORY_GOLD] > 0 ? INVENTORY_GOLD : BALANCE_GOLD] -= 1;
 				} else {
 					state[state[BALANCE_GOLD] > 0 ? BALANCE_GOLD : INVENTORY_GOLD] -= 1;
 				}
 
-				passTime('Making a bank ' + (operation == deposit ? 'deposit' : 'withdrawal'), 1);
+				passTime('Making a bank ' + isDeposit ? 'deposit' : 'withdrawal', 1);
 			}
 
 			return qty;
