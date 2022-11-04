@@ -140,7 +140,7 @@ const BINARY_OPERATORS = {
     },
     or: (a, b) => [a | b, a || b],
     and: (a, b) => [a & b, a && b],
-    xor: (a, b) => [a ^ b, ((a || b) && !(a && b)) ? 1 : 0],
+    xor: (a, b) => [a ^ b, ((!b && a) || (!a && b)) || 0],
     shift: (a, b) => (b < 0) ?
       [ a << -b, ((1 << -b) - 1) & (a >> (16 - b)) ] :
       [ a >> b, 0xffff & (a << (16 - b)) ],

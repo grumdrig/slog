@@ -1101,7 +1101,7 @@ class BinaryExpression {
 		},
 		'^^': {
 			precedence: 12,
-			precompute: (x,y) => (x && !y) || (!x && y) ? 1 : 0,
+			precompute: (x,y) => ((!y && x) || (!x && y)) || 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);

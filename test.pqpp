@@ -101,7 +101,9 @@ assert v6 | v3 == v7
 assert (6 && 3) == 3
 assert !(0 && 3)
 assert !(6 ^^ 3)
-assert (0 ^^ 3)
+assert !(0 ^^ 0)
+assert (0 ^^ 3) == 3
+assert (2 ^^ 0) == 2
 assert (6 || 3) == 6
 assert (0 || 3) == 3
 assert !(0 || 0)
@@ -109,7 +111,9 @@ assert !(0 || 0)
 assert (v6 && v3) == v3
 assert !(v0 && v3)
 assert !(v6 ^^ v3)
-assert (v0 ^^ v3)
+assert !(v0 ^^ v0)
+assert (v0 ^^ v3) == v3
+assert (v2 ^^ v0) == v2
 assert (v6 || v3) == v6
 assert (v0 || v3) == v3
 assert !(v0 || v0)
