@@ -418,9 +418,7 @@ div.icon {
 	    <button aria-label="Close" class=close></button>
 	  </div>
 	</div>
-
 	<div class="window-body">
-
 		<label for=arg1>Arguments:</label>
 			<input id=arg1 type=text value=0></input>
 			<input id=arg2 type=text value=0></input>
@@ -448,7 +446,7 @@ div.icon {
 </div>
 
 
-<div class=window id=docs-window>
+<div class=window hidden id=docs-window>
 	<div class="title-bar">
 	  <div class="title-bar-text">Documentation</div>
 	  <div class="title-bar-controls">
@@ -554,6 +552,7 @@ prove!
 function $(s) { return document.querySelector(s) }
 function $$(s) { return document.querySelectorAll(s) }
 HTMLElement.prototype.$ = HTMLElement.prototype.querySelector;
+HTMLElement.prototype.$$ = HTMLElement.prototype.querySelectorAll;
 function $id(s) { return document.getElementById(s) }
 
 let asm, vm;
@@ -722,10 +721,33 @@ function saveWindowState() {
 			left: w.style.left,
 			top: w.style.top,
 			zIndex: w.style.zIndex ?? '',
-			hidden: w.hasAttribute('hidden') }
+			hidden: w.hasAttribute('hidden'),
+		};
+		let selected = w.$('[role="tab"][aria-selected="true"]');
+		if (selected)
+			ws[w.id].selectedTab = selected.getAttribute('aria-controls');
 	});
 	localStorage.windowState = JSON.stringify(ws);
 }
+
+function loadWindowState(hwnd) {
+  let ws = JSON.parse(localStorage.windowState || '{}');
+  if (ws = ws[hwnd.id]) {
+	  hwnd.style.left = ws.left;
+	  hwnd.style.top = ws.top;
+	  let z = parseInt(ws.zIndex);
+	  if (!Number.isNaN(z)) {
+	  	hwnd.style.zIndex = z;
+	  }
+	  ws.hidden ? hwnd.setAttribute('hidden', true) : hwnd.removeAttribute('hidden');
+	  if (ws.selectedTab)
+	  	changeTabs({
+	  		target: $('[aria-controls="' + ws.selectedTab + '"]'),
+	  		loadingWindowState: true,
+	  	});
+	}
+}
+
 
 function bringToFront(hwnd) {
   	let hiz = 0;
@@ -743,17 +765,7 @@ function prepWindow(hwnd) {
   hwnd.style.top = hwnd.offsetTop + 'px';
   hwnd.style.position = 'absolute';
 
-  // Load window state
-  let ws = JSON.parse(localStorage.windowState || '{}');
-  if (ws = ws[hwnd.id]) {
-	  hwnd.style.left = ws.left;
-	  hwnd.style.top = ws.top;
-	  let z = parseInt(ws.zIndex);
-	  if (!Number.isNaN(z)) {
-	  	hwnd.style.zIndex = z;
-	  }
-	  ws.hidden ? hwnd.setAttribute('hidden', true) : hwnd.removeAttribute('hidden');
-	}
+  loadWindowState(hwnd);
 
 	(handle || hwnd).addEventListener("mousedown", e => {
 		hwnd.dragOrigin = { x: hwnd.offsetLeft - e.pageX,
@@ -830,27 +842,28 @@ $("#asm").addEventListener('keypress', e => {
 
 
 function changeTabs(e) {
-  const target = e.target;
-  const parent = target.parentNode;
-  const grandparent = parent.parentNode;
+	const target = e.target;
+	const parent = target.parentNode;
+	const grandparent = parent.parentNode;
 
   // Remove all current selected tabs
   parent
-    .querySelectorAll('[aria-selected="true"]')
-    .forEach((t) => t.setAttribute("aria-selected", false));
+  .$$('[aria-selected="true"]')
+  .forEach((t) => t.setAttribute("aria-selected", false));
 
   // Set this tab as selected
   target.setAttribute("aria-selected", true);
 
   // Hide all tab panels
-  grandparent
-    .querySelectorAll('[role="tabpanel"]')
-    .forEach((p) => p.setAttribute("hidden", true));
+  grandparent.$$('[role="tabpanel"]')
+  .forEach((p) => p.setAttribute("hidden", true));
 
   // Show the selected panel
-  grandparent.parentNode
-    .querySelector(`#${target.getAttribute("aria-controls")}`)
-    .removeAttribute("hidden");
+  grandparent.parentNode.$(`#${target.getAttribute("aria-controls")}`)
+  .removeAttribute("hidden");
+
+  if (!e.loadingWindowState)
+	  saveWindowState();
 }
 
 
