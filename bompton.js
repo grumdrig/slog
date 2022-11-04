@@ -175,34 +175,11 @@ for (let call in CALLS) {
 	define(call, CALLS[call].operation);
 }
 
-/*
-let EQUIPMENT_TYPES = {
-	weapon: {
-		slot: Equipment
-	},
-	armor: {
-		slot: Equipment
-	},
-	shield: {
-		slot: Equipment
-	},
-	headgear: {
-		slot: Equipment
-	},
-	footwear: {
-		slot: Equipment
-	},
-	amulet: {
-		slot: Equipment
-	},
-	ring: {
-		slot: Equipment
-	},
-	totem: {
-		slot: Equipment
-	},
-};
-*/
+
+const HOURS_PER_DAY = 24;
+const DAYS_PER_MONTH = 32;
+const MONTHS_PER_YEAR = 12;
+const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
 
 
 function generateInterface() {
@@ -1103,12 +1080,10 @@ class Game {
 
 		function passTime(task, hours, days) {
 			TASK = task;  // TODO this is inelegant
-			const HOURS_PER_DAY = 24;
 			if (days) hours += HOURS_PER_DAY * days;
-			const hoursPerYear = 24 * 365;
 			state[HOURS] += hours;
-			while (state[HOURS] > hoursPerYear) {
-				state[HOURS] -= hoursPerYear;
+			while (state[HOURS] > HOURS_PER_YEAR) {
+				state[HOURS] -= HOURS_PER_YEAR;
 				state[YEARS] += 1;
 			}
 		}
