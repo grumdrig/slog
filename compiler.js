@@ -656,59 +656,44 @@ class Expression {
 }
 
 
-// Kind of unneccessary
 class ExternalFunctionExpression {
-	operand;
-	arg1;
-	arg2;
+	args;
+
+	constructor(args) { this.args = args }
 
 	static tryParse(source) {
 		if (!source.tryConsume('external', '(')) return;
-		let result = new ExternalFunctionExpression();
-		result.operand = Expression.parse(source);
-		if (source.tryConsume(',')) {
-			result.arg1 = Expression.parse(source);
-			if (source.tryConsume(',')) {
-				result.arg2 = Expression.parse(source);
-			}
-		}
-		source.consume(')');
-		return result;
+		return new ExternalFunctionExpression(parseArgumentList(source, ')'));
 	}
 
 	simplify(context) {
-		this.operand = this.operand.simplify(context);
-		if (this.arg1) this.arg1 = this.arg1.simplify(context);
-		if (this.arg2) this.arg2 = this.arg2.simplify(context);
+		this.args = this.args.map(a => a.simplify(context));
 		return this;
 	}
 
 	generate(context) {
-		this.simplify(context);  // needed?
-		let operand = this.operand.literal;
-		operand ?? context.error('literal value expected');
-		context.assert(!!this.arg2 == (operand >= 200), 'two arguments expected');
-		context.assert(!!this.arg1 == (operand >= 100), 'at least one argument expected');
-		if (this.arg2) this.arg2.generate(context);
-		if (this.arg1) this.arg1.generate(context);
+		// this.simplify(context);  // needed?
+		context.assert(this.args.length >= 1, "external function call requires at least one argument");
+		let operand = this.args[0].literal ?? context.error('literal value expected');
+		operand += (this.args.length - 1) * 128;
+		for (let a of [...this.args.slice(1)].reverse()) {
+			a.generate(context);
+		}
 		context.emit('ext ' + operand);
 	}
 }
 
+
 class VectorLiteralExpression {
 	members = [];
 
+	constructor(members) { this.members = members }
+
 	static tryParse(source) {
 		if (source.tryConsume('[')) {
-			let expr = new VectorLiteralExpression();
-			while (true) {
-				expr.members.push(Expression.parse(source));
-				if (source.tryConsume(']')) break;
-				source.consume(',');
-			}
-			return expr;
+			return new VectorLiteralExpression(parseArgumentList(source, ']'));
 		} else if (source.isString()) {
-			let expr = new VectorLiteralExpression();
+			let expr = new VectorLiteralExpression([]);
 			for (let c of source.next().text.slice(1, -1))
 				expr.members.push(new LiteralExpression(c.charCodeAt(0)));
 			expr.members.push(new LiteralExpression(0));
@@ -725,6 +710,7 @@ class VectorLiteralExpression {
 		context.error("an vector literal/string is not a valid expression in this context");
 	}
 }
+
 
 class LiteralExpression {
 	literal;
@@ -1187,19 +1173,24 @@ class BinaryExpression {
 	}
 }
 
+function parseArgumentList(source, ender) {
+	let args = [];
+	if (!source.tryConsume(ender)) {
+		while (true) {
+			args.push(Expression.parse(source));
+			if (!source.tryConsume(',')) break;
+		}
+		source.consume(ender);
+	}
+	return args;
+}
+
 class PostfixExpression {
 	static tryPostParse(lhs, source) {
 		let op;
 		while (true) {
 			if (source.tryConsume('(')) {
-				lhs = new FunctionCallExpression(lhs);
-				if (!source.tryConsume(')')) {
-					while (true) {
-						lhs.args.push(Expression.parse(source));
-						if (source.tryConsume(')')) break;
-						source.consume(',');
-					}
-				}
+				lhs = new FunctionCallExpression(lhs, parseArgumentList(source, ')'));
 			} else if (source.tryConsume('[')) {
 				lhs = new IndexExpression(lhs);
 				lhs.index = Expression.parse(source);
@@ -1214,9 +1205,9 @@ class PostfixExpression {
 
 class FunctionCallExpression {
 	lhs;
-	args = [];
+	args;
 
-	constructor(lhs) { this.lhs = lhs }
+	constructor(lhs, args) { this.lhs = lhs; this.args = args }
 
 	generate(context) {
 		let func = this.lhs;
