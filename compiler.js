@@ -467,6 +467,8 @@ class CodeBlock {
 		return result;
 	}
 
+	// TODO: expand this to other cases, for example if the late statement is
+	// an if block and both branches return.
 	endsWithReturn() {
 		return this.statements[this.statements.length - 1] instanceof ReturnStatement
 	}
@@ -591,10 +593,10 @@ class IfStatement {
 		source.consume('}');
 		if (source.tryConsume('else')) {
 			if (source.lookahead('if')) {
-				this.elsebody = IfStatement.parse(source);
+				result.elsebody = IfStatement.parse(source);
 			} else {
 				source.consume('{');
-				this.elsebody = CodeBlock.parse(source);
+				result.elsebody = CodeBlock.parse(source);
 				source.consume('}');
 			}
 		}
@@ -602,16 +604,21 @@ class IfStatement {
 	}
 
 	generate(context) {
-		let elseLabel = uniqueLabel('else');
+		let endifLabel = uniqueLabel('endif');
+		let elseLabel = this.elsebody ? uniqueLabel('else') : null;
 		this.condition.simplify(context).generate(context);
 		context.emit('unary NOT');
-		context.emit('.branch ' + elseLabel);
+		context.emit('.branch ' + (elseLabel ?? endifLabel));
 
 		this.ifbody.generate(context);
 
-		context.emit(elseLabel + ':');
+		if (this.elsebody) {
+			context.emit('.jump ' + endifLabel);
+			context.emit(elseLabel + ':');
+			this.elsebody.generate(context);
+		}
 
-		if (this.elsebody) this.elsebody.generate(context);
+		context.emit(endifLabel + ':');
 	}
 }
 
@@ -1036,9 +1043,9 @@ class BinaryExpression {
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('sub  ; <=');
-				context.emit('max 0');
-				context.emit('unary NOT');
+				context.emit('sub        ; <=');
+				context.emit('max 0      ; <=');
+				context.emit('unary NOT  ; <=');
 			},
 		},
 		'>': {
