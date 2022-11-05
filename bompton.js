@@ -404,8 +404,8 @@ const SPELLS = [ null, {
 			return healing;
 		},
 	}, {
-		name: 'Fireball',
-		moniker: 'FIREBALL',
+		name: 'Pyroclastic Orb',
+		moniker: 'PYROCLASTIC_ORB',
 		level: 2,
 		effect: state => {
 			return battle(state, true);
