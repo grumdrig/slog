@@ -1036,21 +1036,19 @@ function updateCharacterSheet(state) {
 	setProgress('energy', state[MAX_ENERGY]-state[FATIGUE], state[MAX_ENERGY]);
 
 	for (let i = 0; i < STAT_COUNT; ++i) {
-		set('s' + i, state[STAT_0 + i] >> 8);
+		set('s' + i, state[STAT_0 + i]);
 	}
-	let n_spells = 0;
-	for (let i = 0; i < SPELL_COUNT; ++i) {
-		const slot = SPELL_0 + i;
-		let l = state[slot] >> 8;
-		if (l) {
-			set('bt' + n_spells, properCase(SLOTS[slot].name.split('_').slice(-1)[0]));
-			set('b' + n_spells, toRoman(l));
-			n_spells += 1;
+
+	for (let i = 0; i < SPELLBOOK_COUNT; ++i) {
+		const slot = SPELLBOOK_0 + i;
+		let spell = state[slot];
+		if (spell) {
+			set('bt' + i, 'Page ' + (i+1));
+			set('b' + i, SPELLS[spell].name);
+		} else {
+			set('bt' + i, '&nbsp;');
+			set('b' + i, '');
 		}
-	}
-	for ( ; n_spells < 4; ++n_spells) {
-		set('bt' + n_spells, '&nbsp;');
-		set('b' + n_spells, '');
 	}
 
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {

@@ -71,14 +71,10 @@ const SLOTS = [
 	{ name: 'STAT_CHARISMA',
 	  description: `Likeability and ability to read others.` },
 
-
-	{ name: 'SPELL_HEAL', description: `TBA` },
-	{ name: 'SPELL_FIREBALL', description: `TBA` },
-	{ name: 'SPELL_HASTE', description: `TBA` },
-	{ name: 'SPELL_BUFF', description: `TBA` },
-	{ name: 'SPELL_LUCK', description: `TBA` },
-	{ name: 'SPELL_6', description: `TBA` },
-
+	{ name: 'SPELLBOOK_0', description: `TBA` },
+	{ name: 'SPELLBOOK_1', description: `TBA` },
+	{ name: 'SPELLBOOK_2', description: `TBA` },
+	{ name: 'SPELLBOOK_3', description: `TBA` },
 
 	{ name: 'EQUIPMENT_WEAPON',
 
@@ -243,17 +239,16 @@ function define(symbol, value) {
 SLOTS.forEach((slot, i) => define(slot.name, i));
 
 const STAT_0 = STAT_STRENGTH;
-const SPELL_0 = SPELL_HEAL;
 const EQUIPMENT_0 = EQUIPMENT_WEAPON;
 const INVENTORY_0 = INVENTORY_GOLD;
 
-const STAT_COUNT = SPELL_0 - STAT_0;
-const SPELL_COUNT = EQUIPMENT_0 - SPELL_0;
+const STAT_COUNT = SPELLBOOK_0 - STAT_0;
+const SPELLBOOK_COUNT = EQUIPMENT_0 - SPELLBOOK_0;
 const EQUIPMENT_COUNT = INVENTORY_0 - EQUIPMENT_0;
 const INVENTORY_COUNT = LOCATION - INVENTORY_0;
 
 function isStatSlot(slot)      { return STAT_0      <= slot && slot < STAT_0 + STAT_COUNT }
-function isSpellSlot(slot)     { return SPELL_0     <= slot && slot < SPELL_0 + SPELL_COUNT }
+function isSpellSlot(slot)     { return SPELLBOOK_0 <= slot && slot < SPELLBOOK_0 + SPELLBOOK_COUNT }
 function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < EQUIPMENT_0 + EQUIPMENT_COUNT }
 function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_0 + INVENTORY_COUNT }
 
@@ -269,14 +264,15 @@ const CALLS = {
 
 	train: { parameters: 'slot',
 		description: `Train to improve stats (STAT_STRENGTH, and so on).
-		Training speed can be affected by various environmental factors.
-		Training increases the stat fractionally, so it may take multiple
-		training sessions to raise the actual stat.` },
+		Training speed can be affected by various environmental factors.` },
 
-	study: { parameters: 'spell',
-		description: `Study a spell. Repeated study sessions will enable the
-		character to learn the spell or increase thier mastery of it. Each
-		character is limited to only four spells, so choose wisely.` },
+	learn: { parameters: 'spellbook_slot,spell',
+		description: `Study a spell. This spell will replace any existing
+		spell in that spellbook slot; each character is limited to only
+		four spells at a time, so choose wisely.
+
+		The spellbook_slot is a value from 1 to 4, and spell is one of
+		the predfined constants SPELL_*.` },
 
 	travel: { parameters: 'destination',
 		description: `Travel towards a given map location. If the destination
@@ -310,7 +306,7 @@ const CALLS = {
 		description: `Report back to the originator of the current quest to
 		gain sundry rewards for your efforts.` },
 
-	cast: { parameters: 'spell_slot',
+	cast: { parameters: 'spell',
 		description: `Cast a spell you've learned; effects may vary. Consumes
 		reagents and saps energy.` },
 
@@ -379,12 +375,59 @@ function generateInterface() {
 
 	interface.push('');
 
-	SLOTS.forEach((slot, index) => interface.push(`const ${slot.name} = ${index}`));
+	SLOTS.forEach((slot, index) =>
+		interface.push(`const ${slot.name} = ${index}`));
+
+	interface.push('');
+
+	SPELLS.forEach((spell, index) =>
+		spell && interface.push(`const ${spell.moniker} = ${index}`));
 
 	interface.push('');
 
 	return interface.join('\n');
 }
+
+
+/////////// Spells
+
+const SPELLS = [ null, {
+		name: 'Heal Yeah',
+		moniker: 'HEAL_YEAH',
+		level: 1,
+		effect: state => {
+			let healing = 1;
+			healing *= Math.pow(1.6, state[WISDOM]);
+			healing = Math.round(healing);
+			healing = Math.min(healing, state[DAMAGE]);
+			state[DAMAGE] -= healing;
+			return healing;
+		},
+	}, {
+		name: 'Fireball',
+		moniker: 'FIREBALL',
+		level: 2,
+		effect: state => {
+			return battle(state, true);
+		},
+	}, {
+		name: 'Buff',
+		moniker: 'BUFF',
+		level: 4,
+		enchantment: [
+			{ slot: STAT_STRENGTH, increment: 4 },
+		],
+	},
+];
+// * Inviso
+// * Become the species of the nearby mob
+// * Double your money
+// * Scramble the map
+// * Create a ghost city where you stand
+// * Go back to year 0
+
+SPELLS.filter(x=>x).forEach((spell, index) => define(spell.moniker, index));
+
 
 /////////// Weapons
 
@@ -627,7 +670,7 @@ const RACES = [
 		],
 	},
 	{
-		name: "Eff",
+		name: "Eelman",
 		index: 3,
 		esteems: 1,
 		waryof: 2,
@@ -651,8 +694,8 @@ const RACES = [
 
 const DUNKLING = 1;
 const HARDWARF = 2;
-const EFF = 3;
-const GAST = 4;
+const EELMAN = 3;
+const GUST = 4;
 
 
 ///////////////// Map
@@ -793,6 +836,7 @@ const MAP = [null,
 		index: 4,
 		name: "Hohamp",
 		terrain: TOWN,
+		denizen: HARDWARF,
 		level: 0,
 	}, {
 		index: 5,
@@ -809,6 +853,7 @@ const MAP = [null,
 		index: 7,
 		name: "Yar",
 		terrain: TOWN,
+		denizen: EELMAN,
 		level: 0,
 	}, {
 		index: 8,
@@ -882,7 +927,7 @@ const MAP = [null,
 		index: 21,
 		name: "Pillary",
 		terrain: TOWN,
-		civilization: HARDWARF,
+		denizen: HARDWARF,
 		level: 0,
 	}, {
 		index: 22,
@@ -924,7 +969,7 @@ const MAP = [null,
 		index: 29,
 		name: "Delial",
 		terrain: TOWN,
-		civilization: DUNKLING,
+		denizen: DUNKLING,
 		level: 0,
 	}, {
 		index: 30,
@@ -936,7 +981,7 @@ const MAP = [null,
 		index: 31,
 		name: "Cholar",
 		terrain: TOWN,
-		civilization: DUNKLING,
+		denizen: DUNKLING,
 		level: 0,
 	}, {
 		index: 32,
@@ -979,7 +1024,7 @@ const MAP = [null,
 		longitude: 8,
 		neighbors: [37],
 		terrain: TOWN,
-		civilization: GAST,
+		denizen: GUST,
 		level: 0,
 	}];
 
@@ -1034,7 +1079,7 @@ function generateMap() {
 
 
 function carryCapacity(state) {
-	return state[STAT_STRENGTH] >> 8 + state[EQUIPMENT_MOUNT];
+	return state[STAT_STRENGTH] + state[EQUIPMENT_MOUNT];
 }
 
 function encumbrance(state) {
@@ -1073,7 +1118,7 @@ class Game {
 	static generateInterface = generateInterface;
 	static generateMap = generateMap;
 
-	static RACE_NAMES = RACES.map(r => (r && r.name) || 'TBD');
+	static RACE_NAMES = RACES.map(r => (r && r.name) || '');
 	static TERRAIN_TYPES = TERRAIN_TYPES;
 	static MOBS = MOBS;
 	static MAP = MAP;
@@ -1123,12 +1168,12 @@ class Game {
 
 		function randomPick(a) { return a[irand(a.length)] }
 
-		function STR() { return state[STAT_CONSTITUTION] >> 8 }
-		function DEX() { return state[STAT_AGILITY] >> 8 }
-		function CON() { return state[STAT_CONSTITUTION] >> 8 }
-		function INT() { return state[STAT_INTELLIGENCE] >> 8 }
-		function WIS() { return state[STAT_WISDOM] >> 8 }
-		function CHA() { return state[STAT_CHARISMA] >> 8 }
+		function STR() { return state[STAT_CONSTITUTION] }
+		function DEX() { return state[STAT_AGILITY] }
+		function CON() { return state[STAT_CONSTITUTION] }
+		function INT() { return state[STAT_INTELLIGENCE] }
+		function WIS() { return state[STAT_WISDOM] }
+		function CHA() { return state[STAT_CHARISMA] }
 
 		function battle(invulnerable=false) {
 			if (!state[MOB_TYPE]) return -1;
@@ -1161,12 +1206,12 @@ class Game {
 				}
 			}
 
-			function STR() { return state[STAT_CONSTITUTION] >> 8 }
-			function DEX() { return state[STAT_AGILITY] >> 8 }
-			function CON() { return state[STAT_CONSTITUTION] >> 8 }
-			function INT() { return state[STAT_INTELLIGENCE] >> 8 }
-			function WIS() { return state[STAT_WISDOM] >> 8 }
-			function CHA() { return state[STAT_CHARISMA] >> 8 }
+			function STR() { return state[STAT_CONSTITUTION] }
+			function DEX() { return state[STAT_AGILITY] }
+			function CON() { return state[STAT_CONSTITUTION] }
+			function INT() { return state[STAT_INTELLIGENCE] }
+			function WIS() { return state[STAT_WISDOM] }
+			function CHA() { return state[STAT_CHARISMA] }
 
 			const playerAttack = DEX() + weaponPower(state[EQUIPMENT_WEAPON]);
 
@@ -1238,20 +1283,20 @@ class Game {
 				if (slot === RACE) {
 					state[slot] = value;
 				} else if (STAT_0 <= slot && slot < STAT_0 + STAT_COUNT) {
-					state[slot] = value << 8;
+					state[slot] = value;
 				} else {
 					return -1;
 				}
 				return state[slot];
 
 			} else if (operation === startGame) {
-				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) >> 8 > 10) return -1;
+				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) > 10) return -1;
 				let raceinfo = RACES[state[RACE]];
 				if (!raceinfo) return -1;
 				// All good. Start the game.
 				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1) {
 					// Add 3 plus race bonuses to stats
-					state[stat] += (3 + (raceinfo.stat_mods[SLOTS[stat].name] || 0)) << 8;
+					state[stat] += 3 + (raceinfo.stat_mods[SLOTS[stat].name] || 0);
 				}
 				state[LEVEL] = 1;
 				state[LOCATION] = BOMPTON_TOWN;
@@ -1274,6 +1319,7 @@ class Game {
 
 		function passTime(task, hours, days) {
 			TASK = task;  // TODO this is inelegant
+			if (TASK[TASK.length - 1] !== '.') TASK += '...';
 			if (days) hours += HOURS_PER_DAY * days;
 			state[HOURS] += hours;
 			while (state[HOURS] > HOURS_PER_YEAR) {
@@ -1478,43 +1524,73 @@ class Game {
 			state[QUEST_QTY] = 0;
 			return 1;
 
-		} else  if (operation === train || operation == study) {
+		} else  if (operation === train) {
 			let slot = arg1;
 			if (local.terrain !== TOWN) return -1;
-			if (!isSpellSlot(slot) && !isStatSlot(slot)) return -1;
-			if (state[slot] >> 8 >= 99) return 0;
-			if (isSpellSlot(slot) && state.filter((v, s) => isSpellSlot(s) &&
-					((v >> 8) || (s === slot))).length > 4) {
-				return -1;  // max spells already learned
-			}
-			passTime(operation === train ? 'Training' : 'Studying', 0, 1);
-			let learns = Math.round(6 * (3 + WIS()) * Math.pow(0.6, state[slot] / 256));
-			// TODO other factors, like race, stats, random chance?
-			state[slot] += learns;
+			if (!isStatSlot(slot)) return -1;
+			if (state[slot] >= 99) return 0;
+			let hours = 24;
+			hours *= Math.pow(1.6, state[slot]);
+			hours *= 10 / (10 + state[STAT_WISDOM]);
+			// TODO: town stat-learning bonuses
+			// TODO: racial stat-learning bonuses
+			passTime('Training', Math.round(hours));
+			state[slot] += 1;
+			return state[slot];
+
+		} else  if (operation == learn) {
+			let [slot, spellType] = [arg1 - 1 + SPELLBOOK_0, arg2];
+			let spell = SPELLS[spellType];
+			if (!spell) return -1;
+			if (local.terrain !== TOWN) return -1;
+			if (!isSpellSlot(slot)) return -1;
+			let hours = 24;
+			hours *= Math.pow(1.6, spell.level);
+			hours *= 10 / (10 + state[STAT_WISDOM]);
+			// TODO: town spell-learning bonuses?
+			// TODO: racial spell-learning bonuses?
+			passTime('Learning a spell', Math.round(hours));
+			state[slot] = spellType;
 			return state[slot];
 
 		} else if (operation === cast) {
-			let spell = arg1;
-			if (!isSpellSlot(spell)) return -1;
-			let level = state[spell];
-			if (level < 1) return -1;
-			const manaused = 1;
+			let spellType = arg1;
+			let spell = SPELLS[spellType];
+			if (!spell) return -1;
+
+			if (state.slice(SPELLBOOK_0, SPELLBOOK_0 + SPELLBOOK_COUNT)
+				.filter((spell, slot) => spell == spellType)
+				.length == 0) return -1;  // Don't know it
+
+			let level = spell.level;
+
+			const manacost = level;
+			const reagents = level;
+
+			if (state[FATIGUE] + manacost > state[MAX_ENERGY])	return -1;
+			if (state[INVENTORY_REAGENTS] < reagents) return -1;
+
 			passTime('Casting', 1);
-			if (state[FATIGUE] + manaused > state[MAX_ENERGY])
-				return -1;
-			state[FATIGUE] += manaused;
-			if (spell === SPELL_HEAL) {
-				state[DAMAGE] = Math.max(state[DAMAGE] - level, 0);
-			} else if (spell === SPELL_FIREBALL) {
-				return battle(true);
-			} else if (spell === SPELL_HASTE || spell === SPELL_BUFF || spell === SPELL_INVISIBILITY || spell === SPELL_LUCK) {
-				state[ENCHANTMENT] = spell;
-				state[ENCHANTMENTLEVEL] = spell;
-				// TODO: effects of these
-			} else {
-				return -1;
+
+			state[FATIGUE] += manacost;
+			state[INVENTORY_REAGENTS] -= reagents;
+
+			if (spell.enchantment) {
+				let current = SPELLS[state[ENCHANTMENT]];
+				if (current) {
+					// Reverse current enchantment
+					for (let { slot, increment } of current.enchantment) {
+						state[slot] -= increment;
+					}
+				}
+				for (let { slot, increment } of spell.enchantment) {
+					state[slot] += increment;
+				}
 			}
-			return level;
+
+			if (spell.effect) return spell.effect(state);
+
+			return manacost;
 
 		} else if (operation === hunt) {
 			passTime('Hunting', 1);

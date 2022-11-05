@@ -13,14 +13,8 @@ var huntingGrounds[8] = [12, 12, 17, 10, 16, 15, 33, 6]
 
 while !forage(EQUIPMENT_TOTEM) { }
 seekquest()
-while .SPELL_HEAL < (2 << 8) { study(SPELL_HEAL) }
-study(SPELL_6)
-study(SPELL_FIREBALL)
-study(SPELL_HASTE)
-study(SPELL_BUFF)
-study(SPELL_LUCK)
+learn(1, HEAL_YEAH)
 while .LEVEL < 8 {
-  // if .LEVEL == 4 { break }
   goto(huntingGrounds[.LEVEL])
   raids += 1
   while !.DAMAGE && .ENCUMBRANCE < .CAPACITY {

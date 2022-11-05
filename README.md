@@ -225,60 +225,6 @@ Delial:
 	Dunkling
 
 
-### Map
-
-
-	~~F!mM
-	!vFmMF
-	FmMMF!
-	_M!m__
-	v_FF!#
-	!v_F_#
-
-Key:
-	Name
-	Terrain
-	Denizen
-	Level
-
-	+----------+----------+----------+----------+----------+----------+
-	| Watha    | Maak     | Wolfin   |  Hohamp  |  Skiddo  | Chinbreak|
-	|  tundra  |  tundra  |  forest  |  town    |  hill    | mountain |
-	|          |          |          |  dwarf   |          |          |
-	|   7      |    5     |    2     |   0      |   1      |   7      |
-	+----------+----------+----------+----------+----------+----------+
-	|  Yar     | Deepni   | Barkmot  | Goldona  | Breezeby |  Iperko  |
-	|  town    |  forest  |  forest  |  hill    | mountain |  forest  |
-	|  eff     |          |          |          |          |          |
-	|   0      |   1      |    4     |   3      |   5      |   1      |
-	+----------+----------+----------+----------+----------+----------+
-	|  Blesh   |  Donday  | Skidge   | Krako    | Sprue    |H Bompton |
-	|  forest  |  hill    | mountain | mountain |  forest  |  town    |
-	|          |          |          |          |          | dunkling |
-	|  2       |    3     |   5      |   4      |   2      |   0      |
-	+----------+----------+----------+----------+----------+----------+
-	| Terfu    | Blue Mist|  Pillary | Grein    | Woofa    | Hallon   |
-	|  plain   | mountain |  town    |  hill    |  plain   |  plain   |
-	|          |          |  dwarf   |          |          |          |
-	|    3     |    1     |    0     |   3      |   2      |  1       |
-	+----------+----------+----------+----------+----------+----------+
-	| Donga    | Panar    | Owlholm  | Apapay   | Delial   | Solla    |
-	|  marsh   |  plain   |  forest  |  forest  |  town    | desert   |
-	|          |          |          |          | dunkling |          |
-	|   1      |   2      |   4      |   3      |  0       |   1      |
-	+----------+----------+----------+----------+----------+----------+
-	| Cholar   | Ritoll   | Arapet   | Wheewit  | Enotor   | Noonaf   |
-	|  town    |  marsh   |  plain   |  forest  |  plain   | desert   |
-	| dunkling |          |          |          |          |          |
-	|   0      |   4      |   6      |   5      |  4       |   5      |
-	+----------+----------+----------+----------+----------+----------+
-
-6x6 looks like it might be better if I have 6 towns
-
-Some places might have min requirements to enter (equipment, spell, level, etc)
-
-
-
 
 ### Mobs
 
@@ -340,7 +286,7 @@ Monster brainstorm with Andy, transformed:
 ### Spells
 
 	* fireball: kill a monster sans damage
-	* heal: heal, just like it says
+	* Heal Yeah: heal, just like it says
 	* haste: walk faster
 	* buff: make stronger or whatever temporarily
 	* invisibility: it's just cool
@@ -351,6 +297,9 @@ stuff within this universe
 
 * Become the species of the nearby mob
 * Double your money
+* Scramble the map
+* Create a ghost city where you stand
+* Go back to year 0
 
 Maybe have spells use a tech ladder, so you gotta learn A and B to be able to
 learn C, which replaces them.
@@ -360,6 +309,12 @@ Also, maybe an equipment slot for a scroll. You can either read the scroll
 available in some places or something. Exchange a treasure with some guy?
 Stick NPC's in each tile?
 
+Switch spells back to a list, then put the spell ID in each slot. If spells
+have levels, put that in the MSB, but maybe just have separate spells for
+higher levels.
+
+There's no point in having %-learnedness for spells and training. Just have it
+take as long as it takes.
 
 
 ### Quests
@@ -511,3 +466,16 @@ It would seem more natural if function call argments were pushed on the stack
 from last to first? Or am I thinking about this wrong right now? I guess it's
 the opposite of how binary operators work. I'm doing external function calls
 that way in any case.
+
+Add a header to the binary, to identify the binary, to help watch for
+endianness issues and to provide an identifier for what game the program is
+for:
+
+	{
+		'Np': Int16
+		version: Int16 // 0xMMmm = MAJOR minor
+	}
+
+That requires an assmbler directive like .header and a compiler one like
+header X
+
