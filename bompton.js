@@ -628,7 +628,7 @@ const MAP = [null,
 
 	}, {
 		index: 13,
-		name: "Blesh Grove",
+		name: "Edl Grove",
 		terrain: FOREST,
 		level: 2,
 	}, {
@@ -643,7 +643,7 @@ const MAP = [null,
 		level: 5,
 	}, {
 		index: 16,
-		name: "Edl Mountain",
+		name: "Krako Mountain",
 		terrain: MOUNTAINS,
 		level: 4,
 	}, {

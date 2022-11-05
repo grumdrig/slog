@@ -11,224 +11,14 @@ about, etc.
 
 In other words the character runs a virtual machine.
 
-Could also be done in some more user-friendly scripting language. But instead
-maybe let someome write a compiler if they like.
 
+Names For Everything
+====================
 
-Pseudo-code default
-===================
+I've named the game Bompton Island but maybe Chinbreak Island is better?
 
-	While str < 15:
-		goto weight-train
+I guess the high level language is called Slog?
 
-	LOAD [GYM-LAT]
-	LOAD [GYM-LONG]
-	GOSUB gothere
-
-	GOTHERE: ... lat long => ... (but now youre there)
-	dup2
-	atan2
-	face
-	G1:
-	dup2
-	push LATITUDE
-	stat
-	push LONGITUDE
-	stat
-	push DISTANCE
-	gosub
-	push 1
-	sub
-	push 0
-	max
-	push CLOSEENOUGH:
-	branch
-	walk
-	push G1
-	GOTO
-	CLOSEENOUGH:
-	POP
-	POP
-	GOTO (return)
-
-
-	// Assume, say, town is at 0,0
-
-	raid:
-
-	Face east
-	While longitude < char.level:
-	  Walk
-
-	While health > 2:
-	  Scan for monster
-	  If found:
-	    Estimate monster level
-	    If not too high:
-	      While monster alive:
-	        Attack
-	      while scan for loot = find
-	        Gather
-
-	Face atan2 lat,long
-	While char.distanceTo(0, 0) > 1:
-	  walk
-
-	Walk to inn/hospital somehow (maybe have a place to store markers?)
-	While health < healthmax:
-	  Heal
-
-	Walk to store somehow
-	while inventory.junk > 0:
-	  sell
-
-	goto raid
-
-
-Architecture
-============
-
-Probably stack machine is wisest
-
-16 bit signed everything
-
-Mem size no more than 0x7fff = 32767 but probably much less
-
-Instuctions might look like 0xIINN where II is the machine code for the
-instruction and NN is a [signed?] number for immediate mode addressing
-
-If NN is 0 then the number is popped from the stack (stack addressing mode)
-
-Or probably better, if NN is -1 then it's popped
-
-Registers are PC (program counter) and SP (stack pointer) which could also
-have memory addresses
-
-Maybe another register PP which is the last value removed from the stack
-
-Instructions
-============
-
-When a number is given after the instruction mnemonic, that means immediate mode - the
-
-	PUSH N: push a value on the stack
-	... => ... N
-	obv is this does nothing if stack addressing mode
-
-	POP: remove a value from the stack
-
-	STAT: push value of popped stat, also other numerical state of character
-	... N => ... character.stat[N]
-	OR just fetch (and occasionally set) values at a particular mem location, possibly
-
-	FETCH: fetch value at memory location (perhaps this is just an absolute stack location)
-	... N => ... MEMORY[N]
-	may need other address modes
-
-	STORE: store value in memory
-	... X N => ... ; now MEMORY[N] = X
-
-	GOTO: move program execution
-	... X => ... ; PC = X
-	same as STORE [PC] I guess
-
-	GOSUB: jump to subroutines
-	... X => ... PC ; now PC = X
-	(RETURN is just a GOTO, thus)
-
-	BRANCH: maybe jump
-	... V X => ... ; now PC = X provided V is nonzero
-
-	BURY N: rotate the stack N deep
-	... X1 ... XN N => ... XN X1 ... X(N-1)
-	or for negative number -N
-	... X1 ... XN -N => ... X2 ... XN X1
-
-
-Math:
-
-	MAX: maximum
-	... X Y => max(X,Y)
-	(You can use this with 0 to test for postive)
-
-	MIN: minimum
-	(similarly)
-
-	NOT: not
-	... X => (0 if X != 0, else 1)
-
-	NEG: negate
-	... X => ... -X
-
-	ADD, SUB, MUL, DIV: aritmetic operators, like you think
-
-	ATAN2, SIN, LOG, maybe others: more math ops
-
-
-Physical world:
-
-	WALK: proceed in direction you're facing
-	argument: speed as percentage(?)
-
-	FACE: face a particular angle
-	argument: angle in degrees
-	... A => ...
-
-	ACT: do the action appropriate to the current location
-	(no effect on stack) or use immediate mode to indicate action. (Buy, sell, kill, etc)
-	buy
-	sell
-	attack
-	observe / hunt
-	rest (works much better at healing places)
-	forage
-
-	CAST N: cast a spell
-	  fly
-	  dig
-	  fireball
-	  heal
-	  haste
-
-  	TALK: (results in journalled conversation?)
-
-	JOURNAL N: add character to journal of limited length
-
-
-
-MEM LOCATION
-============
-
-Many of these will be read-only. Seems like I should just use negative values
-as mem locations starting at -1.
-
-	PC
-	SP
-	PP
-	Clock (age of character, capped at 32k I guess = death)
-	Level
-	STR CON DEX WIS INT CHA
-	HP MaxHP MP MaxMP
-	Encumbrance, MaxEnc
-	Inventory info somehow, say, a specific slot for each type, giving qty of that
-		Gold
-		Reagents
-		Drops
-		health potions
-	Equipment (multiple slots)
-	spellbook (slot for each possible spell, level given)
-	Latitude Longitude Depth Facing
-	Allegiance (multiple characters)
-	Noise volume / Noise frequency (plays tones)
-	observed info:
-	  general terrain (eg forest)
-	  localized specific terrain (eg tree)
-	  mob estimated level
-	  mob estimated health
-	  mob hostility
-	  mob job (for npcs)
-	  loot / resource nearby
-	Allow journalling?
 
 
 
@@ -490,7 +280,9 @@ Some places might have min requirements to enter (equipment, spell, level, etc)
 
 
 
-### Mobs (say 12 but with different variations that make them stronger?)
+### Mobs
+
+Say 12 but with different variations that make them stronger?
 
 Naybe the buffer version have greaterlevel = ceil(lesserlevel * 1.5)
 
@@ -554,6 +346,18 @@ Monster brainstorm with Andy, transformed:
 	* invisibility: it's just cool
 	* luck: increase drops for a while
 
+Spells should maybe be crazy, like turn gold into HP. Hard to think of crazy
+stuff within this universe
+
+Maybe have spells use a tech ladder, so you gotta learn A and B to be able to
+learn C, which replaces them.
+
+Also, maybe an equipment slot for a scroll. You can either read the scroll
+(cast(equip_scroll)) or study it to learn the spell. Spells might be
+available in some places or something. Exchange a treasure with some guy?
+Stick NPC's in each tile?
+
+
 
 ### Quests
 
@@ -563,8 +367,6 @@ Monster brainstorm with Andy, transformed:
 
 
 ### Um...
-
-For progress bars, pause the machine every player action, I guess.
 
 This is starting to look a bit like the complicated original-ish idea.
 
@@ -586,6 +388,8 @@ Hardwarf  Eff      Nerfling
 Maybe should have human too, even though no such home town. Or make Bompton human.
 
 Maybe should allow monster races too, though it will be hard on the player.
+
+Change Eff to Eel Man or Eelman?
 
 
 ### Character class
@@ -636,12 +440,18 @@ boss), and finally fight the boss. Resources in the final island are limited and
 
 RING
 
-boost stats or other factors. Just use the slot value to index its effect
+Boost stats or other factors. Just use the slot value to index its effect
+
+Some or all might be cursed. Once you have them you can't get rid of them.
 
 
 TOTEM
 
-just for quests I guess
+One per map tile.
+
+Just for quests I guess
+
+Could be they boost something too though.
 
 
 ### Combat
@@ -659,9 +469,10 @@ Health = CON
 Spell attack = INT + spell level
 
 
+
 ### Predictablility
 
-Use a predictable PRNG with a seed based on code checksum, so the game is
+We use a predictable PRNG with a seed based on code checksum, so the game is
 always exactly the same with the same binary.
 
 
