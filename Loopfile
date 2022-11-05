@@ -1,7 +1,7 @@
 # Grumdrig game
 
 # compile
--i grumdrig.asm node compiler.js -i ./bompton.js -o grumdrig.asm grumdrig.pqpp
+-i grumdrig.asm node compiler.js -i ./bompton.js -o grumdrig.asm grumdrig.slog
 
 # assemble
 -i grumdrig.bin -i grumdrig.dasm node vm.js -a grumdrig.asm -d grumdrig.dasm -o grumdrig.bin
@@ -13,7 +13,7 @@ node vm.js -i ./bompton.js -l grumdrig.bin -r
 # tests
 
 # compile
--i test.asm node compiler.js -o test.asm test.pqpp
+-i test.asm node compiler.js -o test.asm test.slog
 
 # assemble
 -i test.bin -i test.dasm node vm.js -a test.asm -d test.dasm -o test.bin
