@@ -890,7 +890,7 @@ function updateDebuggerState(vm) {
 	for (let i = 0; i < vm.state.length; ++i, ++n) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
-		d.innerText = regFmt(SLOTS[i] || i, vm.state[i]);
+		d.innerText = regFmt(SLOTS[i].name, vm.state[i]);
 	}
 
 	$("#codepoint").innerText = '';
@@ -1032,8 +1032,8 @@ function updateCharacterSheet(state) {
 	setProgress('xp', state[XP],
 			Game.xpNeededForLevel(state[LEVEL] + 1),
 			Game.xpNeededForLevel(state[LEVEL]));
-	setProgress('health', state[MAX_HP]-state[DAMAGE], state[MAX_HP]);
-	setProgress('energy', state[MAX_MP]-state[FATIGUE], state[MAX_MP]);
+	setProgress('health', state[MAX_HEALTH]-state[DAMAGE], state[MAX_HEALTH]);
+	setProgress('energy', state[MAX_ENERGY]-state[FATIGUE], state[MAX_ENERGY]);
 
 	for (let i = 0; i < STAT_COUNT; ++i) {
 		set('s' + i, state[STAT_0 + i] >> 8);
@@ -1043,7 +1043,7 @@ function updateCharacterSheet(state) {
 		const slot = SPELL_0 + i;
 		let l = state[slot] >> 8;
 		if (l) {
-			set('bt' + n_spells, properCase(SLOTS[slot].split('_').slice(-1)[0]));
+			set('bt' + n_spells, properCase(SLOTS[slot].name.split('_').slice(-1)[0]));
 			set('b' + n_spells, toRoman(l));
 			n_spells += 1;
 		}
@@ -1060,7 +1060,7 @@ function updateCharacterSheet(state) {
 		if (!v)
 			set('e' + i, '');
 		else if (slot === EQUIPMENT_RING)
-			set('e' + i, 'Ring of ' + SLOTS[v]);
+			set('e' + i, 'Ring of ' + SLOTS[v].name);
 		else if (slot === EQUIPMENT_TOTEM)
 			set('e' + i, MAP[v].name.split(' ')[0] + ' Totem');
 		else
@@ -1104,7 +1104,7 @@ function updateCharacterSheet(state) {
 	};
 	set('questgoal', state[QUEST_OBJECT] === EQUIPMENT_TOTEM ?
 		(state[QUEST_QTY] ? 'Seek the totem' : 'Deliver the totem') :	state[QUEST_OBJECT] ?
-		`Bring me ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]]] : state[QUEST_MOB] ?
+		`Bring me ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]].name] : state[QUEST_MOB] ?
 		`Exterminate the ` + plural(MOBS[state[QUEST_MOB]].name) : '');
 	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
 	setProgress('questprogress', state[QUEST_PROGRESS], state[QUEST_QTY]);

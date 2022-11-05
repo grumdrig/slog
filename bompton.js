@@ -1,84 +1,232 @@
 // PQAsm
 
 const SLOTS = [
-	'GAMEOVER',
+	{ name: 'GAMEOVER',
+	  description: `The game sets this value when it comes to an end. If it
+	  ever becomes non-zero, you won't be around to see it.` },
 
-	'RACE',
-	'LEVEL',
-	'XP',
+	{ name: 'RACE',
+	  description: `Your character's species, choses before the game starts.
+	  Each choice has it's own inherent minor strengths and weaknesses.` },
 
-	'HOURS',
-	'YEARS',
+	{ name: 'LEVEL',
+	  description: `As you gain experience, your level increases. Higher
+	  levels mean increased abilities accross the board.` },
+	{ name: 'XP',
+	  description: `Experience points may be earned by defeating mobs and
+	  completing quests. Earn enough and you'll be able to level up.` },
 
-	'MAX_HP',
-	'DAMAGE',
+	{ name: 'YEARS',
+	  description: `Years of in-game time elapsed since the start of the game.` },
+	{ name: 'HOURS',
+	  description: `Hours of the current year which have gone by. There are 24
+	  hours in a day, 32 days in a month, 12 months in a year. Therefore,
+	  there are 9216 hours in a year.` },
 
-	'MAX_MP',
-	'FATIGUE',
+	{ name: 'MAX_HEALTH',
+	  description: `Maximum hit points is the amount of damage you can sustain
+	  before death.` },
+	{ name: 'DAMAGE',
+	  description: `Damage sustained.` },
 
-	'ARMOR_CLASS',
-	'ENCUMBRANCE',
-	'CAPACITY',
+	{ name: 'MAX_ENERGY',
+	  description: `The maximum energy available to you for casting spells and
+	  other exhausting tasks.` },
+	{ name: 'FATIGUE',
+	  description: `Degree of fatigue, up to MAX_ENERGY.` },
 
-	'ENCHANTMENT',
-	'ENCHANTMENT_LEVEL',
 
-	'STAT_STRENGTH',
-	'STAT_AGILITY',
-	'STAT_CONSTITUTION',
-	'STAT_INTELLIGENCE',
-	'STAT_WISDOM',
-	'STAT_CHARISMA',
+	{ name: 'ARMOR_CLASS',
+	  description: `Defensive rating calculated based on equipment and bonuses.` },
 
-	'SPELL_HEAL',
-	'SPELL_FIREBALL',
-	'SPELL_HASTE',
-	'SPELL_BUFF',
-	'SPELL_LUCK',
-	'SPELL_6', //
+	{ name: 'ENCUMBRANCE',
+	  description: `Total weight of carried items, not to exceed CAPACITY.` },
 
-	'EQUIPMENT_WEAPON',
-	'EQUIPMENT_ARMOR',
-	'EQUIPMENT_SHIELD',
-	'EQUIPMENT_HEADGEAR',
-	'EQUIPMENT_FOOTWEAR',
-	'EQUIPMENT_MOUNT',
-	'EQUIPMENT_RING',
-	'EQUIPMENT_TOTEM',
+	{ name: 'CAPACITY',
+	  description: `Maximum weight you could possibly carry.` },
 
-	'INVENTORY_GOLD',
-	'INVENTORY_SPOILS',
-	'INVENTORY_REAGENTS',
-	'INVENTORY_RESOURCES',
-	'INVENTORY_FOOD',
-	'INVENTORY_TREASURES',
-	'INVENTORY_POTIONS',
-	'INVENTORY_LIFE_POTIONS',
 
-	'LOCATION',
-	'MOB_TYPE',
-	'MOB_LEVEL',
-	'MOB_DAMAGE',
+	{ name: 'ENCHANTMENT',
+	  description: `Active enchantment currently affecting you.` },
 
-	'QUEST_OBJECT', // item, by slot, or 0
-	'QUEST_MOB', // monster (by id)
-	'QUEST_LOCATION', // location to perform the quest
-	'QUEST_QTY', // qty # required
-	'QUEST_PROGRESS', // # completed
-	'QUEST_ORIGIN', // town location
+	{ name: 'ENCHANTMENT_LEVEL',
+	  description: `Level of the current active enchantment.` },
 
-	'ACT', // (up to 9, 10 = win)
-	'ACT_DURATION', // # of something required
-	'ACT_PROGRESS', // as advanced by quests
 
-	'BALANCE_GOLD',      // bank of Bompton...
-	'BALANCE_TREASURES', // ...balances
+	{ name: 'STAT_STRENGTH',
+	  description: `Ability to deal damage and lift heavy things.` },
 
-	'ESTEEM_DUNKLINGS',
-	'ESTEEM_HARDWARVES',
-	'ESTEEM_EFFS',
+	{ name: 'STAT_AGILITY',
+	  description: `Ability to move around, avoid death, etc.` },
 
-	'SEED',  // PRNG seed
+	{ name: 'STAT_CONSTITUTION',
+	  description: `Ability to absorb damage and retain energy.` },
+
+	{ name: 'STAT_INTELLIGENCE',
+	  description: `Rating of cognitive ability and perception.` },
+
+	{ name: 'STAT_WISDOM',
+	  description: `Knowlege and sagacity.` },
+
+	{ name: 'STAT_CHARISMA',
+	  description: `Likeability and ability to read others.` },
+
+
+	{ name: 'SPELL_HEAL', description: `TBA` },
+	{ name: 'SPELL_FIREBALL', description: `TBA` },
+	{ name: 'SPELL_HASTE', description: `TBA` },
+	{ name: 'SPELL_BUFF', description: `TBA` },
+	{ name: 'SPELL_LUCK', description: `TBA` },
+	{ name: 'SPELL_6', description: `TBA` },
+
+
+	{ name: 'EQUIPMENT_WEAPON',
+
+	  description: `` },
+
+	{ name: 'EQUIPMENT_ARMOR',
+
+	  description: `` },
+
+	{ name: 'EQUIPMENT_SHIELD',
+
+	  description: `` },
+
+	{ name: 'EQUIPMENT_HEADGEAR',
+
+	  description: `` },
+
+	{ name: 'EQUIPMENT_FOOTWEAR',
+
+	  description: `` },
+
+	{ name: 'EQUIPMENT_MOUNT',
+
+	  description: `` },
+
+	{ name: 'EQUIPMENT_RING',
+
+	  description: `` },
+
+	{ name: 'EQUIPMENT_TOTEM',
+
+	  description: `` },
+
+
+	{ name: 'INVENTORY_GOLD',
+
+	  description: `` },
+
+	{ name: 'INVENTORY_SPOILS',
+
+	  description: `` },
+
+	{ name: 'INVENTORY_REAGENTS',
+
+	  description: `` },
+
+	{ name: 'INVENTORY_RESOURCES',
+
+	  description: `` },
+
+	{ name: 'INVENTORY_FOOD',
+
+	  description: `` },
+
+	{ name: 'INVENTORY_TREASURES',
+
+	  description: `` },
+
+	{ name: 'INVENTORY_POTIONS',
+
+	  description: `` },
+
+	{ name: 'INVENTORY_LIFE_POTIONS',
+
+	  description: `` },
+
+
+	{ name: 'LOCATION',
+
+	  description: `` },
+
+	{ name: 'MOB_TYPE',
+
+	  description: `` },
+
+	{ name: 'MOB_LEVEL',
+
+	  description: `` },
+
+	{ name: 'MOB_DAMAGE',
+
+	  description: `` },
+
+
+	{ name: 'QUEST_OBJECT', // item, by slot, or 0
+
+	  description: `` },
+
+	{ name: 'QUEST_MOB', // monster (by id)
+
+	  description: `` },
+
+	{ name: 'QUEST_LOCATION', // location to perform the quest
+
+	  description: `` },
+
+	{ name: 'QUEST_QTY', // qty # required
+
+	  description: `` },
+
+	{ name: 'QUEST_PROGRESS', // # completed
+
+	  description: `` },
+
+	{ name: 'QUEST_ORIGIN', // town location
+
+	  description: `` },
+
+
+	{ name: 'ACT', // (up to 9, 10 = win)
+
+	  description: `` },
+
+	{ name: 'ACT_DURATION', // # of something required
+
+	  description: `` },
+
+	{ name: 'ACT_PROGRESS', // as advanced by quests
+
+	  description: `` },
+
+
+	{ name: 'BALANCE_GOLD',      // bank of Bompton...
+
+	  description: `` },
+
+	{ name: 'BALANCE_TREASURES', // ...balances
+
+	  description: `` },
+
+
+	{ name: 'ESTEEM_DUNKLINGS',
+
+	  description: `` },
+
+	{ name: 'ESTEEM_HARDWARVES',
+
+	  description: `` },
+
+	{ name: 'ESTEEM_EFFS',
+
+	  description: `` },
+
+
+	{ name: 'SEED',  // PRNG seed
+
+	  description: `` },
+
 ];
 
 function define(symbol, value) {
@@ -92,7 +240,7 @@ function define(symbol, value) {
 }
 
 // const LEVEL = 1; for example
-SLOTS.forEach(define);
+SLOTS.forEach((slot, i) => define(slot.name, i));
 
 const STAT_0 = STAT_STRENGTH;
 const SPELL_0 = SPELL_HEAL;
@@ -198,6 +346,9 @@ const CALLS = {
 		description: `Withdraw gold or treasures from the Bank of Bompton.
 		There is a 1 GP fee.` },
 
+	retire: {
+		description: `End the game. It's gone on long enough already.` },
+
 	cheat: { parameters: 'slot,quantity',
 		description: `This does nothing.` },
 };
@@ -228,7 +379,7 @@ function generateInterface() {
 
 	interface.push('');
 
-	SLOTS.forEach((slot, index) => interface.push(`const ${slot} = ${index}`));
+	SLOTS.forEach((slot, index) => interface.push(`const ${slot.name} = ${index}`));
 
 	interface.push('');
 
@@ -937,7 +1088,7 @@ class Game {
 	static dumpState(state) {
 		for (let i = 0; i < SLOTS.length; ++i)
 			if (state[i])
-				console.log(SLOTS[i] + ': ' + state[i]);
+				console.log(SLOTS[i].name + ': ' + state[i]);
 	}
 
 	static handleInstruction(state, operation, arg1, arg2) {
@@ -1030,7 +1181,7 @@ class Game {
 				}
 			} else {
 				state[DAMAGE] += dealtToPlayer;
-				if (state[DAMAGE] < state[MAX_HP]) {
+				if (state[DAMAGE] < state[MAX_HEALTH]) {
 					state[MOB_DAMAGE] += dealtToMob;
 				}
 			}
@@ -1046,8 +1197,8 @@ class Game {
 				state[MOB_LEVEL] = 0;
 			}
 
-			if (state[DAMAGE] >= state[MAX_HP]) {
-				state[DAMAGE] = state[MAX_HP];
+			if (state[DAMAGE] >= state[MAX_HEALTH]) {
+				state[DAMAGE] = state[MAX_HEALTH];
 				if (state[INVENTORY_LIFE_POTIONS] > 0) {
 					state[INVENTORY_LIFE_POTIONS] -= 1;
 					state[DAMAGE] = state[HEALTH] - 1;  // or 0?
@@ -1100,12 +1251,12 @@ class Game {
 				// All good. Start the game.
 				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1) {
 					// Add 3 plus race bonuses to stats
-					state[stat] += (3 + (raceinfo.stat_mods[SLOTS[stat]] || 0)) << 8;
+					state[stat] += (3 + (raceinfo.stat_mods[SLOTS[stat].name] || 0)) << 8;
 				}
 				state[LEVEL] = 1;
 				state[LOCATION] = BOMPTON_TOWN;
-				state[MAX_HP] = 6 + CON();
-				state[MAX_MP] = 6 + INT();
+				state[MAX_HEALTH] = 6 + CON();
+				state[MAX_ENERGY] = 6 + INT();
 				actUp();
 				for (let { slot, value } of raceinfo.startingitems) {
 					state[slot] = value;
@@ -1349,7 +1500,7 @@ class Game {
 			if (level < 1) return -1;
 			const manaused = 1;
 			passTime('Casting', 1);
-			if (state[FATIGUE] + manaused > state[MAX_MP])
+			if (state[FATIGUE] + manaused > state[MAX_ENERGY])
 				return -1;
 			state[FATIGUE] += manaused;
 			if (spell === SPELL_HEAL) {
@@ -1430,11 +1581,14 @@ class Game {
 			passTime('Levelling up', 1, 0);
 			return 1;
 
+		} else if (operation === retire) {
+			state[GAMEOVER] = 0x401C;
+
 		} else {
 			error("Invalid operation");
 		}
 
-		if (state[DAMAGE] >= state[MAX_HP]) {
+		if (state[DAMAGE] >= state[MAX_HEALTH]) {
 			state[GAMEOVER] = 0xDEAD;
 		} else if (state[YEARS] >= 10) {
 			state[GAMEOVER] = 0xA9ED;

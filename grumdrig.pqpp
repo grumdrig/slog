@@ -27,7 +27,7 @@ while .LEVEL < 8 {
     while !.MOB_LEVEL || .MOB_LEVEL > .LEVEL {
       hunt()
     }
-    while .MOB_LEVEL && .DAMAGE < (.MAX_HP / 2) {
+    while .MOB_LEVEL && .DAMAGE < (.MAX_HEALTH / 2) {
       melee()
     }
   }

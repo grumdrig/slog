@@ -319,7 +319,7 @@ class VirtualMachine {
         this.push(Math.floor(result));
         this.ax_fractional = result - Math.floor(result);
       } else {
-        error("invalid unary operator");
+        this.error("invalid unary operator");
       }
 
     // Binary operators
@@ -340,6 +340,7 @@ class VirtualMachine {
       this.push(this.world.handleInstruction(this.state, operand & 0x7F, ...args));
 
     } else {
+      this.running = false;
       this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic}`);
     }
 
@@ -366,7 +367,8 @@ class VirtualMachine {
 
   error(message) {
     console.log(message);
-    throw message;
+    this.dumpState();
+    this.running = false;
   }
 
   dumpState() {
