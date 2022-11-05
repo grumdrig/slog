@@ -822,9 +822,9 @@ window.addEventListener("DOMContentLoaded", _ => {
 	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
 
 	for (let call in CALLS) {
-		let { parameters, opcode, description } = CALLS[call];
+		let { parameters, operation, description } = CALLS[call];
 		let b = $("#control-buttons").appendChild(document.createElement('button'));
-		b.addEventListener('click', _ => gameplay(opcode));
+		b.addEventListener('click', _ => gameplay(operation));
 		b.innerText = `${call}(${parameters ?? ''})`;
 		b.hint = description ?? '';
 	}
