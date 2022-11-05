@@ -349,6 +349,9 @@ Monster brainstorm with Andy, transformed:
 Spells should maybe be crazy, like turn gold into HP. Hard to think of crazy
 stuff within this universe
 
+* Become the species of the nearby mob
+* Double your money
+
 Maybe have spells use a tech ladder, so you gotta learn A and B to be able to
 learn C, which replaces them.
 

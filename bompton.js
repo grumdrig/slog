@@ -112,35 +112,94 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 
 const CALLS = {
 	initialize: { parameters: 'slot,value',
-		description: `Before the game starts, the character may assign up to
-a total of ten points to their six stat slots using this function. Also, the
-character's race much be assigned using this function with the slot value
-RACE.`,
-	},
-	startGame: {},
-	train: { parameters: 'stat', },
+		description: `Before the game starts, the character may assign up to a
+		total of ten points to their six stat slots (STATE_STRENGTH, etc)
+		using this function. Also, the character's RACE must be assigned.` },
+
+	startGame: {
+		description: 'Begin the game! Call initialize() as needed first.' },
+
+	train: { parameters: 'slot',
+		description: `Train to improve stats (STAT_STRENGTH, and so on).
+		Training speed can be affected by various environmental factors.
+		Training increases the stat fractionally, so it may take multiple
+		training sessions to raise the actual stat.` },
+
 	study: { parameters: 'spell',
 		description: `Study a spell. Repeated study sessions will enable the
-character to learn the spell or increase thier mastery of it. The character is
-limited to only four spells, so choose wisely.`,
-	},
-	travel: { parameters: 'destination', },
-	melee: {},
-	buyItem: { parameters: 'slot,quantity', },
-	buyEquipment: { parameters: 'slot,quality', },
-	sell: { parameters: 'slot,quantity', },
-	seekquest: {},
-	completequest: {},
-	cast: { parameters: 'spell_slot', },
-	forage: { parameters: 'target_slot', },
-	rest: {},
-	hunt: {},
-	levelup: {},
-	give: { parameters: 'slot,quantity', },
-	drop: { parameters: 'slot,quantity', },
-	deposit: { parameters: 'slot,quantity', },
-	withdraw: { parameters: 'slot,quantity', },
-	CHEAT: { parameters: 'slot,quantity', },
+		character to learn the spell or increase thier mastery of it. Each
+		character is limited to only four spells, so choose wisely.` },
+
+	travel: { parameters: 'destination',
+		description: `Travel towards a given map location. If the destination
+		is reachable, this will get them one map location closer. The
+		character may not choose the most efficient route, so travel
+		step-by-step if more efficiency is desired.` },
+
+	melee: {
+		description: `Battle the nearby mob. You'll do damage, they'll do
+		damage, everybody's happy. Look around the local area for mobs
+		first with hunt().`	},
+
+	buy: { parameters: 'slot,qualanty',
+		description: `Buy a quantity of some inventory item
+		(INVENTORY_POTIONS, etc.) from the local shopkeeper, You can get a
+		price check by passing 0 as the quantitiy.
+
+		Or buy a piece of equipment (EQUIPMENT_*) of a certain quality. This
+		will replace any equipment already in that slot, so consider
+		selling it first.` },
+
+	sell: { parameters: 'slot,quantity',
+		description: `Sell an inventory item of piece of equipment.` },
+
+	seekquest: {
+		description: `While in town, ask around and listen to rumors in hopes
+		of discovering adventures that await and tasks to complete.
+		aThere's only one quest activate at any given time.` },
+
+	completequest: {
+		description: `Report back to the originator of the current quest to
+		gain sundry rewards for your efforts.` },
+
+	cast: { parameters: 'spell_slot',
+		description: `Cast a spell you've learned; effects may vary. Consumes
+		reagents and saps energy.` },
+
+	forage: { parameters: 'target_slot',
+		description: `Comb the local area for INVENTORY_FOOD, or
+		INVENTORY_RESOURCES, or whatever you might seek.` },
+
+	rest: {
+		description: `Grab some downtime to lower FATIGUE and DAMAGE. Resting
+		is much more effected in town than it is out in the wilderness.` },
+
+	hunt: {
+		description: `Search around for a mob to kill.`	},
+
+	levelup: {
+		description: `Level up! When you've accumulated enough experience, you
+		can take yourself to the next level by levelling up. This will
+		increase your general effectiveness accross the board, and may
+		result in stat or other bonuses.` },
+
+	give: { parameters: 'slot,quantity',
+		description: `Hand over in item to whomever is nearby.` },
+
+	drop: { parameters: 'slot,quantity',
+		description: `Drop stuff right on the ground, just to get rid of it.` },
+
+	deposit: { parameters: 'slot,quantity',
+		description: `When in Bompton Town, stop at the Bank of Bompton where
+		you can store INVENTORY_GOLD and INVENTORY_TREASURES. There is a
+		one (1) gold charge for each transaction.` },
+
+	withdraw: { parameters: 'slot,quantity',
+		description: `Withdraw gold or treasures from the Bank of Bompton.
+		There is a 1 GP fee.` },
+
+	cheat: { parameters: 'slot,quantity',
+		description: `This does nothing.` },
 };
 
 Object.values(CALLS).forEach((c, i) => c.operation = 65 + i);
@@ -1013,7 +1072,7 @@ class Game {
 			}
 		}
 
-		if (operation === CHEAT) {
+		if (operation === cheat) {
 			// Remove this some time
 			let [slot, value] = [arg1, arg2];
 			state[slot] = value;
@@ -1123,7 +1182,7 @@ class Game {
 			passTime('Fighting', 1);
 			return battle();
 
-		} else if (operation === buyItem || operation === buyEquipment) {
+		} else if (operation === buy) {
 			let slot = arg1;
 			let qty, levelToBe, capacity;
 			if (isEquipmentSlot(slot)) {
