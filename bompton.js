@@ -24,10 +24,10 @@ const SLOTS = [
 	  there are 9216 hours in a year.` },
 
 	{ name: 'MAX_HEALTH',
-	  description: `Maximum hit points is the amount of damage you can sustain
+	  description: `Maximum hit points, i.e. the amount of damage you can sustain
 	  before death.` },
-	{ name: 'DAMAGE',
-	  description: `Damage sustained.` },
+	{ name: 'HEALTH',
+	  description: `Current health level; MAX_HEALTH minus damage sustained.` },
 
 	{ name: 'MAX_ENERGY',
 	  description: `The maximum energy available to you for casting spells and
@@ -453,12 +453,12 @@ const SPELLS = [ null, {
 			let healing = 1;
 			healing *= Math.pow(1.6, state[WISDOM]);
 			healing = Math.round(healing);
-			healing = Math.min(healing, state[DAMAGE]);
-			state[DAMAGE] -= healing;
+			healing = Math.min(healing, state[MAX_HEALTH] - state[HEALTH]);
+			state[HEALTH] += healing;
 			return healing;
 		},
-		description: `Heal some or all of any DAMAGE you've sustained. The effectiveness
-		of this spell is aided by higher STAT_WISDOM`,
+		description: `Heal some or all of any damage you may have sustained.
+		The effectiveness of this spell is aided by higher STAT_WISDOM`,
 	}, {
 		name: 'Pyroclastic Orb',
 		moniker: 'PYROCLASTIC_ORB',
@@ -470,7 +470,7 @@ const SPELLS = [ null, {
 		effect: state => {
 			return battle(state, true);
 		},
-		description: `Hurl a ball of fire at your nearby foe, causing them damage.`,
+		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
 		name: 'Buff',
 		moniker: 'BUFF',
@@ -1289,11 +1289,11 @@ class Game {
 				// Player attacks first
 				state[MOB_DAMAGE] += dealtToMob;
 				if (state[MOB_DAMAGE] < mobMaxHP) {
-					state[DAMAGE] += dealtToPlayer;
+					state[HEALTH] -= Math.min(dealtToPlayer, state[HEALTH]);
 				}
 			} else {
-				state[DAMAGE] += dealtToPlayer;
-				if (state[DAMAGE] < state[MAX_HEALTH]) {
+				state[HEALTH] -= Math.min(dealtToPlayer, state[HEALTH]);
+				if (state[HEALTH] > 0) {
 					state[MOB_DAMAGE] += dealtToMob;
 				}
 			}
@@ -1309,11 +1309,10 @@ class Game {
 				state[MOB_LEVEL] = 0;
 			}
 
-			if (state[DAMAGE] >= state[MAX_HEALTH]) {
-				state[DAMAGE] = state[MAX_HEALTH];
+			if (state[HEALTH] <= 0) {
 				if (state[INVENTORY_LIFE_POTIONS] > 0) {
 					state[INVENTORY_LIFE_POTIONS] -= 1;
-					state[DAMAGE] = state[HEALTH] - 1;  // or 0?
+					state[HEALTH] = 1;  // or max health?
 				} else {
 					// dead. now what?
 				}
@@ -1321,9 +1320,6 @@ class Game {
 			} else {
 				return 1;
 			}
-
-			// let damage = Math.pow(1.5, levelDisadvantage);
-			// state[DAMAGE] = Math.min(state[DAMAGE] + damage, state[HEALTH]);
 		}
 
 		function actUp() {
@@ -1682,8 +1678,8 @@ class Game {
 			let hp = d(CON());
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rand() * rand());
-			hp = Math.min(hp, state[DAMAGE]);
-			state[DAMAGE] -= hp;
+			hp = Math.min(hp, state[MAX_HEALTH] - state[HEALTH]);
+			state[HEALTH] += hp;
 
 			let mp = d(WIS());
 			if (local.terrain !== TOWN)
@@ -1732,7 +1728,7 @@ class Game {
 			console.log("Invalid operation");
 		}
 
-		if (state[DAMAGE] >= state[MAX_HEALTH]) {
+		if (state[HEALTH] <= 0) {
 			state[GAMEOVER] = 0xDEAD;
 		} else if (state[YEARS] >= 10) {
 			state[GAMEOVER] = 0xA9ED;

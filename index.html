@@ -1043,7 +1043,7 @@ function updateCharacterSheet(state) {
 	setProgress('xp', state[XP],
 			Game.xpNeededForLevel(state[LEVEL] + 1),
 			Game.xpNeededForLevel(state[LEVEL]));
-	setProgress('health', state[MAX_HEALTH]-state[DAMAGE], state[MAX_HEALTH]);
+	setProgress('health', state[HEALTH], state[MAX_HEALTH]);
 	setProgress('energy', state[ENERGY], state[MAX_ENERGY]);
 
 	for (let i = 0; i < STAT_COUNT; ++i) {

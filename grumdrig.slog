@@ -18,18 +18,18 @@ learn(2, PYROCLASTIC_ORB)
 while .LEVEL < 8 {
   goto(huntingGrounds[.LEVEL])
   raids += 1
-  while !.DAMAGE && .ENCUMBRANCE < .CAPACITY {
+  while .HEALTH >= 2 * .MAX_HEALTH / 3 && .ENCUMBRANCE < .CAPACITY {
     while !.MOB_LEVEL || .MOB_LEVEL > .LEVEL {
       hunt()
     }
-    while .MOB_TYPE && .DAMAGE < (.MAX_HEALTH / 2) {
+    while .MOB_TYPE && .HEALTH >= (.MAX_HEALTH / 3) {
       melee()
     }
     while cast(HEAL_YEAH) > 0 { }
     drop(INVENTORY_SPOILS, .INVENTORY_SPOILS)
   }
   goto(18)
-  while .DAMAGE {
+  while .HEALTH < .MAX_HEALTH {
     rest()
   }
   sell(INVENTORY_SPOILS, .INVENTORY_SPOILS)

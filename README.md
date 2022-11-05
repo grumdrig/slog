@@ -481,7 +481,4 @@ header X
 
 Maybe get rid of INVENTORY_ and so on?
 
-Don't use DAMAGE, use HEALTH. Same for FATIGUE and ENERGY. It just looks
-better.
-
 Have a name for the char. Maybe even a class.
