@@ -361,7 +361,6 @@ class MacroDefinition {
 		return this;
 	}
 
-	// TODO declare or define? pick one
 	declare(context) {
 		context.declareFunction(this);
 	}
@@ -374,7 +373,7 @@ class MacroDefinition {
 			context.function = this;
 			context.macroReturnLabel = uniqueLabel(this.name + '_return');
 			this.body.generate(context);
-			if (!this.body.endsWithReturn())
+			if (!this.body.willReturn)
 				context.emit('push 0  ; default macro return value');
 			context.emit(context.macroReturnLabel + ':');
 		} else {
@@ -406,7 +405,7 @@ class FunctionDefinition extends MacroDefinition {
 		if (this.body) {
 			context.function = this;
 			this.body.generate(context);
-			if (!this.body.endsWithReturn())
+			if (!this.body.willReturn)
 				this.generateReturn(context, false);
 		} else {
 			this.expr.generate(context);
@@ -460,10 +459,8 @@ class CodeBlock {
 		return result;
 	}
 
-	// TODO: expand this to other cases, for example if the late statement is
-	// an if block and both branches return.
-	endsWithReturn() {
-		return this.statements[this.statements.length - 1] instanceof ReturnStatement
+	get willReturn() {
+		return (this.statements[this.statements.length - 1] ?? {}).willReturn;
 	}
 
 	generate(context) {
@@ -517,6 +514,8 @@ class ReturnStatement {
 		let func = context.enclosingScope().function;
 		func.generateReturn(context, true);
 	}
+
+	get willReturn() { return true }
 }
 
 class HaltStatement {
@@ -606,12 +605,17 @@ class IfStatement {
 		this.ifbody.generate(context);
 
 		if (this.elsebody) {
-			context.emit('.jump ' + endifLabel);
+			if (!this.ifbody.willReturn)
+				context.emit('.jump ' + endifLabel);
 			context.emit(elseLabel + ':');
 			this.elsebody.generate(context);
 		}
 
 		context.emit(endifLabel + ':');
+	}
+
+	get willReturn() {
+		return this.ifbody.willReturn && (!this.elsebody || this.elsebody.willReturn);
 	}
 }
 

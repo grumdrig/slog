@@ -218,3 +218,16 @@ assert plusFive(1) == 6
 assert plusFive(v1) == v6
 
 checksp()
+
+func either(which) {
+  if which {
+    return 1
+  } else {
+    return 2
+  }
+}
+
+assert either(100) == 1
+assert either(0) == 2
+
+checksp()
