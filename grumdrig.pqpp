@@ -3,7 +3,7 @@ initialize(RACE, 1)
 initialize(STAT_STRENGTH, 10)
 startGame()
 
-func goto(dest) {
+macro goto(dest) {
   while travel(dest) > 0 { }
 }
 
@@ -21,9 +21,11 @@ while .LEVEL < 8 {
     while !.MOB_LEVEL || .MOB_LEVEL > .LEVEL {
       hunt()
     }
-    while .MOB_LEVEL && .DAMAGE < (.MAX_HEALTH / 2) {
+    while .MOB_TYPE && .DAMAGE < (.MAX_HEALTH / 2) {
       melee()
     }
+    while cast(HEAL_YEAH) > 0 { }
+    drop(INVENTORY_SPOILS, .INVENTORY_SPOILS)
   }
   goto(18)
   while .DAMAGE {
