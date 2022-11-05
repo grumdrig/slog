@@ -38,14 +38,21 @@ class Source {
 				let lexeme = { line_no };
 
 				if (lexeme.text = take(/^[$][\da-f]+/i)) {
+					// Hex literal
 					lexeme.literal = true;
 					lexeme.value = parseInt(lexeme.text.substr(1), 16);
+
 				} else if (lexeme.text = take(/^\d+/)) {
+					// Decimal literal
 					lexeme.literal = true;
 					lexeme.value = parseInt(lexeme.text);
+
 				} else if (lexeme.text = take(/^[a-z_]\w*/i)) {
+					// Identifier
 					lexeme.identifier = true;
+
 				} else if (lexeme.text = take(/^'.*?'/)) {
+					// Character
 					if (lexeme.text.length < 3 || lexeme.text.length > 4)
 						this.error('invalid character literal length ' + (lexeme.text.length - 2));
 					lexeme.literal = true;
@@ -53,12 +60,19 @@ class Source {
 					if (lexeme.text.length > 3) {
 						lexeme.value = lexeme.value * 256 + lexeme.text.charCodeAt(2);
 					}
+
 				} else if (lexeme.text = take(/^".+?"/)) {
+					// String
 					lexeme.string = true;
+
 				} else if (lexeme.text = take(/^[-+=<>*/%^&|!?]+/)) {
+					// Operator
 					lexeme.operator = true;
+
 				} else if (lexeme.text = take(/^[.,~@#(){}[\]]/)) {
+					// Punctuation
 					lexeme.punctuation = true;
+
 				} else if (!comment) {
 					this.error(`unrecognized character at line ${line_no}: '${line[0]}'`);
 				}
@@ -416,7 +430,7 @@ class FunctionDefinition extends MacroDefinition {
 
 	generateCall(context, args) {
 		const returnLabel = uniqueLabel('return');
-		context.emit(`.stack 0 ${returnLabel}  ; result, returnAddr`);
+		context.emit(`.stack 0 ${returnLabel}  ; result, return_dddr`);
 		context.emit('fetch FP');
 		for (let a of args) { a.generate(context) }
 		// now position FP right before the arguments

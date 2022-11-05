@@ -32,9 +32,9 @@ const SLOTS = [
 	{ name: 'MAX_ENERGY',
 	  description: `The maximum energy available to you for casting spells and
 	  other exhausting tasks.` },
-	{ name: 'FATIGUE',
-	  description: `Degree of fatigue, up to MAX_ENERGY.` },
-
+	{ name: 'ENERGY',
+	  description: `Energy available at the moment, from MAX_ENERGY down to zero.
+	  It drops as fatigue sets in.` },
 
 	{ name: 'ARMOR_CLASS',
 	  description: `Defensive rating calculated based on equipment and bonuses.` },
@@ -317,7 +317,7 @@ const CALLS = {
 		INVENTORY_RESOURCES, or whatever you might seek.` },
 
 	rest: {
-		description: `Grab some downtime to lower FATIGUE and DAMAGE. Resting
+		description: `Grab some downtime to reduce fatigue and damage. Resting
 		is much more effected in town than it is out in the wilderness.` },
 
 	hunt: {
@@ -446,7 +446,7 @@ const SPELLS = [ null, {
 		moniker: 'HEAL_YEAH',
 		level: 1,
 		costs: [
-			{ slot: FATIGUE, quantity: -1 },
+			{ slot: ENERGY, quantity: 1 },
 			{ slot: INVENTORY_REAGENTS, quantity: 1 },
 			],
 		effect: state => {
@@ -464,7 +464,7 @@ const SPELLS = [ null, {
 		moniker: 'PYROCLASTIC_ORB',
 		level: 2,
 		costs: [
-			{ slot: FATIGUE, quantity: 2 },
+			{ slot: ENERGY, quantity: 2 },
 			{ slot: INVENTORY_REAGENTS, quantity: 2 },
 			],
 		effect: state => {
@@ -476,7 +476,7 @@ const SPELLS = [ null, {
 		moniker: 'BUFF',
 		level: 4,
 		costs: [
-			{ slot: FATIGUE, quantity: -4 },
+			{ slot: ENERGY, quantity: 4 },
 			{ slot: INVENTORY_REAGENTS, quantity: 4 },
 			],
 		enchantment: [
@@ -1368,7 +1368,7 @@ class Game {
 				state[LEVEL] = 1;
 				state[LOCATION] = BOMPTON_TOWN;
 				state[MAX_HEALTH] = 6 + CON();
-				state[MAX_ENERGY] = 6 + INT();
+				state[ENERGY] = state[MAX_ENERGY] = 6 + INT();
 				actUp();
 				for (let { slot, value } of raceinfo.startingitems) {
 					state[slot] = value;
@@ -1634,12 +1634,12 @@ class Game {
 			const manacost = level;
 			const reagents = level;
 
-			if (state[FATIGUE] + manacost > state[MAX_ENERGY])	return -1;
+			if (state[ENERGY] < manacost)	return -1;
 			if (state[INVENTORY_REAGENTS] < reagents) return -1;
 
 			passTime('Casting', 1);
 
-			state[FATIGUE] += manacost;
+			state[ENERGY] -= manacost;
 			state[INVENTORY_REAGENTS] -= reagents;
 
 			if (spell.enchantment) {
@@ -1688,8 +1688,8 @@ class Game {
 			let mp = d(WIS());
 			if (local.terrain !== TOWN)
 				mp = Math.round(mp * rand() * rand());
-			mp = Math.min(mp, state[FATIGUE]);
-			state[FATIGUE] -= mp;
+			mp = Math.min(mp, state[MAX_ENERGY] - state[ENERGY]);
+			state[ENERGY] += mp;
 
 			return hp + mp;
 
