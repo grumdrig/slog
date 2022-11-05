@@ -195,26 +195,32 @@ class VirtualMachine {
       a = -a - 1;
       if (a < this.registers.length) {
         this.registers[a] = v;
+      } else if (a - this.registers.length < this.state.length) {
+        this.state[a - this.registers.length] = v;
       } else {
-        a -= this.registers.length;
-        if (a < this.state.length)
-          this.state[a] = v;
+        this.error("Access violation storing address ", -a - 1);
       }
     } else if (a < this.memory.length) {
         this.memory[a] = v;
+    } else {
+        this.error("Access violation storing address ", a);
     }
   }
 
   fetch(a) {
     if (a < 0) {
       a = -a - 1;
-      if (a < this.registers.length) return this.registers[a];
-      a -= this.registers.length;
-      if (a < this.state.length) return this.state[a];
-      return 0;
-    } else {
-      if (a >= this.memory.length) return 0;
+      if (a < this.registers.length) {
+        return this.registers[a];
+      } else if (a - this.registers.length < this.state.length) {
+        return this.state[a - this.registers.length];
+      } else {
+        this.error("Access violation fetching address ", -a - 1);
+      }
+    } else if (a < this.memory.length) {
       return this.memory[a];
+    } else {
+      this.error("Access violation fetching address ", -a - 1);
     }
   }
 
@@ -223,6 +229,7 @@ class VirtualMachine {
 
   constructor(program, world) {
     this.world = world;
+    this.programLength = program.length;
     for (let i = 0; i < program.length; ++i) {
       this.memory[i] = program[i];
     }
@@ -340,8 +347,7 @@ class VirtualMachine {
       this.push(this.world.handleInstruction(this.state, operand & 0x7F, ...args));
 
     } else {
-      this.running = false;
-      this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic}`);
+      this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic ?? ''}`);
     }
 
     this.ck += 1;
@@ -350,6 +356,15 @@ class VirtualMachine {
     if (this.clock > 1000*1000) {
       console.log("**************** Debug limit reached");
       this.running = false;
+    }
+
+    // Check various sanity conditions. Potentially a programmer might want to
+    // violate them for some hacky reason but we'll worry about that
+    // problem if we encounter it.
+    if (this.pc < 0 || this.pc >= this.memory.length ||
+        this.sp < this.programLength || this.sp > this.memory.length ||
+        this.fp < 0 || this.fp > this.memory.length) {
+      this.error("Invalid machine state");
     }
 
     return result;
@@ -366,7 +381,7 @@ class VirtualMachine {
   }
 
   error(message) {
-    console.log(message);
+    console.log('VM ERROR', message);
     this.dumpState();
     this.running = false;
   }
