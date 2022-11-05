@@ -219,6 +219,11 @@ iframe {
 	border: solid 1px blue;
 }
 
+		.docmom {
+			overflow: auto;
+			height: 390px;
+		}
+
 /* Icons */
 
 div.icon {
@@ -497,7 +502,9 @@ prove!
 </div>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-game-reference">
-		  	<iframe src="data:,Game%20Reference"></iframe>
+		  	<div class=docmom>
+			  	<div id="gamereference"></div>
+			  </div>
 		  </article>
 		  <article role="tabpanel" hidden id="tab-map">
 		  	<div id='worldmap'></div>
@@ -801,6 +808,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 
   $("#interface").value = Game.generateInterface();
   $("#worldmap").innerHTML = Game.generateMap();
+  $("#gamereference").innerHTML = Game.generateDocumentation();
 
   $$(".icon").forEach(element => element.addEventListener('click', e => {
   	let win = document.getElementById(element.getAttribute('data-for'));

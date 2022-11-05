@@ -257,7 +257,9 @@ const CALLS = {
 	initialize: { parameters: 'slot,value',
 		description: `Before the game starts, the character may assign up to a
 		total of ten points to their six stat slots (STATE_STRENGTH, etc)
-		using this function. Also, the character's RACE must be assigned.` },
+		using this function.
+
+		<p>Also, the character's RACE must be assigned.` },
 
 	startGame: {
 		description: 'Begin the game! Call initialize() as needed first.' },
@@ -290,7 +292,7 @@ const CALLS = {
 		(INVENTORY_POTIONS, etc.) from the local shopkeeper, You can get a
 		price check by passing 0 as the quantitiy.
 
-		Or buy a piece of equipment (EQUIPMENT_*) of a certain quality. This
+		<p>Or, buy a piece of equipment (EQUIPMENT_*) of a certain quality. This
 		will replace any equipment already in that slot, so consider
 		selling it first.` },
 
@@ -389,12 +391,64 @@ function generateInterface() {
 }
 
 
+function generateDocumentation() {
+
+	let result = `<style>
+	#gamereference {
+		width: 740px;
+		padding: 0 20px;
+		border: inset 1px silver;
+	}
+	#gamereference h4 {
+		font-size: 18px;
+		margin: 16px 0 10px 0;
+	}
+	</style>`;
+
+	function head(h) { result += `<h3>${h}</h3>`; }
+	function subhead(s, d) { result += `<h4>${s}</h4><p>${d ?? ''}`; }
+	function p(text) { result += '<p>' + text + '</p>' }
+
+	head('Gameplay Functions');
+
+	for (let call in CALLS) {
+		let { parameters, description } = CALLS[call];
+		subhead(call + '(' + (parameters ?? '').replace(',',', ') + ')', description);
+	}
+
+	head('Game State Slots');
+
+	p(`The constants listed here are indices into the game state vector.
+	They are sometimes passed to the gameplay functions above (such as
+	<code>train</code> or <code>give</code>); or their value may be accessed using
+	the state vector access operator (<code>.</code>). For example <code>.LEVEL</code>
+	is the player character's current level.`);
+
+	for (let { name, description } of SLOTS) {
+		subhead(name, description);
+	}
+
+	head('Spells');
+
+	for (let {name, moniker, enchantment, description} of SPELLS.filter(x=>x)) {
+		if (enchantment) moniker += ' (enchantment)';
+		subhead(`${moniker}`, description);
+	}
+
+	return result;
+}
+
+
 /////////// Spells
 
 const SPELLS = [ null, {
 		name: 'Heal Yeah',
 		moniker: 'HEAL_YEAH',
 		level: 1,
+		costs: [
+			{ slot: FATIGUE, quantity: -1 },
+			{ slot: INVENTORY_REAGENTS, quantity: 1 },
+			],
 		effect: state => {
 			let healing = 1;
 			healing *= Math.pow(1.6, state[WISDOM]);
@@ -403,20 +457,32 @@ const SPELLS = [ null, {
 			state[DAMAGE] -= healing;
 			return healing;
 		},
+		description: `Heal some or all of any DAMAGE you've sustained. The effectiveness
+		of this spell is aided by higher STAT_WISDOM`,
 	}, {
 		name: 'Pyroclastic Orb',
 		moniker: 'PYROCLASTIC_ORB',
 		level: 2,
+		costs: [
+			{ slot: FATIGUE, quantity: 2 },
+			{ slot: INVENTORY_REAGENTS, quantity: 2 },
+			],
 		effect: state => {
 			return battle(state, true);
 		},
+		description: `Hurl a ball of fire at your nearby foe, causing them damage.`,
 	}, {
 		name: 'Buff',
 		moniker: 'BUFF',
 		level: 4,
+		costs: [
+			{ slot: FATIGUE, quantity: -4 },
+			{ slot: INVENTORY_REAGENTS, quantity: 4 },
+			],
 		enchantment: [
 			{ slot: STAT_STRENGTH, increment: 4 },
 		],
+		description: `Become just that much stronger.`,
 	},
 ];
 // * Inviso
@@ -1117,6 +1183,7 @@ class Game {
 
 	static generateInterface = generateInterface;
 	static generateMap = generateMap;
+	static generateDocumentation = generateDocumentation;
 
 	static RACE_NAMES = RACES.map(r => (r && r.name) || '');
 	static TERRAIN_TYPES = TERRAIN_TYPES;
