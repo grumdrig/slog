@@ -1083,6 +1083,9 @@ class BinaryExpression {
 				context.emit('unary BOOL');
 			},
 		},
+
+
+
 		'&&': {
 			precedence: 11,
 			precompute: (x,y) => x && y,
@@ -1092,6 +1095,7 @@ class BinaryExpression {
 				context.emit('peek 0');
 				context.emit('unary NOT');
 				context.emit('.branch ' + cutLabel);
+				context.emit('adjust -1');
 				rhs.generate(context);
 				context.emitLabel(cutLabel);
 			},
@@ -1114,10 +1118,12 @@ class BinaryExpression {
 				let cutLabel = uniqueLabel('or_shortcut');
 				context.emit('peek 0'); // dup
 				context.emit('.branch ' + cutLabel);
+				context.emit('adjust -1');
 				rhs.generate(context);
 				context.emitLabel(cutLabel);
 			},
 		},
+
 		'=': {
 			precedence: 14,
 			generate: (context, lhs, rhs) => {

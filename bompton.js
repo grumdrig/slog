@@ -1585,7 +1585,8 @@ class Game {
 			state[GAMEOVER] = 0x401C;
 
 		} else {
-			error("Invalid operation");
+			state[GAMEOVER] = 0xEEEE;
+			console.log("Invalid operation");
 		}
 
 		if (state[DAMAGE] >= state[MAX_HEALTH]) {
