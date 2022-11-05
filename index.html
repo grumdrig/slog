@@ -34,10 +34,13 @@
 		grid-template-columns: 2fr 1fr;
 	}
 	#col1 > #vitals { grid-template-columns: 3fr 3fr }
+	#col1 > #spells { grid-template-columns: 1fr 2fr }
 	#col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
 	#col3 > #environment { grid-template-columns: 2fr 3fr; }
 	#col3 > #quest { grid-template-columns: 4fr 7fr; }
-	#col3 > #plot { grid-template-columns: 1fr 1fr; }
+	#col3 > #plot { grid-template-columns: 4fr 7fr; }
+
+	#spells > div:nth-child(2n+3) { font-style: italic }
 
 	div.header {
 		grid-column: 1 / 3;
@@ -376,7 +379,7 @@ div.icon {
 		<div id=col3>
 			<div id=environment class=listview>
 				<div class=header>Environment</div>
-				<div>Coordinates</div><div>#<span id=location></span> &lt;<span id=longitude></span>,<span id=latitude></span>&gt;</div>
+				<div>Coordinates</div><div id=location></div>
 				<div>Locale</div><div id=locale></div>
 				<div>Terrain</div><div id=terrain></div>
 				<div>Creature</div><div id=mob></div>
@@ -391,8 +394,7 @@ div.icon {
 			</div>
 			<div id=plot class=listview>
 				<div class=header>Game Progress</div>
-				<div>Act</div> <div id=act></div>
-				<div>Act Progress</div> <div id=actprogress class=prog></div>
+				<div id=act></div><div id=actprogress class=prog></div>
 				<div>Game Progress</div> <div id=gameprogress class=prog></div>
 			</div>
 		</div>
@@ -945,7 +947,7 @@ function properCase(s) {
 }
 
 function toRoman(n) {
-  if (!n) return "N";
+  if (!n) return "O";
   var s = "";
   function _rome(dn,ds) {
     if (n >= dn) {
@@ -1011,6 +1013,7 @@ function updateCharacterSheet(state) {
 	unhilite();
 
 	function set(id, value) {
+		value = value ?? '';
 		value = value.toString();
 		let elt = document.getElementById(id);
 		if (elt.innerHTML !== value) {
@@ -1043,7 +1046,7 @@ function updateCharacterSheet(state) {
 		const slot = SPELLBOOK_0 + i;
 		let spell = state[slot];
 		if (spell) {
-			set('bt' + i, 'Page ' + (i+1));
+			set('bt' + i, 'Chapter ' + toRoman(i+1));
 			set('b' + i, SPELLS[spell].name);
 		} else {
 			set('bt' + i, '&nbsp;');
@@ -1072,17 +1075,16 @@ function updateCharacterSheet(state) {
 	set('encumbrance', state[ENCUMBRANCE]);
 	set('capacity', state[CAPACITY]);
 
-	if (!state[LEVEL]) return;
+	// if (!state[LEVEL]) return;
 
-	let local = Game.MAP[state[LOCATION]];
+	let local = Game.MAP[state[LOCATION]] || {};
 
 	$id('gameprogress').title = readableTime(state[HOURS], state[YEARS]);
 	// set('elapsed', readableTime(state[HOURS], state[YEARS]));
-	set('location', local.index);
-	set('longitude', local.longitude || ((local.index - 1) % 6));
-	set('latitude', local.latitude || ((local.index - 1) / 6) >> 0);
+	set('location', local.index ?
+		`#${local.index} &lt;${local.longitude ?? ((local.index - 1) % 6)}, ${local.latitude ?? ((local.index - 1) / 6) >> 0}&gt;` : '');
 	set('locale', local.name);
-	set('terrain', Game.TERRAIN_TYPES[local.terrain].name);
+	set('terrain', (Game.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MOB_TYPE] ?
 		`${Game.MOBS[state[MOB_TYPE]].name} (level ${state[MOB_LEVEL]})` : '');
 	set('mobDamage', state[MOB_TYPE] ? state[MOB_DAMAGE] : '');
@@ -1100,17 +1102,25 @@ function updateCharacterSheet(state) {
 		INVENTORY_POTIONS: 'healing potions',
 		INVENTORY_LIFE_POTIONS: 'life potions',
 	};
-	set('questgoal', state[QUEST_OBJECT] === EQUIPMENT_TOTEM ?
-		(state[QUEST_QTY] ? 'Seek the totem' : 'Deliver the totem') :	state[QUEST_OBJECT] ?
-		`Bring me ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]].name] : state[QUEST_MOB] ?
-		`Exterminate the ` + plural(MOBS[state[QUEST_MOB]].name) : '');
+	set('questgoal',
+		state[QUEST_OBJECT] === EQUIPMENT_TOTEM ?
+		(state[QUEST_QTY] ? 'Seek the totem' : 'Deliver the totem') :
+		state[QUEST_OBJECT] ?	`
+		Bring me ` + friendlySlotNames[SLOTS[state[QUEST_OBJECT]].name] :
+		state[QUEST_MOB] ?
+		`Exterminate the ` + plural(MOBS[state[QUEST_MOB]].name) :
+		'&nbsp;');
 	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
 	setProgress('questprogress', state[QUEST_PROGRESS], state[QUEST_QTY]);
 	set('questorigin', original && (original.name + ' #' + original.index) || '');
 
-	set('act', toRoman(state[ACT]));
-	setProgress('actprogress', state[ACT_PROGRESS], state[ACT_DURATION]);
-	set('gameprogress', `${Math.round(100 * (state[ACT] - 1) / 10)}%`);
+	set('act', 'Act ' + toRoman(state[ACT]));
+	if (state[ACT_DURATION])
+		set('actprogress', Math.round(100 * state[ACT_PROGRESS]/state[ACT_DURATION]) + '%');
+	else
+		set('actprogress', '0%');
+	setBar('actprogress', state[ACT_PROGRESS], state[ACT_DURATION]);
+	set('gameprogress', `${Math.round(100 * Math.max(0, state[ACT] - 1) / 10)}%`);
 	setBar('gameprogress', state[ACT] - 1, 10);
 
 	if (!vm.running) {
