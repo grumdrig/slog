@@ -656,7 +656,8 @@ class Expression {
 			expr = PostfixExpression.tryPostParse(expr, source);
 
 			let binop = BinaryExpression.operators[source.peek()];
-			if (binop && binop.precedence < precedence) {
+			if (binop && (binop.precedence < precedence ||
+				          (binop.precedence == precedence && binop.rightAssociative))) {
 				source.next();  // skip the operator
 				expr = new BinaryExpression(expr, binop, Expression.parse(source, binop.precedence));
 			} else {
@@ -777,7 +778,6 @@ class IdentifierExpression {
 		let reference = context.lookup(this.identifier);
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
 		if (reference && reference.local) {
-			// TODO should this be an opcode?
 			context.emit('fetch FP  ; addr of...' );
 			context.emit('add ' + reference.offset + '  ; ...' + this.identifier);
 		} else {
@@ -891,7 +891,6 @@ class BinaryExpression {
 
 	// Borrowing operators and precedence rules from C, except bitwise operators have higher
 	// precedence than comparisons
-	// TODO: associativity
 	static operators = {
 		'**': {
 			precedence: 2.5,
@@ -977,6 +976,7 @@ class BinaryExpression {
 				context.emit('max  ; >?');
 			},
 		},
+
 		'<<': {
 			precedence: 5,
 			precompute: (x,y) => x << y,
@@ -1023,6 +1023,7 @@ class BinaryExpression {
 				context.emit('or');
 			},
 		},
+
 		'<': {
 			precedence: 6,
 			precompute: (x,y) => x < y ? 1 : 0,
@@ -1088,8 +1089,6 @@ class BinaryExpression {
 			},
 		},
 
-
-
 		'&&': {
 			precedence: 11,
 			precompute: (x,y) => x && y,
@@ -1130,6 +1129,7 @@ class BinaryExpression {
 
 		'=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => {
 				context.assert(lhs.generateAddress, "addressable expression expected");
 				rhs.generate(context);
@@ -1140,42 +1140,52 @@ class BinaryExpression {
 		},
 		'+=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'add'),
 		},
 		'-=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'sub'),
 		},
 		'*=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'mul'),
 		},
 		'/=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'div'),
 		},
 		'%=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'div', 'swap AX'),
 		},
 		'<<=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'unary NEG', 'shift'),
 		},
 		'>>=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'shift'),
 		},
 		'&=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'and'),
 		},
 		'^=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'xor'),
 		},
 		'|=': {
 			precedence: 14,
+			rightAssociative: true,
 			generate: (context, lhs, rhs) => opassign(context, lhs, rhs, 'or'),
 		},
 
@@ -1245,7 +1255,6 @@ class FunctionCallExpression {
 	simplify(context) {
 		this.lhs = this.lhs.simplify(context);
 		this.args = this.args.map(arg => arg.simplify(context));
-		// TODO if this is a call to a macro with literals, expand it
 		return this;
 	}
 }

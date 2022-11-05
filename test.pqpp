@@ -7,6 +7,8 @@ macro checksp() { assert *(-2) == 4096 }
 checksp()
 
 var x
+var y
+var z
 
 // Character literals
 
@@ -71,7 +73,22 @@ assert v3 >? v6 == v6
 assert v6 >? v3 == v6
 assert v3 >? v3 == v3
 
+// Associativity check
+
+assert 5 - 3 - 1 == 1
+assert v5 - v3 - v1 == v1
+assert 3 || 0 && 5 == 5
+assert 3 || 0 && 5 == 5
+assert v3 || v0 && v5 == v5
+
+x = 1
+y = 2
+z = 3
+x = y = z
+assert x == z
+
 // Comparison operators
+
 assert 4 < 5
 assert 4 <= 5
 assert 5 <= 5
@@ -231,3 +248,4 @@ assert either(100) == 1
 assert either(0) == 2
 
 checksp()
+
