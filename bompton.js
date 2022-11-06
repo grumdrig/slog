@@ -451,7 +451,7 @@ const SPELLS = [ null, {
 			],
 		effect: state => {
 			let healing = 1;
-			healing *= Math.pow(1.6, state[WISDOM]);
+			healing *= Math.pow(1.6, state[STAT_WISDOM]);
 			healing = Math.round(healing);
 			healing = Math.min(healing, state[MAX_HEALTH] - state[HEALTH]);
 			state[HEALTH] += healing;
@@ -1205,9 +1205,21 @@ class Game {
 
 	static handleInstruction(state, operation, arg1, arg2) {
 		let result = this._handleInstruction(state, operation, arg1, arg2);
-		state[CAPACITY] = carryCapacity(state);
-		state[ENCUMBRANCE] = encumbrance(state);
-		state[ARMOR_CLASS] = armorClass(state);
+
+		if (state[LEVEL] > 0) {
+			state[CAPACITY] = carryCapacity(state);
+			state[ENCUMBRANCE] = encumbrance(state);
+			state[ARMOR_CLASS] = armorClass(state);
+
+			if (state[HEALTH] <= 0) {
+				state[GAMEOVER] = 0xDED;
+			} else if (state[YEARS] >= 10) {
+				state[GAMEOVER] = 0xA9E;
+			} else if (state[ACT] > 9) {
+				state[GAMEOVER] = 0x1;
+			}
+		}
+
 		return result;
 	}
 
@@ -1363,7 +1375,7 @@ class Game {
 				}
 				state[LEVEL] = 1;
 				state[LOCATION] = BOMPTON_TOWN;
-				state[MAX_HEALTH] = 6 + CON();
+				state[HEALTH] = state[MAX_HEALTH] = 6 + CON();
 				state[ENERGY] = state[MAX_ENERGY] = 6 + INT();
 				actUp();
 				for (let { slot, value } of raceinfo.startingitems) {
@@ -1726,14 +1738,6 @@ class Game {
 		} else {
 			state[GAMEOVER] = 0xEEEE;
 			console.log("Invalid operation");
-		}
-
-		if (state[HEALTH] <= 0) {
-			state[GAMEOVER] = 0xDEAD;
-		} else if (state[YEARS] >= 10) {
-			state[GAMEOVER] = 0xA9ED;
-		} else if (state[ACT] > 9) {
-			state[GAMEOVER] = 0x1;
 		}
 	}
 
