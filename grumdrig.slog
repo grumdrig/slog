@@ -14,7 +14,9 @@ var huntingGrounds[8] = [12, 12, 17, 10, 16, 15, 33, 6]
 while !forage(EQUIPMENT_TOTEM) { }
 seekquest()
 learn(1, HEAL_YEAH)
-learn(2, PYROCLASTIC_ORB)
+learn(3, BUFF)
+while .INVENTORY_REAGENTS < 4 { forage(INVENTORY_REAGENTS) }
+cast(BUFF)
 while .LEVEL < 8 {
   goto(huntingGrounds[.LEVEL])
   raids += 1

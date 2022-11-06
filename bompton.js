@@ -446,8 +446,8 @@ const SPELLS = [ null, {
 		moniker: 'HEAL_YEAH',
 		level: 1,
 		costs: [
-			{ slot: ENERGY, quantity: 1 },
-			{ slot: INVENTORY_REAGENTS, quantity: 1 },
+			{ slot: ENERGY, qty: 1 },
+			{ slot: INVENTORY_REAGENTS, qty: 1 },
 			],
 		effect: state => {
 			let healing = 1;
@@ -464,8 +464,8 @@ const SPELLS = [ null, {
 		moniker: 'PYROCLASTIC_ORB',
 		level: 2,
 		costs: [
-			{ slot: ENERGY, quantity: 2 },
-			{ slot: INVENTORY_REAGENTS, quantity: 2 },
+			{ slot: ENERGY, qty: 2 },
+			{ slot: INVENTORY_REAGENTS, qty: 2 },
 			],
 		effect: state => {
 			return battle(state, true);
@@ -476,11 +476,23 @@ const SPELLS = [ null, {
 		moniker: 'BUFF',
 		level: 4,
 		costs: [
-			{ slot: ENERGY, quantity: 4 },
-			{ slot: INVENTORY_REAGENTS, quantity: 4 },
+			{ slot: ENERGY, qty: 4 },
+			{ slot: INVENTORY_REAGENTS, qty: 4 },
 			],
 		enchantment: [
 			{ slot: STAT_STRENGTH, increment: 4 },
+		],
+		description: `Become just that much stronger.`,
+	}, {
+		name: 'Smort',
+		moniker: 'SMORT',
+		level: 4,
+		costs: [
+			{ slot: ENERGY, qty: 4 },
+			{ slot: INVENTORY_REAGENTS, qty: 4 },
+			],
+		enchantment: [
+			{ slot: STAT_INTELLIGENCE, increment: 4 },
 		],
 		description: `Become just that much stronger.`,
 	},
@@ -1639,16 +1651,13 @@ class Game {
 
 			let level = spell.level;
 
-			const manacost = level;
-			const reagents = level;
-
-			if (state[ENERGY] < manacost)	return -1;
-			if (state[INVENTORY_REAGENTS] < reagents) return -1;
+			for (let { slot, qty } of spell.costs)
+				if (state[slot] < qty) return -1;
 
 			passTime('Casting', 1);
 
-			state[ENERGY] -= manacost;
-			state[INVENTORY_REAGENTS] -= reagents;
+			for (let { slot, qty } of spell.costs)
+				state[slot] -= qty;
 
 			if (spell.enchantment) {
 				let current = SPELLS[state[ENCHANTMENT]];
@@ -1661,11 +1670,12 @@ class Game {
 				for (let { slot, increment } of spell.enchantment) {
 					state[slot] += increment;
 				}
+				state[ENCHANTMENT] = spellType;
 			}
 
 			if (spell.effect) return spell.effect(state);
 
-			return manacost;
+			return spellType;
 
 		} else if (operation === hunt) {
 			passTime('Hunting', 1);
@@ -1729,7 +1739,8 @@ class Game {
 			if (state[XP] < this.xpNeededForLevel(state[LEVEL] + 1))
 				return 0;
 			state[LEVEL] += 1;
-			state[MAX_HEALTH] += 3 + additiveStatBonus(state[STAT_CONSTITUTION]);
+			state[HEALTH] = state[MAX_HEALTH] += 3 + additiveStatBonus(state[STAT_CONSTITUTION]);
+			state[ENERGY] = state[MAX_ENERGY] += 3 + additiveStatBonus(state[STAT_WISDOM]);
 			passTime('Levelling up', 1, 0);
 			return 1;
 
