@@ -315,21 +315,10 @@ class TagDefinition {
 			context.error('Constant value expressions required for tag definition');
 		context.emit('');
 		context.emit('halt 0');
-
-		function asCharIfPossible(v) {
-			let lsb = v & 0xFF;
-			if (32 < lsb && lsb < 127) {
-				lsb = String.fromCharCode(lsb);
-				let msb = v >> 8;
-				if (32 < msb && msb < 127)
-					return "'" + String.fromCharCode(msb) + lsb;
-				else if (msb === 0)
-					return "'" + lsb;
-			}
-			return '$' + v.toString(16);  // settle for hex
-		}
-
-		context.emit('.data ' + asCharIfPossible(this.tag1.value) + ' $' + this.tag2.value.toString(16) + '  ; tag');
+		context.emit('.data ' +
+			(asCharIfPossible(this.tag1.value) ??
+				'$' + this.tag1.value.toString(16)) +
+			   ' $' + this.tag2.value.toString(16) + '  ; tag');
 	}
 }
 

@@ -38,8 +38,8 @@ const opcodes = [
 ];
 
 
-const STACK_MODE_FLAG = -0x200;
-const INLINE_MODE_FLAG = -0x1FF;
+const STACK_MODE_FLAG = -0x400;
+const INLINE_MODE_FLAG = -0x3FF;
 
 let MNEMONICS = {};
 let OPCODES = []
@@ -49,13 +49,16 @@ for (let op of opcodes) {
   OPCODES[parseInt(op.opcode)] = op.mnemonic;
 }
 
+const MIN_INT = -0x8000;
+const MAX_INT =  0x7FFF;
+
 const UNARY_OPERATORS = {
   0x5: { mnemonic: 'SIN', frac: true, operation: x => Math.sin(Math.PI * x / 180) },
   0x4: { mnemonic: 'COS', frac: true, operation: x => Math.cos(Math.PI * x / 180) },
   0x3: { mnemonic: 'TAN', frac: true, operation: x => Math.tan(Math.PI * x / 180) },
   0x7: { mnemonic: 'LOG', frac: true, operation: x => Math.log(x) },
   0xE: { mnemonic: 'EXP', frac: true, operation: x => Math.exp(x) },
-  0x6: { mnemonic: 'INV', frac: true, operation: x => x === 0 ? 0 : 0x7fff/x },
+  0x6: { mnemonic: 'INV', frac: true, operation: x => x === 0 ? 0 : MAX_INT/x },
   0x1: { mnemonic: 'NOT', operation: x => x ? 0 : 1 },
   0xB: { mnemonic: 'BOOL', operation: x => x ? 1 : 0 },
   0xA: { mnemonic: 'ABS', operation: x => Math.abs(x) },
@@ -65,9 +68,6 @@ const UNARY_OPERATORS = {
 
 let UNARY_SYMBOLS = {};
 for (let u in UNARY_OPERATORS) UNARY_SYMBOLS[UNARY_OPERATORS[u].mnemonic] = parseInt(u);
-
-const MIN_INT = -0x8000;
-const MAX_INT =  0x7FFF;
 
 function overflow(x) { return x < MIN_INT ? x - MIN_INT : x > MAX_INT ? x - MAX_INT : 0 }
 
@@ -126,7 +126,7 @@ class VirtualMachine {
 
   get ax() { return this.registers[-1-REGISTERS.AX] }
   set ax(v) { this.registers[-1-REGISTERS.AX] = v }
-  set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * 0x7fff }  // TODO insure 0 <= f <= 1
+  set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * MAX_INT }  // TODO insure 0 <= f <= 1
 
   get ck() { return this.registers[-1-REGISTERS.CK] }
   set ck(v) { this.registers[-1-REGISTERS.CK] = v }
@@ -183,7 +183,7 @@ class VirtualMachine {
 
   bigstep() {
     step();
-    while (this.running && ((this.memory[this.pc] & 0x3F) != 0x3)) {
+    while (this.running && ((this.memory[this.pc] & 0x1F) != 0x3)) {
       step();
     }
   }
@@ -191,9 +191,9 @@ class VirtualMachine {
   step() {
     let result = false;
     const instruction = this.memory[this.pc];
-    const opcode = instruction & 0x3F;
+    const opcode = instruction & 0x1F;
     const mnemonic = OPCODES[opcode];
-    let operand = (instruction >> 6);// & 0x3ff;
+    let operand = (instruction >> 5);
     const stackMode = (operand == STACK_MODE_FLAG);
     const inlineMode = (operand == INLINE_MODE_FLAG);
     const immediateMode = !stackMode && !inlineMode;
@@ -338,7 +338,7 @@ function is_identifier(id) {
 
 function fitsAsImmediate(v) {
   // Return true if the value can be represented in 10-bits
-  return typeof v === 'number' && -0x1ff < v && v < 0x200;
+  return typeof v === 'number' && -0x3ff < v && v < 0x400;
 }
 
 function clone(...objs) {
@@ -368,8 +368,6 @@ class AssemblyError {
 }
 
 class Assembler {
-  static tokenre = /[.][a-z]+|[@a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!#%^&*]|[-+]?[0-9]+|[-+]?[$][a-fA-F0-9]+|"[^"]*"|'./g;
-
   macros = {};
   labels = {};
   forwardCodeReferences = {};
@@ -384,7 +382,7 @@ class Assembler {
   }
 
   assert(truth, message) {
-    if (!truth) error(message);
+    if (!truth) this.error(message);
   }
 
   static assemble(text) {
@@ -598,7 +596,7 @@ class Assembler {
     for (let pc of Object.keys(this.forwardCodeReferences)) {
       let symbol = this.forwardCodeReferences[pc];
       this.assert(typeof this.labels[symbol] !== 'undefined', "undefined code label: " + symbol);
-      let opcode = this.code[pc] & 0x3f;
+      let opcode = this.code[pc] & 0x1f;
       let operand = this.labels[symbol];
       if (['jmp', 'br'].includes(OPCODES[opcode])) {
         // In immediate mode, jmp and br are relative to the (post-instruction) pc
@@ -620,9 +618,9 @@ class Assembler {
   }
 
   reemit(pc, opcode, parameter) {
-    this.assert(-0x200 <= parameter && parameter <= 0x200, `immediate parameter (${parameter}) out of range`);
-    this.assert(0 <= opcode && opcode <= 0x3f, `opcode (${opcode}) out of range`);
-    this.code[pc] = opcode | (parameter << 6);
+    this.assert(-0x400 <= parameter && parameter < 0x400, `immediate parameter (${parameter}) out of range`);
+    this.assert(0 <= opcode && opcode <= 0x1f, `opcode (${opcode}) out of range`);
+    this.code[pc] = opcode | (parameter << 5);
   }
 
   data(value) {
@@ -646,14 +644,14 @@ class Assembler {
       if (address > 0 && isInlineModeInstruction(this.code[address - 1] || 0)) {
         disa = '.data ' + inst;
       } else {
-        let opcode = OPCODES[inst & 0x3f] || '??';
+        let opcode = OPCODES[inst & 0x1f] || '??';
         let immediate = isStackModeInstruction(inst) ? '' :
                         isInlineModeInstruction(inst) ? ':::' :
-                        (inst >> 6);
+                        (inst >> 5);
         if (['fetch','store'].includes(opcode))
           immediate = REGISTER_NAMES[immediate] || immediate;
-        disa = ('$' + ('00' + (inst & 0x3f).toString(16)).substr(-2)
-          + ' $' + ('00' + (0x3ff & (inst >> 6)).toString(16)).substr(-3)
+        disa = ('$' + ('00' + (inst & 0x1f).toString(16)).substr(-2)
+          + ' $' + ('00' + (0x7ff & (inst >> 5)).toString(16)).substr(-3)
           + ' ' + opcode
           + ' ' + immediate);
       }
@@ -662,8 +660,9 @@ class Assembler {
         ('000' + address).substr(-4)
           + ': $' + ('0000' + (inst & 0xffff).toString(16)).substr(-4)
           + ' ' + ('     ' + inst).substr(-6)
-          + ' ' + ((32 <= inst && inst < 128) ? `'${String.fromCharCode(inst)}` : '  ')
-          + '  ' + disa);
+          + ' ' + ((asCharIfPossible(inst) ?? '') + '    ').substr(0,3)
+          + ' ' + disa
+          );
     } else {
       let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
         this.disassemble(num));
@@ -672,12 +671,26 @@ class Assembler {
   }
 }
 
+
+function asCharIfPossible(v) {
+  let lsb = v & 0xFF;
+  if (32 < lsb && lsb < 127) {
+    lsb = String.fromCharCode(lsb);
+    let msb = v >> 8;
+    if (32 < msb && msb < 127)
+      return "'" + String.fromCharCode(msb) + lsb;
+    else if (msb === 0)
+      return "'" + lsb;
+  }
+}
+
+
 function isInlineModeInstruction(inst) {
-  return INLINE_MODE_FLAG === (inst >> 6);
+  return INLINE_MODE_FLAG === (inst >> 5);
 }
 
 function isStackModeInstruction(inst) {
-  return STACK_MODE_FLAG === (inst >> 6);
+  return STACK_MODE_FLAG === (inst >> 5);
 }
 
 // Testing:
