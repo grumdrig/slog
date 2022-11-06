@@ -706,9 +706,20 @@ function reverseMapIntoArray(m) {
 }
 
 
+function readFileAsWords(filename) {
+    const { readFileSync } = require('fs');
+    let buffer = readFileSync(filename);
+    var ab = new ArrayBuffer(buffer.length);
+    let view = new Uint8Array(ab);
+    for (var i = 0; i < buffer.length; ++i)
+      view[i] = buffer[i];
+    return new Int16Array(ab);
+}
+
 if (typeof exports !== 'undefined') {
   exports.VirtualMachine = VirtualMachine;
   exports.Assembler = Assembler;
+  exports.readFileAsWords = readFileAsWords;
 }
 
 
@@ -786,12 +797,7 @@ if (typeof module !== 'undefined' && !module.parent) {
   }
 
   if (flags.load) {
-    let buffer = readFileSync(flags.load);
-    var ab = new ArrayBuffer(buffer.length);
-    let view = new Uint8Array(ab);
-    for (var i = 0; i < buffer.length; ++i)
-        view[i] = buffer[i];
-    code = new Int16Array(ab);
+    code = readFileAsWords(flags.load);
   }
 
   let Game;

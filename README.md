@@ -456,8 +456,6 @@ Binary operators are taking up most of the opcodes. Should maybe have another
 that works like UNARY and takes both params from the stack, but only for the
 lesser-used operators.
 
-And with that, can get under 32 ops and have 11-bit immediates.
-
 Output a symbol table for the debugger
 
 Change 'var' to 'let'?
@@ -467,7 +465,23 @@ from last to first? Or am I thinking about this wrong right now? I guess it's
 the opposite of how binary operators work. I'm doing external function calls
 that way in any case.
 
-Add a header to the binary, to identify the binary, to help watch for
+Maybe get rid of INVENTORY_ and so on?
+
+Have a name for the char. Maybe even a class.
+
+I think I need or it would be best to have splat syntax for at least macros
+
+	macro setName(letters*) external(66, *letters)
+
+The all-caps slot names. Maybe use ProperCasing for them for a little less ugliness?
+
+Check tag
+
+
+Tag
+---
+
+Append a tag to the binary, to identify the binary, to help watch for
 endianness issues and to provide an identifier for what game the program is
 for:
 
@@ -483,14 +497,4 @@ That requires a compiler statement like
 No i guess in ASM it could just be
 
 	.data 'Np' 0x0101
-
-Maybe get rid of INVENTORY_ and so on?
-
-Have a name for the char. Maybe even a class.
-
-I think I need or it would be best to have splat syntax for at least macros
-
-	macro setName(letters*) external(66, *letters)
-
-The all-caps slot names. Maybe use ProperCasing for them for a little less ugliness?
 

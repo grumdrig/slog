@@ -1169,9 +1169,9 @@ function armorClass(state) {
 function hash(...keys) {
 	let x = 0;
 	for (let k of keys) x = ((x ^ (k >> 16) ^ k) * 0x45d9f3b) & 0x7fffffff;
-    x = (((x >> 16) ^ x) * 0x45d9f3b) & 0x7fffffff;
-    x = (x >> 16) ^ x;
-    return x ;
+	x = (((x >> 16) ^ x) * 0x45d9f3b) & 0x7fffffff;
+	x = (x >> 16) ^ x;
+	return x ;
 }
 
 let TASK = '';
@@ -1758,16 +1758,54 @@ if (typeof exports !== 'undefined') {
 	exports.Game = Game;
 }
 
+
 if (typeof module !== 'undefined' && !module.parent) {
-	// Opened by nodejs as main module
-	if (process.argv.includes('--generate-interface')) {
+	// Called with node as main module
+	const { parseArgs } = require('util');
+	const { readFileSync, writeFileSync } = require('fs');
+
+	const { values, positionals } = parseArgs({
+		options: {
+			verbose: {
+				type: 'boolean',
+				short: 'v',
+				multiple: true,
+			},
+			'generate-interface': {
+				type: 'boolean',
+			},
+			'generate-map': {
+				type: 'boolean',
+			},
+			'generate-documentation': {
+				type: 'boolean',
+			},
+		},
+		allowPositionals: true,
+	});
+	const flags = values;
+
+	const verbosity = (flags.verbose || []).length;
+
+	if (flags['generate-interface']) {
 		console.log(generateInterface());
-		process.exit();
+	}
+	if (flags['generate-map']) {
+		console.log(generateMap());
+	}
+	if (flags['generate-documentation']) {
+		console.log(generateMap());
 	}
 
-	if (process.argv.includes('--generate-map')) {
-		console.log(generateMap());
-		process.exit();
+	if (positionals) {
+		let { readFileAsWords, VirtualMachine } = require('./vm.js');
+		let code = readFileAsWords(positionals[0]);
+		let vm = new VirtualMachine(code, Game);
+		if (verbosity > 1) vm.trace = true;
+		vm.run();
+		if (verbosity > 0) {
+			Game.dumpState(vm.state);
+			vm.dumpState();
+		}
 	}
 }
-

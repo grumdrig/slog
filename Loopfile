@@ -7,7 +7,7 @@
 -i grumdrig.bin -i grumdrig.dasm node vm.js -a grumdrig.asm -d grumdrig.dasm -o grumdrig.bin
 
 # execute
-node vm.js -i ./bompton.js -l grumdrig.bin -r
+node bompton.js -v grumdrig.bin
 
 
 # tests
@@ -19,7 +19,7 @@ node vm.js -i ./bompton.js -l grumdrig.bin -r
 -i test.bin -i test.dasm node vm.js -a test.asm -d test.dasm -o test.bin
 
 # execute
-node vm.js -l test.bin -r
+node bompton.js -v test.bin
 
 
 
