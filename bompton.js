@@ -1213,7 +1213,7 @@ class Game {
 
 			if (state[HEALTH] <= 0) {
 				state[GAMEOVER] = 0xDED;
-			} else if (state[YEARS] >= 10) {
+			} else if (state[YEARS] >= 100) {
 				state[GAMEOVER] = 0xA9E;
 			} else if (state[ACT] > 9) {
 				state[GAMEOVER] = 0x1;
@@ -1729,14 +1729,15 @@ class Game {
 			if (state[XP] < this.xpNeededForLevel(state[LEVEL] + 1))
 				return 0;
 			state[LEVEL] += 1;
+			state[MAX_HEALTH] += 3 + additiveStatBonus(state[STAT_CONSTITUTION]);
 			passTime('Levelling up', 1, 0);
 			return 1;
 
 		} else if (operation === retire) {
-			state[GAMEOVER] = 0x401C;
+			state[GAMEOVER] = 0x401;
 
 		} else {
-			state[GAMEOVER] = 0xEEEE;
+			state[GAMEOVER] = 0xEEE;
 			console.log("Invalid operation");
 		}
 	}
@@ -1745,6 +1746,10 @@ class Game {
 		return 0 + Math.floor(Math.pow(level - 1, 1.6)) * 200;
 	}
 
+}
+
+function additiveStatBonus(stat) {
+	return Math.round(Math.pow(1.6, stat)) - 1;
 }
 
 if (typeof exports !== 'undefined') {
