@@ -422,6 +422,11 @@ function toLowerCase(s) {
   return s.toLowerCase ? s.toLowerCase() : s;
 }
 
+class AssemblyError {
+  message;
+  constructor(message) { this.message = message }
+}
+
 class Assembler {
   static tokenre = /[.][a-z]+|[@a-zA-Z_][0-9a-zA-Z_]*|[:=()[\]{}!#%^&*]|[-+]?[0-9]+|[-+]?[$][a-fA-F0-9]+|"[^"]*"|'./g;
 
@@ -434,10 +439,12 @@ class Assembler {
   pc = 0;
   line_no_adjustment = 1;
 
+  error(message) {
+    throw this.line + `\nASSEMBLY ERROR AT LINE ${this.line_no + this.line_no_adjustment}: ${message}`;
+  }
+
   assert(truth, message) {
-    if (!truth) {
-      throw this.line + `\nASSEMBLY ERROR AT LINE ${this.line_no + this.line_no_adjustment}: ${message}`;
-    }
+    if (!truth) error(message);
   }
 
   static assemble(text) {
@@ -452,20 +459,62 @@ class Assembler {
     // TODO: this doesn't watch well for syntax errors. frankly it's pretty terrible.
     let result = [];
     let lines = text.split('\n');
-    function resolve(t) {
-      let n = parseInt(t.replace('$','0x'));
-      if (!Number.isNaN(n)) return [n];
-      if (t[0] === "'") return [ord(t.slice(1))];
-      if (t[0] === '"') return t.slice(1, t.length - 1).split('').map(ord);
-      return [t];
-    }
+
     for (let line_no = 0; line_no < lines.length; ++line_no) {
+      this.line_no = line_no;
       let line = lines[line_no];
-      let tokens = line.split(';')[0];
-      tokens = tokens.trim();
-      tokens = tokens.match(Assembler.tokenre) || [];
-      tokens = tokens.reduce((l, t) => l.concat(resolve(t)), []);
-      result.push({ line_no, line, tokens });
+      let code = line.split(';')[0];
+      code = code.trim();
+
+      let inst = { line_no, line, tokens: [] };
+
+      function take(re) {
+        let result = code.match(re);
+        if (result) {
+          result = result[0];
+          code = code.substr(result.length).trim();
+          return result;
+        }
+      }
+
+      while (code.length) {
+
+        let lexeme;
+        if (lexeme = take(/^[$][-+]?[\da-f]+/i)) {
+          // Hex literal: $10 $AF $-a0 $+a0
+          inst.tokens.push(parseInt(lexeme.substr(1), 16));
+
+        } else if (lexeme = take(/^[-+]?\d+/)) {
+          // Decimal literal: 10 -10 +10
+          inst.tokens.push(parseInt(lexeme));
+
+        } else if (lexeme = take(/^\.?[@a-z_][@\w]*/i)) {
+          // Identifier: name .name @some_name@1
+          inst.tokens.push(lexeme);
+
+        } else if (lexeme = take(/^'..?/)) {
+          // Character literal: 'c or 'cc
+          if (lexeme.length === 3) {
+            inst.tokens.push(ord(lexeme[1]) * 256 + ord(lexeme[2]));
+          } else {
+            inst.tokens.push(ord(lexeme[1]));
+          }
+
+        } else if (lexeme = take(/^".+?"/)) {
+          // String: "hello"
+          inst.tokens = inst.tokens.concat(lexeme.slice(1, lexeme.length - 1)
+            .split('').map(ord));
+
+        } else if (lexeme = take(/^[:=()[\]{}!#%^&*]/)) {
+          // Punctuation: : = ( ) etc.
+          inst.tokens.push(lexeme);
+
+        } else {
+          this.error(`unrecognized character at line ${line_no}: '${line[0]}'`);
+        }
+      }
+
+      result.push(inst);
     }
     return result;
   }
@@ -767,8 +816,12 @@ if (typeof module !== 'undefined' && !module.parent) {
       asm = Assembler.assemble(source);
       code = asm.code;
     } catch (e) {
-      console.error('Assembly Error: ' + e);
-      process.exit(-1);
+      if (e instanceof AssemblyError) {
+        console.error('Assembly Error: ' + e);
+        process.exit(-1);
+      } else {
+        throw e;
+      }
     }
 
     if (flags.disassemble) {

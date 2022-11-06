@@ -241,6 +241,7 @@ class SemanticError {
 }
 
 class Module {
+	tag;
 	constants = [];
 	variables = [];
 	macros = [];
@@ -259,6 +260,10 @@ class Module {
 				result.macros.push(item);
 			} else if (item = FunctionDefinition.tryParse(source)) {
 				result.functions.push(item);
+			} else if (item = TagDefinition.tryParse(source)) {
+				console.log(result.tag);
+				if (result.tag) source.error("Tag already defined");
+				result.tag = item;
 			} else {
 				result.statements.push(Statement.parse(source));
 			}
@@ -282,7 +287,49 @@ class Module {
 		context.emit('@main:');
 		for (let d of this.statements) d.generate(context);
 
+		if (this.tag) this.tag.generate(context);
+
 		return context;
+	}
+}
+
+class TagDefinition {
+	tag1;
+	tag2;
+
+	static tryParse(source) {
+		if (!source.tryConsume('tag')) return false;
+		let result = new TagDefinition();
+		source.consume('(');
+		result.tag1 = Expression.parse(source);
+		source.consume(',');
+		result.tag2 = Expression.parse(source);
+		source.consume(')');
+		return result;
+	}
+
+	generate(context) {
+		this.tag1 = this.tag1.simplify(context);
+		this.tag2 = this.tag2.simplify(context);
+		if (!this.tag1.isLiteral || !this.tag2.isLiteral)
+			context.error('Constant value expressions required for tag definition');
+		context.emit('');
+		context.emit('halt 0');
+
+		function asCharIfPossible(v) {
+			let lsb = v & 0xFF;
+			if (32 < lsb && lsb < 127) {
+				lsb = String.fromCharCode(lsb);
+				let msb = v >> 8;
+				if (32 < msb && msb < 127)
+					return "'" + String.fromCharCode(msb) + lsb;
+				else if (msb === 0)
+					return "'" + lsb;
+			}
+			return '$' + v.toString(16);  // settle for hex
+		}
+
+		context.emit('.data ' + asCharIfPossible(this.tag1.value) + ' $' + this.tag2.value.toString(16) + '  ; tag');
 	}
 }
 
