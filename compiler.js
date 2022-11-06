@@ -592,7 +592,7 @@ class ExpressionStatement {
 	generate(context) {
 		this.expression.simplify(context);
 		this.expression.generate(context);
-		context.emit('adjust -1'); // throw away resulting value
+		context.emit('stack -1'); // throw away resulting value
 	}
 }
 
@@ -695,7 +695,7 @@ class AssertionStatement {
 		this.test.generate(context);
 		context.emit('unary NOT');
 		context.emit('assert 0');
-		context.emit('adjust -1');
+		context.emit('stack -1');
 	}
 }
 
@@ -1159,7 +1159,7 @@ class BinaryExpression {
 				context.emit('peek 0');
 				context.emit('unary NOT');
 				context.emit('.branch ' + cutLabel);
-				context.emit('adjust -1');
+				context.emit('stack -1');
 				rhs.generate(context);
 				context.emitLabel(cutLabel);
 			},
@@ -1182,7 +1182,7 @@ class BinaryExpression {
 				let cutLabel = uniqueLabel('or_shortcut');
 				context.emit('peek 0'); // dup
 				context.emit('.branch ' + cutLabel);
-				context.emit('adjust -1');
+				context.emit('stack -1');
 				rhs.generate(context);
 				context.emitLabel(cutLabel);
 			},

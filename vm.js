@@ -1,97 +1,40 @@
 
 const opcodes = [
-  { opcode: 0x0, mnemonic: 'halt' },
-  // halt execution, parameter ignored I guess
+  { opcode: 0x0, mnemonic: 'halt' },  // Halt execution
 
-  { opcode: 0x10, mnemonic: 'assert' },
-  // assertion of equality or else throw exception
+  { opcode: 0x1, mnemonic: 'br' },    // Branch if nonzero
+  { opcode: 0x2, mnemonic: 'jmp' },   // Unconditional branch
 
-  { opcode: 0xC, mnemonic: 'push' },
-  // put a value on the stack
-  // push X
-  // ... => ... X ; SP += 1
+  { opcode: 0x3, mnemonic: 'ext' },   // External call to embedding application
 
-  { opcode: 0x1C, mnemonic: 'stack' },
-  // push the ensuing data on the stack
-  // .stack D1 D2 ... DN
-  // stack N .data D1 D2 ... DN
-  // ... => DN ... D1 ...
+  { opcode: 0xA, mnemonic: 'push' },    // Push a value onto the stack
+  { opcode: 0xB, mnemonic: 'stack' },   // Push multiple values onto the stack, or shrink it
+  { opcode: 0xC, mnemonic: 'swap' },    // Swap top with value on stack, or register/state
 
-  { opcode: 0x9, mnemonic: 'adjust' },
-  // remove/reserve values on the stack
-  // adjust N
-  // ... XN ... X1 => ... ; SP -= N
-  // adjust
-  // ... XN ... X1 N => ... ; SP -= N+1
+  { opcode: 0xD, mnemonic: 'peek' },      // Push memory[SP + operand]
+  { opcode: 0xE, mnemonic: 'fetch' },      // Push memory[operand]
+  { opcode: 0xF, mnemonic: 'fetchlocal' }, // Push memory[FP + operand]
 
-  { opcode: 0xE, mnemonic: 'fetch' },
-  // fetch a value at a memory location
-  // fetch A
-  // ... => ... [A] ; SP += 1
-  // fetch
-  // ... A => ... [A]
+  { opcode: 0x4, mnemonic: 'poke' },      // Pop to memory[SP + operand]
+  { opcode: 0x5, mnemonic: 'store' },      // Pop to memory[operand]
+  { opcode: 0x6, mnemonic: 'storelocal' }, // Pop to memory[FP + operand]
 
-  { opcode: 0xF, mnemonic: 'fetchlocal' },
+  { opcode: 0x10, mnemonic: 'assert' },  // If not equal throw exception
 
-  { opcode: 0x1F, mnemonic: 'peek' },
-  // peek on the stack
-  // peek A
-  // ... => ... [SP + A] ; SP += 1
-  // peek
-  // ... A => ... [SP + A]
+  { opcode: 0x11, mnemonic: 'unary' },  // Apply unary operator determined by operand to top
 
-  { opcode: 0x5, mnemonic: 'store' },
-  // set a value in memory
-  // set A
-  // ... X => ... ; [A] = X, SP -= 1
-  // set
-  // ... X A => ... ; [A] = X, SP -= 2
+  { opcode: 0x12, mnemonic: 'max' },  // Maximum, AX = minimum
+  { opcode: 0x13, mnemonic: 'add' },  // Sum, AX = overflow
+  { opcode: 0x14, mnemonic: 'sub' },  // Difference, AX = overflow
+  { opcode: 0x15, mnemonic: 'mul' },  // Product, AX = overflow
+  { opcode: 0x16, mnemonic: 'atan2' },// Arctangent, AX = fixed point result (atan2 * 256)
+  { opcode: 0x17, mnemonic: 'pow' },  // Exponentiation, AX = X ^ 1/Y
+  { opcode: 0x18, mnemonic: 'div' },  // Quotient, AX = mod(X,Y)
 
-  { opcode: 0x6, mnemonic: 'storelocal' },
-
-  { opcode: 0x15, mnemonic: 'poke' },
-  // poke a value in [distant] memory
-  // poke A
-  // ... X => ... ; [SP + A] = X, SP -= 1
-  // poke
-  // ... X A => ... ; [SP + A] = X, SP -= 2
-
-  { opcode: 0xA, mnemonic: 'swap' },
-  // Swap values. If the operand is > 0 swap with a value that deep on the stack.
-  // If operand < 0 swap with register or state variable
-  // swap 0 is a noop
-
-  { opcode: 0xB, mnemonic: 'br' },
-  // br if nonzero
-  // br
-  // ... V A => ... ; SP -= 2, if V != 0 then PC = A
-  // br D
-  // ... V => ... ; SP -= 1, if V != 0 the PC += D
-
-  { opcode: 0x2, mnemonic: 'jmp' },
-  // Unconditional branch, which we *could* handle by just setting PC
-
-  { opcode: 0x11, mnemonic: 'unary' },
-  // unary OP
-  // ... X => ... OP(X)
-
-  // binaryOp operand
-  // ... X => ... max(X, operand)
-  { opcode: 0x20, mnemonic: 'max' },  // AX = min
-  { opcode: 0x22, mnemonic: 'add' },  // AX = overflow
-  { opcode: 0x23, mnemonic: 'sub' },  // AX = overflow
-  { opcode: 0x24, mnemonic: 'mul' },  // AX = overflow
-  { opcode: 0x25, mnemonic: 'atan2' },// AX = fixed point result (atan2 * 256)
-  { opcode: 0x26, mnemonic: 'pow' },  // AX = X ^ 1/Y
-  { opcode: 0x27, mnemonic: 'div' },  // AX = mod(X,Y)
-  // bitwise
-  { opcode: 0x2A, mnemonic: 'or' },   // AX = logical or
-  { opcode: 0x2B, mnemonic: 'and' },  // AX = logical and
-  { opcode: 0x2C, mnemonic: 'xor' },  // AX = logical xor
-  { opcode: 0x2D, mnemonic: 'shift' }, // AX = rotated-out bits
-  // similar for these binary ops
-
-  { opcode: 0x3, mnemonic: 'ext' },
+  { opcode: 0x1A, mnemonic: 'or' },   // Bitwise or, AX = logical or
+  { opcode: 0x1B, mnemonic: 'and' },  // Bitwise and, AX = logical and
+  { opcode: 0x1C, mnemonic: 'xor' },  // Bitwise exclusive or, AX = logical xor
+  { opcode: 0x1D, mnemonic: 'shift' }, // Bit shift, AX = rotated-out bits
 ];
 
 
@@ -101,22 +44,23 @@ const INLINE_MODE_FLAG = -0x1FF;
 let MNEMONICS = {};
 let OPCODES = []
 for (let op of opcodes) {
+  if (OPCODES[op] || op < 0 || op > 0x1F) throw "Bad programmer";
   MNEMONICS[op.mnemonic] = op.opcode;
   OPCODES[parseInt(op.opcode)] = op.mnemonic;
 }
 
 const UNARY_OPERATORS = {
-  0x5: { mnemonic: 'SIN', operation: x => Math.sin(Math.PI * x / 180) },
-  0x4: { mnemonic: 'COS', operation: x => Math.cos(Math.PI * x / 180) },
-  0x3: { mnemonic: 'TAN', operation: x => Math.tan(Math.PI * x / 180) },
-  0x7: { mnemonic: 'LOG', operation: x => Math.log(x) },
-  0xE: { mnemonic: 'EXP', operation: x => Math.exp(x) },
+  0x5: { mnemonic: 'SIN', frac: true, operation: x => Math.sin(Math.PI * x / 180) },
+  0x4: { mnemonic: 'COS', frac: true, operation: x => Math.cos(Math.PI * x / 180) },
+  0x3: { mnemonic: 'TAN', frac: true, operation: x => Math.tan(Math.PI * x / 180) },
+  0x7: { mnemonic: 'LOG', frac: true, operation: x => Math.log(x) },
+  0xE: { mnemonic: 'EXP', frac: true, operation: x => Math.exp(x) },
+  0x6: { mnemonic: 'INV', frac: true, operation: x => x === 0 ? 0 : 0x7fff/x },
   0x1: { mnemonic: 'NOT', operation: x => x ? 0 : 1 },
   0xB: { mnemonic: 'BOOL', operation: x => x ? 1 : 0 },
   0xA: { mnemonic: 'ABS', operation: x => Math.abs(x) },
   0x9: { mnemonic: 'NEG', operation: x => -x },
   0xC: { mnemonic: 'COMPLEMENT', operation: x => ~x },
-  0x6: { mnemonic: 'INVERSE', operation: x => x === 0 ? 0 : 0x7fff/x },
 };
 
 let UNARY_SYMBOLS = {};
@@ -274,11 +218,10 @@ class VirtualMachine {
       this.push(operand);
 
     } else if (mnemonic === 'stack') {
-      for (let i = 0; i < operand; i += 1)
+      if (operand < 0)
+        this.sp -= operand;
+      else for (let i = 0; i < operand; i += 1)
         this.push(this.memory[this.pc++]);
-
-    } else if (mnemonic === 'adjust') {
-      this.sp -= operand;
 
     } else if (mnemonic === 'fetch' || mnemonic === 'fetchlocal' || mnemonic == 'peek') {
       let address = operand;
@@ -320,14 +263,11 @@ class VirtualMachine {
     // Unary operators
     } else if (mnemonic === 'unary') {
       let value = this.pop();
-      let operator = UNARY_OPERATORS[operand];
-      if (operator) {
-        let result = operator.operation(value);
-        this.push(Math.floor(result));
+      let operator = UNARY_OPERATORS[operand] ?? this.error("invalid unary operator");
+      let result = operator.operation(value);
+      this.push(Math.floor(result));
+      if (operator.frac)
         this.ax_fractional = result - Math.floor(result);
-      } else {
-        this.error("invalid unary operator");
-      }
 
     // Binary operators
     } else if (BINARY_OPERATORS[mnemonic]) {
@@ -456,7 +396,6 @@ class Assembler {
   }
 
   lex(text) {
-    // TODO: this doesn't watch well for syntax errors. frankly it's pretty terrible.
     let result = [];
     let lines = text.split('\n');
 
