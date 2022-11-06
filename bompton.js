@@ -1150,7 +1150,7 @@ function carryCapacity(state) {
 
 function encumbrance(state) {
 	// Gold doesn't count much against encumbrance
-	return state[INVENTORY_GOLD] >> 8 +
+	return (state[INVENTORY_GOLD] >> 8) +
 		state.slice(INVENTORY_GOLD + 1, INVENTORY_0 + INVENTORY_COUNT)
 			  .reduce((q, v) => q + v);
 }

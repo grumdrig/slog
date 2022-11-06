@@ -11,11 +11,11 @@
 <style>
 	/* Styling for the character sheet */
 
-	#sheet-window { width: 600px }
+	/*#sheet-window { width: 600px }*/
 
 	#sheet {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: 200px 200px 230px;
 		gap: 4px;
 	}
 
@@ -37,8 +37,8 @@
 	#col1 > #spells { grid-template-columns: 1fr 2fr }
 	#col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
 	#col3 > #environment { grid-template-columns: 2fr 3fr; }
-	#col3 > #quest { grid-template-columns: 4fr 7fr; }
-	#col3 > #plot { grid-template-columns: 4fr 7fr; }
+	#col3 > #quest { grid-template-columns: 3fr 7fr; }
+	#col3 > #plot { grid-template-columns: 3fr 7fr; }
 
 	#spells > div:nth-child(2n+3) { font-style: italic }
 
@@ -384,6 +384,8 @@ div.icon {
 		<div id=col3>
 			<div id=environment class=listview>
 				<div class=header>Environment</div>
+				<div>Date</div><div id=date></div>
+				<div>Hour-of-Day</div><div id=time></div>
 				<div>Coordinates</div><div id=location></div>
 				<div>Locale</div><div id=locale></div>
 				<div>Terrain</div><div id=terrain></div>
@@ -394,13 +396,13 @@ div.icon {
 				<div class=header>Quest</div>
 				<div>Object</div> <div id=questgoal></div>
 				<div>Location</div> <div id=questlocation></div>
-				<div>Progress</div> <div id=questprogress class=prog></div>
 				<div>Origin</div> <div id=questorigin></div>
+				<div>Progress</div> <div id=questprogress class=prog></div>
 			</div>
 			<div id=plot class=listview>
 				<div class=header>Game Progress</div>
 				<div id=act></div><div id=actprogress class=prog></div>
-				<div>Game Progress</div> <div id=gameprogress class=prog></div>
+				<div>Overall</div> <div id=gameprogress class=prog></div>
 			</div>
 		</div>
 	</div>
@@ -1009,6 +1011,20 @@ function readableTime(hours, years) {
 }
 
 
+const MONTHS = [
+	'Injender',
+	'Fimbrular',
+	'Morchak',
+	'Apulia',
+	'Milm',
+	'Yunke',
+	'Ioli',
+	'Bargus',
+	'Hipsember',
+	'Extorber',
+	'Orbvemer',
+	'Dipnorther',
+];
 
 function updateCharacterSheet(state) {
 
@@ -1083,12 +1099,19 @@ function updateCharacterSheet(state) {
 	set('encumbrance', state[ENCUMBRANCE]);
 	set('capacity', state[CAPACITY]);
 
-	// if (!state[LEVEL]) return;
-
 	let local = Game.MAP[state[LOCATION]] || {};
 
 	$id('gameprogress').title = readableTime(state[HOURS], state[YEARS]);
 	// set('elapsed', readableTime(state[HOURS], state[YEARS]));
+
+	let t = state[HOURS];
+	let hour = t % HOURS_PER_DAY;
+	t = (t / HOURS_PER_DAY) >> 0;
+	let day = t % DAYS_PER_MONTH;
+	let month = (t / DAYS_PER_MONTH) >> 0;
+	set('date', `${day + 1} ${MONTHS[month]}, ${state[YEARS] + 600}`);
+	set('time', hour + 'h');
+
 	set('location', local.index ?
 		`#${local.index} &lt;${local.longitude ?? ((local.index - 1) % 6)}, ${local.latitude ?? ((local.index - 1) / 6) >> 0}&gt;` : '');
 	set('locale', local.name);

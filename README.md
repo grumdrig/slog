@@ -476,9 +476,21 @@ for:
 		version: Int16 // 0xMMmm = MAJOR minor
 	}
 
-That requires an assmbler directive like .header and a compiler one like
-header X
+That requires a compiler statement like
+
+	header('Np', $0101)
+
+No i guess in ASM it could just be
+
+	.data 'Np' 0x0101
 
 Maybe get rid of INVENTORY_ and so on?
 
 Have a name for the char. Maybe even a class.
+
+I think I need or it would be best to have splat syntax for at least macros
+
+	macro setName(letters*) external(66, *letters)
+
+The all-caps slot names. Maybe use ProperCasing for them for a little less ugliness?
+
