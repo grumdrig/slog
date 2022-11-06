@@ -19,8 +19,7 @@ node bompton.js -v grumdrig.bin
 -i test.bin -i test.dasm node vm.js -a test.asm -d test.dasm -o test.bin
 
 # execute
-node bompton.js -v test.bin
-
+node vm.js -l test.bin -r
 
 
 # Map
