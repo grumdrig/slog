@@ -1,6 +1,11 @@
 
 initialize(RACE, 1)
-initialize(STAT_STRENGTH, 10)
+initialize(STAT_STRENGTH, 4)
+initialize(STAT_AGILITY, 1)
+initialize(STAT_CONSTITUTION, 1)
+initialize(STAT_INTELLIGENCE, 2)
+initialize(STAT_WISDOM, 1)
+initialize(STAT_CHARISMA, 1)
 startGame()
 
 macro goto(dest) {
@@ -17,7 +22,7 @@ learn(1, HEAL_YEAH)
 learn(3, BUFF)
 while .INVENTORY_REAGENTS < 4 { forage(INVENTORY_REAGENTS) }
 cast(BUFF)
-while .LEVEL < 8 {
+while .LEVEL < 88 {
   goto(huntingGrounds[.LEVEL])
   raids += 1
   while .HEALTH >= (2 * .MAX_HEALTH / 3) && .ENCUMBRANCE < .CAPACITY {

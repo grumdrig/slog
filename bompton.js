@@ -713,18 +713,16 @@ const RACES = [
 		waryof: 3,
 		proficiency: SLASH,
 		badat: [POKE, SHOOT],
-		stat_mods: {
-			DEX: +2,
-			CHA: +1,
-			STR: -1,
-			WIS: -2,
-		},
-		description: "Likable, lithe creatures of small stature, often underestimated",
-		startingitems: [
-			{ slot: EQUIPMENT_WEAPON, value: 2},
+		startState: [
+			// { slot: STAT_AGILITY, increment: +2 },
+			// { slot: STAT_CHARISMA, increment: +1 },
+			// { slot: STAT_STRENGTH, increment: -1 },
+			// { slot: STAT_WISDOM, increment: -2 },
+			{ slot: EQUIPMENT_WEAPON,   value: 2},
 			{ slot: EQUIPMENT_HEADGEAR, value: 1},
-			{ slot: INVENTORY_FOOD, value: 1 },
+			{ slot: INVENTORY_FOOD,     value: 1 },
 		],
+		description: "Likable, lithe creatures of small stature, often underestimated",
 	},
 	{
 		name: "Hardwarf",
@@ -734,18 +732,16 @@ const RACES = [
 		waryof: 1,
 		proficiency: SMASH,
 		badat: SLASH,
-		stat_mods: {
-			CON: +2,
-			STR: +1,
-			DEX: -1,
-			INT: -2,
-		},
-		description: "Sturdy sorts with a...direct approch to problems",
-		startingitems: [
+		startState: [
+			// { slot: STAT_CONSTITUTION, increment: +2 },
+			// { slot: STAT_STRENGTH, increment: +1 },
+			// { slot: STAT_AGILITY, increment: -1 },
+			// { slot: STAT_INTELLIGENCE, increment: -2 },
 			{ slot: EQUIPMENT_WEAPON, value: 1},
 			{ slot: EQUIPMENT_SHIELD, value: 1},
-			{ slot: INVENTORY_GOLD, value: 1 },
+			{ slot: INVENTORY_GOLD,   value: 1 },
 		],
+		description: "Sturdy sorts with a...direct approch to problems",
 	},
 	{
 		name: "Eelman",
@@ -754,18 +750,12 @@ const RACES = [
 		waryof: 2,
 		proficiency: [POKE, SHOOT],
 		badat: SMASH,
-		stat_mods: {
-			INT: +2,
-			WIS: +1,
-			CON: -1,
-			CHA: -2,
-		},
-		description: "Proud, sometimes haughty, intellectuals",
-		startingitems: [
-			{ slot: EQUIPMENT_WEAPON, value: 3},
+		startState: [
+			{ slot: EQUIPMENT_WEAPON,   value: 3},
 			{ slot: EQUIPMENT_FOOTWEAR, value: 1},
 			{ slot: INVENTORY_REAGENTS, value: 1 },
 		],
+		description: "Proud, sometimes haughty, intellectuals",
 	}
 ];
 
@@ -1381,18 +1371,19 @@ class Game {
 				let raceinfo = RACES[state[RACE]];
 				if (!raceinfo) return -1;
 				// All good. Start the game.
-				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1) {
-					// Add 3 plus race bonuses to stats
-					state[stat] += 3 + (raceinfo.stat_mods[SLOTS[stat].name] || 0);
-				}
+
+				// Have to add two to keep from going negative
+				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
+					state[stat] += 2;
+
+				for (let { slot, increment, value } of raceinfo.startState ?? [])
+					state[slot] = value ?? (state[slot] + increment)
+
 				state[LEVEL] = 1;
 				state[LOCATION] = BOMPTON_TOWN;
 				state[HEALTH] = state[MAX_HEALTH] = 6 + CON();
 				state[ENERGY] = state[MAX_ENERGY] = 6 + INT();
 				actUp();
-				for (let { slot, value } of raceinfo.startingitems) {
-					state[slot] = value;
-				}
 
 				return 1;
 			}
