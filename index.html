@@ -312,7 +312,7 @@ div.icon {
 	    <p class="status-bar-field" id=r1>SP</p>
 	    <p class="status-bar-field" id=r2>FP</p>
 	    <p class="status-bar-field" id=r3>AX</p>
-	    <p class="status-bar-field" id=r4>CK</p>
+	    <p class="status-bar-field" id=clock>CK</p>
 	  </div>
 	</div>
 </div>
@@ -896,6 +896,8 @@ function updateDebuggerState(vm) {
 		let r = $("#r" + i);
 		if (r) r.innerText = d.innerText;
 	}
+	$("#clock").innerText = '⏳ ' + vm.clock;
+
 	if (!$("#registers").children[n])
 		$('#registers').appendChild(document.createElement('hr'));
 	n += 1;

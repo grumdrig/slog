@@ -27,9 +27,9 @@ const opcodes = [
   { opcode: 0x13, mnemonic: 'add' },  // Sum, AX = overflow
   { opcode: 0x14, mnemonic: 'sub' },  // Difference, AX = overflow
   { opcode: 0x15, mnemonic: 'mul' },  // Product, AX = overflow
-  { opcode: 0x16, mnemonic: 'atan2' },// Arctangent, AX = fixed point result (atan2 * 256)
+  { opcode: 0x16, mnemonic: 'div' },  // Quotient, AX = mod(X,Y)
   { opcode: 0x17, mnemonic: 'pow' },  // Exponentiation, AX = X ^ 1/Y
-  { opcode: 0x18, mnemonic: 'div' },  // Quotient, AX = mod(X,Y)
+  { opcode: 0x18, mnemonic: 'atan2' },// Arctangent, AX = fixed point result (atan2 * 256)
 
   { opcode: 0x1A, mnemonic: 'or' },   // Bitwise or, AX = logical or
   { opcode: 0x1B, mnemonic: 'and' },  // Bitwise and, AX = logical and
@@ -97,10 +97,8 @@ const REGISTERS = {
   SP: -2,  // Stack pointer
   FP: -3,  // Frame pointer
   AX: -4,  // Auxilliary results of some operations
-  CK: -5,  // Counts clock cycles from startup
-  R6: -6,  // Reserved
-  R7: -7,  // Reserved
 };
+const NUM_REGISTERS = 4;
 
 const REGISTER_NAMES = reverseMapIntoArray(REGISTERS);
 
@@ -110,10 +108,10 @@ function fractional(f) { return (f << 16) & 0xffff }
 
 class VirtualMachine {
   memory = new Int16Array(4096);
-  registers = new Int16Array(7);
+  registers = new Int16Array(NUM_REGISTERS);
   state;  // negative memory beyond registers
   running = true;
-  clock = 0;  // actual elapsed cycles (since CK register is 16 bit)
+  clock = 0;  // elapsed cycles since start
 
   get pc() { return this.registers[-1-REGISTERS.PC] }
   set pc(v) { this.registers[-1-REGISTERS.PC] = v }
@@ -127,9 +125,6 @@ class VirtualMachine {
   get ax() { return this.registers[-1-REGISTERS.AX] }
   set ax(v) { this.registers[-1-REGISTERS.AX] = v }
   set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * MAX_INT }
-
-  get ck() { return this.registers[-1-REGISTERS.CK] }
-  set ck(v) { this.registers[-1-REGISTERS.CK] = v }
 
   get top() { return this.fetch(this.sp) }
   set top(v) { this.store(this.sp, v) }
@@ -290,7 +285,6 @@ class VirtualMachine {
       this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic ?? ''}`);
     }
 
-    this.ck += 1;
     this.clock += 1;
 
     if (this.clock > 1000*1000) {
@@ -327,7 +321,7 @@ class VirtualMachine {
   }
 
   dumpState() {
-    console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  CK: ${this.ck}`);
+    console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  Clock: ${this.clock}`);
   }
 }
 

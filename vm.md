@@ -16,8 +16,8 @@ architecture, which includes:
 	  less than 32k, probably much less, addressible with positive 16-bit
 	  values. It holds both code and data.
 
-	* Seven registers, also Int16s, described below, which may be accessed
-	  using memory addresses -1 down to -7.
+	* Four registers, also Int16s, described below, which may be accessed
+	  using memory addresses -1 down to -4.
 
 	* A vector of state variables, fetchable within the machine using negative
 	  addresses -8 or less.
@@ -56,14 +56,6 @@ They are:
 * AX, the auxilliary register, at memory location -4. While instructions that
   do have a result place that result on the stack, some instructions that
   have a auxilliary result place that auxilliary value in the AX register.
-
-* CK, the clock register. at memory location -5. CK is incremented every
-  machine cycle, i.e. each time an instruction is processed. Note that it
-  will wrap around from 32767 to -32768 when it reaches that value. It has no
-  purpose so I may get rid of it.
-
-* R6 and R7, at memory locations -6 and -7. These have no purpose and are
-  reserved for future use, or I may get rid of them too.
 
 
 State Vector

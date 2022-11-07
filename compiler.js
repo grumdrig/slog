@@ -884,7 +884,8 @@ class PrefixExpression {
 		'.': {
 			generate: (context, rhs) => {
 					if (rhs.isLiteral) {
-						context.emit('fetch ' + (-8 - rhs.value));
+						const NUM_REGISTERS = 4;
+						context.emit('fetch ' + (-1 - NUM_REGISTERS - rhs.value));
 					} else {
 						rhs.generate(context);
 						context.emit('unary NEG');
