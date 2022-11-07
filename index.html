@@ -1069,7 +1069,7 @@ function updateCharacterSheet(state) {
 	}
 
 	for (let i = 0; i < SPELLBOOK_COUNT; ++i) {
-		const slot = Spellbook0 + i;
+		const slot = SPELLBOOK_0 + i;
 		let spell = state[slot];
 		if (spell) {
 			set('bt' + i, 'Chapter ' + toRoman(i+1));

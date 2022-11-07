@@ -49,9 +49,6 @@ const SLOTS = [
 	{ name: 'Enchantment',
 	  description: `Active enchantment currently affecting you.` },
 
-	{ name: 'EnchantmentLevel',
-	  description: `Level of the current active enchantment.` },
-
 
 	{ name: 'StatStrength',
 	  description: `Ability to deal damage and lift heavy things.` },
@@ -71,10 +68,20 @@ const SLOTS = [
 	{ name: 'StatCharisma',
 	  description: `Likeability and ability to read others.` },
 
-	{ name: 'Spellbook0', description: `TBA` },
-	{ name: 'Spellbook1', description: `TBA` },
-	{ name: 'Spellbook2', description: `TBA` },
-	{ name: 'Spellbook3', description: `TBA` },
+
+	{ name: 'Spellbook1',
+	  description: `Your spellbook has room for only four spells in its four
+	  chapters. This is the spell in the first chapter.` },
+
+	{ name: 'Spellbook2',
+	  description: `Spellbook spell number 2.` },
+
+	{ name: 'Spellbook3',
+	  description: `Spellbook spell number 3.` },
+
+	{ name: 'Spellbook4',
+	  description: `Spellbook spell number 4.` },
+
 
 	{ name: 'EquipmentWeapon',
 
@@ -206,19 +213,6 @@ const SLOTS = [
 	  description: `` },
 
 
-	{ name: 'EsteemDunklings',
-
-	  description: `` },
-
-	{ name: 'EsteemHardwarves',
-
-	  description: `` },
-
-	{ name: 'EsteemEffs',
-
-	  description: `` },
-
-
 	{ name: 'Seed',  // PRNG seed
 
 	  description: `` },
@@ -239,16 +233,17 @@ function define(symbol, value) {
 SLOTS.forEach((slot, i) => define(slot.name, i));
 
 const STAT_0 = StatStrength;
+const SPELLBOOK_0 = Spellbook1;
 const EQUIPMENT_0 = EquipmentWeapon;
 const INVENTORY_0 = InventoryGold;
 
-const STAT_COUNT = Spellbook0 - STAT_0;
-const SPELLBOOK_COUNT = EQUIPMENT_0 - Spellbook0;
+const STAT_COUNT = SPELLBOOK_0 - STAT_0;
+const SPELLBOOK_COUNT = EQUIPMENT_0 - SPELLBOOK_0;
 const EQUIPMENT_COUNT = INVENTORY_0 - EQUIPMENT_0;
 const INVENTORY_COUNT = Location - INVENTORY_0;
 
 function isStatSlot(slot)      { return STAT_0      <= slot && slot < STAT_0 + STAT_COUNT }
-function isSpellSlot(slot)     { return Spellbook0 <= slot && slot < Spellbook0 + SPELLBOOK_COUNT }
+function isSpellSlot(slot)     { return SPELLBOOK_0 <= slot && slot < SPELLBOOK_0 + SPELLBOOK_COUNT }
 function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < EQUIPMENT_0 + EQUIPMENT_COUNT }
 function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_0 + INVENTORY_COUNT }
 
@@ -1617,7 +1612,7 @@ class Game {
 			return state[slot];
 
 		} else  if (operation == learn) {
-			let [slot, spellType] = [arg1 - 1 + Spellbook0, arg2];
+			let [slot, spellType] = [arg1 - 1 + SPELLBOOK_0, arg2];
 			let spell = SPELLS[spellType];
 			if (!spell) return -1;
 			if (local.terrain !== TOWN) return -1;
@@ -1636,7 +1631,7 @@ class Game {
 			let spell = SPELLS[spellType];
 			if (!spell) return -1;
 
-			if (state.slice(Spellbook0, Spellbook0 + SPELLBOOK_COUNT)
+			if (state.slice(SPELLBOOK_0, SPELLBOOK_0 + SPELLBOOK_COUNT)
 				.filter((spell, slot) => spell == spellType)
 				.length == 0) return -1;  // Don't know it
 
