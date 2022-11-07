@@ -467,6 +467,47 @@ const SPELLS = [ null, {
 		},
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
+		name: 'Spectral Coinpurse',
+		moniker: 'SPECTRAL_COINPURSE',
+		level: 5,
+		costs: [
+			{ slot: Energy, qty: 5 },
+			{ slot: InventoryReagents, qty: 5 },
+			],
+		duration: 24,
+		effect: state => {
+			// TODO: limit by emcumbrance
+			return state[InventoryGold] *= 2;
+		},
+		description: `Double. Your. Money.... Overnight!`,
+	}, {
+		name: 'History Lessen',
+		moniker: 'HISTORY_LESSEN',
+		level: 10,
+		costs: [
+			{ slot: Energy, qty: 10 },
+			{ slot: InventoryReagents, qty: 10 },
+			],
+		effect: state => {
+			return state[YEAR] = 0;
+		},
+		description: `Go back to when this crazy adventure all started. You get to keep your stuff though.`,
+	}, {
+		name: "Morph's Outpost",
+		moniker: 'MORPHS_OUTPOST',
+		level: 3,
+		costs: [
+			{ slot: Energy, qty: 3 },
+			{ slot: InventoryReagents, qty: 3 },
+			],
+		effect: state => {
+			if (!state[MobType]) return -1;
+			// TODO: lose current race bonuses
+			return state[Race] = state[MobType];
+			// TODO: this won't work yet
+		},
+		description: `Turn yourself in to one of those things. One of those things over there.`,
+	}, {
 		name: 'Buff',
 		moniker: 'BUFF',
 		level: 4,
@@ -479,6 +520,16 @@ const SPELLS = [ null, {
 		],
 		description: `Become just that much stronger.`,
 	}, {
+		name: 'Invisibility',
+		moniker: 'INVISIBILITY',
+		level: 6,
+		costs: [
+			{ slot: Energy, qty: 6 },
+			{ slot: InventoryReagents, qty: 6 },
+			],
+		enchantment: [],
+		description: `This doesn't do anything to help; it's just cool.`,
+	}, {
 		name: 'Smort',
 		moniker: 'SMORT',
 		level: 4,
@@ -490,16 +541,39 @@ const SPELLS = [ null, {
 			{ slot: StatIntelligence, increment: 4 },
 		],
 		description: `Become just that much stronger.`,
+	}, {
+		name: 'Scrambled Eggs',
+		moniker: 'SCRAMBLED_EGGS',
+		level: 9,
+		costs: [
+			{ slot: Energy, qty: 9 },
+			{ slot: InventoryReagents, qty: 9 },
+			],
+		enchantment: [],
+		effect: (state, spellid) => {
+			if (state[Location] > 36) return -1;
+			state[Enchantment] = spellid + (state[Location] << 8);
+		},
+		description: `Royally scramble the island.`,
+	}, {
+		name: 'Ghost Town',
+		moniker: 'GHOST_TOWN',
+		level: 5,
+		costs: [
+			{ slot: Energy, qty: 5 },
+			{ slot: InventoryReagents, qty: 5 },
+			],
+		enchantment: [],
+		effect: (state, spellid) => {
+			if (state[Location] > 36) return -1;
+			state[Enchantment] = spellid + (state[Location] << 8);
+			// TODO: the effect
+		},
+		description: `Bring a ghost town into existence where you now stand.`,
 	},
 ];
-// * Inviso
-// * Become the species of the nearby mob
-// * Double your money
-// * Scramble the map
-// * Create a ghost city where you stand
-// * Go back to year 0
 
-SPELLS.filter(x=>x).forEach((spell, index) => define(spell.moniker, index));
+SPELLS.forEach((spell, index) => spell && define(spell.moniker, index));
 
 
 /////////// Weapons
@@ -881,236 +955,206 @@ const MOBS = [
 
 const MAP = [null,
 	{
-		index: 1,
 		name: "Watha",
 		terrain: TUNDRA,
 		level: 7
 	}, {
-		index: 2,
 		name: "Maak",
 		terrain: TUNDRA,
 		level: 5,
 	}, {
-		index: 3,
 		name: "Wolfin Forest",
 		terrain: FOREST,
 		level: 2,
 	}, {
-		index: 4,
 		name: "Hohamp",
 		terrain: TOWN,
 		denizen: HARDWARF,
 		level: 0,
 	}, {
-		index: 5,
 		name: "Skiddo",
 		terrain: HILLS,
 		level: 1,
 	}, {
-		index: 6,
 		name: "Chinbreak Cliff",
 		terrain: MOUNTAINS,
 		level: 7,
 
 	}, {
-		index: 7,
 		name: "Yar",
 		terrain: TOWN,
 		denizen: EELMAN,
 		level: 0,
 	}, {
-		index: 8,
 		name: "Deepni Woods",
 		terrain: FOREST,
 		level: 7,
 	}, {
-		index: 9,
 		name: "Barkmot Forest",
 		terrain: FOREST,
 		level: 7,
 	}, {
-		index: 10,
 		name: "Goldona Hills",
 		terrain: HILLS,
 		level: 3,
 	}, {
-		index: 11,
 		name: "Breezeby Peak",
 		terrain: MOUNTAINS,
 		level: 5,
 	}, {
-		index: 12,
 		name: "Iperko Forest",
 		terrain: FOREST,
 		level: 1,
 
 	}, {
-		index: 13,
 		name: "Edl Grove",
 		terrain: FOREST,
 		level: 2,
 	}, {
-		index: 14,
 		name: "Donday Hill",
 		terrain: HILLS,
 		level: 3,
 	}, {
-		index: 15,
 		name: "Skidge Mountain",
 		terrain: MOUNTAINS,
 		level: 5,
 	}, {
-		index: 16,
 		name: "Krako Mountain",
 		terrain: MOUNTAINS,
 		level: 4,
 	}, {
-		index: 17,
 		name: "Sprue Forest",
 		terrain: FOREST,
 		level: 2,
 	}, {
-		index: 18,
 		name: "Bompton",
 		terrain: TOWN,
 		denizen: DUNKLING,
 		level: 0,
 
 	}, {
-		index: 19,
 		name: "Terfu Plain",
 		terrain: PLAINS,
 		level: 3,
 	}, {
-		index: 20,
 		name: "Blue Mist Mountains",
 		terrain: MOUNTAINS,
 		level: 1,
 	}, {
-		index: 21,
 		name: "Pillary",
 		terrain: TOWN,
 		denizen: HARDWARF,
 		level: 0,
 	}, {
-		index: 22,
 		name: "Grein Hills",
 		terrain: HILLS,
 		level: 3,
 	}, {
-		index: 23,
 		name: "Woofa Plain",
 		terrain: PLAINS,
 		level: 2,
 	}, {
-		index: 24,
 		name: "Hallon Prairie",
 		terrain: PLAINS,
 		level: 1,
 
 	}, {
-		index: 25,
 		name: "Donga Marsh",
 		terrain: MARSH,
 		level: 1,
 	}, {
-		index: 26,
 		name: "Panar Plain",
 		terrain: PLAINS,
 		level: 2,
 	}, {
-		index: 27,
 		name: "Owlholm Woods",
 		terrain: FOREST,
 		level: 4,
 	}, {
-		index: 28,
 		name: "Papay Forest",
 		terrain: FOREST,
 		level: 3,
 	}, {
-		index: 29,
 		name: "Delial",
 		terrain: TOWN,
 		denizen: DUNKLING,
 		level: 0,
 	}, {
-		index: 30,
 		name: "Solla Desert",
 		terrain: DESERT,
 		level: 1,
 
 	}, {
-		index: 31,
 		name: "Cholar",
 		terrain: TOWN,
 		denizen: DUNKLING,
 		level: 0,
 	}, {
-		index: 32,
 		name: "Ritoli Marsh",
 		terrain: MARSH,
 		level: 4,
 	}, {
-		index: 33,
 		name: "Arapet Plains",
 		terrain: PLAINS,
 		level: 6,
 	}, {
-		index: 34,
 		name: "Wheewit Forest",
 		terrain: FOREST,
 		level: 5,
 	}, {
-		index: 35,
 		name: "Enotar Plains",
 		terrain: PLAINS,
 		level: 4,
 	}, {
-		index: 36,
 		name: "Noonaf Wastes",
 		terrain: DESERT,
 		level: 5,
 
 	}, {
-		index: 37,
 		name: "Emkell Peak",
-		latitude: 3,
-		longitude: 8,
 		neighbors: [38],
 		terrain: MOUNTAINS,
 		level: 9,
 	}, {
-		index: 38,
 		name: "Sygnon Tower",
-		latitude: 4,
-		longitude: 8,
 		neighbors: [37],
 		terrain: TOWN,
 		denizen: GUST,
 		level: 0,
 	}];
 
-MAP.filter(t => t).forEach(t => {
-	t.longitude ??= (t.index - 1) % 6;
-	t.latitude ??= ((t.index - 1) / 6) >> 0;
-});
-
 const BOMPTON_TOWN = 18;
 
+function longitude(location) { return location > 36 ? 8 : (location - 1) % 6; }
+function latitude(location) { return location > 36 ? location - 34 : ((location - 1) / 6) >> 0; }
 
-function generateMap() {
+function mapInfo(location, state) {
+	if (0 < location && location <= 36 && (state[Enchantment] & 0xFF) == SCRAMBLED_EGGS) {
+		let fixed = state[Enchantment] >> 8;
+		location = (((location + 36 - fixed) * 23) + fixed - 1) % 36 + 1;  // whew!
+	}
+	return MAP[location];
+}
+
+
+function generateMap(scrambleFrom) {
 	let result = [];
-	let cols = MAP.slice(1).reduce((a,tile) => Math.max(a, tile.longitude+1), 0);
+	let cols = 9;
 	result.push(`<div class=themap style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px">`);
-	MAP.slice(1).forEach(tile => {
-		result.push(`<div style="grid-column:${tile.longitude+1};grid-row:${tile.latitude+1};background-color:${TERRAIN_TYPES[tile.terrain].color}">
-			<div>#${tile.index}</div>
+	for (let l = 1; l <= 38; ++l) {
+		let location = l;
+		if (scrambleFrom) {
+			let fixed = scrambleFrom;
+			if (location <= 36) location = (((location + 36 - fixed) * 23) + fixed - 1) % 36 + 1;
+		}
+		let tile = MAP[location];
+		result.push(`<div style="grid-column:${longitude(l)+1};grid-row:${latitude(l)+1};background-color:${TERRAIN_TYPES[tile.terrain].color}">
+			<div>#${l}</div>
 			<div>${tile.name.split(' ')[0]}<br/>
 			${TERRAIN_TYPES[tile.terrain].name}</div>
 			<div>level ${tile.level}</div>
 		</div>`);
-	});
+	}
 	result.push('</div>');
 
 	let preinfo = `<style>
@@ -1186,6 +1230,7 @@ class Game {
 	static TERRAIN_TYPES = TERRAIN_TYPES;
 	static MOBS = MOBS;
 	static MAP = MAP;
+	static mapInfo = mapInfo;
 	static EQUIPMENT_NAMES = [
 		WEAPON_NAMES,
 		ARMOR_NAMES,
@@ -1387,8 +1432,8 @@ class Game {
 
 		// Game is in process
 
-		let local = this.MAP[state[Location]];
-		let questal = this.MAP[state[QuestLocation]];
+		let local = mapInfo(state[Location], state);
+		let questal = mapInfo(state[QuestLocation], state);
 
 		function passTime(task, hours, days) {
 			TASK = task;  // TODO this is inelegant
@@ -1403,7 +1448,7 @@ class Game {
 
 		function randomLocation() {
 			// A random location on the main island
-			// TODO consider local
+			// TODO consider current locality
 			return d(36);
 		}
 
@@ -1416,16 +1461,16 @@ class Game {
 		}
 
 		if (operation === travel) {
-			const destination = arg1;
+			let destination = arg1;
 			if (destination === state[Location]) return 0;
-			let remote = this.MAP[destination];
+			let remote = mapInfo(destination, state);
 			if (!remote) return -1;
 			if (local.neighbors) {
 				if (!local.neighbors.includes(destination)) return -1;
 			} else {
 				// we're in the 6x6 grid
-				let [x0, y0] = [local.longitude, local.latitude];
-				let [x1, y1] = [remote.longitude, remote.latitude];
+				let [x0, y0] = [longitude(state[Location]), latitude(state[Location])];
+				let [x1, y1] = [longitude(destination), latitude(destination)];
 				if (Math.abs(x1 - x0) > Math.abs(y1 - y0)) {
 					y1 = y0;
 					x1 = (x1 < x0) ? x0 - 1 : x0 + 1;
@@ -1433,7 +1478,8 @@ class Game {
 					x1 = x0;
 					y1 = (y1 < y0) ? y0 - 1 : y0 + 1;
 				}
-				remote = this.MAP[x1 + 6 * y1 + 1];
+				destination = x1 + 6 * y1 + 1;
+				remote = mapInfo(destination, state);
 				if (!remote) return -1;  // but shouldn't happen
 			}
 			let hours = 24;
@@ -1441,7 +1487,7 @@ class Game {
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			hours = Math.round(hours / travelspeed);
-			state[Location] = remote.index;
+			state[Location] = destination;
 			state[MobType] = 0;
 			state[MobLevel] = 0;
 			state[MobDamage] = 0;
@@ -1640,13 +1686,13 @@ class Game {
 			for (let { slot, qty } of spell.costs)
 				if (state[slot] < qty) return -1;
 
-			passTime('Casting', 1);
+			passTime('Casting', spell.duration ?? 1);
 
 			for (let { slot, qty } of spell.costs)
 				state[slot] -= qty;
 
 			if (spell.enchantment) {
-				let current = SPELLS[state[Enchantment]];
+				let current = SPELLS[state[Enchantment] & 0xFF];
 				if (current) {
 					// Reverse current enchantment
 					for (let { slot, increment } of current.enchantment) {
@@ -1659,7 +1705,7 @@ class Game {
 				state[Enchantment] = spellType;
 			}
 
-			if (spell.effect) return spell.effect(state);
+			if (spell.effect) return spell.effect(state, spellType);
 
 			return spellType;
 

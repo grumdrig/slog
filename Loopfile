@@ -1,10 +1,10 @@
 # Grumdrig game
 
 # compile
--i grumdrig.asm node compiler.js -i ./bompton.js -o grumdrig.asm grumdrig.slog
+node compiler.js -i ./bompton.js -o @grumdrig.asm grumdrig.slog
 
 # assemble
--i grumdrig.bin -i grumdrig.dasm node vm.js -a grumdrig.asm -d grumdrig.dasm -o grumdrig.bin
+node vm.js -a grumdrig.asm -d @grumdrig.dasm -o @grumdrig.bin
 
 # execute
 node bompton.js -v grumdrig.bin
@@ -13,10 +13,10 @@ node bompton.js -v grumdrig.bin
 # tests
 
 # compile
--i test.asm node compiler.js -o test.asm test.slog
+node compiler.js -o @test.asm test.slog
 
 # assemble
--i test.bin -i test.dasm node vm.js -a test.asm -d test.dasm -o test.bin
+node vm.js -a test.asm -d @test.dasm -o @test.bin
 
 # execute
 node vm.js -l test.bin -r
@@ -29,6 +29,6 @@ node vm.js -l test.bin -r
 
 # Manuals
 
--i vm.html node_modules/marked/bin/marked.js -i vm.md -o vm.html
--i asm.html node_modules/marked/bin/marked.js -i assembler_manual.md -o asm.html
--i compiler.html node_modules/marked/bin/marked.js -i compiler.md -o compiler.html
+node_modules/marked/bin/marked.js -i vm.md -o @vm.html
+node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
+node_modules/marked/bin/marked.js -i compiler.md -o @compiler.html

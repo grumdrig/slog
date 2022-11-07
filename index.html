@@ -1089,7 +1089,7 @@ function updateCharacterSheet(state) {
 		else if (slot === EquipmentRing)
 			set('e' + i, 'Ring of ' + SLOTS[v].name);
 		else if (slot === EquipmentTotem)
-			set('e' + i, MAP[v].name.split(' ')[0] + ' Totem');
+			set('e' + i, Game.MAP[v].name.split(' ')[0] + ' Totem');
 		else
 			set('e' + i, names[v] || v);
 	}
@@ -1101,7 +1101,7 @@ function updateCharacterSheet(state) {
 	set('encumbrance', state[Encumbrance]);
 	set('capacity', state[Capacity]);
 
-	let local = Game.MAP[state[Location]] || {};
+	let local = Game.mapInfo(state[Location], state) || {};
 
 	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
 	// set('elapsed', readableTime(state[Hours], state[Years]));
@@ -1115,15 +1115,15 @@ function updateCharacterSheet(state) {
 	set('time', hour + 'h');
 
 	set('location', local.index ?
-		`#${local.index} &lt;${local.longitude ?? ((local.index - 1) % 6)}, ${local.latitude ?? ((local.index - 1) / 6) >> 0}&gt;` : '');
+		`#${state[Location]} &lt;${longitude(state[Location])}, ${latitude(state[Location])}&gt;` : '');
 	set('locale', local.name);
 	set('terrain', (Game.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobType] ?
 		`${Game.MOBS[state[MobType]].name} (level ${state[MobLevel]})` : '');
 	set('mobDamage', state[MobType] ? state[MobDamage] : '');
 
-	let questal = Game.MAP[state[QuestLocation]];
-	let original = Game.MAP[state[QuestOrigin]];
+	let questal = Game.mapInfo(state[QuestLocation], state);
+	let original = Game.mapInfo(state[QuestOrigin], state);
 	let friendlySlotNames = {
 		EquipmentTotem: 'totem',
 		InventoryGold: 'gold',
