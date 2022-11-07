@@ -1,225 +1,225 @@
 // PQAsm
 
 const SLOTS = [
-	{ name: 'GAMEOVER',
+	{ name: 'GameOver',
 	  description: `The game sets this value when it comes to an end. If it
 	  ever becomes non-zero, you won't be around to see it.` },
 
-	{ name: 'RACE',
+	{ name: 'Race',
 	  description: `Your character's species, choses before the game starts.
 	  Each choice has it's own inherent minor strengths and weaknesses.` },
 
-	{ name: 'LEVEL',
+	{ name: 'Level',
 	  description: `As you gain experience, your level increases. Higher
 	  levels mean increased abilities accross the board.` },
-	{ name: 'XP',
+	{ name: 'Experience',
 	  description: `Experience points may be earned by defeating mobs and
 	  completing quests. Earn enough and you'll be able to level up.` },
 
-	{ name: 'YEARS',
+	{ name: 'Years',
 	  description: `Years of in-game time elapsed since the start of the game.` },
-	{ name: 'HOURS',
+	{ name: 'Hours',
 	  description: `Hours of the current year which have gone by. There are 24
 	  hours in a day, 32 days in a month, 12 months in a year. Therefore,
 	  there are 9216 hours in a year.` },
 
-	{ name: 'MAX_HEALTH',
+	{ name: 'MaxHealth',
 	  description: `Maximum hit points, i.e. the amount of damage you can sustain
 	  before death.` },
-	{ name: 'HEALTH',
-	  description: `Current health level; MAX_HEALTH minus damage sustained.` },
+	{ name: 'Health',
+	  description: `Current health level; MaxHealth minus damage sustained.` },
 
-	{ name: 'MAX_ENERGY',
+	{ name: 'MaxEnergy',
 	  description: `The maximum energy available to you for casting spells and
 	  other exhausting tasks.` },
-	{ name: 'ENERGY',
-	  description: `Energy available at the moment, from MAX_ENERGY down to zero.
+	{ name: 'Energy',
+	  description: `Energy available at the moment, from MaxEnergy down to zero.
 	  It drops as fatigue sets in.` },
 
-	{ name: 'ARMOR_CLASS',
+	{ name: 'ArmorClass',
 	  description: `Defensive rating calculated based on equipment and bonuses.` },
 
-	{ name: 'ENCUMBRANCE',
-	  description: `Total weight of carried items, not to exceed CAPACITY.` },
+	{ name: 'Encumbrance',
+	  description: `Total weight of carried items, not to exceed Capacity.` },
 
-	{ name: 'CAPACITY',
+	{ name: 'Capacity',
 	  description: `Maximum weight you could possibly carry.` },
 
 
-	{ name: 'ENCHANTMENT',
+	{ name: 'Enchantment',
 	  description: `Active enchantment currently affecting you.` },
 
-	{ name: 'ENCHANTMENT_LEVEL',
+	{ name: 'EnchantmentLevel',
 	  description: `Level of the current active enchantment.` },
 
 
-	{ name: 'STAT_STRENGTH',
+	{ name: 'StatStrength',
 	  description: `Ability to deal damage and lift heavy things.` },
 
-	{ name: 'STAT_AGILITY',
+	{ name: 'StatAgility',
 	  description: `Ability to move around, avoid death, etc.` },
 
-	{ name: 'STAT_CONSTITUTION',
+	{ name: 'StatConstitution',
 	  description: `Ability to absorb damage and retain energy.` },
 
-	{ name: 'STAT_INTELLIGENCE',
+	{ name: 'StatIntelligence',
 	  description: `Rating of cognitive ability and perception.` },
 
-	{ name: 'STAT_WISDOM',
+	{ name: 'StatWisdom',
 	  description: `Knowlege and sagacity.` },
 
-	{ name: 'STAT_CHARISMA',
+	{ name: 'StatCharisma',
 	  description: `Likeability and ability to read others.` },
 
-	{ name: 'SPELLBOOK_0', description: `TBA` },
-	{ name: 'SPELLBOOK_1', description: `TBA` },
-	{ name: 'SPELLBOOK_2', description: `TBA` },
-	{ name: 'SPELLBOOK_3', description: `TBA` },
+	{ name: 'Spellbook0', description: `TBA` },
+	{ name: 'Spellbook1', description: `TBA` },
+	{ name: 'Spellbook2', description: `TBA` },
+	{ name: 'Spellbook3', description: `TBA` },
 
-	{ name: 'EQUIPMENT_WEAPON',
-
-	  description: `` },
-
-	{ name: 'EQUIPMENT_ARMOR',
+	{ name: 'EquipmentWeapon',
 
 	  description: `` },
 
-	{ name: 'EQUIPMENT_SHIELD',
+	{ name: 'EquipmentArmor',
 
 	  description: `` },
 
-	{ name: 'EQUIPMENT_HEADGEAR',
+	{ name: 'EquipmentShield',
 
 	  description: `` },
 
-	{ name: 'EQUIPMENT_FOOTWEAR',
+	{ name: 'EquipmentHeadgear',
 
 	  description: `` },
 
-	{ name: 'EQUIPMENT_MOUNT',
+	{ name: 'EquipmentFootwear',
 
 	  description: `` },
 
-	{ name: 'EQUIPMENT_RING',
+	{ name: 'EquipmentMount',
 
 	  description: `` },
 
-	{ name: 'EQUIPMENT_TOTEM',
+	{ name: 'EquipmentRing',
 
 	  description: `` },
 
-
-	{ name: 'INVENTORY_GOLD',
-
-	  description: `` },
-
-	{ name: 'INVENTORY_SPOILS',
-
-	  description: `` },
-
-	{ name: 'INVENTORY_REAGENTS',
-
-	  description: `` },
-
-	{ name: 'INVENTORY_RESOURCES',
-
-	  description: `` },
-
-	{ name: 'INVENTORY_FOOD',
-
-	  description: `` },
-
-	{ name: 'INVENTORY_TREASURES',
-
-	  description: `` },
-
-	{ name: 'INVENTORY_POTIONS',
-
-	  description: `` },
-
-	{ name: 'INVENTORY_LIFE_POTIONS',
+	{ name: 'EquipmentTotem',
 
 	  description: `` },
 
 
-	{ name: 'LOCATION',
+	{ name: 'InventoryGold',
 
 	  description: `` },
 
-	{ name: 'MOB_TYPE',
+	{ name: 'InventorySpoils',
 
 	  description: `` },
 
-	{ name: 'MOB_LEVEL',
+	{ name: 'InventoryReagents',
 
 	  description: `` },
 
-	{ name: 'MOB_DAMAGE',
+	{ name: 'InventoryResources',
 
 	  description: `` },
 
-
-	{ name: 'QUEST_OBJECT', // item, by slot, or 0
-
-	  description: `` },
-
-	{ name: 'QUEST_MOB', // monster (by id)
+	{ name: 'InventoryFood',
 
 	  description: `` },
 
-	{ name: 'QUEST_LOCATION', // location to perform the quest
+	{ name: 'InventoryTreasures',
 
 	  description: `` },
 
-	{ name: 'QUEST_QTY', // qty # required
+	{ name: 'InventoryPotions',
 
 	  description: `` },
 
-	{ name: 'QUEST_PROGRESS', // # completed
-
-	  description: `` },
-
-	{ name: 'QUEST_ORIGIN', // town location
+	{ name: 'InventoryLifePotions',
 
 	  description: `` },
 
 
-	{ name: 'ACT', // (up to 9, 10 = win)
+	{ name: 'Location',
 
 	  description: `` },
 
-	{ name: 'ACT_DURATION', // # of something required
+	{ name: 'MobType',
 
 	  description: `` },
 
-	{ name: 'ACT_PROGRESS', // as advanced by quests
+	{ name: 'MobLevel',
 
 	  description: `` },
 
-
-	{ name: 'BALANCE_GOLD',      // bank of Bompton...
-
-	  description: `` },
-
-	{ name: 'BALANCE_TREASURES', // ...balances
+	{ name: 'MobDamage',
 
 	  description: `` },
 
 
-	{ name: 'ESTEEM_DUNKLINGS',
+	{ name: 'QuestObject', // item, by slot, or 0
 
 	  description: `` },
 
-	{ name: 'ESTEEM_HARDWARVES',
+	{ name: 'QuestMob', // monster (by id)
 
 	  description: `` },
 
-	{ name: 'ESTEEM_EFFS',
+	{ name: 'QuestLocation', // location to perform the quest
+
+	  description: `` },
+
+	{ name: 'QuestQty', // qty # required
+
+	  description: `` },
+
+	{ name: 'QuestProgress', // # completed
+
+	  description: `` },
+
+	{ name: 'QuestOrigin', // town location
 
 	  description: `` },
 
 
-	{ name: 'SEED',  // PRNG seed
+	{ name: 'Act', // (up to 9, 10 = win)
+
+	  description: `` },
+
+	{ name: 'ActDuration', // # of something required
+
+	  description: `` },
+
+	{ name: 'ActProgress', // as advanced by quests
+
+	  description: `` },
+
+
+	{ name: 'BalanceGold',      // bank of Bompton...
+
+	  description: `` },
+
+	{ name: 'BalanceTreasures', // ...balances
+
+	  description: `` },
+
+
+	{ name: 'EsteemDunklings',
+
+	  description: `` },
+
+	{ name: 'EsteemHardwarves',
+
+	  description: `` },
+
+	{ name: 'EsteemEffs',
+
+	  description: `` },
+
+
+	{ name: 'Seed',  // PRNG seed
 
 	  description: `` },
 
@@ -235,20 +235,20 @@ function define(symbol, value) {
 		Object.defineProperty(exports, symbol, { value });
 }
 
-// const LEVEL = 1; for example
+// const Level = 1; for example
 SLOTS.forEach((slot, i) => define(slot.name, i));
 
-const STAT_0 = STAT_STRENGTH;
-const EQUIPMENT_0 = EQUIPMENT_WEAPON;
-const INVENTORY_0 = INVENTORY_GOLD;
+const STAT_0 = StatStrength;
+const EQUIPMENT_0 = EquipmentWeapon;
+const INVENTORY_0 = InventoryGold;
 
-const STAT_COUNT = SPELLBOOK_0 - STAT_0;
-const SPELLBOOK_COUNT = EQUIPMENT_0 - SPELLBOOK_0;
+const STAT_COUNT = Spellbook0 - STAT_0;
+const SPELLBOOK_COUNT = EQUIPMENT_0 - Spellbook0;
 const EQUIPMENT_COUNT = INVENTORY_0 - EQUIPMENT_0;
-const INVENTORY_COUNT = LOCATION - INVENTORY_0;
+const INVENTORY_COUNT = Location - INVENTORY_0;
 
 function isStatSlot(slot)      { return STAT_0      <= slot && slot < STAT_0 + STAT_COUNT }
-function isSpellSlot(slot)     { return SPELLBOOK_0 <= slot && slot < SPELLBOOK_0 + SPELLBOOK_COUNT }
+function isSpellSlot(slot)     { return Spellbook0 <= slot && slot < Spellbook0 + SPELLBOOK_COUNT }
 function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < EQUIPMENT_0 + EQUIPMENT_COUNT }
 function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_0 + INVENTORY_COUNT }
 
@@ -259,13 +259,13 @@ const CALLS = {
 		total of ten points to their six stat slots (STATE_STRENGTH, etc)
 		using this function.
 
-		<p>Also, the character's RACE must be assigned.` },
+		<p>Also, the character's Race must be assigned.` },
 
 	startGame: {
 		description: 'Begin the game! Call initialize() as needed first.' },
 
 	train: { parameters: 'slot',
-		description: `Train to improve stats (STAT_STRENGTH, and so on).
+		description: `Train to improve stats (StatStrength, and so on).
 		Training speed can be affected by various environmental factors.` },
 
 	learn: { parameters: 'spellbook_slot,spell',
@@ -289,7 +289,7 @@ const CALLS = {
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item
-		(INVENTORY_POTIONS, etc.) from the local shopkeeper, You can get a
+		(InventoryPotions, etc.) from the local shopkeeper, You can get a
 		price check by passing 0 as the quantitiy.
 
 		<p>Or, buy a piece of equipment (EQUIPMENT_*) of a certain quality. This
@@ -313,8 +313,8 @@ const CALLS = {
 		reagents and saps energy.` },
 
 	forage: { parameters: 'target_slot',
-		description: `Comb the local area for INVENTORY_FOOD, or
-		INVENTORY_RESOURCES, or whatever you might seek.` },
+		description: `Comb the local area for InventoryFood, or
+		InventoryResources, or whatever you might seek.` },
 
 	rest: {
 		description: `Grab some downtime to reduce fatigue and damage. Resting
@@ -337,7 +337,7 @@ const CALLS = {
 
 	deposit: { parameters: 'slot,quantity',
 		description: `When in Bompton Town, stop at the Bank of Bompton where
-		you can store INVENTORY_GOLD and INVENTORY_TREASURES. There is a
+		you can store InventoryGold and InventoryTreasures. There is a
 		one (1) gold charge for each transaction.` },
 
 	withdraw: { parameters: 'slot,quantity',
@@ -421,7 +421,7 @@ function generateDocumentation() {
 	p(`The constants listed here are indices into the game state vector.
 	They are sometimes passed to the gameplay functions above (such as
 	<code>train</code> or <code>give</code>); or their value may be accessed using
-	the state vector access operator (<code>.</code>). For example <code>.LEVEL</code>
+	the state vector access operator (<code>.</code>). For example <code>.Level</code>
 	is the player character's current level.`);
 
 	for (let { name, description } of SLOTS) {
@@ -446,26 +446,26 @@ const SPELLS = [ null, {
 		moniker: 'HEAL_YEAH',
 		level: 1,
 		costs: [
-			{ slot: ENERGY, qty: 1 },
-			{ slot: INVENTORY_REAGENTS, qty: 1 },
+			{ slot: Energy, qty: 1 },
+			{ slot: InventoryReagents, qty: 1 },
 			],
 		effect: state => {
 			let healing = 1;
-			healing *= Math.pow(1.6, state[STAT_WISDOM]);
+			healing *= Math.pow(1.6, state[StatWisdom]);
 			healing = Math.round(healing);
-			healing = Math.min(healing, state[MAX_HEALTH] - state[HEALTH]);
-			state[HEALTH] += healing;
+			healing = Math.min(healing, state[MaxHealth] - state[Health]);
+			state[Health] += healing;
 			return healing;
 		},
 		description: `Heal some or all of any damage you may have sustained.
-		The effectiveness of this spell is aided by higher STAT_WISDOM`,
+		The effectiveness of this spell is aided by higher StatWisdom`,
 	}, {
 		name: 'Pyroclastic Orb',
 		moniker: 'PYROCLASTIC_ORB',
 		level: 2,
 		costs: [
-			{ slot: ENERGY, qty: 2 },
-			{ slot: INVENTORY_REAGENTS, qty: 2 },
+			{ slot: Energy, qty: 2 },
+			{ slot: InventoryReagents, qty: 2 },
 			],
 		effect: state => {
 			return battle(state, true);
@@ -476,11 +476,11 @@ const SPELLS = [ null, {
 		moniker: 'BUFF',
 		level: 4,
 		costs: [
-			{ slot: ENERGY, qty: 4 },
-			{ slot: INVENTORY_REAGENTS, qty: 4 },
+			{ slot: Energy, qty: 4 },
+			{ slot: InventoryReagents, qty: 4 },
 			],
 		enchantment: [
-			{ slot: STAT_STRENGTH, increment: 4 },
+			{ slot: StatStrength, increment: 4 },
 		],
 		description: `Become just that much stronger.`,
 	}, {
@@ -488,11 +488,11 @@ const SPELLS = [ null, {
 		moniker: 'SMORT',
 		level: 4,
 		costs: [
-			{ slot: ENERGY, qty: 4 },
-			{ slot: INVENTORY_REAGENTS, qty: 4 },
+			{ slot: Energy, qty: 4 },
+			{ slot: InventoryReagents, qty: 4 },
 			],
 		enchantment: [
-			{ slot: STAT_INTELLIGENCE, increment: 4 },
+			{ slot: StatIntelligence, increment: 4 },
 		],
 		description: `Become just that much stronger.`,
 	},
@@ -714,13 +714,13 @@ const RACES = [
 		proficiency: SLASH,
 		badat: [POKE, SHOOT],
 		startState: [
-			// { slot: STAT_AGILITY, increment: +2 },
-			// { slot: STAT_CHARISMA, increment: +1 },
-			// { slot: STAT_STRENGTH, increment: -1 },
-			// { slot: STAT_WISDOM, increment: -2 },
-			{ slot: EQUIPMENT_WEAPON,   value: 2},
-			{ slot: EQUIPMENT_HEADGEAR, value: 1},
-			{ slot: INVENTORY_FOOD,     value: 1 },
+			// { slot: StatAgility, increment: +2 },
+			// { slot: StatCharisma, increment: +1 },
+			// { slot: StatStrength, increment: -1 },
+			// { slot: StatWisdom, increment: -2 },
+			{ slot: EquipmentWeapon,   value: 2},
+			{ slot: EquipmentHeadgear, value: 1},
+			{ slot: InventoryFood,     value: 1 },
 		],
 		description: "Likable, lithe creatures of small stature, often underestimated",
 	},
@@ -733,13 +733,13 @@ const RACES = [
 		proficiency: SMASH,
 		badat: SLASH,
 		startState: [
-			// { slot: STAT_CONSTITUTION, increment: +2 },
-			// { slot: STAT_STRENGTH, increment: +1 },
-			// { slot: STAT_AGILITY, increment: -1 },
-			// { slot: STAT_INTELLIGENCE, increment: -2 },
-			{ slot: EQUIPMENT_WEAPON, value: 1},
-			{ slot: EQUIPMENT_SHIELD, value: 1},
-			{ slot: INVENTORY_GOLD,   value: 1 },
+			// { slot: StatConstitution, increment: +2 },
+			// { slot: StatStrength, increment: +1 },
+			// { slot: StatAgility, increment: -1 },
+			// { slot: StatIntelligence, increment: -2 },
+			{ slot: EquipmentWeapon, value: 1},
+			{ slot: EquipmentShield, value: 1},
+			{ slot: InventoryGold,   value: 1 },
 		],
 		description: "Sturdy sorts with a...direct approch to problems",
 	},
@@ -751,9 +751,9 @@ const RACES = [
 		proficiency: [POKE, SHOOT],
 		badat: SMASH,
 		startState: [
-			{ slot: EQUIPMENT_WEAPON,   value: 3},
-			{ slot: EQUIPMENT_FOOTWEAR, value: 1},
-			{ slot: INVENTORY_REAGENTS, value: 1 },
+			{ slot: EquipmentWeapon,   value: 3},
+			{ slot: EquipmentFootwear, value: 1},
+			{ slot: InventoryReagents, value: 1 },
 		],
 		description: "Proud, sometimes haughty, intellectuals",
 	}
@@ -790,16 +790,16 @@ const TERRAIN_TYPES = [
 	}, {
 		name: 'Plains',
 		color: 'lightgreen',
-		forage: { item: INVENTORY_FOOD, rate: 2 },
+		forage: { item: InventoryFood, rate: 2 },
 	}, {
 		name: 'Marsh',
 		color: 'olive',
 		moveCost: 2.5,
-		forage: { item: INVENTORY_FOOD, rate: 0 },
+		forage: { item: InventoryFood, rate: 0 },
 	}, {
 		name: 'Desert',
 		color: 'yellow',
-		forage: { item: INVENTORY_FOOD, rate: 0 },
+		forage: { item: InventoryFood, rate: 0 },
 	}];
 
 TERRAIN_TYPES.forEach((info, index) => {
@@ -1147,21 +1147,21 @@ function generateMap() {
 
 
 function carryCapacity(state) {
-	return state[STAT_STRENGTH] + state[EQUIPMENT_MOUNT];
+	return state[StatStrength] + state[EquipmentMount];
 }
 
 function encumbrance(state) {
 	// Gold doesn't count much against encumbrance
-	return (state[INVENTORY_GOLD] >> 8) +
-		state.slice(INVENTORY_GOLD + 1, INVENTORY_0 + INVENTORY_COUNT)
+	return (state[InventoryGold] >> 8) +
+		state.slice(InventoryGold + 1, INVENTORY_0 + INVENTORY_COUNT)
 			  .reduce((q, v) => q + v);
 }
 
 function armorClass(state) {
-	return state[EQUIPMENT_ARMOR] +
-			state[EQUIPMENT_SHIELD] +
-			state[EQUIPMENT_HEADGEAR] +
-			state[EQUIPMENT_FOOTWEAR];
+	return state[EquipmentArmor] +
+			state[EquipmentShield] +
+			state[EquipmentHeadgear] +
+			state[EquipmentFootwear];
 }
 
 // Generalized hopefully well from
@@ -1179,7 +1179,7 @@ let TASK = '';
 class Game {
 	static create(code) {
 		let state = new Int16Array(SLOTS.length);
-		state[SEED] = hash(0x3FB9, ...code);
+		state[Seed] = hash(0x3FB9, ...code);
 		return state;
 	}
 
@@ -1208,17 +1208,17 @@ class Game {
 	static handleInstruction(state, operation, arg1, arg2) {
 		let result = this._handleInstruction(state, operation, arg1, arg2);
 
-		if (state[LEVEL] > 0) {
-			state[CAPACITY] = carryCapacity(state);
-			state[ENCUMBRANCE] = encumbrance(state);
-			state[ARMOR_CLASS] = armorClass(state);
+		if (state[Level] > 0) {
+			state[Capacity] = carryCapacity(state);
+			state[Encumbrance] = encumbrance(state);
+			state[ArmorClass] = armorClass(state);
 
-			if (state[HEALTH] <= 0) {
-				state[GAMEOVER] = 0xDED;
-			} else if (state[YEARS] >= 100) {
-				state[GAMEOVER] = 0xA9E;
-			} else if (state[ACT] > 9) {
-				state[GAMEOVER] = 0x1;
+			if (state[Health] <= 0) {
+				state[GameOver] = 0xDED;
+			} else if (state[Years] >= 100) {
+				state[GameOver] = 0xA9E;
+			} else if (state[Act] > 9) {
+				state[GameOver] = 0x1;
 			}
 		}
 
@@ -1227,8 +1227,8 @@ class Game {
 
 	static _handleInstruction(state, operation, arg1, arg2) {
 
-		let seed = hash(state[SEED], 0x5EED, operation, arg1, arg2);
-		state[SEED] = seed;
+		let seed = hash(state[Seed], 0x5EED, operation, arg1, arg2);
+		state[Seed] = seed;
 
 		// seed and key are integers on [0, 0x7fffffff]
 		// result is real on [0, 1)
@@ -1249,17 +1249,17 @@ class Game {
 
 		function randomPick(a) { return a[irand(a.length)] }
 
-		function STR() { return state[STAT_CONSTITUTION] }
-		function DEX() { return state[STAT_AGILITY] }
-		function CON() { return state[STAT_CONSTITUTION] }
-		function INT() { return state[STAT_INTELLIGENCE] }
-		function WIS() { return state[STAT_WISDOM] }
-		function CHA() { return state[STAT_CHARISMA] }
+		function STR() { return state[StatConstitution] }
+		function DEX() { return state[StatAgility] }
+		function CON() { return state[StatConstitution] }
+		function INT() { return state[StatIntelligence] }
+		function WIS() { return state[StatWisdom] }
+		function CHA() { return state[StatCharisma] }
 
 		function battle(invulnerable=false) {
-			if (!state[MOB_TYPE]) return -1;
+			if (!state[MobType]) return -1;
 
-			let info = MOBS[state[MOB_TYPE]];
+			let info = MOBS[state[MobType]];
 			if (!info) return -1;
 
 			if (info.esteemSlot)
@@ -1287,46 +1287,46 @@ class Game {
 				}
 			}
 
-			function STR() { return state[STAT_CONSTITUTION] }
-			function DEX() { return state[STAT_AGILITY] }
-			function CON() { return state[STAT_CONSTITUTION] }
-			function INT() { return state[STAT_INTELLIGENCE] }
-			function WIS() { return state[STAT_WISDOM] }
-			function CHA() { return state[STAT_CHARISMA] }
+			function STR() { return state[StatConstitution] }
+			function DEX() { return state[StatAgility] }
+			function CON() { return state[StatConstitution] }
+			function INT() { return state[StatIntelligence] }
+			function WIS() { return state[StatWisdom] }
+			function CHA() { return state[StatCharisma] }
 
-			const playerAttack = DEX() + weaponPower(state[EQUIPMENT_WEAPON]);
+			const playerAttack = DEX() + weaponPower(state[EquipmentWeapon]);
 
 			let dealtToMob = rollAttack(DEX(), mobDefense, STR());
 			let dealtToPlayer = rollAttack(mobOffsense, DEX(), mobSharpness);
 
 			if (DEX() + d(6) >= mobLevel + d(6)) {
 				// Player attacks first
-				state[MOB_DAMAGE] += dealtToMob;
-				if (state[MOB_DAMAGE] < mobMaxHP) {
-					state[HEALTH] -= Math.min(dealtToPlayer, state[HEALTH]);
+				state[MobDamage] += dealtToMob;
+				if (state[MobDamage] < mobMaxHP) {
+					state[Health] -= Math.min(dealtToPlayer, state[Health]);
 				}
 			} else {
-				state[HEALTH] -= Math.min(dealtToPlayer, state[HEALTH]);
-				if (state[HEALTH] > 0) {
-					state[MOB_DAMAGE] += dealtToMob;
+				state[Health] -= Math.min(dealtToPlayer, state[Health]);
+				if (state[Health] > 0) {
+					state[MobDamage] += dealtToMob;
 				}
 			}
 
-			let levelDisadvantage = state[MOB_LEVEL] - state[LEVEL];
-			if (state[MOB_DAMAGE] >= mobMaxHP) {
-				state[XP] += 10 * state[MOB_LEVEL] * Math.pow(1.5, levelDisadvantage);
+			let levelDisadvantage = state[MobLevel] - state[Level];
+			if (state[MobDamage] >= mobMaxHP) {
+				state[Experience] += 10 * state[MobLevel] * Math.pow(1.5, levelDisadvantage);
 				let ndrops = Math.min(1, carryCapacity(state));
-				state[INVENTORY_SPOILS] += ndrops;
-				if (state[MOB_TYPE] == state[QUEST_MOB]) state[QUEST_PROGRESS] += 1;
-				state[MOB_DAMAGE] = 0;
-				state[MOB_TYPE] = 0;
-				state[MOB_LEVEL] = 0;
+				state[InventorySpoils] += ndrops;
+				if (state[MobType] == state[QuestMob]) state[QuestProgress] += 1;
+				state[MobDamage] = 0;
+				state[MobType] = 0;
+				state[MobLevel] = 0;
 			}
 
-			if (state[HEALTH] <= 0) {
-				if (state[INVENTORY_LIFE_POTIONS] > 0) {
-					state[INVENTORY_LIFE_POTIONS] -= 1;
-					state[HEALTH] = 1;  // or max health?
+			if (state[Health] <= 0) {
+				if (state[InventoryLifePotions] > 0) {
+					state[InventoryLifePotions] -= 1;
+					state[Health] = 1;  // or max health?
 				} else {
 					// dead. now what?
 				}
@@ -1337,11 +1337,11 @@ class Game {
 		}
 
 		function actUp() {
-			if (state[ACT_PROGRESS] >= state[ACT_DURATION]) {
-				state[ACT] += 1;
+			if (state[ActProgress] >= state[ActDuration]) {
+				state[Act] += 1;
 				const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
-				state[ACT_DURATION] = ACT_LENGTHS[state[ACT] - 1];
-				state[ACT_PROGRESS] = 0;
+				state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
+				state[ActProgress] = 0;
 			}
 		}
 
@@ -1352,12 +1352,12 @@ class Game {
 			return value;
 		}
 
-		if (state[LEVEL] === 0) {
+		if (state[Level] === 0) {
 			// game hasn't begun
 			if (operation === initialize) {
 				let [slot, value] = [arg1, arg2];
 				if (value < 0) return -1
-				if (slot === RACE) {
+				if (slot === Race) {
 					state[slot] = value;
 				} else if (STAT_0 <= slot && slot < STAT_0 + STAT_COUNT) {
 					state[slot] = value;
@@ -1368,7 +1368,7 @@ class Game {
 
 			} else if (operation === startGame) {
 				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) > 10) return -1;
-				let raceinfo = RACES[state[RACE]];
+				let raceinfo = RACES[state[Race]];
 				if (!raceinfo) return -1;
 				// All good. Start the game.
 
@@ -1379,10 +1379,10 @@ class Game {
 				for (let { slot, increment, value } of raceinfo.startState ?? [])
 					state[slot] = value ?? (state[slot] + increment)
 
-				state[LEVEL] = 1;
-				state[LOCATION] = BOMPTON_TOWN;
-				state[HEALTH] = state[MAX_HEALTH] = 6 + CON();
-				state[ENERGY] = state[MAX_ENERGY] = 6 + INT();
+				state[Level] = 1;
+				state[Location] = BOMPTON_TOWN;
+				state[Health] = state[MaxHealth] = 6 + CON();
+				state[Energy] = state[MaxEnergy] = 6 + INT();
 				actUp();
 
 				return 1;
@@ -1392,17 +1392,17 @@ class Game {
 
 		// Game is in process
 
-		let local = this.MAP[state[LOCATION]];
-		let questal = this.MAP[state[QUEST_LOCATION]];
+		let local = this.MAP[state[Location]];
+		let questal = this.MAP[state[QuestLocation]];
 
 		function passTime(task, hours, days) {
 			TASK = task;  // TODO this is inelegant
 			if (TASK[TASK.length - 1] !== '.') TASK += '...';
 			if (days) hours += HOURS_PER_DAY * days;
-			state[HOURS] += hours;
-			while (state[HOURS] > HOURS_PER_YEAR) {
-				state[HOURS] -= HOURS_PER_YEAR;
-				state[YEARS] += 1;
+			state[Hours] += hours;
+			while (state[Hours] > HOURS_PER_YEAR) {
+				state[Hours] -= HOURS_PER_YEAR;
+				state[Years] += 1;
 			}
 		}
 
@@ -1422,7 +1422,7 @@ class Game {
 
 		if (operation === travel) {
 			const destination = arg1;
-			if (destination === state[LOCATION]) return 0;
+			if (destination === state[Location]) return 0;
 			let remote = this.MAP[destination];
 			if (!remote) return -1;
 			if (local.neighbors) {
@@ -1442,14 +1442,14 @@ class Game {
 				if (!remote) return -1;  // but shouldn't happen
 			}
 			let hours = 24;
-			let travelspeed = (CON() + state[EQUIPMENT_MOUNT]) / 5;
+			let travelspeed = (CON() + state[EquipmentMount]) / 5;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			hours = Math.round(hours / travelspeed);
-			state[LOCATION] = remote.index;
-			state[MOB_TYPE] = 0;
-			state[MOB_LEVEL] = 0;
-			state[MOB_DAMAGE] = 0;
+			state[Location] = remote.index;
+			state[MobType] = 0;
+			state[MobLevel] = 0;
+			state[MobDamage] = 0;
 			passTime('Travelling', hours);
 			return 1;
 
@@ -1505,9 +1505,9 @@ class Game {
 			}
 			let price = qty * 0.5 * marketValue(slot);
 			if (operation !== give) {
-				state[INVENTORY_GOLD] += price;
-			} else if (state[QUEST_OBJECT] === slot) {
-				state[QUEST_PROGRESS] += qty;
+				state[InventoryGold] += price;
+			} else if (state[QuestObject] === slot) {
+				state[QuestProgress] += qty;
 			}
 			state[slot] -= qty;
 			passTime('Selling', 1, 0);
@@ -1519,14 +1519,14 @@ class Game {
 			const isDeposit = (operation === deposit);
 
 			if (qty < 0) return -1;  // nice try hacker
-			if (state[LOCATION] != BOMPTON_TOWN) return -1;  // you're not at the bank
+			if (state[Location] != BOMPTON_TOWN) return -1;  // you're not at the bank
 
-			if (state[INVENTORY_GOLD] + state[BALANCE_GOLD] <= 0)
+			if (state[InventoryGold] + state[BalanceGold] <= 0)
 				return -1;  // Can't afford it
 
 			let bankSlot;
-			if (slot == INVENTORY_GOLD) bankSlot = BALANCE_GOLD;
-			else if (slot == INVENTORY_TREASURES) bankSlot = BALANCE_TREASURES;
+			if (slot == InventoryGold) bankSlot = BalanceGold;
+			else if (slot == InventoryTreasures) bankSlot = BalanceTreasures;
 			else return -1;  // Bank doesn't deal in this item
 
 			let fromSlot = isDeposit ? slot : bankSlot;
@@ -1535,7 +1535,7 @@ class Game {
 			qty = Math.min(qty, state[fromSlot]);
 
 			// TODO not considering weight of item
-			let availableCapacity = isDeposit ? MAX_INT - state[toSlot] : state[CAPACITY] - state[ENCUMBRANCE];
+			let availableCapacity = isDeposit ? MAX_INT - state[toSlot] : state[Capacity] - state[Encumbrance];
 			qty = Math.min(qty, availableCapacity);
 
 			if (qty > 0) {
@@ -1544,9 +1544,9 @@ class Game {
 
 				// Charge a 1 gold commission per transaction
 				if (isDeposit) {
-					state[state[INVENTORY_GOLD] > 0 ? INVENTORY_GOLD : BALANCE_GOLD] -= 1;
+					state[state[InventoryGold] > 0 ? InventoryGold : BalanceGold] -= 1;
 				} else {
-					state[state[BALANCE_GOLD] > 0 ? BALANCE_GOLD : INVENTORY_GOLD] -= 1;
+					state[state[BalanceGold] > 0 ? BalanceGold : InventoryGold] -= 1;
 				}
 
 				passTime('Making a bank ' + isDeposit ? 'deposit' : 'withdrawal', 1);
@@ -1559,47 +1559,47 @@ class Game {
 			if (local.terrain !== TOWN) return -1;
 			let questTypes = [_ => {
 				// Exterminate the ___
-				state[QUEST_LOCATION] = randomLocation();
-				state[QUEST_MOB] = randomMob();
-				state[QUEST_OBJECT] = 0;
-				state[QUEST_QTY] = 5 + d(10);
+				state[QuestLocation] = randomLocation();
+				state[QuestMob] = randomMob();
+				state[QuestObject] = 0;
+				state[QuestQty] = 5 + d(10);
 			}, _ => {
 				// Bring me N of SOMETHING
-				state[QUEST_LOCATION] = 0;
-				state[QUEST_OBJECT] = INVENTORY_0 + irand(INVENTORY_COUNT);
-				state[QUEST_MOB] = 0;
-				state[QUEST_QTY] = 5 * d(10);
+				state[QuestLocation] = 0;
+				state[QuestObject] = INVENTORY_0 + irand(INVENTORY_COUNT);
+				state[QuestMob] = 0;
+				state[QuestQty] = 5 * d(10);
 			}, _ => {
-				if (state[EQUIPMENT_TOTEM]) {
+				if (state[EquipmentTotem]) {
 					// Deliver this totem
-					state[QUEST_OBJECT] = EQUIPMENT_TOTEM;
-					state[QUEST_LOCATION] = randomLocation();
-					state[QUEST_QTY] = 0;
+					state[QuestObject] = EquipmentTotem;
+					state[QuestLocation] = randomLocation();
+					state[QuestQty] = 0;
 				} else {
 					// Seek the totem
-					state[QUEST_OBJECT] = EQUIPMENT_TOTEM;
-					state[QUEST_LOCATION] = randomLocation();
-					state[QUEST_QTY] = 1;
+					state[QuestObject] = EquipmentTotem;
+					state[QuestLocation] = randomLocation();
+					state[QuestQty] = 1;
 				}
 			}];
 			randomPick(questTypes)();
-			state[QUEST_PROGRESS] = 0;
-			state[QUEST_ORIGIN] = state[LOCATION];
+			state[QuestProgress] = 0;
+			state[QuestOrigin] = state[Location];
 			return 1;
 
 		} else if (operation === completequest) {
-			if (!state[QUEST_OBJECT] && !state[QUEST_MOB]) return -1;
-			if (state[QUEST_ORIGIN] && (state[QUEST_ORIGIN] != state[LOCATION])) return -1;
-			if (state[QUEST_PROGRESS] < state[QUEST_QTY]) return -1;
-			state[XP] += 100;
-			state[ACT_PROGRESS] += 1;
+			if (!state[QuestObject] && !state[QuestMob]) return -1;
+			if (state[QuestOrigin] && (state[QuestOrigin] != state[Location])) return -1;
+			if (state[QuestProgress] < state[QuestQty]) return -1;
+			state[Experience] += 100;
+			state[ActProgress] += 1;
 			actUp();
-			state[QUEST_OBJECT] = 0;
-			state[QUEST_MOB] = 0;
-			state[QUEST_LOCATION] = 0;
-			state[QUEST_ORIGIN] = 0;
-			state[QUEST_PROGRESS] = 0;
-			state[QUEST_QTY] = 0;
+			state[QuestObject] = 0;
+			state[QuestMob] = 0;
+			state[QuestLocation] = 0;
+			state[QuestOrigin] = 0;
+			state[QuestProgress] = 0;
+			state[QuestQty] = 0;
 			return 1;
 
 		} else  if (operation === train) {
@@ -1609,7 +1609,7 @@ class Game {
 			if (state[slot] >= 99) return 0;
 			let hours = 24;
 			hours *= Math.pow(1.6, state[slot]);
-			hours *= 10 / (10 + state[STAT_WISDOM]);
+			hours *= 10 / (10 + state[StatWisdom]);
 			// TODO: town stat-learning bonuses
 			// TODO: racial stat-learning bonuses
 			passTime('Training', Math.round(hours));
@@ -1617,14 +1617,14 @@ class Game {
 			return state[slot];
 
 		} else  if (operation == learn) {
-			let [slot, spellType] = [arg1 - 1 + SPELLBOOK_0, arg2];
+			let [slot, spellType] = [arg1 - 1 + Spellbook0, arg2];
 			let spell = SPELLS[spellType];
 			if (!spell) return -1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot)) return -1;
 			let hours = 24;
 			hours *= Math.pow(1.6, spell.level);
-			hours *= 10 / (10 + state[STAT_WISDOM]);
+			hours *= 10 / (10 + state[StatWisdom]);
 			// TODO: town spell-learning bonuses?
 			// TODO: racial spell-learning bonuses?
 			passTime('Learning a spell', Math.round(hours));
@@ -1636,7 +1636,7 @@ class Game {
 			let spell = SPELLS[spellType];
 			if (!spell) return -1;
 
-			if (state.slice(SPELLBOOK_0, SPELLBOOK_0 + SPELLBOOK_COUNT)
+			if (state.slice(Spellbook0, Spellbook0 + SPELLBOOK_COUNT)
 				.filter((spell, slot) => spell == spellType)
 				.length == 0) return -1;  // Don't know it
 
@@ -1651,7 +1651,7 @@ class Game {
 				state[slot] -= qty;
 
 			if (spell.enchantment) {
-				let current = SPELLS[state[ENCHANTMENT]];
+				let current = SPELLS[state[Enchantment]];
 				if (current) {
 					// Reverse current enchantment
 					for (let { slot, increment } of current.enchantment) {
@@ -1661,7 +1661,7 @@ class Game {
 				for (let { slot, increment } of spell.enchantment) {
 					state[slot] += increment;
 				}
-				state[ENCHANTMENT] = spellType;
+				state[Enchantment] = spellType;
 			}
 
 			if (spell.effect) return spell.effect(state);
@@ -1670,45 +1670,45 @@ class Game {
 
 		} else if (operation === hunt) {
 			passTime('Hunting', 1);
-			state[MOB_TYPE] = 0;
-			state[MOB_LEVEL] = 0;
-			state[MOB_DAMAGE] = 0;
+			state[MobType] = 0;
+			state[MobLevel] = 0;
+			state[MobDamage] = 0;
 			for (let i = 0; i < 4; ++i) {
 				// location.mobtype;
 				let t = randomMob();
 				let l = MOBS[t].hitdice + d(2) - d(2);
-				if (!state[MOB_TYPE] || Math.abs(l - local.level) <
-										Math.abs(state[MOB_LEVEL] - local.level)) {
-					state[MOB_TYPE] = t;
-					state[MOB_LEVEL] = l;
+				if (!state[MobType] || Math.abs(l - local.level) <
+										Math.abs(state[MobLevel] - local.level)) {
+					state[MobType] = t;
+					state[MobLevel] = l;
 				}
 			}
-			state[MOB_DAMAGE] = 0;
-			return state[MOB_TYPE] ? 1 : 0;
+			state[MobDamage] = 0;
+			return state[MobType] ? 1 : 0;
 
 		} else if (operation === rest) {
 			passTime('Resting', 0, 1);
 			let hp = d(CON());
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rand() * rand());
-			hp = Math.min(hp, state[MAX_HEALTH] - state[HEALTH]);
-			state[HEALTH] += hp;
+			hp = Math.min(hp, state[MaxHealth] - state[Health]);
+			state[Health] += hp;
 
 			let mp = d(WIS());
 			if (local.terrain !== TOWN)
 				mp = Math.round(mp * rand() * rand());
-			mp = Math.min(mp, state[MAX_ENERGY] - state[ENERGY]);
-			state[ENERGY] += mp;
+			mp = Math.min(mp, state[MaxEnergy] - state[Energy]);
+			state[Energy] += mp;
 
 			return hp + mp;
 
 		} else if (operation === forage) {
 			let target = arg1;
 			let qty;
-			if (target === EQUIPMENT_TOTEM) {
+			if (target === EquipmentTotem) {
 				passTime('Seeking the local totem', 6);
 				if (d(20) <= INT()) {
-					state[EQUIPMENT_TOTEM] = state[LOCATION];
+					state[EquipmentTotem] = state[Location];
 					return 1;
 				} else {
 					return 0;
@@ -1726,20 +1726,20 @@ class Game {
 			return qty;
 
 		} else if (operation === levelup) {
-			if (state[LEVEL] >= 99) return 0;
-			if (state[XP] < this.xpNeededForLevel(state[LEVEL] + 1))
+			if (state[Level] >= 99) return 0;
+			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
 				return 0;
-			state[LEVEL] += 1;
-			state[HEALTH] = state[MAX_HEALTH] += 3 + additiveStatBonus(state[STAT_CONSTITUTION]);
-			state[ENERGY] = state[MAX_ENERGY] += 3 + additiveStatBonus(state[STAT_WISDOM]);
+			state[Level] += 1;
+			state[Health] = state[MaxHealth] += 3 + additiveStatBonus(state[StatConstitution]);
+			state[Energy] = state[MaxEnergy] += 3 + additiveStatBonus(state[StatWisdom]);
 			passTime('Levelling up', 1, 0);
 			return 1;
 
 		} else if (operation === retire) {
-			state[GAMEOVER] = 0x401;
+			state[GameOver] = 0x401;
 
 		} else {
-			state[GAMEOVER] = 0xEEE;
+			state[GameOver] = 0xEEE;
 			console.log("Invalid operation");
 		}
 	}

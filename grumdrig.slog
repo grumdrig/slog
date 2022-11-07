@@ -1,11 +1,11 @@
 
-initialize(RACE, 1)
-initialize(STAT_STRENGTH, 4)
-initialize(STAT_AGILITY, 1)
-initialize(STAT_CONSTITUTION, 1)
-initialize(STAT_INTELLIGENCE, 2)
-initialize(STAT_WISDOM, 1)
-initialize(STAT_CHARISMA, 1)
+initialize(Race, 1)
+initialize(StatStrength, 4)
+initialize(StatAgility, 1)
+initialize(StatConstitution, 1)
+initialize(StatIntelligence, 2)
+initialize(StatWisdom, 1)
+initialize(StatCharisma, 1)
 startGame()
 
 macro goto(dest) {
@@ -16,30 +16,30 @@ var raids = 0
 
 var huntingGrounds[8] = [12, 12, 17, 10, 16, 15, 33, 6]
 
-while !forage(EQUIPMENT_TOTEM) { }
+while !forage(EquipmentTotem) { }
 seekquest()
 learn(1, HEAL_YEAH)
 learn(3, BUFF)
-while .INVENTORY_REAGENTS < 4 { forage(INVENTORY_REAGENTS) }
+while .InventoryReagents < 4 { forage(InventoryReagents) }
 cast(BUFF)
-while .LEVEL < 88 {
-  goto(huntingGrounds[.LEVEL])
+while .Level < 88 {
+  goto(huntingGrounds[.Level])
   raids += 1
-  while .HEALTH >= (2 * .MAX_HEALTH / 3) && .ENCUMBRANCE < .CAPACITY {
-    while !.MOB_LEVEL || .MOB_LEVEL > .LEVEL {
+  while .Health >= (2 * .MaxHealth / 3) && .Encumbrance < .Capacity {
+    while !.MobLevel || .MobLevel > .Level {
       hunt()
     }
-    while .MOB_TYPE && .HEALTH >= (.MAX_HEALTH / 3) {
+    while .MobType && .Health >= (.MaxHealth / 3) {
       melee()
     }
-    while !.INVENTORY_REAGENTS { forage(INVENTORY_REAGENTS) }
+    while !.InventoryReagents { forage(InventoryReagents) }
     while cast(HEAL_YEAH) > 0 { }
-    drop(INVENTORY_SPOILS, .INVENTORY_SPOILS)
+    drop(InventorySpoils, .InventorySpoils)
   }
   goto(18)
-  while .HEALTH < .MAX_HEALTH {
+  while .Health < .MaxHealth {
     rest()
   }
-  sell(INVENTORY_SPOILS, .INVENTORY_SPOILS)
+  sell(InventorySpoils, .InventorySpoils)
   levelup()
 }
