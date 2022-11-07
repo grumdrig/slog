@@ -126,7 +126,7 @@ class VirtualMachine {
 
   get ax() { return this.registers[-1-REGISTERS.AX] }
   set ax(v) { this.registers[-1-REGISTERS.AX] = v }
-  set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * MAX_INT }  // TODO insure 0 <= f <= 1
+  set ax_fractional(f) { this.registers[-1-REGISTERS.AX] = f * MAX_INT }
 
   get ck() { return this.registers[-1-REGISTERS.CK] }
   set ck(v) { this.registers[-1-REGISTERS.CK] = v }

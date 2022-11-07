@@ -177,3 +177,7 @@ So for example the following are equivalent:
 In the case that *data* is a single value, which in turn is representable as
 an immediate, or in other words, if possible, the directive is implemented as
 a `push` instruction.
+
+
+### .jump and .branch
+
