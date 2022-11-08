@@ -301,6 +301,19 @@ assert &p2 - &p1 == 3
 assert &p4 - &p3 == 4
 assert &p5 - &p3 == 8
 
+func math(a, b) {
+  var c
+  var d
+  c = a
+  d = b
+  assert c == a
+  assert c[1] == b
+  assert a[-1] == b
+ }
+
+ math(5,6)
+
+
 
 ///////////////
 // Perverse
