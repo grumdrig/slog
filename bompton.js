@@ -252,12 +252,12 @@ const CALLS = {
 	initialize: { parameters: 'slot,value',
 		description: `Before the game starts, the character may assign up to a
 		total of ten points to their six stat slots (STATE_STRENGTH, etc)
-		using this function.
+		using this function.` },
 
-		<p>Also, the character's Race must be assigned.` },
+	startgame: { parameters: 'race',
+		description: 'Pick a race for your character and begin the game!' },
 
-	startGame: {
-		description: 'Begin the game! Call initialize() as needed first.' },
+	// setNameCharacter: { parameters: 'index,character' },
 
 	train: { parameters: 'slot',
 		description: `Train to improve stats (StatStrength, and so on).
@@ -1397,19 +1397,21 @@ class Game {
 			if (operation === initialize) {
 				let [slot, value] = [arg1, arg2];
 				if (value < 0) return -1
-				if (slot === Race) {
-					state[slot] = value;
-				} else if (STAT_0 <= slot && slot < STAT_0 + STAT_COUNT) {
+				if (isStatSlot(slot)) {
 					state[slot] = value;
 				} else {
 					return -1;
 				}
 				return state[slot];
 
-			} else if (operation === startGame) {
-				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) > 10) return -1;
-				let raceinfo = RACES[state[Race]];
+			} else if (operation === startgame) {
+				let race = arg1;
+				let raceinfo = RACES[race];
 				if (!raceinfo) return -1;
+
+				state[Race] = race;
+
+				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) > 10) return -1;
 				// All good. Start the game.
 
 				// Have to add two to keep from going negative
