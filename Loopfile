@@ -19,12 +19,9 @@ node compiler.js -o @test.asm test.slog
 node vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm
 
 # execute
-node vm.js -l test.bin -r -- test.bin
+# node vm.js -l test.bin -r -- test.bin
+node test.js -- test.bin
 
-
-# Map
-
-# node bompton.js --generate-map > map.html
 
 
 # Manuals

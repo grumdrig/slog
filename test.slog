@@ -247,5 +247,39 @@ func either(which) {
 assert either(100) == 1
 assert either(0) == 2
 
+func unless(cond, what) {
+  if cond {
+    return 99
+  }
+  return what
+}
+
+assert unless(1,10) == 99
+assert unless(0,20) == 20
+
+
 checksp()
 
+
+///////////////
+// Variables
+///////////////
+
+var var1
+var var2
+var2 = var1 + 2
+assert var2 == 2
+var var3 = [10, 20, 30]
+assert var3[1] == 20
+
+func f1(var4) {
+  var var5
+  var5 = var2 + 100
+  var1 = var4 + var5 + 1000
+  return var3
+}
+
+assert f1(50) == 10  // yeah that's bad
+assert var1 == 50 + 2 + 100 + 1000
+
+checksp()
