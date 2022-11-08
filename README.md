@@ -465,15 +465,11 @@ from last to first? Or am I thinking about this wrong right now? I guess it's
 the opposite of how binary operators work. I'm doing external function calls
 that way in any case.
 
-Maybe get rid of INVENTORY_ and so on?
-
 Have a name for the char. Maybe even a class.
 
 I think I need or it would be best to have splat syntax for at least macros
 
 	macro setName(letters*) external(66, *letters)
-
-The all-caps slot names. Maybe use ProperCasing for them for a little less ugliness?
 
 Check tag
 

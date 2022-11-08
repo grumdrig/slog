@@ -4,10 +4,10 @@
 node compiler.js -i ./bompton.js -o @grumdrig.asm grumdrig.slog
 
 # assemble
-node vm.js -a grumdrig.asm -d @grumdrig.dasm -o @grumdrig.bin
+node vm.js -a grumdrig.asm -d @grumdrig.dasm -o @grumdrig.bin -- grumdrig.asm
 
 # execute
-node bompton.js -v grumdrig.bin
+node bompton.js -v grumdrig.bin -- grumdrig.bin
 
 
 # tests
@@ -16,10 +16,10 @@ node bompton.js -v grumdrig.bin
 node compiler.js -o @test.asm test.slog
 
 # assemble
-node vm.js -a test.asm -d @test.dasm -o @test.bin
+node vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm
 
 # execute
-node vm.js -l test.bin -r
+node vm.js -l test.bin -r -- test.bin
 
 
 # Map
