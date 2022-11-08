@@ -494,3 +494,18 @@ No i guess in ASM it could just be
 
 	.data 'Np' 0x0101
 
+
+Local declarations
+------------------
+
+I think I've got to think about namespaces separately from scope. Scope is
+only at the global (or static) level and the function level. And I'm not
+nesting functions here.
+
+Namespace is within a code block.
+
+Globals/statics have to (reasonably) be emitted before, or after, any and all
+of the code is. (Before, they're easier to see in the debugger. After would
+avoid the JMP.)
+
+In any case it seems like we need two passes. Then there needs to be records of storage needs at the module and function scopes, and a symbol table within any scope.

@@ -173,7 +173,11 @@ class VirtualMachine {
       this.memory[i] = program[i];
     }
     this.sp = this.memory.length;  // stack size is 0
-    this.state = world ? world.create(program) : [0];
+    this.state = (world ? world.create(program) : new Int16Array(1));
+  }
+
+  static createFromFile(filename, world) {
+    return new VirtualMachine(readFileAsWords(filename), world);
   }
 
   bigstep() {
@@ -327,7 +331,7 @@ class VirtualMachine {
 
 
 function is_identifier(id) {
-  return id.match(/^[@]?[a-zA-Z_][0-9a-zA-Z_]*$/);
+  return id.match(IDRE);
 }
 
 function fitsAsImmediate(v) {
@@ -355,6 +359,8 @@ function negate(dict) {
 function toLowerCase(s) {
   return s.toLowerCase ? s.toLowerCase() : s;
 }
+
+const IDRE = /^\.?[@a-z_][@\w]*/i;
 
 class AssemblyError {
   message;
@@ -419,7 +425,7 @@ class Assembler {
           // Decimal literal: 10 -10 +10
           inst.tokens.push(parseInt(lexeme));
 
-        } else if (lexeme = take(/^\.?[@a-z_][@\w]*/i)) {
+        } else if (lexeme = take(IDRE)) {
           // Identifier: name .name @some_name@1
           inst.tokens.push(lexeme);
 

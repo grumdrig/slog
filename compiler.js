@@ -157,12 +157,6 @@ class Source {
 }
 
 
-uniqueLabel.UNIQUE = 1;
-function uniqueLabel(realm) {
-	return `@${realm || ''}_${uniqueLabel.UNIQUE++}`;
-}
-
-
 function indent(s) {
 	if (s.split(';')[0].search(':') >= 0) return s;
 	return '\t' + s;
@@ -177,6 +171,18 @@ class CompilationContext {
 		if (!parent) {
 			this.code = [];
 			this.unique = 1;
+			this.labels = new Set();
+		}
+	}
+
+	uniqueLabel(realm) {
+		if (!this.labels) return this.parent.uniqueLabel(realm);
+		for (let i = 0; ; i += 1) {
+			let result = (realm || '') + '@' + i;
+			if (!this.labels.has(result)) {
+				this.labels.add(result);
+				return result;
+			}
 		}
 	}
 
@@ -196,7 +202,8 @@ class CompilationContext {
 
 	declareVariable(identifier, count, initializer) {
 		let result;
-		if (!this.parent) {
+		let scope = this.enclosingScope();
+		if (!scope) {
 			// Global declaration
 			this.emit(identifier + ':');
 			if (Array.isArray(initializer))
@@ -207,10 +214,8 @@ class CompilationContext {
 			this.emit('');
 		} else {
 			// Stack declaration
-			let scope = this.enclosingScope();
-			this.assert(scope, "no enclosing scope"); // seems impossible
 			// FP points at OLD_FP. Then come arguments, then local vars
-			let offset = -1;// - scope.function.parameters.length;
+			let offset = -1;
 			for (let i in scope.symbols) offset -= scope.symbols[i].count;
 			scope.symbols[identifier] = result = { variable: true, local: true, identifier, offset, count, initializer };
 		}
@@ -419,20 +424,16 @@ class MacroDefinition {
 		context = new CompilationContext(context);
 		args.map((arg, i) => context.defineAlias(this.parameters[i], arg));
 		if (this.body) {
-			context.emit(uniqueLabel(this.name) + ':');
-			context.function = this;
-			context.macroReturnLabel = uniqueLabel(this.name + '_return');
+			context.emit('; macro ' + this.name);
+			// context.function = this;
+			context.returnLabel = context.uniqueLabel(this.name + '_return');
 			this.body.generate(context);
 			if (!this.body.willReturn)
 				context.emit('push 0  ; default macro return value');
-			context.emit(context.macroReturnLabel + ':');
+			context.emit(context.returnLabel + ':');
 		} else {
 			this.expr.generate(context);
 		}
-	}
-
-	generateReturn(context) {
-		context.emit('.jump ' + context.enclosingScope().macroReturnLabel);
 	}
 }
 
@@ -447,26 +448,33 @@ class FunctionDefinition extends MacroDefinition {
 	stackFrameSize() { return this.parameters.length }
 
 	generate(context) {
-		context.emit(this.name + ':');
 		context = new CompilationContext(context);
+		context.emitLabel(this.name);
 		this.parameters.forEach((parameter, i) => {
 			context.symbols[parameter] = { variable: true, local: true, offset: -i - 1, count: 1 };
 		});
 		if (this.body) {
 			context.function = this;
+			context.returnLabel = context.uniqueLabel(this.name + '_return');
 			this.body.generate(context);
 			if (!this.body.willReturn)
-				this.generateReturn(context, false);
+				context.emit('push 0  ; default function return value');
+			context.emit(context.returnLabel + ':');
 		} else {
 			this.expr.generate(context);
-			this.generateReturn(context, true);
 		}
+
+		context.emit('storelocal 2  ; store result');
+		context.emit('fetch FP');
+		context.emit('store SP');
+		context.emit('store FP');
+		context.emit('jmp  ; return from ' + this.name);
 		context.emit('');
 	}
 
 	generateCall(context, args) {
-		const returnLabel = uniqueLabel('return');
-		context.emit(`.stack 0 ${returnLabel}  ; result, return_dddr`);
+		const returnLabel = context.uniqueLabel('return_from_' + this.name);
+		context.emit(`.stack 0 ${returnLabel}  ; result, ret addr`);
 		context.emit('fetch FP');
 		for (let a of args) { a.generate(context) }
 		// now position FP right before the arguments
@@ -478,16 +486,8 @@ class FunctionDefinition extends MacroDefinition {
 		// stack: ..., RESULT, RETURN_ADDRESS, OLD_FP, ARGS... ]
 		context.emit(returnLabel + ':')
 	}
-
-	generateReturn(context, setResult) {
-		if (setResult)
-			context.emit('storelocal 2  ; result');
-		context.emit('fetch FP');
-		context.emit('store SP');
-		context.emit('store FP');
-		context.emit('jmp  ; return');
-	}
 }
+
 
 class CodeBlock {
 	constants = [];
@@ -527,6 +527,8 @@ class Statement {  // namespace only
 			return new BreakStatement();
 		} else if (source.tryConsume('halt')) {
 			return new HaltStatement();
+		// } else if (source.lookahead('emit')) {
+		// 	return new EmitStatement(source);
 		} else if (source.tryConsume('return')) {
 			return new ReturnStatement(Expression.parse(source));
 		} else if (source.lookahead('while')) {
@@ -560,9 +562,11 @@ class ReturnStatement {
 	}
 
 	generate(context) {
+		let rc = context;
+		while (rc && !rc.returnLabel) rc = rc.parent;
+		if (!rc) context.error('return outside of enclosing scope');
 		this.value.simplify(context).generate(context);
-		let func = context.enclosingScope().function;
-		func.generateReturn(context, true);
+		context.emit('.jump ' + rc.returnLabel);
 	}
 
 	get willReturn() { return true }
@@ -573,6 +577,30 @@ class HaltStatement {
 		context.emit('halt 0');
 	}
 }
+
+/*
+class EmitStatement {
+	opcode;
+	operand;
+
+	constructor(source) {
+		source.consume('emit');
+		source.consume('(');
+		this.opcode = Expression.parse(source);
+		if (source.tryConsume(',')) {
+			this.operand = Expression.parse(source);
+		}
+		source.consume(')');
+		return this;
+	}
+
+	generate(context) {
+		this.opcode = this.opcode.simplify(context);
+		this.operand = this.operand && this.operand.simplify(context);
+		crahs();
+	}
+}
+*/
 
 class ExpressionStatement {
 	expression;
@@ -601,9 +629,9 @@ class WhileStatement {
 
 	generate(context) {
 		context = new CompilationContext(context);
-		context.breakLabel = uniqueLabel('endwhile');
+		context.breakLabel = context.uniqueLabel('endwhile');
 
-		let loopStartLabel = uniqueLabel('while');
+		let loopStartLabel = context.uniqueLabel('while');
 		context.emit(loopStartLabel + ':');
 
 		// Test loop condition
@@ -646,8 +674,8 @@ class IfStatement {
 	}
 
 	generate(context) {
-		let endifLabel = uniqueLabel('endif');
-		let elseLabel = this.elsebody ? uniqueLabel('else') : null;
+		let endifLabel = context.uniqueLabel('endif');
+		let elseLabel = this.elsebody ? context.uniqueLabel('else') : null;
 		this.condition.simplify(context).generate(context);
 		context.emit('unary NOT');
 		context.emit('.branch ' + (elseLabel ?? endifLabel));
@@ -808,6 +836,7 @@ class IdentifierExpression {
 
 	simplify(context) {
 		let reference = context.lookup(this.identifier);
+		if (reference && reference.alias) return reference.value.simplify(context);
 		return reference && reference.constant ? reference.value : this;
 	}
 
@@ -1145,7 +1174,7 @@ class BinaryExpression {
 			precompute: (x,y) => x && y,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
-				let cutLabel = uniqueLabel('and_shorcut');
+				let cutLabel = context.uniqueLabel('and_shorcut');
 				context.emit('peek 0');
 				context.emit('unary NOT');
 				context.emit('.branch ' + cutLabel);
@@ -1169,7 +1198,7 @@ class BinaryExpression {
 			precompute: (x,y) => x || y,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
-				let cutLabel = uniqueLabel('or_shortcut');
+				let cutLabel = context.uniqueLabel('or_shortcut');
 				context.emit('peek 0'); // dup
 				context.emit('.branch ' + cutLabel);
 				context.emit('stack -1');
@@ -1295,7 +1324,7 @@ class FunctionCallExpression {
 	generate(context) {
 		let func = this.lhs;
 		if (func.identifier) {
-			func = context.lookup(func.identifier) ?? context.error(func, 'unknown identifier ' + this.lhs.identifier);
+			func = context.lookup(func.identifier) ?? context.error('unknown identifier ' + this.lhs.identifier);
 		}
 		func = func.function ?? context.error('attempt to call non-function');
 		context.assert(func.parameters.length === this.args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${this.args.length}`);
