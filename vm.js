@@ -322,6 +322,7 @@ class VirtualMachine {
     console.log('VM ERROR', message);
     this.dumpState();
     this.running = false;
+    throw message;
   }
 
   dumpState() {

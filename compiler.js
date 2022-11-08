@@ -206,10 +206,13 @@ class CompilationContext {
 		if (!scope) {
 			// Global declaration
 			this.emit(identifier + ':');
-			if (Array.isArray(initializer))
-				this.emit('.data ' + initializer.join(' ') + '  ; ' + identifier);
-			else
-				this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
+			if (Array.isArray(initializer)) {
+				if (initializer.length > 0)
+					this.emit('.data ' + initializer.join(' ') + '  ; ' + identifier);
+			} else {
+				if (count > 0)
+					this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
+			}
 			this.symbols[identifier] = result = { variable: true, static: true, identifier };
 			this.emit('');
 		} else {
@@ -1348,6 +1351,7 @@ class IndexExpression {
 	constructor(lhs) { this.lhs = lhs }
 
 	generateAddress(context) {
+		context.assert(this.lhs.generateAddress, "addressable expression expected");
 		this.lhs.generateAddress(context);
 		this.index.generate(context);
 		context.emit('add');

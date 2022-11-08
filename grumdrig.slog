@@ -28,6 +28,14 @@ macro goto(dest) {
 var raids = 0
 
 var huntingGrounds[8] = [12, 12, 17, 10, 16, 15, 33, 6]
+var endOfList[0]
+func goodHunting(forLevel) {
+  if forLevel < &endOfList - &huntingGrounds {
+    return huntingGrounds[forLevel]
+  } else {
+    return endOfList[-1]
+  }
+}
 
 while !forage(EquipmentTotem) { }
 seekquest()
@@ -36,7 +44,7 @@ learn(3, BUFF)
 while .InventoryReagents < 4 { forage(InventoryReagents) }
 cast(BUFF)
 while .Level < 88 {
-  goto(huntingGrounds[.Level])
+  goto(goodHunting(.Level))
   raids += 1
   while .Health >= (2 * .MaxHealth / 3) && .Encumbrance < .Capacity {
     while !.MobLevel || .MobLevel > .Level {

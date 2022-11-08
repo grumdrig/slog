@@ -279,7 +279,43 @@ func f1(var4) {
   return var3
 }
 
-assert f1(50) == 10  // yeah that's bad
+assert f1(50) == 10  // yeah that's perverse
 assert var1 == 50 + 2 + 100 + 1000
 
 checksp()
+
+
+/////////////////
+// Pointers
+/////////////////
+
+var p1 = [11,22,33]
+var p2 = 44
+var p3[4]
+var p4[4]
+var p5[0]
+
+assert * &p1 == 11
+assert *(&p1 + 1) == 22
+assert &p2 - &p1 == 3
+assert &p4 - &p3 == 4
+assert &p5 - &p3 == 8
+
+
+///////////////
+// Perverse
+///////////////
+
+var perv1 = [10,20,30]
+var perv2 = 40
+
+assert perv1 == 10
+assert perv1[3] == 40
+
+var pa = [1,2,3]
+var pc[0]
+var pd = []
+var pe[0] = []
+var pb = 4
+
+assert &pb - &pa == 3
