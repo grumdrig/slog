@@ -764,11 +764,19 @@ class AssertionStatement {
 	}
 
 	generate(context) {
-		this.test = this.test.simplify(context);
-		this.test.generate(context);
-		context.emit('unary NOT');
-		context.emit('assert 0');
-		context.emit('stack -1');
+		if (this.test instanceof BinaryExpression && this.test.operator.equality) {
+			let lhs = this.test.lhs.simplify(context);
+			let rhs = this.test.rhs.simplify(context);
+			lhs.generate(context);
+			rhs.generate(context);
+			context.emit('assert');
+		} else {
+			this.test = this.test.simplify(context);
+			this.test.generate(context);
+			context.emit('unary NOT');
+			context.emit('assert 0');
+		}
+		context.emit('stack -1');  // assert leaves the value on the stack
 	}
 }
 
@@ -1209,6 +1217,7 @@ class BinaryExpression {
 			},
 		},
 		'==': {
+			equality: true,
 			precedence: 7,
 			precompute: (x,y) => x == y ? 1 : 0,
 			generate: (context, lhs, rhs) => {
