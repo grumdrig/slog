@@ -273,11 +273,10 @@ assert glow == 4
 var five = 5
 macro more(t) {
   var u = t + 10
-//  assert u == t + 10
-//  assert u[-1] == t
+  assert u == t + 10
+  //assert u[-1] == t
 }
 more(5)
-
 
 checksp()
 
@@ -304,6 +303,40 @@ assert f1(50) == 10  // yeah that's perverse
 assert var1 == 50 + 2 + 100 + 1000
 
 checksp()
+
+// Scoping in blocks
+
+var what = 1
+var was = 4
+while what {
+  var what = 2
+  what = 3
+  was = 5
+  break
+}
+assert what == 1
+assert was == 5
+
+if what {
+  var what
+  what = 0
+  was = 6
+}
+assert what == 1
+assert was == 6
+
+checksp()
+
+func fresh(what) {
+  var was = 7
+  what = 8
+  was = 9
+  return what
+}
+assert what == 1
+assert was == 6
+what = fresh(what)
+assert what == 8
 
 
 /////////////////
