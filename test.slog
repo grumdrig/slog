@@ -259,7 +259,6 @@ assert unless(0,20) == 20
 
 checksp()
 
-/* make this work next
 var glow = 4
 macro topMan(n) {
   var glow = 9
@@ -267,7 +266,18 @@ macro topMan(n) {
 }
 topMan(2)
 assert glow == 4
-*/
+
+
+// Macros
+
+var five = 5
+macro more(t) {
+  var u = t + 10
+//  assert u == t + 10
+//  assert u[-1] == t
+}
+more(5)
+
 
 checksp()
 

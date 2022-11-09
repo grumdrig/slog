@@ -209,8 +209,18 @@ class CompilationContext {
 			// global
 			let globalContext = this;
 			while (globalContext.parent) globalContext = globalContext.parent;
-			globalContext.allocations.push({ label: identifier, count, initializer });
-			this.symbols[identifier] = result = { variable: true, static: true, identifier, count, initializer };
+			if (globalContext == this) {
+				// no need for an alias
+				globalContext.allocations.push({ label: identifier, count, initializer });
+				// might not need all these fields either
+				this.symbols[identifier] = result = { variable: true, static: true, identifier, count, initializer };
+			} else {
+				let label = this.uniqueLabel(identifier);
+				globalContext.allocations.push({ label, count, initializer });
+				this.defineAlias(identifier, new IdentifierExpression(label));
+				// might not need all these fields either
+				globalContext.symbols[label] = result = { variable: true, static: true, identifier: label, count, initializer };
+			}
 		} else {
 			// Stack declaration
 			// FP points at OLD_FP. Then come arguments, then local vars
@@ -867,11 +877,14 @@ class LiteralExpression {
 class IdentifierExpression {
 	identifier;
 
+	constructor(identifier) {
+		this.identifier = identifier;
+		if (!this.identifier) throw "fit";
+	 }
+
 	static tryParse(source) {
 		if (!source.isIdentifier()) return;
-		let result = new IdentifierExpression();
-		result.identifier = source.consumeIdentifier();
-		return result;
+		return new IdentifierExpression(source.consumeIdentifier());
 	}
 
 	simplify(context) {
