@@ -159,6 +159,7 @@ class Source {
 
 function indent(s) {
 	if (s.split(';')[0].search(':') >= 0) return s;
+	if (s.startsWith(';;')) return s;
 	return '\t' + s;
 }
 
@@ -172,13 +173,14 @@ class CompilationContext {
 			this.code = [];
 			this.unique = 1;
 			this.labels = new Set();
+			this.allocations = [];
 		}
 	}
 
 	uniqueLabel(realm) {
 		if (!this.labels) return this.parent.uniqueLabel(realm);
 		for (let i = 0; ; i += 1) {
-			let result = (realm || '') + '@' + i;
+			let result = (realm || 'unique') + '@' + i;
 			if (!this.labels.has(result)) {
 				this.labels.add(result);
 				return result;
@@ -186,7 +188,7 @@ class CompilationContext {
 		}
 	}
 
-	enclosingScope() { return (this.function && this) || (this.parent && this.parent.enclosingScope()) }
+	enclosingScope() { return this.function || (this.parent && this.parent.enclosingScope()) }
 
 	lookup(id) { return this.symbols[id] || (this.parent && this.parent.lookup(id)) }
 
@@ -204,23 +206,21 @@ class CompilationContext {
 		let result;
 		let scope = this.enclosingScope();
 		if (!scope) {
-			// Global declaration
-			this.emit(identifier + ':');
-			if (Array.isArray(initializer)) {
-				if (initializer.length > 0)
-					this.emit('.data ' + initializer.join(' ') + '  ; ' + identifier);
-			} else {
-				if (count > 0)
-					this.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count) + '  ; ' + identifier);
-			}
-			this.symbols[identifier] = result = { variable: true, static: true, identifier };
-			this.emit('');
+			// global
+			let globalContext = this;
+			while (globalContext.parent) globalContext = globalContext.parent;
+			globalContext.allocations.push({ label: identifier, count, initializer });
+			this.symbols[identifier] = result = { variable: true, static: true, identifier, count, initializer };
 		} else {
 			// Stack declaration
 			// FP points at OLD_FP. Then come arguments, then local vars
-			let offset = -1;
-			for (let i in scope.symbols) offset -= scope.symbols[i].count;
-			scope.symbols[identifier] = result = { variable: true, local: true, identifier, offset, count, initializer };
+			let offset = -1 - scope.allocated;
+
+			// might not need all these fields
+			this.symbols[identifier] = result = { variable: true, local: true, identifier, offset, count, initializer };
+
+			this.emit(`.stack ${initializer || 0}${count !== 1 ? ' * ' + count : ''}  ; allocate ${identifier}`);
+			scope.allocated += 1;
 		}
 		return result;
 	}
@@ -290,10 +290,25 @@ class Module {
 		for (let d of this.macros)    d.declare(context);
 		for (let d of this.functions) d.declare(context);
 
-		for (let d of this.functions) d.generate(context);
-
 		context.emit('@main:');
 		for (let d of this.statements) d.generate(context);
+		context.emit('halt 0  ; end @main');
+		context.emit('');
+
+		// for (let d of this.variables) d.allocate(context);
+		for (let { label, count, initializer } of context.allocations)  {
+			context.emit(label + ':');
+			if (Array.isArray(initializer)) {
+				if (initializer.length > 0)
+					context.emit('.data ' + initializer.join(' '));
+			} else {
+				if (count > 0)
+					context.emit('.data ' + (initializer || 0) + (count == 1 ? '' : ' * ' + count));
+			}
+		}
+		context.emit('');
+
+		for (let d of this.functions) d.generate(context);
 
 		if (this.tag) this.tag.generate(context);
 
@@ -382,12 +397,30 @@ class VariableDeclaration {
 				initializer = i.value ?? context.error('literal initializer expected');
 			}
 		}
-		let record = context.declareVariable(this.name, count, initializer);
+		//this.decl =
+		context.declareVariable(this.name, count, initializer);
+	}
 
-		if (record.local) {
-			context.emit(`.stack ${record.initializer || 0}${record.count !== 1 ? '*' + record.count : ''}  ; declare ${record.identifier}`);
+	/*
+	allocate(context) {
+		if (this.decl.static) {
+			// Global declaration
+			context.emit(this.decl.identifier + ':');
+			if (Array.isArray(this.decl.initializer)) {
+				if (this.decl.initializer.length > 0)
+					context.emit('.data ' + this.decl.initializer.join(' ') + '  ; ' + this.decl.identifier);
+			} else {
+				if (this.decl.count > 0)
+					context.emit('.data ' + (this.decl.initializer || 0) + (this.decl.count == 1 ? '' : ' * ' + this.decl.count) + '  ; ' + this.decl.identifier);
+			}
+			context.emit('');
+		} else if (this.decl.local) {
+			context.emit(`.stack ${this.decl.initializer || 0}${this.decl.count !== 1 ? '*' + this.decl.count : ''}  ; allocate ${this.decl.identifier}`);
+		} else {
+			throw "I don't know what";
 		}
 	}
+	*/
 }
 
 
@@ -427,7 +460,7 @@ class MacroDefinition {
 		context = new CompilationContext(context);
 		args.map((arg, i) => context.defineAlias(this.parameters[i], arg));
 		if (this.body) {
-			context.emit('; macro ' + this.name);
+			context.emit(';; macro ' + this.name);
 			// context.function = this;
 			context.returnLabel = context.uniqueLabel(this.name + '_return');
 			this.body.generate(context);
@@ -443,6 +476,8 @@ class MacroDefinition {
 
 class FunctionDefinition extends MacroDefinition {
 
+	allocated = 0;
+
 	static tryParse(source) {
 		if (!source.tryConsume('func')) return;
 		return new FunctionDefinition().continueParsing(source);
@@ -454,7 +489,8 @@ class FunctionDefinition extends MacroDefinition {
 		context = new CompilationContext(context);
 		context.emitLabel(this.name);
 		this.parameters.forEach((parameter, i) => {
-			context.symbols[parameter] = { variable: true, local: true, offset: -i - 1, count: 1 };
+			context.symbols[parameter] = { variable: true, local: true, offset: -1 - this.allocated, count: 1 };
+			this.allocated += 1;
 		});
 		if (this.body) {
 			context.function = this;
@@ -520,6 +556,7 @@ class CodeBlock {
 		context = new CompilationContext(context);
 		for (let d of this.constants) d.define(context);
 		for (let d of this.variables) d.declare(context);
+		// for (let d of this.variables) d.allocate(context);
 		for (let d of this.statements) d.generate(context);
 	}
 }
@@ -852,7 +889,8 @@ class IdentifierExpression {
 			context.emit('fetchlocal ' + reference.offset + ' ; ' + this.identifier);
 		} else {
 			// hopefully global
-			context.emit('fetch ' + this.identifier);
+			context.emit('fetch #');
+			context.emit('.data ' + this.identifier);  // todo, try to make this immediate
 		}
 	}
 
@@ -917,7 +955,7 @@ class PrefixExpression {
 			generate: (context, rhs) => {
 					if (rhs.isLiteral) {
 						const NUM_REGISTERS = 4;
-						context.emit('fetch ' + (-1 - NUM_REGISTERS - rhs.value));
+						context.emit('fetch ' +  (-1 - NUM_REGISTERS - rhs.value));
 					} else {
 						rhs.generate(context);
 						context.emit('unary NEG');
@@ -1424,7 +1462,8 @@ if (typeof module !== 'undefined' && !module.parent) {
 	let sources = positionals.map(filename => readFileSync(filename, 'utf8'));
 
 	let code;
-	try {
+		code = compile(...interfaces.concat(sources));
+/*	try {
 		code = compile(...interfaces.concat(sources));
 	} catch (e) {
 		if (e instanceof ParseError) {
@@ -1435,7 +1474,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 			console.error('Compilation Error: ' + e);
 		}
 		process.exit(-1);
-	}
+	}*/
 
 	if (output) {
 		writeFileSync(output, code, 'utf8');

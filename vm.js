@@ -38,8 +38,8 @@ const opcodes = [
 ];
 
 
-const STACK_MODE_FLAG = -0x400;
-const INLINE_MODE_FLAG = -0x3FF;
+const STACK_MODE_TAG = -0x400;
+const INLINE_MODE_TAG = -0x3FF;
 
 let MNEMONICS = {};
 let OPCODES = []
@@ -193,8 +193,8 @@ class VirtualMachine {
     const opcode = instruction & 0x1F;
     const mnemonic = OPCODES[opcode];
     let operand = (instruction >> 5);
-    const stackMode = (operand == STACK_MODE_FLAG);
-    const inlineMode = (operand == INLINE_MODE_FLAG);
+    const stackMode = (operand == STACK_MODE_TAG);
+    const inlineMode = (operand == INLINE_MODE_TAG);
     const immediateMode = !stackMode && !inlineMode;
     if (stackMode) {
       operand = this.pop();
@@ -511,8 +511,9 @@ class Assembler {
             if (t === '*') {
               multiply = true;
             } else {
-              this.assert(typeof t === 'number', `numeric value expected <${typeof t} ${t}>`);
               if (multiply) {
+                this.assert(typeof t === 'number', `numeric mulitplier expected <${typeof t} ${t}>`);
+                last ?? this.error(`numeric multiplicand expected <${typeof last} ${last}>`);
                 this.assert(t > 0, "positive value expected");
                 for (let i = 1; i < t; ++i) this.data(last);
                 multiply = false;
@@ -543,14 +544,14 @@ class Assembler {
           this.assert(tokens.length === 2, "label of target for jump (only) expected");
           this.assert(typeof operand === 'string', "label of target for jump expected");
           // TODO: immediate mode
-          this.emit(MNEMONICS.jmp, INLINE_MODE_FLAG);
+          this.emit(MNEMONICS.jmp, INLINE_MODE_TAG);
           this.data(operand);
 
         } else if (inst === toLowerCase('.branch')) {
           this.assert(tokens.length === 2, "label of target for branch (only) expected");
           this.assert(typeof operand === 'string', "label of target for branch expected");
           // TODO: immediate mode
-          this.emit(MNEMONICS.br, INLINE_MODE_FLAG);
+          this.emit(MNEMONICS.br, INLINE_MODE_TAG);
           this.data(operand);
 
         } else if (this.macros[inst]) {
@@ -572,7 +573,11 @@ class Assembler {
 
           if (tokens.length === 1) {
             "INST  ; instruction in stack addressing mode"
-            this.emit(inst, STACK_MODE_FLAG);
+            this.emit(inst, STACK_MODE_TAG);
+
+          } else if (operand === '#') {
+            "INST #  ; inline mode flag"
+            this.emit(inst, INLINE_MODE_TAG);
 
           } else {
             "INST operand  ; instruction with an immediate operand"
@@ -687,11 +692,11 @@ function asCharIfPossible(v) {
 
 
 function isInlineModeInstruction(inst) {
-  return INLINE_MODE_FLAG === (inst >> 5);
+  return INLINE_MODE_TAG === (inst >> 5);
 }
 
 function isStackModeInstruction(inst) {
-  return STACK_MODE_FLAG === (inst >> 5);
+  return STACK_MODE_TAG === (inst >> 5);
 }
 
 // Testing:

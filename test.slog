@@ -257,6 +257,17 @@ func unless(cond, what) {
 assert unless(1,10) == 99
 assert unless(0,20) == 20
 
+checksp()
+
+/* make this work next
+var glow = 4
+macro topMan(n) {
+  var glow = 9
+  glow += n
+}
+topMan(2)
+assert glow == 4
+*/
 
 checksp()
 
@@ -332,3 +343,5 @@ var pe[0] = []
 var pb = 4
 
 assert &pb - &pa == 3
+
+checksp()

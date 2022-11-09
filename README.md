@@ -509,3 +509,71 @@ of the code is. (Before, they're easier to see in the debugger. After would
 avoid the JMP.)
 
 In any case it seems like we need two passes. Then there needs to be records of storage needs at the module and function scopes, and a symbol table within any scope.
+
+Here's the variable allocation situations:
+
+- in the global context
+
+	var x = 5
+
+	context.symbols gets name: { static, label=x }
+
+	context.allocations gets label=x : { count, initializer }
+
+- inside of a code block outside any function
+
+	while (true) { var x = 5 ... }
+
+	global_context.allocation gets: unique(x): { count, initializer }
+
+	local_context.symbols gets x { static, label=unique(x) }
+
+	code gets x = 5 at the top of the loop
+
+- as a function parameter
+
+	func x(a) { ... }
+
+	local_context.symbols get x: { local, offset }
+
+- top-level in a function
+
+	func ... {
+		var x = 5
+
+	code makes room at FP with a .stack 5
+
+	local_context.symbols gets x: { local, offset }
+
+- inside a block inside a function
+
+	func ... { while ... { var x = 5 ... } }
+
+	code makes room at FP with dec SP
+
+	local_context.symbols gets x: { local, offset }
+
+- static inside a function (not implemented yet)
+
+	func ... { static x = 5 }
+
+	local symbols get x: { static, label }
+
+	global allocations gets unique(x): { count initializer }
+
+- as a macro parameter
+
+	local gets alias to expr
+
+- top level in a macro
+
+	global allocation gets unique(x): { count, identifier }
+
+	local symbols gets name: { static, unique(x)
+
+
+- inside a block inside a macro
+
+	same as top level in macro
+
+	but code gets initialization

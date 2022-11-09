@@ -16,7 +16,7 @@ node bompton.js -v grumdrig.bin -- grumdrig.bin
 node compiler.js -o @test.asm test.slog
 
 # assemble
-node vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm
+node --trace-uncaught vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm
 
 # execute
 # node vm.js -l test.bin -r -- test.bin
