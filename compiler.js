@@ -239,6 +239,11 @@ class CompilationContext {
 		this.symbols[declaration.name] = { function: declaration };
 	}
 
+	literalValue(expr) {
+		expr.value ?? this.error("constant value expected");
+		return expr.value;
+	}
+
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(indent(s)) }
 
 	emitLabel(l) { this.emit(l + ':') }
@@ -577,8 +582,8 @@ class Statement {  // namespace only
 			return new BreakStatement();
 		} else if (source.tryConsume('halt')) {
 			return new HaltStatement();
-		// } else if (source.lookahead('emit')) {
-		// 	return new EmitStatement(source);
+		} else if (source.lookahead('emit')) {
+		 	return new EmitStatement(source);
 		} else if (source.tryConsume('return')) {
 			return new ReturnStatement(Expression.parse(source));
 		} else if (source.lookahead('while')) {
@@ -628,29 +633,30 @@ class HaltStatement {
 	}
 }
 
-/*
 class EmitStatement {
-	opcode;
-	operand;
+	instruction;
+	args = [];
 
 	constructor(source) {
 		source.consume('emit');
 		source.consume('(');
-		this.opcode = Expression.parse(source);
-		if (source.tryConsume(',')) {
-			this.operand = Expression.parse(source);
+		this.instruction = Expression.parse(source);
+		while (source.tryConsume(',')) {
+			this.args.push(Expression.parse(source));
 		}
 		source.consume(')');
 		return this;
 	}
 
 	generate(context) {
-		this.opcode = this.opcode.simplify(context);
-		this.operand = this.operand && this.operand.simplify(context);
-		crahs();
+		this.instruction = this.instruction.simplify(context);
+		this.args = this.args.map(a => a.simplify(context));
+		for (let a of [...this.args.slice(0)].reverse()) {
+			a.generate(context);
+		}
+		context.emit('.data ' + context.literalValue(this.instruction));
 	}
 }
-*/
 
 class ExpressionStatement {
 	expression;

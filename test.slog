@@ -224,7 +224,7 @@ assert ! ! -v1 == v1
 checksp()
 
 ////////////////////
-// Functions
+// Functions & scope
 ///////////////////
 
 func factorial(n) (n <= 1 && 1) || n * factorial(n - 1)
@@ -263,6 +263,7 @@ var glow = 4
 macro topMan(n) {
   var glow = 9
   glow += n
+  assert glow == 11
 }
 topMan(2)
 assert glow == 4
@@ -273,13 +274,13 @@ assert glow == 4
 var five = 5
 macro more(t) {
   var u = t + 10
-//  assert u == t + 10
+  assert u == t + 10
 //  assert u[-1] == t
 }
 more(5)
 
-
 checksp()
+
 
 
 ///////////////
@@ -302,6 +303,27 @@ func f1(var4) {
 
 assert f1(50) == 10  // yeah that's perverse
 assert var1 == 50 + 2 + 100 + 1000
+
+macro trace(addr) {
+  emit($800e, addr)  // 'fetch ^', addr
+  emit($8009)        // 'trace ^'
+}
+
+var1 = 1
+var2 = 2
+while (var1 < 2) {
+  var var2
+  var2 = 5
+  trace(&var1)
+  var1 += var2
+}
+
+checksp()
+
+trace(&var1)
+assert var1 == 6
+trace(&var2)
+//assert var2 == 5
 
 checksp()
 

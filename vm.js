@@ -19,6 +19,7 @@ const opcodes = [
   { opcode: 0x5, mnemonic: 'store' },      // Pop to memory[operand]
   { opcode: 0x6, mnemonic: 'storelocal' }, // Pop to memory[FP + operand]
 
+  { opcode: 0x9,  mnemonic: 'trace' },   // print a value for debugging purposes
   { opcode: 0x10, mnemonic: 'assert' },  // If not equal throw exception
 
   { opcode: 0x11, mnemonic: 'unary' },  // Apply unary operator determined by operand to top
@@ -212,6 +213,9 @@ class VirtualMachine {
       if(this.top !== operand) {
         this.error(`ASSERTION FAILURE AT ${this.pc}: top ${this.top} != operand ${operand}`);
       }
+
+    } else if (mnemonic === 'trace') {
+      console.log('trace', operand, '$' + operand.toString(16));
 
     } else if (mnemonic === 'push') {
       this.push(operand);
@@ -615,7 +619,7 @@ class Assembler {
       this.assert(typeof this.labels[symbol] !== 'undefined', "undefined data label: " + symbol);
       this.redata(pc, this.labels[symbol]);
     }
-    let lastNontrivialIndex = this.code.reduce((n, v, i) => v ? i : n);
+    let lastNontrivialIndex = this.code.reduce((n, v, i) => v ? i : n, 0);
     this.code = this.code.slice(0, lastNontrivialIndex + 1);
   }
 
