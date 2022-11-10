@@ -258,6 +258,7 @@ const CALLS = {
 		description: 'Pick a race for your character and begin the game!' },
 
 	// setNameCharacter: { parameters: 'index,character' },
+	setname: {},
 
 	train: { parameters: 'slot',
 		description: `Train to improve stats (StatStrength, and so on).
@@ -1245,8 +1246,8 @@ class Game {
 				console.log(SLOTS[i].name + ': ' + state[i]);
 	}
 
-	static handleInstruction(state, operation, arg1, arg2) {
-		let result = this._handleInstruction(state, operation, arg1, arg2);
+	static handleInstruction(state, operation, ...args) {
+		let result = this._handleInstruction(state, operation, ...args);
 
 		if (state[Level] > 0) {
 			state[Capacity] = carryCapacity(state);
@@ -1265,9 +1266,11 @@ class Game {
 		return result;
 	}
 
-	static _handleInstruction(state, operation, arg1, arg2) {
+	static _handleInstruction(state, operation, ...args) {
+		let arg1 = args[0];
+		let arg2 = args[1];
 
-		let seed = hash(state[Seed], 0x5EED, operation, arg1, arg2);
+		let seed = hash(state[Seed], 0x5EED, operation, ...args);
 		state[Seed] = seed;
 
 		// seed and key are integers on [0, 0x7fffffff]
@@ -1460,6 +1463,11 @@ class Game {
 
 		function inventoryCapacity() {
 			return Math.max(0, carryCapacity(state) - encumbrance(state));
+		}
+
+		if (operation === setname) {
+			console.log('NAME', args.map(c => String.fromCharCode(c)).join(''));
+			return 0;
 		}
 
 		if (operation === travel) {

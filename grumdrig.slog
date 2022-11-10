@@ -6,20 +6,12 @@ initialize(StatWisdom, 1)
 initialize(StatCharisma, 1)
 startgame(2)
 
-/*
-macro setName(name) {
-  var n = name
-  var i = 0
-  while n[i] { i += 1 }
-  while i >= 0 {
-    emit("push", i)
-    i -= 1
-  }
-  external(77)
-}
-
-setName("Name")
-*/
+// set name to "hi!"
+emit((3 << 5) + 11)
+emit(33)
+emit(105)
+emit(104)
+external(3 * 128 + 67)
 
 macro goto(dest) {
   while travel(dest) > 0 { }
