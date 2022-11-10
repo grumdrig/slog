@@ -7,11 +7,14 @@ initialize(StatCharisma, 1)
 startgame(2)
 
 // set name to "hi!"
-emit((3 << 5) + 11)
-emit(33)
-emit(105)
-emit(104)
-external(3 * 128 + 67)
+const strlen = 3
+const stack_opcode = 11
+const getname_ext = 67
+emit((strlen << 5) + stack_opcode) // stack 3
+emit('!')
+emit('i')
+emit('H')
+external(strlen * 128 + getname_ext)
 
 macro goto(dest) {
   while travel(dest) > 0 { }
