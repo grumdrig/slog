@@ -228,13 +228,20 @@ class CompilationContext {
 		} else {
 			// Stack declaration
 			// FP points at OLD_FP. Then come arguments, then local vars
-			let offset = -1 - scope.allocated;
+
+			if (Array.isArray(initializer)) {
+				if (initializer.length > 0)
+					this.emit('.stack ' + [...initializer].reverse().join(' '));
+			} else if (count > 0) {
+				this.emit(`.stack ${initializer || 0}${count !== 1 ? ' * ' + count : ''}  ; allocate ${identifier}`);
+			}
+
+			scope.allocated += count;
 
 			// might not need all these fields
+			let offset = //-1
+				- scope.allocated;
 			this.symbols[identifier] = result = { variable: true, local: true, identifier, offset, count, initializer };
-
-			this.emit(`.stack ${initializer || 0}${count !== 1 ? ' * ' + count : ''}  ; allocate ${identifier}`);
-			scope.allocated += 1;
 		}
 		return result;
 	}

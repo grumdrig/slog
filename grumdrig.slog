@@ -15,13 +15,13 @@ macro goto(dest) {
 
 var raids = 0
 
-var huntingGrounds[8] = [12, 12, 17, 10, 16, 15, 33, 6]
-var endOfList[0]
 func goodHunting(forLevel) {
-  if forLevel < &endOfList - &huntingGrounds {
+  const numGrounds = 8
+  var huntingGrounds[numGrounds] = [12, 12, 17, 10, 16, 15, 33, 6]
+  if forLevel < numGrounds {
     return huntingGrounds[forLevel]
   } else {
-    return endOfList[-1]
+    return huntingGrounds[numGrounds - 1]
   }
 }
 

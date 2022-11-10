@@ -324,15 +324,15 @@ var2 = 2
 while (var1 < 2) {
   var var2
   var2 = 5
-  trace(&var2)
+  //trace(&var2)
   var1 += var2
 }
 
 checksp()
 
-trace(&var1)
+//trace(&var1)
 assert var1 == 6
-trace(&var2)
+//trace(&var2)
 assert var2 == 2
 
 checksp()
@@ -400,6 +400,17 @@ func math(a, b) {
 
  math(5,6)
 
+//////////////
+// Vectors
+//////////////
+
+
+func happy(n) {
+  var sad = "Misery"
+  return sad[n]
+}
+assert happy(1) == 'i'
+assert happy(6) == 0
 
 
 ///////////////
@@ -421,3 +432,5 @@ var pb = 4
 assert &pb - &pa == 3
 
 checksp()
+
+
