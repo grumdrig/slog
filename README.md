@@ -316,6 +316,22 @@ higher levels.
 There's no point in having %-learnedness for spells and training. Just have it
 take as long as it takes.
 
+List of spells from a note on my phone:
+
+* Susan’s Opening Salvo
+* Snowmound
+* Go Fuck Yourself, Janine
+* Ferment
+* Horsewheels
+* Spectral Bampot
+* Unusual Greeting
+* Tacklebox
+* Relevant Info
+* Classic Paladin
+* Overcook
+* Hogtie
+* Delta P
+
 
 ### Quests
 
