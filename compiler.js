@@ -215,14 +215,12 @@ class CompilationContext {
 			if (globalContext == this) {
 				// no need for an alias
 				globalContext.allocations.push({ label: identifier, count, initializer });
-				// might not need all these fields either
-				this.symbols[identifier] = { /*variable: true,*/ static: true, /*identifier, count, initializer*/ };
+				this.symbols[identifier] = { static: true };
 			} else {
 				let label = this.uniqueLabel(identifier);
 				globalContext.allocations.push({ label, count, initializer });
 				this.defineAlias(identifier, new IdentifierExpression(label));
-				// might not need all these fields either
-				globalContext.symbols[label] = { /*variable: true, */static: true, /*identifier: label, count, initializer*/ };
+				globalContext.symbols[label] = { static: true };
 			}
 		} else {
 			// Stack declaration
@@ -237,9 +235,7 @@ class CompilationContext {
 
 			scope.allocated += count;
 
-			// might not need all these fields
-			let offset = -scope.allocated;
-			this.symbols[identifier] = { /*variable: true,*/ local: true, /*identifier,*/ offset, /*count, initializer*/ };
+			this.symbols[identifier] = { local: true, offset: -scope.allocated };
 		}
 	}
 
@@ -506,7 +502,7 @@ class FunctionDefinition extends MacroDefinition {
 		context = new CompilationContext(context);
 		context.emitLabel(this.name);
 		this.parameters.forEach((parameter, i) => {
-			context.symbols[parameter] = { /*variable: true,*/ local: true, offset: -1 - this.allocated, /*count: 1*/ };
+			context.symbols[parameter] = { local: true, offset: -1 - this.allocated };
 			this.allocated += 1;
 		});
 		if (this.body) {

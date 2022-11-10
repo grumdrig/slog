@@ -371,6 +371,20 @@ assert was == 6
 what = fresh(what)
 assert what == 8
 
+var count = 10
+var sum = 0
+while (count) {
+	var increment = 1
+	sum += increment
+	increment += 1
+	count -= 1
+}
+var emergency = 911
+if sum != 10 {
+	trace(&emergency)
+	trace(&sum)
+}
+// I either need to disallow var decls in such spots or initialize them correctly
 
 /////////////////
 // Pointers
