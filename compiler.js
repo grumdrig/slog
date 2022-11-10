@@ -207,7 +207,6 @@ class CompilationContext {
 	}
 
 	declareVariable(identifier, count, initializer) {
-		let result;
 		let scope = this.enclosingScope();
 		if (!scope) {
 			// global
@@ -217,13 +216,13 @@ class CompilationContext {
 				// no need for an alias
 				globalContext.allocations.push({ label: identifier, count, initializer });
 				// might not need all these fields either
-				this.symbols[identifier] = result = { variable: true, static: true, identifier, count, initializer };
+				this.symbols[identifier] = { /*variable: true,*/ static: true, /*identifier, count, initializer*/ };
 			} else {
 				let label = this.uniqueLabel(identifier);
 				globalContext.allocations.push({ label, count, initializer });
 				this.defineAlias(identifier, new IdentifierExpression(label));
 				// might not need all these fields either
-				globalContext.symbols[label] = result = { variable: true, static: true, identifier: label, count, initializer };
+				globalContext.symbols[label] = { /*variable: true, */static: true, /*identifier: label, count, initializer*/ };
 			}
 		} else {
 			// Stack declaration
@@ -239,11 +238,9 @@ class CompilationContext {
 			scope.allocated += count;
 
 			// might not need all these fields
-			let offset = //-1
-				- scope.allocated;
-			this.symbols[identifier] = result = { variable: true, local: true, identifier, offset, count, initializer };
+			let offset = -scope.allocated;
+			this.symbols[identifier] = { /*variable: true,*/ local: true, /*identifier,*/ offset, /*count, initializer*/ };
 		}
-		return result;
 	}
 
 	declareFunction(declaration) {
@@ -258,12 +255,6 @@ class CompilationContext {
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(indent(s)) }
 
 	emitLabel(l) { this.emit(l + ':') }
-
-	// link() {
-	// 	for (let f in forwards) {
-	// 		this.code[forwards[f]] = this.symbols[f];  // or something
-	// 	}
-	// }
 
 	error(message) { throw new SemanticError(message) }
 	assert(cond, mess) { if (!cond) this.error(mess) }
@@ -515,7 +506,7 @@ class FunctionDefinition extends MacroDefinition {
 		context = new CompilationContext(context);
 		context.emitLabel(this.name);
 		this.parameters.forEach((parameter, i) => {
-			context.symbols[parameter] = { variable: true, local: true, offset: -1 - this.allocated, count: 1 };
+			context.symbols[parameter] = { /*variable: true,*/ local: true, offset: -1 - this.allocated, /*count: 1*/ };
 			this.allocated += 1;
 		});
 		if (this.body) {
@@ -935,26 +926,28 @@ class IdentifierExpression {
 	generate(context) {
 		let reference = context.lookup(this.identifier);
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
-		if (reference && reference.alias) {
+		if (reference.alias) {
 			reference.value.generate(context);
-		} else if (reference && !reference.static) {
+		} else if (reference.local) {
 			context.emit('fetchlocal ' + reference.offset + ' ; ' + this.identifier);
-		} else {
-			// hopefully global
+		} else if (reference.static) {
 			context.emit('fetch #');
 			context.emit('.data ' + this.identifier);  // todo, try to make this immediate
+		} else {
+			context.error("What is this thing? I don't think it belongs here");
 		}
 	}
 
 	generateAddress(context) {
 		let reference = context.lookup(this.identifier);
 		context.assert(reference, 'undefined identifier: ' + this.identifier);
-		if (reference && reference.local) {
+		if (reference.local) {
 			context.emit('fetch FP  ; addr of...' );
 			context.emit('add ' + reference.offset + '  ; ...' + this.identifier);
-		} else {
-			// hopefully global
+		} else if (reference.static) {
 			context.emit('.stack ' + this.identifier);
+		} else {
+			context.error("Can't take the address of whatever this is");
 		}
 	}
 }

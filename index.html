@@ -1045,9 +1045,9 @@ function updateCharacterSheet(state) {
 		value = value ?? '';
 		value = value.toString();
 		let elt = document.getElementById(id);
+			if (state[Level] > 0) {
 		if (elt.innerHTML !== value) {
 			elt.innerHTML = value;
-			if (state[Level] > 0) {
 				if (!updateCharacterSheet.UNHILITE) {
 					updateCharacterSheet.UNHILITE = setTimeout(_ => unhilite(true), 10000);
 				}

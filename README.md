@@ -577,3 +577,23 @@ Here's the variable allocation situations:
 	same as top level in macro
 
 	but code gets initialization
+
+
+Symbol table members
+--------------------
+
+- Alias
+
+{ alias: true, value: Expr }
+
+- Static allocation
+
+{ static: true }
+
+- Local allocation
+
+{ local: true, offset: distance from FP }
+
+- Function
+
+{ function: FunctionDefinition }

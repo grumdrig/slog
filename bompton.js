@@ -1232,6 +1232,11 @@ function hash(...keys) {
 	return x ;
 }
 
+function itemsName(sloth) {
+	return SLOTS[sloth].name.substr(9).toLowerCase();
+}
+
+
 let TASK = '';
 
 class Game {
@@ -1527,7 +1532,8 @@ class Game {
 			return 1;
 
 		} else if (operation === melee) {
-			passTime('Battling!', 1);
+			if (!state[MobType]) return -1;
+			passTime('Engaging this ' + MOBS[state[MobType]].name.toLowerCase() + ' in battle!', 1);
 			return battle();
 
 		} else if (operation === buy) {
@@ -1560,7 +1566,7 @@ class Game {
 			// You may proceed with the purchase
 			state[GOLD] -= price;
 			state[slot] = levelToBe;
-			passTime('Buying some ' + SLOTS[slot].name.substr(9), 3);
+			passTime('Buying some ' + itemsName(slot), 3);
 			return qty;
 
 		} else if (operation === sell || operation === give || operation === drop) {
@@ -1584,11 +1590,11 @@ class Game {
 			}
 			state[slot] -= qty;
 			if (operation === sell) {
-				passTime('Selling some ' + SLOTS[slot].name.substr(9), 3);
+				passTime('Selling some ' + itemsName(slot), 3);
 			} else if (operation === give) {
-				passTime('Giving away some ' + SLOTS[slot].name.substr(9), 1);
+				passTime('Giving away some ' + itemsName(slot), 1);
 			} else if (operation === drop) {
-				passTime('Cleaning out some extra ' + SLOTS[slot].name.substr(9) + ' from my backpack', 1);
+				passTime('Cleaning out some extra ' + itemsName(slot) + ' from my backpack', 1);
 			}
 
 			return qty;
@@ -1803,7 +1809,7 @@ class Game {
 			qty = Math.min(qty, inventoryCapacity());
 			state[target] += qty;
 
-			passTime('Foraging for ' + SLOTS[target].name.substr(9), 1);
+			passTime('Foraging for ' + itemsName(target), 1);
 			return qty;
 
 		} else if (operation === levelup) {
