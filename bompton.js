@@ -212,6 +212,17 @@ const SLOTS = [
 
 	  description: `` },
 
+	{ name: 'Name',
+	  description: `The name by which you...are to be called? You know, a name. Ten characters or less.` },
+	{ name: 'Name2' },
+	{ name: 'Name3' },
+	{ name: 'Name4' },
+	{ name: 'Name5' },
+	{ name: 'Name6' },
+	{ name: 'Name7' },
+	{ name: 'Name8' },
+	{ name: 'Name9' },
+	{ name: 'Name10' },
 
 	{ name: 'Seed',  // PRNG seed
 
@@ -236,11 +247,13 @@ const STAT_0 = StatStrength;
 const SPELLBOOK_0 = Spellbook1;
 const EQUIPMENT_0 = EquipmentWeapon;
 const INVENTORY_0 = InventoryGold;
+const NAME_0 = Name;
 
 const STAT_COUNT = SPELLBOOK_0 - STAT_0;
 const SPELLBOOK_COUNT = EQUIPMENT_0 - SPELLBOOK_0;
 const EQUIPMENT_COUNT = INVENTORY_0 - EQUIPMENT_0;
 const INVENTORY_COUNT = Location - INVENTORY_0;
+const NAME_COUNT = Seed - NAME_0;
 
 function isStatSlot(slot)      { return STAT_0      <= slot && slot < STAT_0 + STAT_COUNT }
 function isSpellSlot(slot)     { return SPELLBOOK_0 <= slot && slot < SPELLBOOK_0 + SPELLBOOK_COUNT }
@@ -257,7 +270,8 @@ const CALLS = {
 	startgame: { parameters: 'race',
 		description: 'Pick a race for your character and begin the game!' },
 
-	setname: { parameters: 'string_address', zeroTerminatedArray: true },
+	setname: { parameters: 'string', zeroTerminatedArray: true,
+		description: "Pick a name, or we'll pick one for you." },
 
 	train: { parameters: 'slot',
 		description: `Train to improve stats (StatStrength, and so on).
@@ -364,9 +378,13 @@ function generateInterface() {
 
 	for (let call in CALLS) {
 		let { operation, parameters, zeroTerminatedArray } = CALLS[call];
-		if (zeroTerminatedArray) operation *= -1;
+		let arguments = parameters;
+		if (zeroTerminatedArray) {
+			operation *= -1;
+			arguments = '&' + arguments;
+		}
 		if (parameters)
-			interface.push(`macro ${call}(${parameters}) external(${operation},${parameters})`);
+			interface.push(`macro ${call}(${parameters}) external(${operation},${arguments})`);
 		else
 			interface.push(`macro ${call}() external(${operation})`);
 	}
@@ -1407,6 +1425,11 @@ class Game {
 				}
 				return state[slot];
 
+			} else if (operation === setname) {
+				for (let i = 0; i < NAME_COUNT; ++i) {
+					state[Name + i] = i < args.length ? args[i] : 0;
+				}
+
 			} else if (operation === startgame) {
 				let race = arg1;
 				let raceinfo = RACES[race];
@@ -1463,11 +1486,6 @@ class Game {
 
 		function inventoryCapacity() {
 			return Math.max(0, carryCapacity(state) - encumbrance(state));
-		}
-
-		if (operation === setname) {
-			console.log('NAME', args.map(c => String.fromCharCode(c)).join(''));
-			return 0;
 		}
 
 		if (operation === travel) {

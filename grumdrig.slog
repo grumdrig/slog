@@ -4,21 +4,10 @@ initialize(StatConstitution, 1)
 initialize(StatIntelligence, 2)
 initialize(StatWisdom, 1)
 initialize(StatCharisma, 1)
+var name = "Intrepidor"
+setname(name)
 startgame(2)
 
-/*
-// set name to "hi!"
-const strlen = 3
-const stack_opcode = 11
-const getname_ext = 67
-emit((strlen << 5) + stack_opcode) // stack 3
-emit('!')
-emit('i')
-emit('H')
-external(strlen * 128 + getname_ext)
-*/
-var name = "Hello, world!"
-setname(&name)
 
 macro goto(dest) {
   while travel(dest) > 0 { }

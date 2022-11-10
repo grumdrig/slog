@@ -331,7 +331,8 @@ div.icon {
 		<div id=col1>
 			<div id=vitals class=listview>
 				<div class=header>Vital Statistics</div>
-				<div>Race</div><div id="race"></div>
+				<div>Name</div><div id="name"></div>
+				<div>Species</div><div id="race"></div>
 				<div>Level</div><div id="level"></div>
 				<div>Experience</div><div id="xp" class=prog></div>
 				<div>Health</div><div id="health" class=prog></div>
@@ -1056,6 +1057,9 @@ function updateCharacterSheet(state) {
 		setBar(id, value, end, start);
 	}
 
+	set('name', Array.from(state.slice(NAME_0, NAME_0 + NAME_COUNT))
+		.filter(c => 32 <= c && c < 127)
+		.map(c => String.fromCharCode(c)).join(''));
 	set('race', Game.RACE_NAMES[state[Race]]);
 	set('level', state[Level]);
 	setProgress('xp', state[Experience],
