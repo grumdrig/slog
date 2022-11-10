@@ -286,7 +286,18 @@ class VirtualMachine {
     } else if (mnemonic == 'ext') {
       result = true;
       let args = [];
-      for (let i = 0; i < operand >> 7; ++i) args.push(this.pop());
+      let param_count = operand >> 7;
+      let code = operand & 0x7F;
+      if (param_count == -1) {
+        let addr = this.pop();
+        while (true) {
+          let v = this.fetch(addr + args.length);
+          if (!v) break;
+          args.push(v);
+        }
+      } else {
+        for (let i = 0; i < param_count; ++i) args.push(this.pop());
+      }
       this.push(this.world.handleInstruction(this.state, operand & 0x7F, ...args));
 
     } else {
@@ -656,7 +667,7 @@ class Assembler {
       } else {
         let opcode = OPCODES[inst & 0x1f] || '??';
         let immediate = isStackModeInstruction(inst) ? '' :
-                        isInlineModeInstruction(inst) ? ':::' :
+                        isInlineModeInstruction(inst) ? '#' :
                         (inst >> 5);
         if (['fetch','store'].includes(opcode))
           immediate = REGISTER_NAMES[immediate] || immediate;

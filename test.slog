@@ -279,6 +279,16 @@ macro more(t) {
 }
 more(5)
 
+macro facto(n) {
+  if n > 1 {
+    return facto(n-1) * n
+  } else {
+    return 1
+  }
+}
+assert facto(2) == 2
+assert facto(4) == 24
+
 checksp()
 
 
@@ -314,7 +324,7 @@ var2 = 2
 while (var1 < 2) {
   var var2
   var2 = 5
-  trace(&var1)
+  trace(&var2)
   var1 += var2
 }
 
@@ -323,7 +333,7 @@ checksp()
 trace(&var1)
 assert var1 == 6
 trace(&var2)
-//assert var2 == 5
+assert var2 == 2
 
 checksp()
 

@@ -257,8 +257,7 @@ const CALLS = {
 	startgame: { parameters: 'race',
 		description: 'Pick a race for your character and begin the game!' },
 
-	// setNameCharacter: { parameters: 'index,character' },
-	setname: {},
+	setname: { parameters: 'string_address', zeroTerminatedArray: true },
 
 	train: { parameters: 'slot',
 		description: `Train to improve stats (StatStrength, and so on).
@@ -364,7 +363,8 @@ function generateInterface() {
 	let interface = [];
 
 	for (let call in CALLS) {
-		let { operation, parameters } = CALLS[call];
+		let { operation, parameters, zeroTerminatedArray } = CALLS[call];
+		if (zeroTerminatedArray) operation *= -1;
 		if (parameters)
 			interface.push(`macro ${call}(${parameters}) external(${operation},${parameters})`);
 		else

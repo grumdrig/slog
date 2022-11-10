@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+
+const OPTIMIZE = true;  // Turn on (scant) optimizations
+
+
 class ParseError {
 	message;
 	constructor(message, location) { this.message = message }
@@ -347,16 +351,16 @@ class TagDefinition {
 	}
 
 	generate(context) {
-		this.tag1 = this.tag1.simplify(context);
-		this.tag2 = this.tag2.simplify(context);
-		if (!this.tag1.isLiteral || !this.tag2.isLiteral)
+		let tag1 = this.tag1.simplify(context);
+		let tag2 = this.tag2.simplify(context);
+		if (!tag1.isLiteral || !tag2.isLiteral)
 			context.error('Constant value expressions required for tag definition');
 		context.emit('');
 		context.emit('halt 0');
 		context.emit('.data ' +
-			(asCharIfPossible(this.tag1.value) ??
-				'$' + this.tag1.value.toString(16)) +
-			   ' $' + this.tag2.value.toString(16) + '  ; tag');
+			(asCharIfPossible(tag1.value) ??
+				'$' + tag1.value.toString(16)) +
+			   ' $' + tag2.value.toString(16) + '  ; tag');
 	}
 }
 
@@ -649,12 +653,11 @@ class EmitStatement {
 	}
 
 	generate(context) {
-		this.instruction = this.instruction.simplify(context);
-		this.args = this.args.map(a => a.simplify(context));
-		for (let a of [...this.args.slice(0)].reverse()) {
-			a.generate(context);
+		let args = this.args.map(a => a.simplify(context));
+		for (let a of [...args.slice(0)].reverse()) {
+			a.simplify(context).generate(context);
 		}
-		context.emit('.data ' + context.literalValue(this.instruction));
+		context.emit('.data ' + context.literalValue(this.instruction.simplify(context)));
 	}
 }
 
@@ -663,8 +666,7 @@ class ExpressionStatement {
 	constructor(expression) { this.expression = expression }
 
 	generate(context) {
-		this.expression.simplify(context);
-		this.expression.generate(context);
+		this.expression.simplify(context).generate(context);
 		context.emit('stack -1'); // throw away resulting value
 	}
 }
@@ -684,6 +686,9 @@ class WhileStatement {
 	}
 
 	generate(context) {
+		let condition = this.condition.simplify(context)
+		if (OPTIMIZE && condition.isLiteral && !condition.value) return;
+
 		context = new CompilationContext(context);
 		context.breakLabel = context.uniqueLabel('endwhile');
 
@@ -691,7 +696,7 @@ class WhileStatement {
 		context.emit(loopStartLabel + ':');
 
 		// Test loop condition
-		this.condition.simplify(context).generate(context);
+		condition.generate(context);
 		context.emit('unary NOT');
 
 		// Exit loop if it's false
@@ -704,6 +709,7 @@ class WhileStatement {
 		context.emit(context.breakLabel + ':');
 	}
 }
+
 
 class IfStatement {
 	condition;
@@ -730,9 +736,18 @@ class IfStatement {
 	}
 
 	generate(context) {
+		let condition = this.condition.simplify(context);
+		if (OPTIMIZE && condition.isLiteral) {
+			if (condition.value) {
+				this.ifbody.generate(context);
+			} else if (this.elsebody) {
+				this.elsebody.generate(context);
+			}
+			return;
+		}
 		let endifLabel = context.uniqueLabel('endif');
 		let elseLabel = this.elsebody ? context.uniqueLabel('else') : null;
-		this.condition.simplify(context).generate(context);
+		condition.generate(context);
 		context.emit('unary NOT');
 		context.emit('.branch ' + (elseLabel ?? endifLabel));
 
@@ -771,8 +786,7 @@ class AssertionStatement {
 			rhs.generate(context);
 			context.emit('assert');
 		} else {
-			this.test = this.test.simplify(context);
-			this.test.generate(context);
+			this.test.simplify(context).generate(context);
 			context.emit('unary NOT');
 			context.emit('assert 0');
 		}
@@ -821,17 +835,22 @@ class ExternalFunctionExpression {
 	}
 
 	simplify(context) {
-		this.args = this.args.map(a => a.simplify(context));
-		return this;
+		return new ExternalFunctionExpression(this.args.map(a => a.simplify(context)));
 	}
 
 	generate(context) {
-		// this.simplify(context);  // needed?
 		context.assert(this.args.length >= 1, "external function call requires at least one argument");
-		let operand = this.args[0].value ?? context.error('literal value expected');
-		operand += (this.args.length - 1) * 128;
+		let operand = this.args[0].simplify(context).value ?? context.error('literal value expected');
+		if (operand < 0) {
+			// signals single argment that's the address of a zero-terminated array
+			context.assert(this.args.length == 2, "exactly two arguments expected");
+			operand *= -1;
+			operand += -1 << 7;
+		} else {
+			operand += (this.args.length - 1) * 128;
+		}
 		for (let a of [...this.args.slice(1)].reverse()) {
-			a.generate(context);
+			a.simplify(context).generate(context);
 		}
 		context.emit('ext ' + operand);
 	}
@@ -856,8 +875,7 @@ class VectorLiteralExpression {
 	}
 
 	simplify(context) {
-		this.members = this.members.map(a => a.simplify(context));
-		return this;
+		return new VectorLiteralExpression(this.members.map(a => a.simplify(context)));
 	}
 
 	generate(context) {
@@ -1003,9 +1021,9 @@ class PrefixExpression {
 	}
 
 	simplify(context) {
-		this.rhs = this.rhs.simplify(context);
-		if (this.rhs.isLiteral && this.operator.precompute)
-			return new LiteralExpression(this.operator.precompute(this.rhs.value));
+		let rhs = this.rhs.simplify(context);
+		if (rhs.isLiteral && this.operator.precompute)
+			return new LiteralExpression(this.operator.precompute(rhs.value));
 		else
 			return this;
 	}
@@ -1341,12 +1359,15 @@ class BinaryExpression {
 	};
 
 	simplify(context) {
-		this.lhs = this.lhs.simplify(context);
-		this.rhs = this.rhs.simplify(context);
-		if (this.lhs.isLiteral && this.operator.precompute && this.rhs.isLiteral)
-			return new LiteralExpression(this.operator.precompute(this.lhs.value, this.rhs.value));
-		else
+		let lhs = this.lhs.simplify(context);
+		let rhs = this.rhs.simplify(context);
+		if (lhs.isLiteral && this.operator.precompute && rhs.isLiteral) {
+			return new LiteralExpression(this.operator.precompute(lhs.value, rhs.value));
+		} else if (lhs !== this.lhs || rhs !== this.rhs) {
+			return new BinaryExpression(lhs, this.operator, rhs);
+		} else {
 			return this;
+		}
 	}
 
 	generate(context) {
@@ -1402,9 +1423,7 @@ class FunctionCallExpression {
 	}
 
 	simplify(context) {
-		this.lhs = this.lhs.simplify(context);
-		this.args = this.args.map(arg => arg.simplify(context));
-		return this;
+		return new FunctionCallExpression(this.lhs.simplify(context), this.args.map(arg => arg.simplify(context)));
 	}
 }
 
@@ -1433,16 +1452,18 @@ class IndexExpression {
 	}
 
 	simplify(context) {
-		this.lhs = this.lhs.simplify(context);
-		this.index = this.index.simplify(context);
-		if (this.lhs.isLiteral && this.index.isLiteral) {
-			return new LiteralExpression(this.lhs.value + this.index.value);
-		} else if (this.lhs.members && this.index.isLiteral) {
-			if (this.index.value < 0 || this.index.value >= this.lhs.members.length)
+		let lhs = this.lhs.simplify(context);
+		let index = this.index.simplify(context);
+		if (lhs.isLiteral && index.isLiteral) {
+			return new LiteralExpression(lhs.value + index.value);
+		} else if (lhs.members && index.isLiteral) {
+			if (index.value < 0 || index.value >= lhs.members.length)
 				context.error('index out of range');
-			return this.lhs.members[this.index.value];
+			return lhs.members[index.value];
 		} else {
-			return this;
+			let e = new IndexExpression(lhs);
+			e.index = index;
+			return e;
 		}
 	}
 }
