@@ -603,3 +603,37 @@ LLVM
 ----
 
 Right?
+
+https://llvm.org/docs/WritingAnLLVMBackend.html
+
+
+Drops
+-----
+
+Need 3 or 4 levels of drops with value scaling up.
+
+1 Skins
+10 Reagents
+100 ?
+1000 Treasures
+
+Drops and resources serve kind of the same purpose, or at least have the same
+value. Call them scrap? junk? chaff? forage? fodder? Not have them?
+
+Merge forage and food? Seems like food should be more valuable if kept
+
+Reagents should be hard to scavenge, or harder than resources.
+
+Use food as you travel? Would need to be scavengeable. Or take twice as long
+without food. Starving is no fun.
+
+| item  | value | wt | where and what
+|-------|-------|----|----------
+| Drops | 1/10  |  1 | From mobs. Not useful
+| Skins | 1     |  1 | From mobs. Not useful
+| Food  | 10    |  1 | From mobs, stores, forage
+| Reagt | 100   |  1 | Maybe from mobs, stores forage
+| Treas | 1000  |  3 | From mobs
+| Resou | 1/10  |  1 | Forage, not useful
+
+

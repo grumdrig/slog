@@ -1597,15 +1597,16 @@ class Game {
 				unitValue = Math.round(Math.pow(1.6, unitValue));
 			} else if (isInventorySlot(slot)) {
 				qty = Math.min(qty, state[slot]);
-				unitValue = INVENTORY_INFO[slot].unitValue;
+				unitValue = INVENTORY_INFO[slot].value;
 			} else {
 				return -1;
 			}
 			if (qty <= 0) return -1;
 			let price = qty * 0.5 * unitValue;
-			if (operation !== give) {
-				state[InventoryGold] += price;
-			} else if (state[QuestObject] === slot) {
+			if (operation === sell) {
+				state[InventoryGold] += Math.floor(price);
+			}
+			if (operation === give && state[QuestObject] === slot) {
 				state[QuestProgress] += qty;
 			}
 			state[slot] -= qty;

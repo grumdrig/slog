@@ -47,7 +47,7 @@ while .Level < 88 {
       }
       if cast(HEAL_YEAH) <= 0 { break }
     }
-    drop(InventorySpoils, .InventorySpoils)
+    //drop(InventorySpoils, .InventorySpoils)
   }
   goto(18)
   while .Health < .MaxHealth {

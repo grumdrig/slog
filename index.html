@@ -322,7 +322,7 @@ div.icon {
 
 <div class=window id=sheet-window>
 	<div class="title-bar">
-		<div class="title-bar-text">Progress Quest Assembly - Character Sheet</div>
+		<div class="title-bar-text">Progress Quest Slog - Character Sheet</div>
 		<div class="title-bar-controls">
 			<button aria-label="Close" class=close></button>
 		</div>
@@ -575,6 +575,7 @@ let asm, vm;
 function saveChanges() {
 	localStorage.source = $("#source").value;
 	localStorage.autorun = JSON.stringify($("#autorun").checked);
+	localStorage.autoplay = JSON.stringify($("#autoplay").checked);
 }
 
 
@@ -593,6 +594,8 @@ function comp() {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
 			if ($("#autorun").checked)
 				run();
+			else if ($("#autoplay").checked)
+				play();
 		}
 	} catch (e) {
 		let message;
@@ -670,6 +673,7 @@ function run() {
 
 function play() {
 	stopRunimation();
+	bringToFront($id('sheet-window'));
 	vm.running = true;
 	playmation();
 }
@@ -835,6 +839,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 
 	$("#source").value = localStorage.source || "// hello, world!";
 	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
+	$("#autoplay").checked = JSON.parse(localStorage.autoplay || "false");
 
 	for (let call in CALLS) {
 		let { parameters, operation, description } = CALLS[call];
