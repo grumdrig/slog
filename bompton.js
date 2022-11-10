@@ -495,8 +495,8 @@ const SPELLS = [ null, {
 			],
 		duration: 24,
 		effect: state => {
-			// TODO: limit by emcumbrance
-			return state[InventoryGold] *= 2;
+			let winnings = Math.min(roomFor(InventoryGold, state), state[InventoryGold]);
+			return state[InventoryGold] += winnings;
 		},
 		description: `Double. Your. Money.... Overnight!`,
 	}, {
@@ -1208,11 +1208,28 @@ function carryCapacity(state) {
 	return state[StatStrength] + state[EquipmentMount];
 }
 
+const INVENTORY_INFO = [];
+INVENTORY_INFO[InventoryGold] =        { value: 1, weight: 1/256 };
+INVENTORY_INFO[InventorySpoils] =      { value: 1, weight: 1 };
+INVENTORY_INFO[InventoryReagents] =    { value: 1, weight: 1 };
+INVENTORY_INFO[InventoryResources] =   { value: 1, weight: 1 };
+INVENTORY_INFO[InventoryFood] =        { value: 1, weight: 1 };
+INVENTORY_INFO[InventoryTreasures] =   { value: 1000, weight: 3 };
+INVENTORY_INFO[InventoryPotions] = 	   { value: 1, weight: 1 };
+INVENTORY_INFO[InventoryLifePotions] = { value: 1, weight: 1 };
+
+
 function encumbrance(state) {
-	// Gold doesn't count much against encumbrance
-	return (state[InventoryGold] >> 8) +
-		state.slice(InventoryGold + 1, INVENTORY_0 + INVENTORY_COUNT)
-			  .reduce((q, v) => q + v);
+	let result = 0
+	for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
+		result += INVENTORY_INFO[i].weight * state[i];
+	}
+	return Math.floor(result);
+}
+
+function roomFor(item, state) {
+	let available = carryCapacity(state) - encumbrance(state);
+	return Math.floor(available / INVENTORY_INFO[item].weight);
 }
 
 function armorClass(state) {
@@ -1278,11 +1295,11 @@ class Game {
 			state[ArmorClass] = armorClass(state);
 
 			if (state[Health] <= 0) {
-				state[GameOver] = 0xDED;
+				state[GameOver] = 86;
 			} else if (state[Years] >= 100) {
-				state[GameOver] = 0xA9E;
+				state[GameOver] = 100;
 			} else if (state[Act] > 9) {
-				state[GameOver] = 0x1;
+				state[GameOver] = 1;
 			}
 		}
 
@@ -1571,18 +1588,21 @@ class Game {
 
 		} else if (operation === sell || operation === give || operation === drop) {
 			let [slot, qty] = [arg1, arg2];
+			let unitValue;
 			if (isEquipmentSlot(slot)) {
-				qty = Math.max(qty, 1);
+				qty = Math.min(qty, 1);
+				unitValue = state[slot];
+				if (!unitValue) return -1;
+				if (slot === EquipmentWeapon) unitValue = weaponPower(unitValue);
+				unitValue = Math.round(Math.pow(1.6, unitValue));
 			} else if (isInventorySlot(slot)) {
-				qty = Math.max(qty, state[slot]);
+				qty = Math.min(qty, state[slot]);
+				unitValue = INVENTORY_INFO[slot].unitValue;
 			} else {
 				return -1;
 			}
-			function marketValue(slot) {
-				// TODO
-				return 1;
-			}
-			let price = qty * 0.5 * marketValue(slot);
+			if (qty <= 0) return -1;
+			let price = qty * 0.5 * unitValue;
 			if (operation !== give) {
 				state[InventoryGold] += price;
 			} else if (state[QuestObject] === slot) {
@@ -1620,8 +1640,7 @@ class Game {
 
 			qty = Math.min(qty, state[fromSlot]);
 
-			// TODO not considering weight of item
-			let availableCapacity = isDeposit ? MAX_INT - state[toSlot] : state[Capacity] - state[Encumbrance];
+			let availableCapacity = isDeposit ? MAX_INT - state[toSlot] : roomFor(slot, state);
 			qty = Math.min(qty, availableCapacity);
 
 			if (qty > 0) {
@@ -1803,7 +1822,7 @@ class Game {
 			}
 
 			if (!isInventorySlot(target)) return -1;
-			if (!inventoryCapacity()) return -1;
+			if (roomFor(target, state) < 1) return -1;
 
 			qty = rand() < 0.5 ? 1 : 0;
 			qty = Math.min(qty, inventoryCapacity());
@@ -1823,10 +1842,10 @@ class Game {
 			return 1;
 
 		} else if (operation === retire) {
-			state[GameOver] = 0x401;
+			state[GameOver] = 401;
 
 		} else {
-			state[GameOver] = 0xEEE;
+			state[GameOver] = 333;
 			console.log("Invalid operation");
 		}
 	}

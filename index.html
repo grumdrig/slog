@@ -257,6 +257,7 @@ div.icon {
 				<button onclick="comp()">Compile</button>
 				<span style="margin-left: 10px">&nbsp;</span>
 				<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
+				<input type=checkbox id=autoplay><label for=autoplay>Autoplay</label></input>
 				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
 			</article>
 			<article role="tabpanel" hidden id="tab-B">
@@ -633,8 +634,7 @@ function step() {
 
 function bigstep() {
 	stopRunimation();
-	vm.running = true;
-	vm.bigstep();
+	playmation(true);
 	updateDebuggerState(vm);
 	updateCharacterSheet(vm.state);
 }
@@ -688,7 +688,7 @@ function setTaskBar() {
 	}
 }
 
-function playmation() {
+function playmation(butStop) {
 	function age() { return vm.state[Years] * HOURS_PER_YEAR + vm.state[Hours] }
 	let before = age();
 	while (vm.alive() && age() == before) {
@@ -698,7 +698,8 @@ function playmation() {
 	animate.progress = 0;
 	$id('task').innerText = TASK;
 	setTaskBar();
-	runimate.timer = setTimeout(animate, 10);
+	if (!butStop)
+		runimate.timer = setTimeout(animate, 10);
 }
 
 function animate() {
