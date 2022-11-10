@@ -230,9 +230,6 @@ class CompilationContext {
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(indent(s)) }
 
-	// TODO use it or lose it
-	emitLabel(l) { this.emit(l + ':') }
-
 	error(message) { throw new SemanticError(message) }
 	assert(cond, mess) { if (!cond) this.error(mess) }
 }
@@ -522,7 +519,7 @@ class FunctionDefinition extends MacroDefinition {
 
 	generate(context) {
 		context = new CompilationContext(context);
-		context.emitLabel(this.name);
+		context.emit(this.name + ':');
 		this.parameters.forEach((parameter, i) => {
 			context.symbols[parameter] = { local: true, offset: -1 - this.allocated };
 			this.allocated += 1;
@@ -1286,7 +1283,7 @@ class BinaryExpression {
 				context.emit('.branch ' + cutLabel);
 				context.emit('stack -1');
 				rhs.generate(context);
-				context.emitLabel(cutLabel);
+				context.emit(cutLabel + ':');
 			},
 		},
 		'^^': {
@@ -1309,7 +1306,7 @@ class BinaryExpression {
 				context.emit('.branch ' + cutLabel);
 				context.emit('stack -1');
 				rhs.generate(context);
-				context.emitLabel(cutLabel);
+				context.emit(cutLabel + ':');
 			},
 		},
 
