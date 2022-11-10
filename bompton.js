@@ -1494,6 +1494,7 @@ class Game {
 			if (destination === state[Location]) return 0;
 			let remote = mapInfo(destination, state);
 			if (!remote) return -1;
+			let goal = remote;
 			if (local.neighbors) {
 				if (!local.neighbors.includes(destination)) return -1;
 			} else {
@@ -1520,11 +1521,13 @@ class Game {
 			state[MobType] = 0;
 			state[MobLevel] = 0;
 			state[MobDamage] = 0;
-			passTime('Travelling', hours);
+			let plan = 'Travelling to ' + remote.name;
+			if (goal !== remote) plan += ' en route to ' + goal.name;
+			passTime(plan, hours);
 			return 1;
 
 		} else if (operation === melee) {
-			passTime('Fighting', 1);
+			passTime('Battling!', 1);
 			return battle();
 
 		} else if (operation === buy) {
@@ -1557,7 +1560,7 @@ class Game {
 			// You may proceed with the purchase
 			state[GOLD] -= price;
 			state[slot] = levelToBe;
-			passTime('Buying', 1);
+			passTime('Buying some ' + SLOTS[slot].name.substr(9), 3);
 			return qty;
 
 		} else if (operation === sell || operation === give || operation === drop) {
@@ -1580,7 +1583,14 @@ class Game {
 				state[QuestProgress] += qty;
 			}
 			state[slot] -= qty;
-			passTime('Selling', 1, 0);
+			if (operation === sell) {
+				passTime('Selling some ' + SLOTS[slot].name.substr(9), 3);
+			} else if (operation === give) {
+				passTime('Giving away some ' + SLOTS[slot].name.substr(9), 1);
+			} else if (operation === drop) {
+				passTime('Cleaning out some extra ' + SLOTS[slot].name.substr(9) + ' from my backpack', 1);
+			}
+
 			return qty;
 
 		} else if (operation === deposit || operation == withdraw) {
@@ -1670,6 +1680,7 @@ class Game {
 			state[QuestOrigin] = 0;
 			state[QuestProgress] = 0;
 			state[QuestQty] = 0;
+			passTime('Taking care of paperwork; this quest is done!', 3);
 			return 1;
 
 		} else  if (operation === train) {
@@ -1682,7 +1693,7 @@ class Game {
 			hours *= 10 / (10 + state[StatWisdom]);
 			// TODO: town stat-learning bonuses
 			// TODO: racial stat-learning bonuses
-			passTime('Training', Math.round(hours));
+			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), Math.round(hours));
 			state[slot] += 1;
 			return state[slot];
 
@@ -1697,7 +1708,7 @@ class Game {
 			hours *= 10 / (10 + state[StatWisdom]);
 			// TODO: town spell-learning bonuses?
 			// TODO: racial spell-learning bonuses?
-			passTime('Learning a spell', Math.round(hours));
+			passTime('Inscribing "' + spell.name + '" into my spell book', Math.round(hours));
 			state[slot] = spellType;
 			return state[slot];
 
@@ -1715,7 +1726,7 @@ class Game {
 			for (let { slot, qty } of spell.costs)
 				if (state[slot] < qty) return -1;
 
-			passTime('Casting', spell.duration ?? 1);
+			passTime('Casting ' + spell.name, spell.duration ?? 10);
 
 			for (let { slot, qty } of spell.costs)
 				state[slot] -= qty;
@@ -1739,7 +1750,7 @@ class Game {
 			return spellType;
 
 		} else if (operation === hunt) {
-			passTime('Hunting', 1);
+			passTime('Hunting for a suitable local victim', 1);
 			state[MobType] = 0;
 			state[MobLevel] = 0;
 			state[MobDamage] = 0;
@@ -1757,7 +1768,7 @@ class Game {
 			return state[MobType] ? 1 : 0;
 
 		} else if (operation === rest) {
-			passTime('Resting', 0, 1);
+			passTime('Resting up', 0, 1);
 			let hp = d(CON());
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rand() * rand());
@@ -1792,7 +1803,7 @@ class Game {
 			qty = Math.min(qty, inventoryCapacity());
 			state[target] += qty;
 
-			passTime('Foraging', 1);
+			passTime('Foraging for ' + SLOTS[target].name.substr(9), 1);
 			return qty;
 
 		} else if (operation === levelup) {
@@ -1802,7 +1813,7 @@ class Game {
 			state[Level] += 1;
 			state[Health] = state[MaxHealth] += 3 + additiveStatBonus(state[StatConstitution]);
 			state[Energy] = state[MaxEnergy] += 3 + additiveStatBonus(state[StatWisdom]);
-			passTime('Levelling up', 1, 0);
+			passTime('Levelling up', 1);
 			return 1;
 
 		} else if (operation === retire) {

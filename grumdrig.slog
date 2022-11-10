@@ -42,7 +42,7 @@ while .Level < 88 {
       melee()
     }
     while !.InventoryReagents { forage(InventoryReagents) }
-    while cast(HEAL_YEAH) > 0 { }
+    while .Health < .MaxHealth && cast(HEAL_YEAH) > 0 { }
     drop(InventorySpoils, .InventorySpoils)
   }
   goto(18)

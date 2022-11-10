@@ -337,6 +337,7 @@ div.icon {
 				<div>Experience</div><div id="xp" class=prog></div>
 				<div>Health</div><div id="health" class=prog></div>
 				<div>Energy</div><div id="energy" class=prog></div>
+				<div>Enchantment</div><div id="enchantment"></div>
 			</div>
 
 			<div id=stats class=listview>
@@ -1070,6 +1071,8 @@ function updateCharacterSheet(state) {
 			Game.xpNeededForLevel(state[Level]));
 	setProgress('health', state[Health], state[MaxHealth]);
 	setProgress('energy', state[Energy], state[MaxEnergy]);
+	let spell = SPELLS[state[Enchantment] & 0xFF];
+	set('enchantment', spell ? spell.name : '');
 
 	for (let i = 0; i < STAT_COUNT; ++i) {
 		set('s' + i, state[STAT_0 + i]);
@@ -1121,9 +1124,9 @@ function updateCharacterSheet(state) {
 	set('date', `${day + 1} ${MONTHS[month]}, ${state[Years] + 600}`);
 	set('time', hour + 'h');
 
-	set('location', local.index ?
+	set('location', state[Location] ?
 		`#${state[Location]} &lt;${longitude(state[Location])}, ${latitude(state[Location])}&gt;` : '');
-	set('locale', local.name);
+	set('locale', local ? local.name + ' #' + state[Location] : '');
 	set('terrain', (Game.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobType] ?
 		`${Game.MOBS[state[MobType]].name} (level ${state[MobLevel]})` : '');
@@ -1150,9 +1153,9 @@ function updateCharacterSheet(state) {
 		state[QuestMob] ?
 		`Exterminate the ` + plural(MOBS[state[QuestMob]].name) :
 		'&nbsp;');
-	set('questlocation', questal && (questal.name + ' #' + questal.index) || '');
+	set('questlocation', questal && (questal.name + ' #' + state[QuestLocation]) || '');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
-	set('questorigin', original && (original.name + ' #' + original.index) || '');
+	set('questorigin', original && (original.name + ' #' + state[QuestOrigin]) || '');
 
 	set('act', 'Act ' + toRoman(state[Act]));
 	if (state[ActDuration])
