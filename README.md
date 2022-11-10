@@ -309,13 +309,6 @@ Also, maybe an equipment slot for a scroll. You can either read the scroll
 available in some places or something. Exchange a treasure with some guy?
 Stick NPC's in each tile?
 
-Switch spells back to a list, then put the spell ID in each slot. If spells
-have levels, put that in the MSB, but maybe just have separate spells for
-higher levels.
-
-There's no point in having %-learnedness for spells and training. Just have it
-take as long as it takes.
-
 List of spells from a note on my phone:
 
 * Susan’s Opening Salvo

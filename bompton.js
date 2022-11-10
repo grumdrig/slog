@@ -5,7 +5,7 @@ const SLOTS = [
 	  description: `The game sets this value when it comes to an end. If it
 	  ever becomes non-zero, you won't be around to see it.` },
 
-	{ name: 'Race',
+	{ name: 'Species',
 	  description: `Your character's species, choses before the game starts.
 	  Each choice has it's own inherent minor strengths and weaknesses.` },
 
@@ -267,8 +267,8 @@ const CALLS = {
 		total of ten points to their six stat slots (STATE_STRENGTH, etc)
 		using this function.` },
 
-	startgame: { parameters: 'race',
-		description: 'Pick a race for your character and begin the game!' },
+	startgame: { parameters: 'species',
+		description: 'Pick a species for your character and begin the game!' },
 
 	setname: { parameters: 'string', zeroTerminatedArray: true,
 		description: "Pick a name, or we'll pick one for you." },
@@ -521,8 +521,8 @@ const SPELLS = [ null, {
 			],
 		effect: state => {
 			if (!state[MobType]) return -1;
-			// TODO: lose current race bonuses
-			return state[Race] = state[MobType];
+			// TODO: lose current species bonuses
+			return state[Species] = state[MobType];
 			// TODO: this won't work yet
 		},
 		description: `Turn yourself in to one of those things. One of those things over there.`,
@@ -791,7 +791,7 @@ const MOUNT_NAMES = ['',
 
 ///////// Races
 
-const RACES = [
+const SPECIESES = [
 	null,
 	{
 		name: "Dunkling",
@@ -1267,7 +1267,7 @@ class Game {
 	static generateMap = generateMap;
 	static generateDocumentation = generateDocumentation;
 
-	static RACE_NAMES = RACES.map(r => (r && r.name) || '');
+	static SPECIES_NAMES = SPECIESES.map(r => (r && r.name) || '');
 	static TERRAIN_TYPES = TERRAIN_TYPES;
 	static MOBS = MOBS;
 	static MAP = MAP;
@@ -1453,11 +1453,11 @@ class Game {
 				}
 
 			} else if (operation === startgame) {
-				let race = arg1;
-				let raceinfo = RACES[race];
-				if (!raceinfo) return -1;
+				let species = arg1;
+				let speciesinfo = SPECIESES[species];
+				if (!speciesinfo) return -1;
 
-				state[Race] = race;
+				state[Species] = species;
 
 				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) > 10) return -1;
 				// All good. Start the game.
@@ -1466,7 +1466,7 @@ class Game {
 				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
 					state[stat] += 2;
 
-				for (let { slot, increment, value } of raceinfo.startState ?? [])
+				for (let { slot, increment, value } of speciesinfo.startState ?? [])
 					state[slot] = value ?? (state[slot] + increment)
 
 				state[Level] = 1;
