@@ -472,7 +472,7 @@ const SPELLS = [ null, {
 			return healing;
 		},
 		description: `Heal some or all of any damage you may have sustained.
-		The effectiveness of this spell is aided by higher StatWisdom`,
+		The effectiveness of this spell is aided by higher wisdom`,
 	}, {
 		name: 'Pyroclastic Orb',
 		moniker: 'PYROCLASTIC_ORB',
@@ -499,6 +499,10 @@ const SPELLS = [ null, {
 			return state[InventoryGold] += winnings;
 		},
 		description: `Double. Your. Money.... Overnight!`,
+	}, {
+		name: 'Delta P',
+		moniker: 'DELTA_P',
+		description: `Release a massive pressure discontinuity.`
 	}, {
 		name: 'History Lessen',
 		moniker: 'HISTORY_LESSEN',
@@ -789,71 +793,6 @@ const MOUNT_NAMES = ['',
 
 
 
-///////// Races
-
-const SPECIESES = [
-	null,
-	{
-		name: "Dunkling",
-		aka: "Nerfling",
-		index: 1,
-		esteems: 2,
-		waryof: 3,
-		proficiency: SLASH,
-		badat: [POKE, SHOOT],
-		startState: [
-			// { slot: StatAgility, increment: +2 },
-			// { slot: StatCharisma, increment: +1 },
-			// { slot: StatStrength, increment: -1 },
-			// { slot: StatWisdom, increment: -2 },
-			{ slot: EquipmentWeapon,   value: 2},
-			{ slot: EquipmentHeadgear, value: 1},
-			{ slot: InventoryFood,     value: 1 },
-		],
-		description: "Likable, lithe creatures of small stature, often underestimated",
-	},
-	{
-		name: "Hardwarf",
-		plural: "Hardwarves",
-		index: 2,
-		esteems: 3,
-		waryof: 1,
-		proficiency: SMASH,
-		badat: SLASH,
-		startState: [
-			// { slot: StatConstitution, increment: +2 },
-			// { slot: StatStrength, increment: +1 },
-			// { slot: StatAgility, increment: -1 },
-			// { slot: StatIntelligence, increment: -2 },
-			{ slot: EquipmentWeapon, value: 1},
-			{ slot: EquipmentShield, value: 1},
-			{ slot: InventoryGold,   value: 1 },
-		],
-		description: "Sturdy sorts with a...direct approch to problems",
-	},
-	{
-		name: "Eelman",
-		index: 3,
-		esteems: 1,
-		waryof: 2,
-		proficiency: [POKE, SHOOT],
-		badat: SMASH,
-		startState: [
-			{ slot: EquipmentWeapon,   value: 3},
-			{ slot: EquipmentFootwear, value: 1},
-			{ slot: InventoryReagents, value: 1 },
-		],
-		description: "Proud, sometimes haughty, intellectuals",
-	}
-];
-
-
-const DUNKLING = 1;
-const HARDWARF = 2;
-const EELMAN = 3;
-const GUST = 4;
-
-
 ///////////////// Map
 
 const TERRAIN_TYPES = [
@@ -895,19 +834,70 @@ TERRAIN_TYPES.forEach((info, index) => {
 });
 
 
-// const TUNDRA = 1;
-// const FOREST = 2;
-// const TOWN = 3;
-// const HILLS = 4;
-// const MOUNTAINS = 5;
-// const PLAINS = 6;
-// const MARSH = 7;
-// const DESERT = 8;
+// Denizens
 
-
-const MOBS = [
+const DENIZENS = [
 	null,
 	{
+		name: "Dunkling",
+		moniker: 'DUNKLING',
+		aka: "Nerfling",
+		playable: true,
+		index: 1,
+		esteems: 2,
+		waryof: 3,
+		proficiency: SLASH,
+		badat: [POKE, SHOOT],
+		startState: [
+			// { slot: StatAgility, increment: +2 },
+			// { slot: StatCharisma, increment: +1 },
+			// { slot: StatStrength, increment: -1 },
+			// { slot: StatWisdom, increment: -2 },
+			{ slot: EquipmentWeapon,   value: 2},
+			{ slot: EquipmentHeadgear, value: 1},
+			{ slot: InventoryFood,     value: 1 },
+		],
+		description: "Likable, lithe creatures of small stature, often underestimated",
+	},
+	{
+		name: "Hardwarf",
+		moniker: 'HARDWARF',
+		plural: "Hardwarves",
+		playable: true,
+		index: 2,
+		esteems: 3,
+		waryof: 1,
+		proficiency: SMASH,
+		badat: SLASH,
+		startState: [
+			// { slot: StatConstitution, increment: +2 },
+			// { slot: StatStrength, increment: +1 },
+			// { slot: StatAgility, increment: -1 },
+			// { slot: StatIntelligence, increment: -2 },
+			{ slot: EquipmentWeapon, value: 1},
+			{ slot: EquipmentShield, value: 1},
+			{ slot: InventoryGold,   value: 1 },
+		],
+		description: "Sturdy sorts with a...direct approch to problems",
+	},
+	{
+		name: "Eelman",
+		moniker: 'EELMAN',
+		playable: true,
+		index: 3,
+		esteems: 1,
+		waryof: 2,
+		proficiency: [POKE, SHOOT],
+		badat: SMASH,
+		startState: [
+			{ slot: EquipmentWeapon,   value: 3},
+			{ slot: EquipmentFootwear, value: 1},
+			{ slot: InventoryReagents, value: 1 },
+		],
+		description: "Proud, sometimes haughty, intellectuals",
+	}, {
+		name: "Gust",
+	}, {
 		name: "Parakeet",
 		badassname: "Triplikeet",
 		domain: PLAINS,
@@ -971,6 +961,9 @@ const MOBS = [
 	}
 ];
 
+DENIZENS.forEach((d, index) => {
+	if (d) define(d.name.replace(' ', '_'), index);
+});
 
 const MAP = [null,
 	{
@@ -988,7 +981,7 @@ const MAP = [null,
 	}, {
 		name: "Hohamp",
 		terrain: TOWN,
-		denizen: HARDWARF,
+		denizen: Hardwarf,
 		level: 0,
 	}, {
 		name: "Skiddo",
@@ -1002,7 +995,7 @@ const MAP = [null,
 	}, {
 		name: "Yar",
 		terrain: TOWN,
-		denizen: EELMAN,
+		denizen: Eelman,
 		level: 0,
 	}, {
 		name: "Deepni Woods",
@@ -1048,7 +1041,7 @@ const MAP = [null,
 	}, {
 		name: "Bompton",
 		terrain: TOWN,
-		denizen: DUNKLING,
+		denizen: Dunkling,
 		level: 0,
 
 	}, {
@@ -1062,7 +1055,7 @@ const MAP = [null,
 	}, {
 		name: "Pillary",
 		terrain: TOWN,
-		denizen: HARDWARF,
+		denizen: Hardwarf,
 		level: 0,
 	}, {
 		name: "Grein Hills",
@@ -1096,7 +1089,7 @@ const MAP = [null,
 	}, {
 		name: "Delial",
 		terrain: TOWN,
-		denizen: DUNKLING,
+		denizen: Dunkling,
 		level: 0,
 	}, {
 		name: "Solla Desert",
@@ -1106,7 +1099,7 @@ const MAP = [null,
 	}, {
 		name: "Cholar",
 		terrain: TOWN,
-		denizen: DUNKLING,
+		denizen: Dunkling,
 		level: 0,
 	}, {
 		name: "Ritoli Marsh",
@@ -1138,7 +1131,7 @@ const MAP = [null,
 		name: "Sygnon Tower",
 		neighbors: [37],
 		terrain: TOWN,
-		denizen: GUST,
+		denizen: Gust,
 		level: 0,
 	}];
 
@@ -1267,9 +1260,9 @@ class Game {
 	static generateMap = generateMap;
 	static generateDocumentation = generateDocumentation;
 
-	static SPECIES_NAMES = SPECIESES.map(r => (r && r.name) || '');
+	static SPECIES_NAMES = DENIZENS.map(r => (r && r.name) || '');
 	static TERRAIN_TYPES = TERRAIN_TYPES;
-	static MOBS = MOBS;
+	static DENIZENS = DENIZENS;
 	static MAP = MAP;
 	static mapInfo = mapInfo;
 	static EQUIPMENT_NAMES = [
@@ -1342,7 +1335,7 @@ class Game {
 		function battle(invulnerable=false) {
 			if (!state[MobType]) return -1;
 
-			let info = MOBS[state[MobType]];
+			let info = DENIZENS[state[MobType]];
 			if (!info) return -1;
 
 			if (info.esteemSlot)
@@ -1454,7 +1447,7 @@ class Game {
 
 			} else if (operation === startgame) {
 				let species = arg1;
-				let speciesinfo = SPECIESES[species];
+				let speciesinfo = DENIZENS[species];
 				if (!speciesinfo) return -1;
 
 				state[Species] = species;
@@ -1504,7 +1497,10 @@ class Game {
 		}
 
 		function randomMob() {
-			return d(MOBS.length - 1);
+			while (true) {
+				let mob = d(DENIZENS.length - 1);
+				if (DENIZENS[mob].hitdice) return mob;
+			}
 		}
 
 		function inventoryCapacity() {
@@ -1550,7 +1546,7 @@ class Game {
 
 		} else if (operation === melee) {
 			if (!state[MobType]) return -1;
-			passTime('Engaging this ' + MOBS[state[MobType]].name.toLowerCase() + ' in battle!', 1);
+			passTime('Engaging this ' + DENIZENS[state[MobType]].name.toLowerCase() + ' in battle!', 1);
 			return battle();
 
 		} else if (operation === buy) {
@@ -1783,7 +1779,7 @@ class Game {
 			for (let i = 0; i < 4; ++i) {
 				// location.mobtype;
 				let t = randomMob();
-				let l = MOBS[t].hitdice + d(2) - d(2);
+				let l = DENIZENS[t].hitdice + d(2) - d(2);
 				if (!state[MobType] || Math.abs(l - local.level) <
 										Math.abs(state[MobLevel] - local.level)) {
 					state[MobType] = t;

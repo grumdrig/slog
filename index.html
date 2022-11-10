@@ -582,8 +582,9 @@ function saveChanges() {
 window.addEventListener('unload', saveChanges);
 
 
-function comp() {
-	saveChanges();
+function comp(initialLoad) {
+	if (!initialLoad)
+		saveChanges();
 	$("#errors").innerHTML = '&nbsp;';
 	$("#errors").classList.remove("err");
 	try {
@@ -849,7 +850,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 		b.hint = description ?? '';
 	}
 
-	setTimeout(comp, 1);
+	setTimeout(_ => comp(true), 1);
 });
 
 $("#source").addEventListener('keypress', e => {
@@ -1135,7 +1136,7 @@ function updateCharacterSheet(state) {
 	set('locale', local ? local.name + ' #' + state[Location] : '');
 	set('terrain', (Game.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobType] ?
-		`${Game.MOBS[state[MobType]].name} (level ${state[MobLevel]})` : '');
+		`${Game.DENIZENS[state[MobType]].name} (level ${state[MobLevel]})` : '');
 	set('mobDamage', state[MobType] ? state[MobDamage] : '');
 
 	let questal = Game.mapInfo(state[QuestLocation], state);
@@ -1157,7 +1158,7 @@ function updateCharacterSheet(state) {
 		state[QuestObject] ?	`
 		Bring me ` + friendlySlotNames[SLOTS[state[QuestObject]].name] :
 		state[QuestMob] ?
-		`Exterminate the ` + plural(MOBS[state[QuestMob]].name) :
+		`Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questlocation', questal && (questal.name + ' #' + state[QuestLocation]) || '');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
