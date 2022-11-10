@@ -237,21 +237,21 @@ assert plusFive(v1) == v6
 checksp()
 
 func either(which) {
-  if which {
-    return 1
-  } else {
-    return 2
-  }
+	if which {
+		return 1
+	} else {
+		return 2
+	}
 }
 
 assert either(100) == 1
 assert either(0) == 2
 
 func unless(cond, what) {
-  if cond {
-    return 99
-  }
-  return what
+	if cond {
+		return 99
+	}
+	return what
 }
 
 assert unless(1,10) == 99
@@ -261,9 +261,9 @@ checksp()
 
 var glow = 4
 macro topMan(n) {
-  var glow = 9
-  glow += n
-  assert glow == 11
+	var glow = 9
+	glow += n
+	assert glow == 11
 }
 topMan(2)
 assert glow == 4
@@ -273,18 +273,18 @@ assert glow == 4
 
 var five = 5
 macro more(t) {
-  var u = t + 10
-  assert u == t + 10
-  //assert u[-1] == t
+	var u = t + 10
+	assert u == t + 10
+	//assert u[-1] == t
 }
 more(5)
 
 macro facto(n) {
-  if n > 1 {
-    return facto(n-1) * n
-  } else {
-    return 1
-  }
+	if n > 1 {
+		return facto(n-1) * n
+	} else {
+		return 1
+	}
 }
 assert facto(2) == 2
 assert facto(4) == 24
@@ -305,27 +305,27 @@ var var3 = [10, 20, 30]
 assert var3[1] == 20
 
 func f1(var4) {
-  var var5
-  var5 = var2 + 100
-  var1 = var4 + var5 + 1000
-  return var3
+	var var5
+	var5 = var2 + 100
+	var1 = var4 + var5 + 1000
+	return var3
 }
 
 assert f1(50) == 10  // yeah that's perverse
 assert var1 == 50 + 2 + 100 + 1000
 
 macro trace(addr) {
-  emit($800e, addr)  // 'fetch ^', addr
-  emit($8009)        // 'trace ^'
+	emit($800e, addr)  // 'fetch ^', addr
+	emit($8009)        // 'trace ^'
 }
 
 var1 = 1
 var2 = 2
 while (var1 < 2) {
-  var var2
-  var2 = 5
-  //trace(&var2)
-  var1 += var2
+	var var2
+	var2 = 5
+	//trace(&var2)
+	var1 += var2
 }
 
 checksp()
@@ -342,18 +342,18 @@ checksp()
 var what = 1
 var was = 4
 while what {
-  var what = 2
-  what = 3
-  was = 5
-  break
+	var what = 2
+	what = 3
+	was = 5
+	break
 }
 assert what == 1
 assert was == 5
 
 if what {
-  var what
-  what = 0
-  was = 6
+	var what
+	what = 0
+	was = 6
 }
 assert what == 1
 assert was == 6
@@ -361,10 +361,10 @@ assert was == 6
 checksp()
 
 func fresh(what) {
-  var was = 7
-  what = 8
-  was = 9
-  return what
+	var was = 7
+	what = 8
+	was = 9
+	return what
 }
 assert what == 1
 assert was == 6
@@ -389,13 +389,13 @@ assert &p4 - &p3 == 4
 assert &p5 - &p3 == 8
 
 func math(a, b) {
-  var c
-  var d
-  c = a
-  d = b
-  assert c == a
-  assert c[1] == b
-  assert a[-1] == b
+	var c
+	var d
+	c = a
+	d = b
+	assert c == a
+	assert c[1] == b
+	assert a[-1] == b
  }
 
  math(5,6)
@@ -406,8 +406,8 @@ func math(a, b) {
 
 
 func happy(n) {
-  var sad = "Misery"
-  return sad[n]
+	var sad = "Misery"
+	return sad[n]
 }
 assert happy(1) == 'i'
 assert happy(6) == 0

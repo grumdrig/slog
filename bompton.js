@@ -1452,6 +1452,7 @@ class Game {
 				state[Health] = state[MaxHealth] = 6 + CON();
 				state[Energy] = state[MaxEnergy] = 6 + INT();
 				actUp();
+				passTime('Loading', 1);
 
 				return 1;
 			}
