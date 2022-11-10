@@ -328,12 +328,16 @@ while (var1 < 2) {
 	var1 += var2
 }
 
-checksp()
-
 //trace(&var1)
 assert var1 == 6
 //trace(&var2)
 assert var2 == 2
+
+
+func fives(a) { return a * 5 }
+
+var ini = fives(3)
+assert ini == 15
 
 checksp()
 
@@ -379,12 +383,8 @@ while (count) {
 	increment += 1
 	count -= 1
 }
-var emergency = 911
-if sum != 10 {
-	trace(&emergency)
-	trace(&sum)
-}
-// I either need to disallow var decls in such spots or initialize them correctly
+assert sum == 10
+
 
 /////////////////
 // Pointers
@@ -445,6 +445,16 @@ var pb = 4
 
 assert &pb - &pa == 3
 
+// vectors are not reinitialized inside a loop
+var i = 0
+var r
+while i < 2 {
+	var a = [1]
+	r = a[0]
+	a[0] += 2
+	i += 1
+}
+assert r == 3
+
+
 checksp()
-
-

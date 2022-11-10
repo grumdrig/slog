@@ -194,53 +194,33 @@ class CompilationContext {
 
 	enclosingScope() { return this.function || (this.parent && this.parent.enclosingScope()) }
 
+	isInsideLoop() { return this.breakLabel || (this.parent && this.parent.isInsideLoop()) }
+
 	lookup(id) { return this.symbols[id] || (this.parent && this.parent.lookup(id)) }
 
-	defineConstant(identifier, value) {
+	_define(identifier, record) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
-		this.symbols[identifier] = { constant: true, value };
+		this.symbols[identifier] = record;
+	}
+
+	defineConstant(identifier, value) {
+		this._define(identifier, { constant: true, value });
 	}
 
 	defineAlias(identifier, value) {
-		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
-		this.symbols[identifier] = { alias: true, value };
+		this._define(identifier, { alias: true, value });
 	}
 
-	declareVariable(identifier, count, initializer) {
-		let scope = this.enclosingScope();
-		if (!scope) {
-			// global
-			let globalContext = this;
-			while (globalContext.parent) globalContext = globalContext.parent;
-			if (globalContext == this) {
-				// no need for an alias
-				globalContext.allocations.push({ label: identifier, count, initializer });
-				this.symbols[identifier] = { static: true };
-			} else {
-				let label = this.uniqueLabel(identifier);
-				globalContext.allocations.push({ label, count, initializer });
-				this.defineAlias(identifier, new IdentifierExpression(label));
-				globalContext.symbols[label] = { static: true };
-			}
-		} else {
-			// Stack declaration
-			// FP points at OLD_FP. Then come arguments, then local vars
+	declareStaticVariable(identifier, offset) {
+		this._define(identifier,	{ static: true });
+	}
 
-			if (Array.isArray(initializer)) {
-				if (initializer.length > 0)
-					this.emit('.stack ' + [...initializer].reverse().join(' '));
-			} else if (count > 0) {
-				this.emit(`.stack ${initializer || 0}${count !== 1 ? ' * ' + count : ''}  ; allocate ${identifier}`);
-			}
-
-			scope.allocated += count;
-
-			this.symbols[identifier] = { local: true, offset: -scope.allocated };
-		}
+	declareLocalVariable(identifier, offset) {
+		this._define(identifier, { local: true, offset });
 	}
 
 	declareFunction(declaration) {
-		this.symbols[declaration.name] = { function: declaration };
+		this._define(declaration.name, { function: declaration });
 	}
 
 	literalValue(expr) {
@@ -250,6 +230,7 @@ class CompilationContext {
 
 	emit(s) { this.parent ? this.parent.emit(s) : this.code.push(indent(s)) }
 
+	// TODO use it or lose it
 	emitLabel(l) { this.emit(l + ':') }
 
 	error(message) { throw new SemanticError(message) }
@@ -277,6 +258,7 @@ class Module {
 				result.constants.push(item);
 			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
+				result.statements.push(new Initialization(item));
 			} else if (item = MacroDefinition.tryParse(source)) {
 				result.macros.push(item);
 			} else if (item = FunctionDefinition.tryParse(source)) {
@@ -402,38 +384,78 @@ class VariableDeclaration {
 		if (this.initializer) {
 			let i = this.initializer.simplify(context);
 			if (i.members) {
-				initializer = i.members.map(m => m.value ?? context.error('literal vector initializer expected'));
-				if (this.count && count !== initializer.length)
+				if (this.count && count !== i.members.length)
 					context.error('vector length mismatch with initializer');
+				initializer = i.members.map(m => m.value ?? 0);
 				count = initializer.length;
+				if (i.members.filter(m => !m.isLiteral).length > 0) {
+					// this.dynamicInitializationNeeded = true;
+					context.error('vector initializers must be fixed values');
+					// More full-featured plan would be to go through and
+					// initialize all of them if inside a loop, or just
+					// the ones that need dynamic init if not.
+					// Short of that should possibly disallow vector init
+					// inside of a loop.
+				}
+			} else if (i.isLiteral) {
+				initializer = i.value;
+				if (context.isInsideLoop())
+					this.dynamicInitializationNeeded = true;
 			} else {
-				initializer = i.value ?? context.error('literal initializer expected');
+				initializer = 0;
+				this.dynamicInitializationNeeded = true;
 			}
 		}
-		//this.decl =
-		context.declareVariable(this.name, count, initializer);
+
+		let scope = context.enclosingScope();
+		if (!scope) {
+			// global
+			let globalContext = context;
+			while (globalContext.parent) globalContext = globalContext.parent;
+			if (globalContext == context) {
+				// no need for an alias
+				globalContext.allocations.push({ label: this.name, count, initializer });
+				context.declareStaticVariable(this.name, { static: true });
+			} else {
+				let label = context.uniqueLabel(this.name);
+				globalContext.allocations.push({ label, count, initializer });
+				context.defineAlias(this.name, new IdentifierExpression(label));
+				globalContext.declareStaticVariable(label, { static: true });
+			}
+		} else {
+			// Stack declaration
+			// FP points at OLD_FP. Then come arguments, then local vars
+
+			if (Array.isArray(initializer)) {
+				if (initializer.length > 0)
+					context.emit('.stack ' + [...initializer].reverse().join(' '));
+			} else if (count > 0) {
+				context.emit(`.stack ${initializer || 0}${count !== 1 ? ' * ' + count : ''}  ; allocate ${this.name}`);
+			}
+
+			scope.allocated += count;
+			context.declareLocalVariable(this.name, -scope.allocated);
+		}
 	}
 
-	/*
-	allocate(context) {
-		if (this.decl.static) {
-			// Global declaration
-			context.emit(this.decl.identifier + ':');
-			if (Array.isArray(this.decl.initializer)) {
-				if (this.decl.initializer.length > 0)
-					context.emit('.data ' + this.decl.initializer.join(' ') + '  ; ' + this.decl.identifier);
-			} else {
-				if (this.decl.count > 0)
-					context.emit('.data ' + (this.decl.initializer || 0) + (this.decl.count == 1 ? '' : ' * ' + this.decl.count) + '  ; ' + this.decl.identifier);
-			}
-			context.emit('');
-		} else if (this.decl.local) {
-			context.emit(`.stack ${this.decl.initializer || 0}${this.decl.count !== 1 ? '*' + this.decl.count : ''}  ; allocate ${this.decl.identifier}`);
-		} else {
-			throw "I don't know what";
+	initialize(context) {
+		if (this.dynamicInitializationNeeded) {
+			this.initializer.simplify(context).generate(context);
+			new IdentifierExpression(this.name).simplify(context).generateAddress(context);
+			context.emit('store');
 		}
 	}
-	*/
+}
+
+
+class Initialization {
+	decl;
+
+	constructor(decl) { this.decl = decl }
+
+	generate(context) {
+		this.decl.initialize(context);
+	}
 }
 
 
@@ -554,6 +576,7 @@ class CodeBlock {
 				result.constants.push(item);
 			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
+				result.statements.push(new Initialization(item));
 			} else {
 				result.statements.push(Statement.parse(source));
 			}
