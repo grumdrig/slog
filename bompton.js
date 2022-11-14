@@ -1,4 +1,6 @@
-// PQAsm
+// Bompton Island: A Progress Quest Slot module
+
+const GR = 0.5 + Math.sqrt(5) / 2;
 
 const SLOTS = [
 	{ name: 'GameOver',
@@ -368,7 +370,7 @@ for (let call in CALLS) {
 
 
 const HOURS_PER_DAY = 24;
-const DAYS_PER_MONTH = 32;
+const DAYS_PER_MONTH = 30;
 const MONTHS_PER_YEAR = 12;
 const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
 
@@ -465,7 +467,7 @@ const SPELLS = [ null, {
 			],
 		effect: state => {
 			let healing = 1;
-			healing *= Math.pow(1.6, state[StatWisdom]);
+			healing *= Math.pow(GR, state[StatWisdom]);
 			healing = Math.round(healing);
 			healing = Math.min(healing, state[MaxHealth] - state[Health]);
 			state[Health] += healing;
@@ -740,6 +742,7 @@ const HEADGEAR_NAMES = ['',
 	'+3 Horned Helm',
 	'+4 Disruption Helm',
 	'+5 Apocalypse Cap'];
+const NUM_HEADGEAR = HEADGEAR_NAMES.length - 1;
 
 const ARMOR_NAMES = ['',
 	'Clothing',
@@ -754,6 +757,7 @@ const ARMOR_NAMES = ['',
 	'+4 Phase Armor',
 	'+5 Midnight Plate',
 	'+6 Horrorplate'];
+const NUM_ARMOR = ARMOR_NAMES.length - 1;
 
 const SHIELD_NAMES = ['',
 	'Cookie Sheet',
@@ -791,6 +795,38 @@ const MOUNT_NAMES = ['',
 	'+4 Firehorse',
 	'+5 Kelpie'];
 
+
+const DATABASE = [];
+DATABASE[EquipmentWeapon] = {
+	names: WEAPON_NAMES,
+	count: WEAPON_NAMES.length - 1,
+	basePrice: 15,
+};
+DATABASE[EquipmentHeadgear] = {
+	names: HEADGEAR_NAMES,
+	count: HEADGEAR_NAMES.length - 1,
+	basePrice: 10,
+};
+DATABASE[EquipmentArmor] = {
+	names: ARMOR_NAMES,
+	count: ARMOR_NAMES.length - 1,
+	basePrice: 20,
+};
+DATABASE[EquipmentShield] = {
+	names: SHIELD_NAMES,
+	count: SHIELD_NAMES.length - 1,
+	basePrice: 10,
+};
+DATABASE[EquipmentFootwear] = {
+	names: FOOTWEAR_NAMES,
+	count: FOOTWEAR_NAMES.length - 1,
+	basePrice: 10,
+};
+DATABASE[EquipmentMount] = {
+	names: MOUNT_NAMES,
+	count: MOUNT_NAMES.length - 1,
+	basePrice: 20,
+};
 
 
 ///////////////// Map
@@ -1043,6 +1079,7 @@ const MAP = [null,
 		terrain: TOWN,
 		denizen: Dunkling,
 		level: 0,
+		hasBank: true,
 
 	}, {
 		name: "Terfu Plain",
@@ -1127,15 +1164,58 @@ const MAP = [null,
 		neighbors: [38],
 		terrain: MOUNTAINS,
 		level: 9,
+		offshore: true,
 	}, {
 		name: "Sygnon Tower",
 		neighbors: [37],
 		terrain: TOWN,
 		denizen: Gust,
 		level: 0,
+		offshore: true,
 	}];
 
-const BOMPTON_TOWN = 18;
+const MAINLAND_TOWNS = [];
+
+MAP.forEach((tile,index) => {
+	if (tile) {
+		if (tile.terrain === TOWN) {
+			tile.forSale = [];
+			if (!tile.offshore)
+				MAINLAND_TOWNS.push(index);
+		}
+		define(tile.name.toUpperCase().replace(' ', '_'), index);
+	}
+});
+
+// Make items available for sale
+let nextTown = 0;
+function sellAt(slot, item, coord) {
+	MAP[coord].forSale.push({ slot, item });
+}
+for (let slot = EQUIPMENT_0; slot < EQUIPMENT_0 + EQUIPMENT_COUNT; slot += 1) {
+	let db = DATABASE[slot];
+	if (db) {
+		for (let item = 1; item <= db.count; ++item) {
+			let power = item;
+			let maxPower = db.count;
+			if (slot === EquipmentWeapon) {
+				power = weaponPower(item);
+				maxPower /= NUM_WEAPON_TYPES;
+			}
+			if (power <= 2) {
+				for (let t = 0; t < MAINLAND_TOWNS.length; ++t) {
+					sellAt(slot, item, MAINLAND_TOWNS[t]);
+				}
+			} else if (power == maxPower) {
+				sellAt(slot, item, SYGNON_TOWER);
+			} else {
+				sellAt(slot, item, MAINLAND_TOWNS[nextTown]);
+				nextTown = (nextTown + 1) % MAINLAND_TOWNS.length;
+			}
+		}
+	}
+}
+
 
 function longitude(location) { return location > 36 ? 8 : (location - 1) % 6; }
 function latitude(location) { return location > 36 ? location - 34 : ((location - 1) / 6) >> 0; }
@@ -1201,28 +1281,27 @@ function carryCapacity(state) {
 	return state[StatStrength] + state[EquipmentMount];
 }
 
-const INVENTORY_INFO = [];
-INVENTORY_INFO[InventoryGold] =        { value: 1, weight: 1/256 };
-INVENTORY_INFO[InventorySpoils] =      { value: 1, weight: 1 };
-INVENTORY_INFO[InventoryReagents] =    { value: 1, weight: 1 };
-INVENTORY_INFO[InventoryResources] =   { value: 1, weight: 1 };
-INVENTORY_INFO[InventoryFood] =        { value: 1, weight: 1 };
-INVENTORY_INFO[InventoryTreasures] =   { value: 1000, weight: 3 };
-INVENTORY_INFO[InventoryPotions] = 	   { value: 1, weight: 1 };
-INVENTORY_INFO[InventoryLifePotions] = { value: 1, weight: 1 };
+DATABASE[InventoryGold] =        { value: 1, weight: 1/256 };
+DATABASE[InventorySpoils] =      { value: 1, weight: 1 };
+DATABASE[InventoryReagents] =    { value: 1, weight: 1 };
+DATABASE[InventoryResources] =   { value: 1, weight: 1 };
+DATABASE[InventoryFood] =        { value: 1, weight: 1 };
+DATABASE[InventoryTreasures] =   { value: 1000, weight: 3 };
+DATABASE[InventoryPotions] = 	 { value: 1, weight: 1 };
+DATABASE[InventoryLifePotions] = { value: 1, weight: 1 };
 
 
 function encumbrance(state) {
 	let result = 0
 	for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
-		result += INVENTORY_INFO[i].weight * state[i];
+		result += DATABASE[i].weight * state[i];
 	}
 	return Math.floor(result);
 }
 
 function roomFor(item, state) {
 	let available = carryCapacity(state) - encumbrance(state);
-	return Math.floor(available / INVENTORY_INFO[item].weight);
+	return Math.floor(available / DATABASE[item].weight);
 }
 
 function armorClass(state) {
@@ -1265,13 +1344,7 @@ class Game {
 	static DENIZENS = DENIZENS;
 	static MAP = MAP;
 	static mapInfo = mapInfo;
-	static EQUIPMENT_NAMES = [
-		WEAPON_NAMES,
-		ARMOR_NAMES,
-		SHIELD_NAMES,
-		HEADGEAR_NAMES,
-		FOOTWEAR_NAMES,
-		MOUNT_NAMES];
+	static DATABASE = DATABASE;
 
 	static dumpState(state) {
 		for (let i = 0; i < SLOTS.length; ++i)
@@ -1448,7 +1521,7 @@ class Game {
 					state[slot] = value ?? (state[slot] + increment)
 
 				state[Level] = 1;
-				state[Location] = BOMPTON_TOWN;
+				state[Location] = BOMPTON;
 				state[Health] = state[MaxHealth] = 6 + state[StatConstitution];
 				state[Energy] = state[MaxEnergy] = 6 + state[StatIntelligence];
 				actUp();
@@ -1536,20 +1609,28 @@ class Game {
 
 		} else if (operation === buy) {
 			let slot = arg1;
-			let qty, levelToBe, capacity;
+			if (!local.forSale) return -1;  // nothing to buy here
+			let qty, levelToBe, capacity, price;
 			if (isEquipmentSlot(slot)) {
 				qty = 1;
 				levelToBe = arg2;
 				capacity = state[slot] ? 0 : 1;
+				if (local.forSale.filter(fsi => fsi.slot === slot &&
+					                             fsi.item == levelToBe).length === 0)
+					return -1;
+				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
+				price = Math.round(DATABASE[slot].basePrice * Math.exp(GR, levelToBe));
 			} else if (isInventorySlot(slot)) {
 				qty = arg2;
 				levelToBe = state[slot] + qty;
 				capacity = carryCapacity(state) - encumbrance(state);
+				price = DATABASE[slot].value;
 			} else {
 				return -1;
 			}
-			let price = local.price[slot];
-			if (!price) return -1;  // Make sure it's available here
+
+			// TODO: consider local effect on price
+			// TODO: consider charisma
 
 			if (arg2 === 0) {
 				// It's a price check only
@@ -1558,11 +1639,11 @@ class Game {
 			}
 
 			price *= qty;
-			if (state[GOLD] < price) return -1;  // Can't afford it
+			if (state[InventoryGold] < price) return -1;  // Can't afford it
 			if (capacity < qty) return -1;  // No room
 
 			// You may proceed with the purchase
-			state[GOLD] -= price;
+			state[InventoryGold] -= price;
 			state[slot] = levelToBe;
 			passTime('Buying some ' + itemsName(slot), 3);
 			return qty;
@@ -1575,10 +1656,10 @@ class Game {
 				unitValue = state[slot];
 				if (!unitValue) return -1;
 				if (slot === EquipmentWeapon) unitValue = weaponPower(unitValue);
-				unitValue = Math.round(Math.pow(1.6, unitValue));
+				unitValue = Math.round(Math.pow(GR, unitValue));
 			} else if (isInventorySlot(slot)) {
 				qty = Math.min(qty, state[slot]);
-				unitValue = INVENTORY_INFO[slot].value;
+				unitValue = DATABASE[slot].value;
 			} else {
 				return -1;
 			}
@@ -1607,7 +1688,7 @@ class Game {
 			const isDeposit = (operation === deposit);
 
 			if (qty < 0) return -1;  // nice try hacker
-			if (state[Location] != BOMPTON_TOWN) return -1;  // you're not at the bank
+			if (state[Location].hasBank) return -1;  // you're not at the bank
 
 			if (state[InventoryGold] + state[BalanceGold] <= 0)
 				return -1;  // Can't afford it
@@ -1696,7 +1777,7 @@ class Game {
 			if (!isStatSlot(slot)) return -1;
 			if (state[slot] >= 99) return 0;
 			let hours = 24;
-			hours *= Math.pow(1.6, state[slot]);
+			hours *= Math.pow(GR, state[slot]);
 			hours *= 10 / (10 + state[StatWisdom]);
 			// TODO: town stat-learning bonuses
 			// TODO: racial stat-learning bonuses
@@ -1711,7 +1792,7 @@ class Game {
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot)) return -1;
 			let hours = 24;
-			hours *= Math.pow(1.6, spell.level);
+			hours *= Math.pow(GR, spell.level);
 			hours *= 10 / (10 + state[StatWisdom]);
 			// TODO: town spell-learning bonuses?
 			// TODO: racial spell-learning bonuses?
@@ -1841,13 +1922,13 @@ class Game {
 	}
 
 	static xpNeededForLevel(level) {
-		return 0 + Math.floor(Math.pow(level - 1, 1.6)) * 200;
+		return 0 + Math.floor(Math.pow(level - 1, GR)) * 200;
 	}
 
 }
 
 function additiveStatBonus(stat) {
-	return Math.round(Math.pow(1.6, stat)) - 1;
+	return Math.round(Math.pow(GR, stat)) - 1;
 }
 
 if (typeof exports !== 'undefined') {

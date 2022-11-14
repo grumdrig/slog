@@ -1098,7 +1098,6 @@ function updateCharacterSheet(state) {
 	}
 
 	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
-		const names = Game.EQUIPMENT_NAMES[i] || [];
 		let slot = EQUIPMENT_0 + i;
 		let v = state[slot];
 		if (!v)
@@ -1107,8 +1106,10 @@ function updateCharacterSheet(state) {
 			set('e' + i, 'Ring of ' + SLOTS[v].name);
 		else if (slot === EquipmentTotem)
 			set('e' + i, Game.MAP[v].name.split(' ')[0] + ' Totem');
-		else
+		else {
+			const names = (Game.DATABASE[slot] ?? {}).names;
 			set('e' + i, names[v] || v);
+		}
 	}
 	set('armorClass', state[ArmorClass]);
 
