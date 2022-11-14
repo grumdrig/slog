@@ -1272,7 +1272,7 @@ class BinaryExpression {
 			},
 		},
 
-		'&&': {
+		'and': {
 			precedence: 11,
 			precompute: (x,y) => x && y,
 			generate: (context, lhs, rhs) => {
@@ -1286,17 +1286,17 @@ class BinaryExpression {
 				context.emit(cutLabel + ':');
 			},
 		},
-		'^^': {
+		'xor': {
 			precedence: 12,
 			precompute: (x,y) => ((!y && x) || (!x && y)) || 0,
 			generate: (context, lhs, rhs) => {
 				lhs.generate(context);
 				rhs.generate(context);
-				context.emit('xor  ; ^^');
+				context.emit('xor  ; xor');
 				context.emit('swap AX');
 			},
 		},
-		'||': {
+		'or': {
 			precedence: 13,
 			precompute: (x,y) => x || y,
 			generate: (context, lhs, rhs) => {

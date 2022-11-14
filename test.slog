@@ -77,9 +77,9 @@ assert v3 >? v3 == v3
 
 assert 5 - 3 - 1 == 1
 assert v5 - v3 - v1 == v1
-assert 3 || 0 && 5 == 5
-assert 3 || 0 && 5 == 5
-assert v3 || v0 && v5 == v5
+assert 3 or 0 and 5 == 5
+assert 3 or 0 and 5 == 5
+assert v3 or v0 and v5 == v5
 
 x = 1
 y = 2
@@ -121,27 +121,27 @@ checksp()
 
 // Logical operators
 
-assert (6 && 3) == 3
-assert !(0 && 3)
-assert !(6 ^^ 3)
-assert !(0 ^^ 0)
-assert (0 ^^ 3) == 3
-assert (2 ^^ 0) == 2
-assert (6 || 3) == 6
-assert (0 || 3) == 3
-assert !(0 || 0)
+assert (6 and 3) == 3
+assert !(0 and 3)
+assert !(6 xor 3)
+assert !(0 xor 0)
+assert (0 xor 3) == 3
+assert (2 xor 0) == 2
+assert (6 or 3) == 6
+assert (0 or 3) == 3
+assert !(0 or 0)
 
 checksp()
 
-assert (v6 && v3) == v3
-assert !(v0 && v3)
-assert !(v6 ^^ v3)
-assert !(v0 ^^ v0)
-assert (v0 ^^ v3) == v3
-assert (v2 ^^ v0) == v2
-assert (v6 || v3) == v6
-assert (v0 || v3) == v3
-assert !(v0 || v0)
+assert (v6 and v3) == v3
+assert !(v0 and v3)
+assert !(v6 xor v3)
+assert !(v0 xor v0)
+assert (v0 xor v3) == v3
+assert (v2 xor v0) == v2
+assert (v6 or v3) == v6
+assert (v0 or v3) == v3
+assert !(v0 or v0)
 
 checksp()
 
@@ -154,11 +154,11 @@ func incX(r) {
 }
 incX(0)
 assert x == 1
-assert incX(1) || incX(1)
+assert incX(1) or incX(1)
 assert x == 2
-assert incX(1) && incX(1)
+assert incX(1) and incX(1)
 assert x == 4
-assert !(incX(0) && incX(1))
+assert !(incX(0) and incX(1))
 assert x == 5
 
 checksp()
@@ -227,7 +227,7 @@ checksp()
 // Functions & scope
 ///////////////////
 
-func factorial(n) (n <= 1 && 1) || n * factorial(n - 1)
+func factorial(n) (n <= 1 and 1) or n * factorial(n - 1)
 assert factorial(3) == 6
 
 macro plusFive(v) v + 5

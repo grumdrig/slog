@@ -34,11 +34,11 @@ func goodHunting(forLevel) {
 while .Level < 88 {
   goto(goodHunting(.Level))
   raids += 1
-  while .Health >= (2 * .MaxHealth / 3) { // && .Encumbrance < .Capacity {
-    while !.MobType || .MobLevel > .Level {
+  while .Health >= (2 * .MaxHealth / 3) { // and .Encumbrance < .Capacity {
+    while !.MobType or .MobLevel > .Level {
       hunt()
     }
-    while .MobType && .Health >= (.MaxHealth / 3) {
+    while .MobType and .Health >= (.MaxHealth / 3) {
       melee()
     }
     while .Health < .MaxHealth {

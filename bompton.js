@@ -1763,7 +1763,15 @@ class Game {
 			state[MobDamage] = 0;
 			for (let i = 0; i < 4; ++i) {
 				// location.mobtype;
-				let t = randomMob();
+				let t = irand(6);
+				if (t === 0 && local.denizen) {
+					t = local.mobType;
+				} else if (t === 1 && state[QuestMob] &&
+							state[QuestLocation] === state[Location]) {
+					t = state[QuestMob];
+				} else {
+					t = randomMob();
+				}
 				let l = DENIZENS[t].hitdice + d(2) - d(2);
 				if (!state[MobType] || Math.abs(l - local.level) <
 										Math.abs(state[MobLevel] - local.level)) {
