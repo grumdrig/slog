@@ -1173,15 +1173,15 @@ function updateCharacterSheet(state) {
 	set('gameprogress', `${Math.round(100 * Math.max(0, state[Act] - 1) / 10)}%`);
 	setBar('gameprogress', state[Act] - 1, 10);
 
-	if (state[GameOver] === 0x401) {
+	if (state[GameOver] === 401) {
 			TASK = 'Game over. Character has retired.';
-	} else if (state[GameOver] === 0xEEE) {
+	} else if (state[GameOver] === 333) {
 			TASK = 'Game over. Simulation has crashed!';
-	} else if (state[GameOver] === 0xA9E) {
+	} else if (state[GameOver] === 100) {
 			TASK = 'Game over. Character has aged out.';
-	} else if (state[GameOver] === 0xDED) {
+	} else if (state[GameOver] === 86) {
 			TASK = 'Game over. You died.';
-	} else if (state[GameOver] === 0x1) {
+	} else if (state[GameOver] === 1) {
 			TASK = 'Game complete! Victory!';
 	} else if (state[GameOver]) {
 			TASK = 'Game over!';

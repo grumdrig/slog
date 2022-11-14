@@ -512,7 +512,7 @@ const SPELLS = [ null, {
 			{ slot: InventoryReagents, qty: 10 },
 			],
 		effect: state => {
-			return state[YEAR] = 0;
+			return state[Years] = 0;
 		},
 		description: `Go back to when this crazy adventure all started. You get to keep your stuff though.`,
 	}, {
@@ -1303,8 +1303,7 @@ class Game {
 		let arg1 = args[0];
 		let arg2 = args[1];
 
-		let seed = hash(state[Seed], 0x5EED, operation, ...args);
-		state[Seed] = seed;
+		let seed = hash(state[Seed], 0x5EED, state[Years], state[Hours], operation, ...args);
 
 		// seed and key are integers on [0, 0x7fffffff]
 		// result is real on [0, 1)
@@ -1324,13 +1323,6 @@ class Game {
 		function d(pips) { return irand(pips) + 1 }
 
 		function randomPick(a) { return a[irand(a.length)] }
-
-		function STR() { return state[StatConstitution] }
-		function DEX() { return state[StatAgility] }
-		function CON() { return state[StatConstitution] }
-		function INT() { return state[StatIntelligence] }
-		function WIS() { return state[StatWisdom] }
-		function CHA() { return state[StatCharisma] }
 
 		function battle(invulnerable=false) {
 			if (!state[MobType]) return -1;
@@ -1363,19 +1355,12 @@ class Game {
 				}
 			}
 
-			function STR() { return state[StatConstitution] }
-			function DEX() { return state[StatAgility] }
-			function CON() { return state[StatConstitution] }
-			function INT() { return state[StatIntelligence] }
-			function WIS() { return state[StatWisdom] }
-			function CHA() { return state[StatCharisma] }
+			const playerAttack = state[StatAgility] + weaponPower(state[EquipmentWeapon]);
 
-			const playerAttack = DEX() + weaponPower(state[EquipmentWeapon]);
+			let dealtToMob = rollAttack(state[StatAgility], mobDefense, state[StatStrength]);
+			let dealtToPlayer = rollAttack(mobOffsense, state[StatAgility], mobSharpness);
 
-			let dealtToMob = rollAttack(DEX(), mobDefense, STR());
-			let dealtToPlayer = rollAttack(mobOffsense, DEX(), mobSharpness);
-
-			if (DEX() + d(6) >= mobLevel + d(6)) {
+			if (state[StatAgility] + d(6) >= mobLevel + d(6)) {
 				// Player attacks first
 				state[MobDamage] += dealtToMob;
 				if (state[MobDamage] < mobMaxHP) {
@@ -1464,8 +1449,8 @@ class Game {
 
 				state[Level] = 1;
 				state[Location] = BOMPTON_TOWN;
-				state[Health] = state[MaxHealth] = 6 + CON();
-				state[Energy] = state[MaxEnergy] = 6 + INT();
+				state[Health] = state[MaxHealth] = 6 + state[StatConstitution];
+				state[Energy] = state[MaxEnergy] = 6 + state[StatIntelligence];
 				actUp();
 				passTime('Loading', 1);
 
@@ -1531,7 +1516,7 @@ class Game {
 				if (!remote) return -1;  // but shouldn't happen
 			}
 			let hours = 24;
-			let travelspeed = (CON() + state[EquipmentMount]) / 5;
+			let travelspeed = (state[StatConstitution] + state[EquipmentMount]) / 5;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			hours = Math.round(hours / travelspeed);
@@ -1791,13 +1776,13 @@ class Game {
 
 		} else if (operation === rest) {
 			passTime('Resting up', 0, 1);
-			let hp = d(CON());
+			let hp = d(state[StatConstitution]);
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rand() * rand());
 			hp = Math.min(hp, state[MaxHealth] - state[Health]);
 			state[Health] += hp;
 
-			let mp = d(WIS());
+			let mp = d(state[StatWisdom]);
 			if (local.terrain !== TOWN)
 				mp = Math.round(mp * rand() * rand());
 			mp = Math.min(mp, state[MaxEnergy] - state[Energy]);
@@ -1810,7 +1795,7 @@ class Game {
 			let qty;
 			if (target === EquipmentTotem) {
 				passTime('Seeking the local totem', 6);
-				if (d(20) <= INT()) {
+				if (d(20) <= state[StatIntelligence]) {
 					state[EquipmentTotem] = state[Location];
 					return 1;
 				} else {
