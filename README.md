@@ -646,3 +646,65 @@ without food. Starving is no fun.
 | Resou | 1/10  |  1 | Forage, not useful
 
 
+Players Guide
+-------------
+
+Welcome to Progress Quest Slog.
+
+As a player of Progress Quest Slog, you will be granted an avatar to carry out
+your will in the game world. This avatar will experience a series of
+adventures which culminate, ideally, in saving their home, Bompton Island,
+from the nearby evil prescence which has been making things worse on the
+island for some time.
+
+You means of doing so are through giving your adventurer very explicit
+instructions on how to proceed. Said adventurer is willing and loyal, and
+holds much potential, but is also pendantic to a fault. They will not stray
+from your instructions.
+
+The mental state of your avatar is represented by the Slog Virtual Machine
+(SVM), which processes its instructions, in the form of machine code, and
+acts on them, We might call these instructions a "program".
+
+The SVM is documented in some detail, but the player will probably not need to
+know most of that. Instead the program can be produced by compiling a
+higher-level language called Slog, using the slog compiler. (Of course it
+would be possible to compile other languages to provide code suitable for the
+SVM.)
+
+The program interacts with the game code in two ways. There is a `state`
+vector, which is a number of integers, which fully describes the game state
+at any particular moment. For example, your character, as in most RPGs, has a
+level (a general assement of overall development) that starts at one and may
+climb in value as the game progresses. It's index in the state vector is
+designated `Level`, and the character's current level may be accessed in a
+program by prefixing the `.` operator to that index, i.e., by `.Level`.
+
+Similarly, to give some other examples, the character's currest strength
+rating is `.Strength`, and current location is `.Location`.
+
+The other interfaces with the game world from within a character program are a
+number of functions which may be called to take some game action. For
+example, the `travel` function is used to change location, so this statement
+would move towards or into Iperko Forest:
+
+	travel(IperkoForest)
+
+Likewise, to sell five potions:
+
+	sell(InventoryPotions, 5)
+
+Each such action takes some amount of time, and it would behoove the player
+not to waste any, as time available to save Bompton Island is limited.
+
+The game takes place in nine acts, which are advanced by completing quests. In
+the final act, the quests, as they are completed, will cause the character to
+be transported to Sygnon Isle, to encounter and hopefully defeat the final
+boss.
+
+
+Basic PQ
+--------
+
+What if I just reproduce PQ basically as-is?
+

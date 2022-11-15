@@ -86,44 +86,34 @@ const SLOTS = [
 
 
 	{ name: 'EquipmentWeapon',
-
-	  description: `` },
+	  description: `The weapon is used for causing damage to one's foe.` },
 
 	{ name: 'EquipmentArmor',
-
-	  description: `` },
+	  description: `Armor is worn on the body to protect it from damage.` },
 
 	{ name: 'EquipmentShield',
-
-	  description: `` },
+	  description: `A shield may be held to deflect blows from one's oppenent's attacks.` },
 
 	{ name: 'EquipmentHeadgear',
-
-	  description: `` },
+	  description: `Helments and other headgear help protect the head from physical trauma.` },
 
 	{ name: 'EquipmentFootwear',
-
-	  description: `` },
+	  description: `The feet and lower legs may be protected with good footwear choices.` },
 
 	{ name: 'EquipmentMount',
-
-	  description: `` },
+	  description: `Adventurers use mounts to improve their travel speed and carrying capacity.` },
 
 	{ name: 'EquipmentRing',
-
-	  description: `` },
+	  description: `Rings can serve for decoration, and may also be imbued with magical powers.` },
 
 	{ name: 'EquipmentTotem',
-
-	  description: `` },
+	  description: `Totems are local to specific areas and may play a part in various quests.` },
 
 
 	{ name: 'InventoryGold',
-
-	  description: `` },
+	  description: `Gold coins are the common medium of value storage and exchange.` },
 
 	{ name: 'InventorySpoils',
-
 	  description: `` },
 
 	{ name: 'InventoryReagents',
@@ -152,8 +142,7 @@ const SLOTS = [
 
 
 	{ name: 'Location',
-
-	  description: `` },
+	  description: `The localities of Bompton Island are numbered from one to thirty-eight.` },
 
 	{ name: 'MobType',
 
