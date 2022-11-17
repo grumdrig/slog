@@ -459,7 +459,7 @@ const SPELLS = [ null, {
 			healing *= Math.pow(GR, state[StatWisdom]);
 			healing = Math.round(healing);
 			healing = Math.min(healing, state[MaxHealth] - state[Health]);
-			state[Health] += healing;
+			inc(Health, healing);
 			return healing;
 		},
 		description: `Heal some or all of any damage you may have sustained.
@@ -487,9 +487,9 @@ const SPELLS = [ null, {
 		duration: 24,
 		effect: state => {
 			let winnings = Math.min(roomFor(InventoryGold, state), state[InventoryGold]);
-			return state[InventoryGold] += winnings;
+			return inc(InventoryGold, winnings);
 		},
-		description: `Double. Your. Money.... Overnight!`,
+		description: `Double. Your. Money.... Overnight! <sup>*</sup>Terms and conditions apply. Doubling is limited by cargo capacity.`,
 	}, {
 		name: 'Delta P',
 		moniker: 'DELTA_P',
@@ -1424,23 +1424,23 @@ class Game {
 
 			if (state[StatAgility] + d(6) >= mobLevel + d(6)) {
 				// Player attacks first
-				state[MobDamage] += dealtToMob;
+				inc(MobDamage, dealtToMob);
 				if (state[MobDamage] < mobMaxHP) {
-					state[Health] -= Math.min(dealtToPlayer, state[Health]);
+					inc(Health, -Math.min(dealtToPlayer, state[Health]));
 				}
 			} else {
-				state[Health] -= Math.min(dealtToPlayer, state[Health]);
+				inc(Health, -Math.min(dealtToPlayer, state[Health]));
 				if (state[Health] > 0) {
-					state[MobDamage] += dealtToMob;
+					inc(MobDamage, dealtToMob);
 				}
 			}
 
 			let levelDisadvantage = state[MobLevel] - state[Level];
 			if (state[MobDamage] >= mobMaxHP) {
-				state[Experience] += 10 * state[MobLevel] * Math.pow(1.5, levelDisadvantage);
+				inc(Experience, 10 * state[MobLevel] * Math.pow(1.5, levelDisadvantage));
 				let ndrops = Math.min(1, carryCapacity(state));
-				state[InventorySpoils] += ndrops;
-				if (state[MobType] == state[QuestMob]) state[QuestProgress] += 1;
+				inc(InventorySpoils, ndrops);
+				if (state[MobType] == state[QuestMob]) inc(QuestProgress, 1);
 				state[MobDamage] = 0;
 				state[MobType] = 0;
 				state[MobLevel] = 0;
@@ -1448,7 +1448,7 @@ class Game {
 
 			if (state[Health] <= 0) {
 				if (state[InventoryLifePotions] > 0) {
-					state[InventoryLifePotions] -= 1;
+					inc(InventoryLifePotions, -1);
 					state[Health] = 1;  // or max health?
 				} else {
 					// dead. now what?
@@ -1461,7 +1461,7 @@ class Game {
 
 		function actUp() {
 			if (state[ActProgress] >= state[ActDuration]) {
-				state[Act] += 1;
+				inc(Act, 1);
 				const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
 				state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
 				state[ActProgress] = 0;
@@ -1504,7 +1504,7 @@ class Game {
 
 				// Have to add two to keep from going negative
 				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
-					state[stat] += 2;
+					inc(stat, 2);
 
 				for (let { slot, increment, value } of speciesinfo.startState ?? [])
 					state[slot] = value ?? (state[slot] + increment)
@@ -1530,10 +1530,10 @@ class Game {
 			TASK = task;  // TODO this is inelegant
 			if (TASK[TASK.length - 1] !== '.') TASK += '...';
 			if (days) hours += HOURS_PER_DAY * days;
-			state[Hours] += hours;
+			inc(Hours, hours);
 			while (state[Hours] > HOURS_PER_YEAR) {
-				state[Hours] -= HOURS_PER_YEAR;
-				state[Years] += 1;
+				inc(Hours, -HOURS_PER_YEAR);
+				inc(Years, 1);
 			}
 		}
 
@@ -1550,11 +1550,37 @@ class Game {
 			}
 		}
 
+		function randomMobNearLevel(goal, repeats=4) {
+			let type = randomMob();
+			let level = DENIZENS[type].hitdice + d(2) - d(2);
+			for (let i = 0; i < repeats; ++i) {
+				let t = randomMob();
+				let l = DENIZENS[t].hitdice + d(2) - d(2);
+
+				if (Math.abs(l - goal) < Math.abs(level - goal)) {
+					type = t;
+					level = l;
+				}
+			}
+			return { type, level };
+		}
+
+
 		function inventoryCapacity() {
 			return Math.max(0, carryCapacity(state) - encumbrance(state));
 		}
 
+		function inc(slot, qty) {
+			const MIN_INT = -0x8000;
+			const MAX_INT =  0x7FFF;
+			return state[slot] = Math.min(MAX_INT, Math.max(MIN_INT, state[slot] + qty));
+		}
+
+		function dec(slot, qty) { return inc(slot, -qty) }
+
+
 		if (operation === travel) {
+			if (state[Encumbrance] > state[Capacity] * 1.5) return -1; // vastly over-encumbered
 			let destination = arg1;
 			if (destination === state[Location]) return 0;
 			let remote = mapInfo(destination, state);
@@ -1581,6 +1607,7 @@ class Game {
 			let travelspeed = (state[StatConstitution] + state[EquipmentMount]) / 5;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
+			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
 			hours = Math.round(hours / travelspeed);
 			state[Location] = destination;
 			state[MobType] = 0;
@@ -1632,7 +1659,7 @@ class Game {
 			if (capacity < qty) return -1;  // No room
 
 			// You may proceed with the purchase
-			state[InventoryGold] -= price;
+			inc(InventoryGold, -price);
 			state[slot] = levelToBe;
 			passTime('Buying some ' + itemsName(slot), 3);
 			return qty;
@@ -1655,12 +1682,12 @@ class Game {
 			if (qty <= 0) return -1;
 			let price = qty * 0.5 * unitValue;
 			if (operation === sell) {
-				state[InventoryGold] += Math.floor(price);
+				inc(InventoryGold, Math.floor(price));
 			}
 			if (operation === give && state[QuestObject] === slot) {
-				state[QuestProgress] += qty;
+				inc(QuestProgress, qty);
 			}
-			state[slot] -= qty;
+			dec(slot, qty);
 			if (operation === sell) {
 				passTime('Selling some ' + itemsName(slot), 3);
 			} else if (operation === give) {
@@ -1692,18 +1719,15 @@ class Game {
 
 			qty = Math.min(qty, state[fromSlot]);
 
-			let availableCapacity = isDeposit ? MAX_INT - state[toSlot] : roomFor(slot, state);
-			qty = Math.min(qty, availableCapacity);
-
 			if (qty > 0) {
-				state[fromSlot] -= qty;
-				state[toSlot] += qty;
+				inc(fromSlot, -qty);
+				inc(toSlot,    qty);
 
 				// Charge a 1 gold commission per transaction
 				if (isDeposit) {
-					state[state[InventoryGold] > 0 ? InventoryGold : BalanceGold] -= 1;
+					inc(state[InventoryGold] > 0 ? InventoryGold : BalanceGold, -1);
 				} else {
-					state[state[BalanceGold] > 0 ? BalanceGold : InventoryGold] -= 1;
+					inc(state[BalanceGold] > 0 ? BalanceGold : InventoryGold, -1);
 				}
 
 				passTime('Making a bank ' + isDeposit ? 'deposit' : 'withdrawal', 1);
@@ -1717,7 +1741,7 @@ class Game {
 			let questTypes = [_ => {
 				// Exterminate the ___
 				state[QuestLocation] = randomLocation();
-				state[QuestMob] = randomMob();
+				state[QuestMob] = randomMobNearLevel(state[Level]);
 				state[QuestObject] = 0;
 				state[QuestQty] = 5 + d(10);
 			}, _ => {
@@ -1726,7 +1750,9 @@ class Game {
 				state[QuestObject] = INVENTORY_0 + irand(INVENTORY_COUNT);
 				state[QuestMob] = 0;
 				state[QuestQty] = 5 * d(10);
-			}, _ => {
+			},
+			/* totem quests arent so clear right now
+			_ => {
 				if (state[EquipmentTotem]) {
 					// Deliver this totem
 					state[QuestObject] = EquipmentTotem;
@@ -1738,7 +1764,8 @@ class Game {
 					state[QuestLocation] = randomLocation();
 					state[QuestQty] = 1;
 				}
-			}];
+			}*/
+			];
 			randomPick(questTypes)();
 			state[QuestProgress] = 0;
 			state[QuestOrigin] = state[Location];
@@ -1748,8 +1775,8 @@ class Game {
 			if (!state[QuestObject] && !state[QuestMob]) return -1;
 			if (state[QuestOrigin] && (state[QuestOrigin] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
-			state[Experience] += 100;
-			state[ActProgress] += 1;
+			inc(Experience, 100);
+			inc(ActProgress, 1);
 			actUp();
 			state[QuestObject] = 0;
 			state[QuestMob] = 0;
@@ -1771,7 +1798,7 @@ class Game {
 			// TODO: town stat-learning bonuses
 			// TODO: racial stat-learning bonuses
 			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), Math.round(hours));
-			state[slot] += 1;
+			inc(slot, 1);
 			return state[slot];
 
 		} else  if (operation == learn) {
@@ -1806,18 +1833,18 @@ class Game {
 			passTime('Casting ' + spell.name, spell.duration ?? 10);
 
 			for (let { slot, qty } of spell.costs)
-				state[slot] -= qty;
+				inc(slot, -qty);
 
 			if (spell.enchantment) {
 				let current = SPELLS[state[Enchantment] & 0xFF];
 				if (current) {
 					// Reverse current enchantment
 					for (let { slot, increment } of current.enchantment) {
-						state[slot] -= increment;
+						inc(slot, -increment);
 					}
 				}
 				for (let { slot, increment } of spell.enchantment) {
-					state[slot] += increment;
+					inc(slot, increment);
 				}
 				state[Enchantment] = spellType;
 			}
@@ -1831,24 +1858,22 @@ class Game {
 			state[MobType] = 0;
 			state[MobLevel] = 0;
 			state[MobDamage] = 0;
-			for (let i = 0; i < 4; ++i) {
-				// location.mobtype;
-				let t = irand(6);
-				if (t === 0 && local.denizen) {
-					t = local.mobType;
-				} else if (t === 1 && state[QuestMob] &&
-							state[QuestLocation] === state[Location]) {
-					t = state[QuestMob];
-				} else {
-					t = randomMob();
-				}
-				let l = DENIZENS[t].hitdice + d(2) - d(2);
-				if (!state[MobType] || Math.abs(l - local.level) <
-										Math.abs(state[MobLevel] - local.level)) {
-					state[MobType] = t;
-					state[MobLevel] = l;
-				}
+			let t = irand(6);
+			let type, level;
+			if (t === 0 && local.denizen) {
+				type = local.mobType;
+				level = DENIZENS[type] + d(2) - d(2);
+			} else if (t === 1 && state[QuestMob] &&
+						state[QuestLocation] === state[Location]) {
+				type = state[QuestMob];
+				level = DENIZENS[type] + d(2) - d(2);
+			} else {
+				let tl = randomMobNearLevel(local.level);
+				type = tl.type;
+				level = tl.level;
 			}
+			state[MobType] = type;
+			state[MobLevel] = level;
 			state[MobDamage] = 0;
 			return state[MobType] ? 1 : 0;
 
@@ -1858,13 +1883,13 @@ class Game {
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rand() * rand());
 			hp = Math.min(hp, state[MaxHealth] - state[Health]);
-			state[Health] += hp;
+			inc(Health, hp);
 
 			let mp = d(state[StatWisdom]);
 			if (local.terrain !== TOWN)
 				mp = Math.round(mp * rand() * rand());
 			mp = Math.min(mp, state[MaxEnergy] - state[Energy]);
-			state[Energy] += mp;
+			inc(Energy, mp);
 
 			return hp + mp;
 
@@ -1882,11 +1907,10 @@ class Game {
 			}
 
 			if (!isInventorySlot(target)) return -1;
-			if (roomFor(target, state) < 1) return -1;
 
 			qty = rand() < 0.5 ? 1 : 0;
 			qty = Math.min(qty, inventoryCapacity());
-			state[target] += qty;
+			inc(target, qty);
 
 			passTime('Foraging for ' + itemsName(target), 1);
 			return qty;
@@ -1895,9 +1919,9 @@ class Game {
 			if (state[Level] >= 99) return 0;
 			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
 				return 0;
-			state[Level] += 1;
-			state[Health] = state[MaxHealth] += 3 + additiveStatBonus(state[StatConstitution]);
-			state[Energy] = state[MaxEnergy] += 3 + additiveStatBonus(state[StatWisdom]);
+			inc(Level, 1);
+			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[StatConstitution]));
+			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[StatWisdom]));
 			passTime('Levelling up', 1);
 			return 1;
 
