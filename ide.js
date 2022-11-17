@@ -324,3 +324,17 @@ function updateDebuggerState(vm) {
 		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
 	}
 }
+
+function loadBinary(filepath, callback) {
+	const xhr = new XMLHttpRequest();
+	xhr.open('GET', 'steve.bin');
+	xhr.responseType = 'arraybuffer';
+	xhr.onreadystatechange = e => {
+		if (xhr.readyState === 4) {
+			let buffer = xhr.response;
+			program = new Int16Array(buffer, 0, Math.floor(buffer.byteLength / 2));
+			callback(program);
+		}
+	}
+	xhr.send();
+}
