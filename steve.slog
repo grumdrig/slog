@@ -1,0 +1,30 @@
+var x = D / 2
+var y = D / 2
+
+macro gonorth() {
+	y -= 1
+	north()
+}
+
+macro gosouth() {
+	y += 1
+	south()
+}
+
+macro gowest() {
+	x -= 1
+	west()
+}
+
+macro goeast() {
+	x += 1
+	east()
+}
+
+
+while 1 {
+	if x < .FoodX { goeast() }
+	else if x > .FoodX { gowest() }
+	else if y < .FoodY { gosouth() }
+	else { gonorth() }
+}

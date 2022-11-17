@@ -1945,7 +1945,7 @@ function additiveStatBonus(stat) {
 }
 
 if (typeof exports !== 'undefined') {
-	exports.Game = Game;
+	exports = Game;
 }
 
 

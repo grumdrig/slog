@@ -330,6 +330,17 @@ class TagDefinition {
 			context.error('Constant value expressions required for tag definition');
 		context.emit('');
 		context.emit('halt 0');
+		function asCharIfPossible(v) {
+			let lsb = v & 0xFF;
+			if (32 < lsb && lsb < 127) {
+				lsb = String.fromCharCode(lsb);
+				let msb = v >> 8;
+				if (32 < msb && msb < 127)
+					return "'" + String.fromCharCode(msb) + lsb;
+				else if (msb === 0)
+					return "'" + lsb;
+			}
+		}
 		context.emit('.data ' +
 			(asCharIfPossible(tag1.value) ??
 				'$' + tag1.value.toString(16)) +
@@ -1522,7 +1533,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		allowPositionals: true,
 	});
 
-	let interfaces = (interface || []).map(filename => require(filename).Game.generateInterface());
+	let interfaces = (interface || []).map(filename => require(filename).generateInterface());
 
 	let sources = positionals.map(filename => readFileSync(filename, 'utf8'));
 

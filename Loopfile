@@ -10,6 +10,14 @@ node vm.js -a grumdrig.asm -d @grumdrig.dasm -o @grumdrig.bin -- grumdrig.asm
 node bompton.js -v grumdrig.bin -- grumdrig.bin
 
 
+
+# Snake
+
+node compiler.js -i ./snake.js -o @steve.asm steve.slog
+node vm.js -a steve.asm -o @steve.bin -- steve.asm
+node snake.js -v steve.bin -- steve.bin
+
+
 # tests
 
 # compile
