@@ -511,7 +511,7 @@ class MacroDefinition {
 				context.emit('push 0  ; default macro return value');
 			context.emit(context.returnLabel + ':');
 		} else {
-			this.expr.generate(context);
+			this.expr.simplify(context).generate(context);
 		}
 	}
 }
@@ -961,6 +961,7 @@ class IdentifierExpression {
 			context.emit('fetch #');
 			context.emit('.data ' + this.identifier);  // todo, try to make this immediate
 		} else {
+			console.log(reference);
 			context.error("What is this thing? I don't think it belongs here");
 		}
 	}

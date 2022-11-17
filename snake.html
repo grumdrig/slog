@@ -9,6 +9,9 @@
 </head>
 <body>
 <canvas width=400 height=400></canvas>
+<div>Score: <span id=score>0</span></div>
+<div id=gameover></div>
+
 <script>
 
 function $(s) { return document.querySelector(s) }
@@ -60,7 +63,7 @@ function go(program) {
 
 function bigstep() {
 
-	while (vm.running && vm.state[Step] === step) {
+	while (vm.alive() && vm.state[Step] === step) {
 		vm.step();
 	}
 
@@ -68,11 +71,22 @@ function bigstep() {
 
 	draw(vm.state);
 
-	if (vm.running) {
-		setTimeout(bigstep, 50);
+	$("#score").innerText = vm.state[Length] - 1;
+
+	if (vm.alive()) {
+		setTimeout(bigstep, vm.state[Length] > 12 ? 1000 : 10);
 	} else {
 		Snake.dumpState(vm.state);
 		vm.dumpState();
+		$('#gameover').innerText =
+			vm.state[GameOver] == 0 ? 'ok' :
+			vm.state[GameOver] == 1 ? 'Game Over. Crashed into wall.' :
+			vm.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
+			vm.state[GameOver] == 3 ? 'Game Over. Time is up.' :
+			'Game Over: ' + vm.state[GameOver];
+		// for (let i = 0; i < vm.memory.length; i += 1)
+		// 	if (vm.memory[i])
+		// 		console.log(i, vm.memory[i]);
 	}
 }
 

@@ -1,6 +1,18 @@
+macro x(i) i % D
+macro y(i) i / D
+
+macro northward() y(.Head) > 0   and .(Grid0 + .Head - D) <= 0
+macro eastward()  x(.Head) < D-1 and .(Grid0 + .Head + 1) <= 0
+macro southward() y(.Head) < D-1 and .(Grid0 + .Head + D) <= 0
+macro westward()  x(.Head) > 0   and .(Grid0 + .Head - 1) <= 0
+
 while 1 {
-	if .HeadX < .FoodX { east() }
-	else if .HeadX > .FoodX { west() }
-	else if .HeadY < .FoodY { south() }
-	else { north() }
+	if      x(.Head) < x(.Food) and eastward()  { east() }
+	else if x(.Head) > x(.Food) and westward()  { west() }
+	else if y(.Head) < y(.Food) and southward() { south() }
+	else if y(.Head) > y(.Food) and northward() { north() }
+	else if eastward()  { east() }
+	else if westward()  { west() }
+	else if southward() { south() }
+	else                { north() }
 }

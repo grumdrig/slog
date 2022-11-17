@@ -2,13 +2,11 @@
 const GameOver = 0;
 const Step = 1;
 const Length = 2;
-const HeadX = 3;
-const HeadY = 4;
-const FoodX = 5;
-const FoodY = 6;
-const Seed = 7;
+const Head = 3;
+const Food = 4;
+const Seed = 5;
 
-const Grid0 = 8;
+const Grid0 = 6;
 const D = 20;
 
 const INTERFACE = `
@@ -22,10 +20,8 @@ macro west()  external(4)
 const GameOver = ${GameOver}
 const Step = ${Step}
 const Length = ${Length}
-const HeadX = ${HeadX}
-const HeadY = ${HeadY}
-const FoodX = ${FoodX}
-const FoodY = ${FoodY}
+const Head = ${Head}
+const Food = ${Food}
 const Seed = ${Seed}
 const Grid0 = ${Grid0}
 const D = ${D}
@@ -55,8 +51,7 @@ function plantFood(state) {
 		let i = hash(state[Seed], state[Step], 0xF00D, attempt) % (D * D);
 		if (icell(state, i) === 0) {
 			icell(state, i, -1);
-			state[FoodX] = i % D;
-			state[FoodY] = Math.floor(i / D);
+			state[Food] = i;
 			return;
 		}
 	}
@@ -71,8 +66,8 @@ class Snake {
 		let state = new Int16Array(Grid0 + D * D);
 		state[Seed] = hash(0x54ec, ...code);
 		state[Length] = 1;
-		state[HeadX] = state[HeadY] = Math.floor(D/2);
-		cell(state, state[HeadX], state[HeadY], 1);
+		state[Head] = Math.floor(D/2) * (1 + D);
+		icell(state, state[Head], 1);
 
 		plantFood(state);
 		return state;
@@ -81,31 +76,32 @@ class Snake {
 	static handleInstruction(state, operation, ...args) {
 		if (state[GameOver]) return 0;
 
-		if (cell(state, state[FoodX], state[FoodY]) !== -1 ||
-			cell(state, state[HeadX], state[HeadY]) !==  1) {
+		if (icell(state, state[Food]) !== -1 ||
+			icell(state, state[Head]) !==  1) {
 			Snake.dumpState(state);
 			throw "Invalid game state";
 		}
 
-		let next_x = state[HeadX], next_y = state[HeadY];
-		let dx = 0, dy = 0;
-		if (operation === 1) {			next_y -= 1;  // N
+		let next_x = state[Head] % D;
+		let next_y = Math.floor(state[Head] / D);
+		if        (operation === 1) {	next_y -= 1;  // N
 		} else if (operation === 2) {	next_x += 1;  // E
 		} else if (operation === 3) {	next_y += 1;  // S
 		} else if (operation === 4) {	next_x -= 1;  // W
 		} else { return -1;	}
 
+		let next = next_x + D * next_y;
 
 		if (next_x < 0 || next_y < 0 || next_x >= D || next_y >= D) {
 			// Ran into wall
 			state[GameOver] = 1;
-		} else if (cell(state, next_x, next_y) > 0) {
+		} else if (icell(state, next) > 0) {
 			// Crashed into self
 			state[GameOver] = 2;
 		} else if (state[Step] == 0x7FFF) {
 			// Time is up
 			state[GameOver] = 3;
-		} else if (next_x === state[FoodX] && next_y == state[FoodY]) {
+		} else if (next === state[Food]) {
 			// Found food
 			state[Length] += 1;
 			plantFood(state);
@@ -120,9 +116,8 @@ class Snake {
 					icell(state, i, v + 1);
 				}
 			}
-			cell(state, next_x, next_y, 1);
-			state[HeadX] = next_x;
-			state[HeadY] = next_y;
+			icell(state, next, 1);
+			state[Head] = next;
 			state[Step] += 1;
 		}
 
@@ -169,6 +164,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		let vm = new VirtualMachine(code, Snake);
 		if (verbosity > 1) vm.trace = true;
 		vm.run();
+		console.log('Score: ', vm.state[Length] - 1);
 		if (verbosity > 0) {
 			Snake.dumpState(vm.state);
 			vm.dumpState();
