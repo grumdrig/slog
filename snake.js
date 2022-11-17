@@ -1,3 +1,5 @@
+const Snake = (_ => {
+
 const SLOTS = [
 	{ name: 'GameOver' },
 	{ name: 'Step' },
@@ -82,6 +84,48 @@ class Snake {
 		return state;
 	}
 
+	static name = "Snake";
+	static SLOTS = SLOTS;
+
+	static windowContent = `
+			<canvas width=400 height=400 id=snakepit></canvas>
+			<div>Score: <span id=score>0</span></div>
+			<div id=gameover></div>`;
+
+	static updateUI(state) {
+		let can = $('#snakepit');
+		let ctx = can.getContext('2d');
+
+		for (let i = 0; i < D * D; i++) {
+			let s = state[Grid0 + i];
+			if (s > 1) {
+				ctx.fillStyle = 'white';
+			} else if (s === 1) {
+				ctx.fillStyle = '#0a0';
+			} else if (s < 0) {
+				ctx.fillStyle = 'red';
+			} else {
+				ctx.fillStyle = 'black';
+			}
+			let x = i % D;
+			let y = Math.floor(i / D);
+			ctx.fillRect(x * can.width / D + 1, y * can.height / D + 1, can.width / D - 2, can.height / D - 2);
+			ctx.strokeStyle = '#444';
+			ctx.strokeRect(x * can.width / D, y * can.height / D, can.width / D, can.height / D);
+		}
+
+		$("#score").innerText = this.score(vm.state);
+
+		$('#gameover').innerText =
+			vm.state[GameOver] == 0 ? '' :
+			vm.state[GameOver] == 1 ? 'Game Over. Crashed into wall.' :
+			vm.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
+			vm.state[GameOver] == 3 ? 'Game Over. Time is up.' :
+			'Game Over: ' + vm.state[GameOver];
+	}
+
+	static score(state) { return state[Length] - 1 }
+
 	static handleInstruction(state, operation, ...args) {
 		if (state[GameOver]) return 0;
 
@@ -140,7 +184,31 @@ class Snake {
 			if (v) console.log(`${i}: ${v}`);
 		});
 	}
+
+	// This is awkward. Unify with the other one better
+	static playmation(vm, butStop) {
+		vm.bigstep();
+
+		this.updateUI(vm.state);
+
+		if (vm.alive()) {
+			if (!butStop)
+				setTimeout(_ => this.playmation(vm), 10);//vm.state[Length] > 12 ? 1000 : 10);
+		} else {
+			this.dumpState(vm.state);
+			vm.dumpState();
+			// for (let i = 0; i < vm.memory.length; i += 1)
+			// 	if (vm.memory[i])
+			// 		console.log(i, vm.memory[i]);
+		}
+	}
+
 }
+
+
+
+
+return Snake; })();
 
 
 if (typeof module !== 'undefined') {
@@ -173,7 +241,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		let vm = new VirtualMachine(code, Snake);
 		if (verbosity > 1) vm.trace = true;
 		vm.run();
-		console.log('Score: ', vm.state[Length] - 1);
+		console.log('Score: ', Snake.score(vm.state));
 		if (verbosity > 0) {
 			Snake.dumpState(vm.state);
 			vm.dumpState();

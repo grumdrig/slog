@@ -37,38 +37,7 @@
 let Game = Snake;
 
 
-function updateGame(state) {
 
-	let can = $('canvas');
-	let ctx = can.getContext('2d');
-
-	for (let i = 0; i < D * D; i++) {
-		let s = state[Grid0 + i];
-		if (s > 1) {
-			ctx.fillStyle = 'white';
-		} else if (s === 1) {
-			ctx.fillStyle = '#0a0';
-		} else if (s < 0) {
-			ctx.fillStyle = 'red';
-		} else {
-			ctx.fillStyle = 'black';
-		}
-		let x = i % D;
-		let y = Math.floor(i / D);
-		ctx.fillRect(x * can.width / D + 1, y * can.height / D + 1, can.width / D - 2, can.height / D - 2);
-		ctx.strokeStyle = '#444';
-		ctx.strokeRect(x * can.width / D, y * can.height / D, can.width / D, can.height / D);
-	}
-
-	$("#score").innerText = vm.state[Length] - 1;
-
-	$('#gameover').innerText =
-		vm.state[GameOver] == 0 ? '' :
-		vm.state[GameOver] == 1 ? 'Game Over. Crashed into wall.' :
-		vm.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
-		vm.state[GameOver] == 3 ? 'Game Over. Time is up.' :
-		'Game Over: ' + vm.state[GameOver];
-}
 
 window.addEventListener("DOMContentLoaded", _ => {
 	prepIDE();
@@ -96,21 +65,5 @@ function go(program) {
 	bigstep();
 }
 
-function playmation(butStop) {
-	vm.bigstep();
-
-	updateGame(vm.state);
-
-	if (vm.alive()) {
-		if (!butStop)
-			setTimeout(playmation, 10);//vm.state[Length] > 12 ? 1000 : 10);
-	} else {
-		Snake.dumpState(vm.state);
-		vm.dumpState();
-		// for (let i = 0; i < vm.memory.length; i += 1)
-		// 	if (vm.memory[i])
-		// 		console.log(i, vm.memory[i]);
-	}
-}
 
 </script>

@@ -5,110 +5,6 @@ HTMLElement.prototype.$$ = HTMLElement.prototype.querySelectorAll;
 function $id(s) { return document.getElementById(s) }
 
 
-function createDebuggerWindow() {
-	let div = document.body.appendChild(document.createElement('div'));
-	div.outerHTML = `
-<div class=window hidden id=debugger-window>
-	<div class="title-bar">
-		<div class="title-bar-text">Debugger</div>
-		<div class="title-bar-controls">
-			<button aria-label="Close" class=close></button>
-		</div>
-	</div>
-
-	<div class="window-body">
-		<div id=debugger>
-			<span>Execution point</span>
-			<span>Stack [<span id=stackdepth></span>]</span>
-
-			<div id=codepoint></div>
-			<div id=stack></div>
-
-			<span>Registers &amp; State</span>
-			<span>Memory</span>
-
-			<div class=brain><div id=registers></div></div>
-			<div class=brain><div id='memory'></div></div>
-		</div>
-		<div class=nobo>
-			<button onclick="step()">Step</button>
-			<button onclick="bigstep()">Bigstep</button>
-			<button onclick="runimate()">Runimate</button>
-			<button onclick="run()">Run</button>
-			<button onclick="play()">Play</button>
-			<button onclick="reset()">Reset</button>
-		</div>
-		<div class="status-bar" id=debugbar>
-			<p class="status-bar-field" id=r0>PC</p>
-			<p class="status-bar-field" id=r1>SP</p>
-			<p class="status-bar-field" id=r2>FP</p>
-			<p class="status-bar-field" id=r3>AX</p>
-			<p class="status-bar-field" id=clock>CK</p>
-		</div>
-	</div>
-</div>
-`;
-
-	document.body.appendChild(document.createElement('div')).outerHTML = `
-<div class=icon data-for=debugger-window>
-	<img src=debugger.png>
-	<div>Debugger</div>
-</div>`;
-
-}
-
-function createEditorWindow() {
-	document.body.appendChild(document.createElement('div')).outerHTML = `
-	<div class=window id=editor-window>
-	<div class="title-bar">
-		<div class="title-bar-text">Source Code Editor</div>
-		<div class="title-bar-controls">
-			<button aria-label="Close" class=close></button>
-		</div>
-	</div>
-	<div class="window-body" id="sources">
-		<section class="tabs">
-			<menu role="tablist" aria-label="Editor Tabs">
-				<button role="tab" aria-selected="true" aria-controls="tab-A">Source</button>
-				<button role="tab" aria-controls="tab-B">Assembly</button>
-				<button role="tab" aria-controls="tab-C">Disassembly</button>
-				<button role="tab" aria-controls="tab-D">Interface</button>
-			</menu>
-			<article role="tabpanel" id="tab-A">
-				<textarea rows=16 cols=50 id=source></textarea><br/>
-				<button onclick="comp()">Compile</button>
-				<span style="margin-left: 10px">&nbsp;</span>
-				<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
-				<input type=checkbox id=autoplay><label for=autoplay>Autoplay</label></input>
-				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
-			</article>
-			<article role="tabpanel" hidden id="tab-B">
-				<textarea rows=16 cols=50 id=asm></textarea>
-				<button onclick="assemble()">Assemble</button>
-			</article>
-			<article role="tabpanel" hidden id="tab-C">
-				<textarea readonly rows=18 cols=50 id=machine></textarea>
-			</article>
-			<article role="tabpanel" hidden id="tab-D">
-				<textarea readonly rows=18 cols=60 id=interface></textarea>
-			</article>
-		</section>
-		<div class="status-bar">
-			<p class="status-bar-field" id=errors></p>
-		</div>
-	</div>
-</div>`;
-
-	document.body.appendChild(document.createElement('div')).outerHTML = `
-<div class=icon data-for=editor-window>
-	<img src=editor.png>
-	<div>Editor</div>
-</div>`;
-}
-
-
-
-
 // Where are these? I confuse
 //let asm, vm;
 let asm;
@@ -171,23 +67,26 @@ function step() {
 	stopRunimation();
 	vm.step();
 	updateDebuggerState(vm);
-	updateGame(vm.state);
+	Game.updateUI(vm.state);
 }
 
 function bigstep() {
 	stopRunimation();
-	playmation(true);
+	Game.playmation(vm, true);
 	updateDebuggerState(vm);
-	updateGame(vm.state);
+	Game.updateUI(vm.state);
 }
 
 function stopRunimation() {
 	if (runimate.timer) {
 		clearTimeout(runimate.timer);
-		runimate.timer = null
+		runimate.timer = null;
+/*
+will probably need to get this into Bompton somehow:
 		$id('task').innerHTML = 'Paused';
 		animate.progress = 0;
 		setTaskBar();
+		*/
 	}
 }
 
@@ -195,7 +94,7 @@ function runimate() {
 	if (vm.alive()) {
 		let calledOut = vm.step();
 		updateDebuggerState(vm);
-		if (calledOut) updateGame(vm.state);
+		if (calledOut) Game.updateUI(vm.state);
 		runimate.timer = setTimeout(runimate, 100);
 	}
 }
@@ -207,37 +106,21 @@ function run() {
 		vm.step();
 	}
 	updateDebuggerState(vm);
-	updateGame(vm.state);
+	Game.updateUI(vm.state);
 }
 
 function play() {
 	stopRunimation();
 	bringToFront($id('game-window'));
 	vm.running = true;
-	playmation();
+	Game.playmation(vm);
 }
-
-function setTaskBar() {
-	// setBar('task', animate.progress, animate.duration, 0, '#ace97c');
-	let bar  = $('#taskbar > div:nth-child(1)');
-	let text = $('#taskbar > div:nth-child(2)');
-	if (animate.duration > 0) {
-		let pct = 100 * animate.progress / animate.duration;
-		bar.style.width = pct.toFixed(2) + "%";
-		text.innerText = Math.round(pct) + '%';
-	} else {
-		bar.style.width = 0;
-		text.innerText = "";
-	}
-}
-
-
 
 function reset() {
 	stopRunimation();
 	vm = new VirtualMachine(asm.code, Game);
 	updateDebuggerState(vm);
-	updateGame(vm.state);
+	Game.updateUI(vm.state);
 }
 
 function rand(m) { return Math.floor(Math.random() * m) }
@@ -284,7 +167,7 @@ function bringToFront(hwnd) {
 		let hiz = 0;
 		Array.from($$('.window'))
 			.filter(w => w != hwnd)
-			.forEach(w => hiz = Math.max(parseInt(w.style.zIndex ?? 0), hiz));
+			.forEach(w => hiz = Math.max(parseInt(w.style.zIndex || 0), hiz));
 		hwnd.style.zIndex = hiz + 1;
 }
 
@@ -328,9 +211,6 @@ function prepWindow(hwnd) {
 function prepIDE() {
 	window.addEventListener('unload', saveChanges);
 
-	createDebuggerWindow();
-	createEditorWindow();
-
 	$("#source").addEventListener('keypress', e => {
 		if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) comp();
 	});
@@ -340,8 +220,6 @@ function prepIDE() {
 	});
 
 	$$('[role="tab"]').forEach(tab => tab.addEventListener("click", changeTabs));
-
-	$("#interface").value = Game.generateInterface();
 
 	$$(".icon").forEach(element => element.addEventListener('click', e => {
 		let win = document.getElementById(element.getAttribute('data-for'));
@@ -419,7 +297,7 @@ function updateDebuggerState(vm) {
 	for (let i = 0; i < vm.state.length; ++i, ++n) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
-		d.innerText = regFmt(SLOTS[i] ? SLOTS[i].name : i, vm.state[i]);
+		d.innerText = regFmt(Game.SLOTS[i] ? Game.SLOTS[i].name : i, vm.state[i]);
 	}
 
 	$("#codepoint").innerText = '';

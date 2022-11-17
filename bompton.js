@@ -1,5 +1,7 @@
 // Bompton Island: A Progress Quest Slot module
 
+const Bompton = (_ => {
+
 const GR = 0.5 + Math.sqrt(5) / 2;
 
 const SLOTS = [
@@ -1317,12 +1319,31 @@ function itemsName(sloth) {
 
 let TASK = '';
 
-class Game {
+class Bompton {
+	static title = 'Progress Quest Slog: Bompton Island';
+
+	static get windowContent() { return BOMPTON_WINDOW_CONTENT }
+
 	static create(code) {
 		let state = new Int16Array(SLOTS.length);
 		state[Seed] = hash(0x3FB9, ...code);
 		return state;
 	}
+
+	static prepareUI() {
+		$("#worldmap").innerHTML = this.generateMap();
+		$("#gamereference").innerHTML = this.generateDocumentation();
+
+		for (let call in CALLS) {
+			let { parameters, operation, description } = CALLS[call];
+			let b = $("#control-buttons").appendChild(document.createElement('button'));
+			b.addEventListener('click', _ => gameplay(operation));
+			b.innerText = `${call}(${parameters ?? ''})`;
+			b.hint = description ?? '';
+		}
+	}
+
+	static updateUI(state) { updateGame(state) }
 
 	static generateInterface = generateInterface;
 	static generateMap = generateMap;
@@ -1334,6 +1355,8 @@ class Game {
 	static MAP = MAP;
 	static mapInfo = mapInfo;
 	static DATABASE = DATABASE;
+	static SLOTS = SLOTS;
+
 
 	static dumpState(state) {
 		for (let i = 0; i < SLOTS.length; ++i)
@@ -1944,8 +1967,528 @@ function additiveStatBonus(stat) {
 	return Math.round(Math.pow(GR, stat)) - 1;
 }
 
+
+/////////////////// UI ///////////////////////////////
+
+
+const BOMPTON_WINDOW_CONTENT = `
+<style>	/* Styling for the character sheet */
+
+/*#game-window { width: 600px }*/
+
+#sheet {
+	display: grid;
+	grid-template-columns: 200px 200px 230px;
+	gap: 4px;
+}
+
+#col1, #col2, #col3 {
+	grid-row: 1;
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 4px;
+	/*width: 300px;*/
+}
+#col1 { grid-column: 1; }
+#col2 { grid-column: 2; }
+#col3 { grid-column: 3; }
+#col1 > div, #col2 > div, #col3 > div {
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+}
+#col1 > #vitals { grid-template-columns: 3fr 3fr }
+#col1 > #spells { grid-template-columns: 1fr 2fr }
+#col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
+#col3 > #environment { grid-template-columns: 2fr 3fr; }
+#col3 > #quest { grid-template-columns: 3fr 7fr; }
+#col3 > #plot { grid-template-columns: 3fr 7fr; }
+
+#spells > div:nth-child(2n+3) { font-style: italic }
+
+div.header {
+	grid-column: 1 / 3;
+	height: 14px;
+}
+
+.listview {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	/*grid-auto-rows: 200px;*/
+	gap: 2px;
+	position: relative;
+	border: inset 2px #ddd;
+	background-color: white;
+}
+.listview div {
+	/*padding-left: 2px;*/
+	padding: 0 1px;
+}
+.listview .header {
+	background-color: #ece9d8;
+	border: outset 1px #ddd;
+	border-right: groove 1px #ddd;
+}
+
+.changed { background-color: yellow }
+
+
+[role="progressbar"] {
+	height: 15px;
+	border: 1px solid #888;
+	border-radius: 3px;
+	overflow: hidden;
+	background-color: white;
+}
+[role="progressbar"] > div {
+	overflow: hidden;
+	height: 13px;
+	margin: 1px;
+}
+[role="progressbar"] > div:first-child {
+	/*box-shadow: inset 0 0 1px #fff;*/
+	background-color: #ace97c;
+}
+[role="progressbar"] > div:nth-child(2) {
+	text-align: center;
+	width: 100%;
+}
+
+[role="progressbar"] {
+	position: relative;
+}
+[role="progressbar"] > * {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+#task { margin: 1px 0 2px 0; }
+
+.prog {
+	border: 1px solid #888;
+	border-radius: 3px;
+	height: 11px; /* TODO this needs to be 12px to properly fit text inside but that's one pixel too big for the current space alloted to the other rows with just text, so we need to resolve that somehow */
+	text-align: center;
+	margin-right: 1px;
+}
+
+#elapsed {
+/*	grid-column: 1 / 3;
+	text-align: center;
+*/
+	float: right;
+}
+</style>
+
+
+<div id=sheet>
+	<div id=col1>
+		<div id=vitals class=listview>
+			<div class=header>Vital Statistics</div>
+			<div>Name</div><div id="name"></div>
+			<div>Species</div><div id="species"></div>
+			<div>Level</div><div id="level"></div>
+			<div>Experience</div><div id="xp" class=prog></div>
+			<div>Health</div><div id="health" class=prog></div>
+			<div>Energy</div><div id="energy" class=prog></div>
+			<div>Enchantment</div><div id="enchantment"></div>
+		</div>
+
+		<div id=stats class=listview>
+			<div class=header>Stats</div>
+			<div>Strength</div>     <div id="s0"></div>
+			<div>Agility</div>      <div id="s1"></div>
+			<div>Constitution</div> <div id="s2"></div>
+			<div>Intelligence</div> <div id="s3"></div>
+			<div>Wisdom</div>       <div id="s4"></div>
+			<div>Charisma</div>     <div id="s5"></div>
+		</div>
+
+		<div id=spells class=listview>
+			<div class=header>Spell Book</div>
+			<div id=bt0>&nbsp;</div> <div id="b0"></div>
+			<div id=bt1>&nbsp;</div> <div id="b1"></div>
+			<div id=bt2>&nbsp;</div> <div id="b2"></div>
+			<div id=bt3>&nbsp;</div> <div id="b3"></div>
+		</div>
+	</div>
+
+	<div id=col2>
+		<div id=equipment class=listview>
+			<div class=header>Equipment	(Armor Class: <span id=armorClass></span>)</div>
+			<div>Weapon</div>   <div id=e0></div>
+			<div>Armor</div>    <div id=e1></div>
+			<div>Shield</div>   <div id=e2></div>
+			<div>Headgear</div> <div id=e3></div>
+			<div>Footwear</div> <div id=e4></div>
+			<div>Mount</div>    <div id=e5></div>
+			<div>Ring</div>     <div id=e6></div>
+			<div>Totem</div>    <div id=e7></div>
+		</div>
+		<div id=inventory class=listview>
+			<div class=header>Inventory
+				(Encumbrance: <span id=encumbrance></span>/<span id=capacity></span>)</div>
+			<div>Gold</div><div id=i0></div>
+			<div>Drops</div><div id=i1></div>
+			<div>Reagents</div><div id=i2></div>
+			<div>Resources</div><div id=i3></div>
+			<div>Rations</div><div id=i4></div>
+			<div>Treasures</div><div id=i5></div>
+			<div>Healing Potions</div><div id=i6></div>
+			<div>Life Potions</div><div id=i7></div>
+		</div>
+	</div>
+
+	<div id=col3>
+		<div id=environment class=listview>
+			<div class=header>Environment</div>
+			<div>Date</div><div id=date></div>
+			<div>Hour-of-Day</div><div id=time></div>
+			<div>Coordinates</div><div id=location></div>
+			<div>Locale</div><div id=locale></div>
+			<div>Terrain</div><div id=terrain></div>
+			<div>Creature</div><div id=mob></div>
+			<div>Damage</div><div id=mobDamage></div>
+		</div>
+		<div id=quest class=listview>
+			<div class=header>Quest</div>
+			<div>Object</div> <div id=questgoal></div>
+			<div>Location</div> <div id=questlocation></div>
+			<div>Origin</div> <div id=questorigin></div>
+			<div>Progress</div> <div id=questprogress class=prog></div>
+		</div>
+		<div id=plot class=listview>
+			<div class=header>Game Progress</div>
+			<div id=act></div><div id=actprogress class=prog></div>
+			<div>Overall</div> <div id=gameprogress class=prog></div>
+		</div>
+	</div>
+</div>
+
+<div id=task-area class=status-bar>
+	<div class=status-bar-field>
+		<div id=elapsed></div>
+		<div id=task >Loading...</div>
+		<div id=taskbar role="progressbar" aria-valuemin=0 aria-valuemax=100 aria-valuenow=90>
+			<div></div>
+			<div></div>
+		</div>
+	</div>
+</div>`;
+
+
+function setBar(id, value, end, start=0, color='#ace97c') {
+	let progress = Math.round(100 * (value - start) / (end - start));
+	let bi = `linear-gradient(left, ${color}, ${color} ${progress}%, transparent ${progress}%, transparent 100%)`
+	$id(id).style.backgroundImage = bi;
+	$id(id).style.backgroundImage = '-webkit-' + bi;
+}
+
+
+function plural(s) {
+	if (s.endsWith('y'))
+		return s.slice(0,-1) + 'ies';
+	else if (s.endsWith('us'))
+		return s.slice(0,-2) + 'i';
+	else if (s.endsWith('ch') || s.endsWith('x') || s.endsWith('s') || s.endsWith( 'sh'))
+		return s + 'es';
+	else if (s.endsWith('f'))
+		return s.slice(0,-1) + 'ves';
+	else if (s.endsWith('man') || s.endsWith('Man'))
+		return s.slice(0,-2) + 'en';
+	else return s + 's';
+}
+
+function properCase(s) {
+	return s[0].toUpperCase() + s.substr(1).toLowerCase();
+}
+
+function toRoman(n) {
+	if (!n) return "O";
+	var s = "";
+	function _rome(dn,ds) {
+		if (n >= dn) {
+			n -= dn;
+			s += ds;
+			return true;
+		} else return false;
+	}
+	if (n < 0) {
+		s = "-";
+		n = -n;
+	}
+
+	while (_rome(10000,"T")) {0;}
+	_rome(9000,"MT");
+	_rome(5000,"A");
+	_rome(4000,"MA");
+	while (_rome(1000,"M")) {0;}
+	_rome(900,"CM");
+	_rome(500,"D");
+	_rome(400,"CD");
+	while (_rome(100,"C")) {0;}
+	_rome(90,"XC");
+	_rome(50,"L");
+	_rome(40,"XL");
+	while (_rome(10,"X")) {0;}
+	_rome(9,"IX");
+	_rome(5,"V");
+	_rome(4,"IV");
+	while (_rome(1,"I")) {0;}
+	return s;
+}
+
+
+function readableTime(hours, years) {
+	let t = years * HOURS_PER_YEAR + hours;
+	let calendar = t % HOURS_PER_DAY + ' hours';
+	t = (t / HOURS_PER_DAY) >> 0;
+	if (t) {
+		calendar = t % DAYS_PER_MONTH + ' days, ' + calendar;
+		t = (t / DAYS_PER_MONTH) >> 0;
+		if (t) {
+			calendar = t % MONTHS_PER_YEAR + ' months, ' + calendar;
+			t = (t / MONTHS_PER_YEAR) >> 0;
+			if (t) {
+				calendar = t + ' years, ' + calendar;
+			}
+		}
+	}
+	return calendar;
+}
+
+
+const MONTHS = [
+	'Injender',
+	'Fimbrular',
+	'Morchak',
+	'Apulia',
+	'Milm',
+	'Yunke',
+	'Ioli',
+	'Bargus',
+	'Hipsember',
+	'Extorber',
+	'Orbvemer',
+	'Dipnorther',
+];
+
+function updateGame(state) {
+
+	function unhilite(timed) {
+		$$('.changed').forEach(elt => elt.classList.remove('changed'));
+		if (!timed && updateGame.UNHILITE)
+			clearTimeout(updateGame.UNHILITE);
+		updateGame.UNHILITE = null;
+	}
+
+	unhilite();
+
+	function set(id, value) {
+		value = value ?? '';
+		value = value.toString();
+		let elt = document.getElementById(id);
+			if (state[Level] > 0) {
+		if (elt.innerHTML !== value) {
+			elt.innerHTML = value;
+				if (!updateGame.UNHILITE) {
+					updateGame.UNHILITE = setTimeout(_ => unhilite(true), 10000);
+				}
+				elt.classList.add('changed');
+			}
+		}
+	}
+
+	function setProgress(id, value, end, start = 0) {
+		set(id, `${value}&nbsp;/&nbsp;${end}`);
+		setBar(id, value, end, start);
+	}
+
+	set('name', Array.from(state.slice(NAME_0, NAME_0 + NAME_COUNT))
+		.filter(c => 32 <= c && c < 127)
+		.map(c => String.fromCharCode(c)).join(''));
+	set('species', Bompton.SPECIES_NAMES[state[Species]]);
+	set('level', state[Level]);
+	setProgress('xp', state[Experience],
+			Bompton.xpNeededForLevel(state[Level] + 1),
+			Bompton.xpNeededForLevel(state[Level]));
+	setProgress('health', state[Health], state[MaxHealth]);
+	setProgress('energy', state[Energy], state[MaxEnergy]);
+	let spell = SPELLS[state[Enchantment] & 0xFF];
+	set('enchantment', spell ? spell.name : '');
+
+	for (let i = 0; i < STAT_COUNT; ++i) {
+		set('s' + i, state[STAT_0 + i]);
+	}
+
+	for (let i = 0; i < SPELLBOOK_COUNT; ++i) {
+		const slot = SPELLBOOK_0 + i;
+		let spell = state[slot];
+		if (spell) {
+			set('bt' + i, 'Chapter ' + toRoman(i+1));
+			set('b' + i, SPELLS[spell].name);
+		} else {
+			set('bt' + i, '&nbsp;');
+			set('b' + i, '');
+		}
+	}
+
+	for (let i = 0; i < EQUIPMENT_COUNT; ++i) {
+		let slot = EQUIPMENT_0 + i;
+		let v = state[slot];
+		if (!v)
+			set('e' + i, '');
+		else if (slot === EquipmentRing)
+			set('e' + i, 'Ring of ' + SLOTS[v].name);
+		else if (slot === EquipmentTotem)
+			set('e' + i, Bompton.MAP[v].name.split(' ')[0] + ' Totem');
+		else {
+			const names = (Bompton.DATABASE[slot] ?? {}).names;
+			set('e' + i, names[v] || v);
+		}
+	}
+	set('armorClass', state[ArmorClass]);
+
+	for (let i = 0; i < INVENTORY_COUNT; ++i) {
+		set('i' + i, state[INVENTORY_0 + i]);
+	}
+	set('encumbrance', state[Encumbrance]);
+	set('capacity', state[Capacity]);
+
+	let local = Bompton.mapInfo(state[Location], state) || {};
+
+	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
+	// set('elapsed', readableTime(state[Hours], state[Years]));
+
+	let t = state[Hours];
+	let hour = t % HOURS_PER_DAY;
+	t = (t / HOURS_PER_DAY) >> 0;
+	let day = t % DAYS_PER_MONTH;
+	let month = (t / DAYS_PER_MONTH) >> 0;
+	set('date', `${day + 1} ${MONTHS[month]}, ${state[Years] + 600}`);
+	set('time', hour + 'h');
+
+	set('location', state[Location] ?
+		`#${state[Location]} &lt;${longitude(state[Location])}, ${latitude(state[Location])}&gt;` : '');
+	set('locale', local ? local.name + ' #' + state[Location] : '');
+	set('terrain', (Bompton.TERRAIN_TYPES[local.terrain] ?? {}).name);
+	set('mob', state[MobType] ?
+		`${Bompton.DENIZENS[state[MobType]].name} (level ${state[MobLevel]})` : '');
+	set('mobDamage', state[MobType] ? state[MobDamage] : '');
+
+	let questal = Bompton.mapInfo(state[QuestLocation], state);
+	let original = Bompton.mapInfo(state[QuestOrigin], state);
+	let friendlySlotNames = {
+		EquipmentTotem: 'totem',
+		InventoryGold: 'gold',
+		InventorySpoils: 'spoils',
+		InventoryReagents: 'reagents',
+		InventoryResources: 'resources',
+		InventoryFood: 'food',
+		InventoryTreasures: 'treasures',
+		InventoryPotions: 'healing potions',
+		InventoryLifePotions: 'life potions',
+	};
+	set('questgoal',
+		state[QuestObject] === EquipmentTotem ?
+		(state[QuestQty] ? 'Seek the totem' : 'Deliver the totem') :
+		state[QuestObject] ?	`
+		Bring me ` + friendlySlotNames[SLOTS[state[QuestObject]].name] :
+		state[QuestMob] ?
+		`Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
+		'&nbsp;');
+	set('questlocation', questal && (questal.name + ' #' + state[QuestLocation]) || '');
+	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
+	set('questorigin', original && (original.name + ' #' + state[QuestOrigin]) || '');
+
+	set('act', 'Act ' + toRoman(state[Act]));
+	if (state[ActDuration])
+		set('actprogress', Math.round(100 * state[ActProgress]/state[ActDuration]) + '%');
+	else
+		set('actprogress', '0%');
+	setBar('actprogress', state[ActProgress], state[ActDuration]);
+	set('gameprogress', `${Math.round(100 * Math.max(0, state[Act] - 1) / 10)}%`);
+	setBar('gameprogress', state[Act] - 1, 10);
+
+	if (state[GameOver] === 401) {
+			TASK = 'Game over. Character has retired.';
+	} else if (state[GameOver] === 333) {
+			TASK = 'Game over. Simulation has crashed!';
+	} else if (state[GameOver] === 100) {
+			TASK = 'Game over. Character has aged out.';
+	} else if (state[GameOver] === 86) {
+			TASK = 'Game over. You died.';
+	} else if (state[GameOver] === 1) {
+			TASK = 'Game complete! Victory!';
+	} else if (state[GameOver]) {
+			TASK = 'Game over!';
+	} else if (!vm.running) {
+			TASK = 'Halted.';
+	}
+	$id('task').innerText = TASK;
+	setTaskBar();
+}
+
+
+function gameplay(inst, arg1, arg2) {
+	arg1 = arg1 || eval($("#arg1").value);
+	arg2 = arg2 || eval($("#arg2").value);
+	let result = Bompton.handleInstruction(vm.state, inst, arg1, arg2);
+	$("#result").innerText = result;
+	updateDebuggerState(vm);
+	updateGame(vm.state);
+}
+
+Bompton.playmation = function(vm, butStop) {
+	function age() { return vm.state[Years] * HOURS_PER_YEAR + vm.state[Hours] }
+	let before = age();
+	while (vm.alive() && age() == before) {
+		vm.step();
+	}
+	animate.duration = 1000 * Math.round(Math.sqrt(2 * (age() - before)));
+	animate.progress = 0;
+	$id('task').innerText = TASK;
+	setTaskBar();
+	if (!butStop)
+		runimate.timer = setTimeout(animate, 10);
+}
+
+
+
+function animate() {
+	animate.progress += 10;
+	setTaskBar();
+	if (animate.progress >= animate.duration) {
+		updateDebuggerState(vm);
+		Bompton.updateUI(vm.state);
+		if (vm.alive())
+			runimate.timer = setTimeout(_ => Bompton.playmation(vm), 1);
+	} else {
+		runimate.timer = setTimeout(animate, 10);
+	}
+}
+
+function setTaskBar() {
+	// setBar('task', animate.progress, animate.duration, 0, '#ace97c');
+	let bar  = $('#taskbar > div:nth-child(1)');
+	let text = $('#taskbar > div:nth-child(2)');
+	if (animate.duration > 0) {
+		let pct = 100 * animate.progress / animate.duration;
+		bar.style.width = pct.toFixed(2) + "%";
+		text.innerText = Math.round(pct) + '%';
+	} else {
+		bar.style.width = 0;
+		text.innerText = "";
+	}
+}
+
+
+
+return Bompton; })();
+
+
 if (typeof exports !== 'undefined') {
-	exports = Game;
+	exports = Bompton;
 }
 
 
@@ -1990,11 +2533,11 @@ if (typeof module !== 'undefined' && !module.parent) {
 	if (positionals) {
 		let { readFileAsWords, VirtualMachine } = require('./vm.js');
 		let code = readFileAsWords(positionals[0]);
-		let vm = new VirtualMachine(code, Game);
+		let vm = new VirtualMachine(code, Bompton);
 		if (verbosity > 1) vm.trace = true;
 		vm.run();
 		if (verbosity > 0) {
-			Game.dumpState(vm.state);
+			Bompton.dumpState(vm.state);
 			vm.dumpState();
 		}
 	}
