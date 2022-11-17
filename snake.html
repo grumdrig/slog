@@ -1,0 +1,79 @@
+<!doctype html>
+<head><meta charset='utf-8'/>
+<title>Snake Slog</title>
+<style>
+
+</style>
+<script src="snake.js"></script>
+<script src="vm.js"></script>
+</head>
+<body>
+<canvas width=400 height=400></canvas>
+<script>
+
+function $(s) { return document.querySelector(s) }
+
+let can = $('canvas');
+let ctx = can.getContext('2d');
+
+function draw(state) {
+
+	for (let i = 0; i < D * D; i++) {
+		let s = state[Grid0 + i];
+		if (s > 1) {
+			ctx.fillStyle = 'white';
+		} else if (s === 1) {
+			ctx.fillStyle = '#0a0';
+		} else if (s < 0) {
+			ctx.fillStyle = 'red';
+		} else {
+			ctx.fillStyle = 'black';
+		}
+		let x = i % D;
+		let y = Math.floor(i / D);
+		ctx.fillRect(x * can.width / D + 1, y * can.height / D + 1, can.width / D - 2, can.height / D - 2);
+		ctx.strokeStyle = '#444';
+		ctx.strokeRect(x * can.width / D, y * can.height / D, can.width / D, can.height / D);
+	}
+}
+
+const xhr = new XMLHttpRequest();
+xhr.open('GET', 'steve.bin');
+xhr.responseType = 'arraybuffer';
+xhr.onreadystatechange = e => {
+	if (xhr.readyState === 4) {
+		let buffer = xhr.response;
+		program = new Int16Array(buffer, 0, Math.floor(buffer.byteLength / 2));
+		go(program);
+	}
+}
+xhr.send();
+
+let vm;
+let step = -1;
+
+function go(program) {
+	vm = new VirtualMachine(program, Snake);
+	vm.debugLimit = 1000*1000*1000;
+	bigstep();
+}
+
+function bigstep() {
+
+	while (vm.running && vm.state[Step] === step) {
+		vm.step();
+	}
+
+	step = vm.state[Step];
+
+	draw(vm.state);
+
+	if (vm.running) {
+		setTimeout(bigstep, 50);
+	} else {
+		Snake.dumpState(vm.state);
+		vm.dumpState();
+	}
+}
+
+</script>

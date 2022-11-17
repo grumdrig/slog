@@ -87,8 +87,6 @@ class Snake {
 			throw "Invalid game state";
 		}
 
-
-
 		let next_x = state[HeadX], next_y = state[HeadY];
 		let dx = 0, dy = 0;
 		if (operation === 1) {			next_y -= 1;  // N

@@ -113,6 +113,7 @@ class VirtualMachine {
 	state;  // negative memory beyond registers
 	running = true;
 	clock = 0;  // elapsed cycles since start
+	debugLimit = 1000*1000;
 
 	get pc() { return this.registers[-1-REGISTERS.PC] }
 	set pc(v) { this.registers[-1-REGISTERS.PC] = v }
@@ -306,7 +307,7 @@ class VirtualMachine {
 
 		this.clock += 1;
 
-		if (this.clock > 1000*1000) {
+		if (this.debugLimit && this.clock > this.debugLimit) {
 			console.log("**************** Debug limit reached");
 			this.running = false;
 		}
