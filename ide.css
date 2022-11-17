@@ -1,0 +1,114 @@
+
+.window { cursor: default }
+
+body {
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	background-color: #afdeee;
+}
+
+
+#sources textarea { width: 100%; }
+
+.button > br {
+	content: "";
+	margin: -1px;
+	display: block;
+}
+
+#registers > pre {
+	border-bottom: dotted 1px silver;
+	margin-bottom: -1px;
+}
+
+#debugger {
+	margin: 10px 0;
+	display: grid;
+	grid-template-columns: 370px 180px;
+	width: auto;
+}
+
+#debugger hr { margin: 0 }
+
+#debugger button { width: 100%; }
+#debugger > div {
+	border: solid 1px silver;
+	padding: 4px;
+}
+#debugger > div.nobo {
+	border: none;
+}
+#stack { background-color: white }
+.brain {
+	overflow: auto;
+	max-height: 112px;
+}
+#debugbar p { font: 13px monospace }
+
+#sources textarea {
+	border: inset 1px silver;
+}
+
+.err {
+	color: red;
+}
+
+#automom { margin: 4px }
+
+article { min-height: 280px; }
+
+/* defeat some xp.css for the machine area */
+
+div#sources pre,
+div#debugger pre {
+	padding: 0;
+	font-size: 13px;
+	background-color: white;
+	color: black;
+	font-family: monospace;
+	margin: 0;
+}
+
+div#sources textarea,
+div#debugger textarea {
+	font-family: monospace;
+	font-size: 13px;
+}
+
+div#sources button,
+div#debugger button {
+	min-width: 0px;;
+	padding: 1px 6px;
+}
+
+#controls-window {
+	width: 500px;
+}
+
+iframe {
+	width: 800px;
+	height: 390px;
+	background-color: #fff;
+}
+
+#worldmap {
+	background-color: lightblue;
+	padding: 14px;
+	border: solid 1px blue;
+}
+
+.docmom {
+	overflow: auto;
+	height: 390px;
+}
+
+/* Icons */
+
+div.icon {
+	width: 64px;
+	text-align: center;
+	margin: 20px;
+}
+
