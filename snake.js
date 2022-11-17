@@ -19,15 +19,16 @@ macro east()  external(2)
 macro south() external(3)
 macro west()  external(4)
 
-const GameOver = 0
-const Step = 1
-const Length = 2
-const FoodX = 3
-const FoodY = 4
-const Seed = 5
-
-const Grid0 = 6
-const D = 20
+const GameOver = ${GameOver}
+const Step = ${Step}
+const Length = ${Length}
+const HeadX = ${HeadX}
+const HeadY = ${HeadY}
+const FoodX = ${FoodX}
+const FoodY = ${FoodY}
+const Seed = ${Seed}
+const Grid0 = ${Grid0}
+const D = ${D}
 `;
 
 
@@ -46,19 +47,21 @@ function icell(state, i, value) {
 	return state[i + Grid0];
 }
 
-function cell(state, x, y, value) { icell(state, x + y * D, value) }
+function cell(state, x, y, value) { return icell(state, x + y * D, value) }
 
 
 function plantFood(state) {
-	for (let attempt = 0; ; attempt += 1) {
+	for (let attempt = 0; attempt < 1000; attempt += 1) {
 		let i = hash(state[Seed], state[Step], 0xF00D, attempt) % (D * D);
-		if (state[i] === 0) {
+		if (icell(state, i) === 0) {
 			icell(state, i, -1);
 			state[FoodX] = i % D;
 			state[FoodY] = Math.floor(i / D);
-			break;
+			return;
 		}
 	}
+	Snake.dumpState(state);
+	throw "Couldn't find a place for food";
 }
 
 
@@ -68,14 +71,23 @@ class Snake {
 		let state = new Int16Array(Grid0 + D * D);
 		state[Seed] = hash(0x54ec, ...code);
 		state[Length] = 1;
-		let midpoint = Math.floor(D/2);
-		cell(state, midpoint, midpoint, 1);
+		state[HeadX] = state[HeadY] = Math.floor(D/2);
+		cell(state, state[HeadX], state[HeadY], 1);
+
 		plantFood(state);
 		return state;
 	}
 
 	static handleInstruction(state, operation, ...args) {
 		if (state[GameOver]) return 0;
+
+		if (cell(state, state[FoodX], state[FoodY]) !== -1 ||
+			cell(state, state[HeadX], state[HeadY]) !==  1) {
+			Snake.dumpState(state);
+			throw "Invalid game state";
+		}
+
+
 
 		let next_x = state[HeadX], next_y = state[HeadY];
 		let dx = 0, dy = 0;
@@ -87,13 +99,18 @@ class Snake {
 
 
 		if (next_x < 0 || next_y < 0 || next_x >= D || next_y >= D) {
+			// Ran into wall
 			state[GameOver] = 1;
 		} else if (cell(state, next_x, next_y) > 0) {
+			// Crashed into self
 			state[GameOver] = 2;
 		} else if (state[Step] == 0x7FFF) {
+			// Time is up
 			state[GameOver] = 3;
-		} else if (cell(state, next_x, next_y) < 0) {
+		} else if (next_x === state[FoodX] && next_y == state[FoodY]) {
+			// Found food
 			state[Length] += 1;
+			plantFood(state);
 		}
 
 		if (!state[GameOver]) {
@@ -106,6 +123,8 @@ class Snake {
 				}
 			}
 			cell(state, next_x, next_y, 1);
+			state[HeadX] = next_x;
+			state[HeadY] = next_y;
 			state[Step] += 1;
 		}
 
