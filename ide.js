@@ -49,11 +49,69 @@ function createDebuggerWindow() {
 </div>
 `;
 
+	document.body.appendChild(document.createElement('div')).outerHTML = `
+<div class=icon data-for=debugger-window>
+	<img src=debugger.png>
+	<div>Debugger</div>
+</div>`;
+
+}
+
+function createEditorWindow() {
+	document.body.appendChild(document.createElement('div')).outerHTML = `
+	<div class=window id=editor-window>
+	<div class="title-bar">
+		<div class="title-bar-text">Source Code Editor</div>
+		<div class="title-bar-controls">
+			<button aria-label="Close" class=close></button>
+		</div>
+	</div>
+	<div class="window-body" id="sources">
+		<section class="tabs">
+			<menu role="tablist" aria-label="Editor Tabs">
+				<button role="tab" aria-selected="true" aria-controls="tab-A">Source</button>
+				<button role="tab" aria-controls="tab-B">Assembly</button>
+				<button role="tab" aria-controls="tab-C">Disassembly</button>
+				<button role="tab" aria-controls="tab-D">Interface</button>
+			</menu>
+			<article role="tabpanel" id="tab-A">
+				<textarea rows=16 cols=50 id=source></textarea><br/>
+				<button onclick="comp()">Compile</button>
+				<span style="margin-left: 10px">&nbsp;</span>
+				<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
+				<input type=checkbox id=autoplay><label for=autoplay>Autoplay</label></input>
+				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
+			</article>
+			<article role="tabpanel" hidden id="tab-B">
+				<textarea rows=16 cols=50 id=asm></textarea>
+				<button onclick="assemble()">Assemble</button>
+			</article>
+			<article role="tabpanel" hidden id="tab-C">
+				<textarea readonly rows=18 cols=50 id=machine></textarea>
+			</article>
+			<article role="tabpanel" hidden id="tab-D">
+				<textarea readonly rows=18 cols=60 id=interface></textarea>
+			</article>
+		</section>
+		<div class="status-bar">
+			<p class="status-bar-field" id=errors></p>
+		</div>
+	</div>
+</div>`;
+
+	document.body.appendChild(document.createElement('div')).outerHTML = `
+<div class=icon data-for=editor-window>
+	<img src=editor.png>
+	<div>Editor</div>
+</div>`;
 }
 
 
-//let asm, vm;
 
+
+// Where are these? I confuse
+//let asm, vm;
+let asm;
 
 function saveChanges() {
 	localStorage.source = $("#source").value;
@@ -113,14 +171,14 @@ function step() {
 	stopRunimation();
 	vm.step();
 	updateDebuggerState(vm);
-	updateCharacterSheet(vm.state);
+	updateGame(vm.state);
 }
 
 function bigstep() {
 	stopRunimation();
 	playmation(true);
 	updateDebuggerState(vm);
-	updateCharacterSheet(vm.state);
+	updateGame(vm.state);
 }
 
 function stopRunimation() {
@@ -137,7 +195,7 @@ function runimate() {
 	if (vm.alive()) {
 		let calledOut = vm.step();
 		updateDebuggerState(vm);
-		if (calledOut) updateCharacterSheet(vm.state);
+		if (calledOut) updateGame(vm.state);
 		runimate.timer = setTimeout(runimate, 100);
 	}
 }
@@ -149,12 +207,12 @@ function run() {
 		vm.step();
 	}
 	updateDebuggerState(vm);
-	updateCharacterSheet(vm.state);
+	updateGame(vm.state);
 }
 
 function play() {
 	stopRunimation();
-	bringToFront($id('sheet-window'));
+	bringToFront($id('game-window'));
 	vm.running = true;
 	playmation();
 }
@@ -173,39 +231,13 @@ function setTaskBar() {
 	}
 }
 
-function playmation(butStop) {
-	function age() { return vm.state[Years] * HOURS_PER_YEAR + vm.state[Hours] }
-	let before = age();
-	while (vm.alive() && age() == before) {
-		vm.step();
-	}
-	animate.duration = 1000 * Math.round(Math.sqrt(2 * (age() - before)));
-	animate.progress = 0;
-	$id('task').innerText = TASK;
-	setTaskBar();
-	if (!butStop)
-		runimate.timer = setTimeout(animate, 10);
-}
-
-function animate() {
-	animate.progress += 10;
-	setTaskBar();
-	if (animate.progress >= animate.duration) {
-		updateDebuggerState(vm);
-		updateCharacterSheet(vm.state);
-		if (vm.alive)
-			runimate.timer = setTimeout(playmation, 1);
-	} else {
-		runimate.timer = setTimeout(animate, 10);
-	}
-}
 
 
 function reset() {
 	stopRunimation();
 	vm = new VirtualMachine(asm.code, Game);
 	updateDebuggerState(vm);
-	updateCharacterSheet(vm.state);
+	updateGame(vm.state);
 }
 
 function rand(m) { return Math.floor(Math.random() * m) }
@@ -292,11 +324,12 @@ function prepWindow(hwnd) {
 	});
 }
 
-// window.addEventListener('load', e => {
-window.addEventListener("DOMContentLoaded", _ => {
+
+function prepIDE() {
 	window.addEventListener('unload', saveChanges);
 
 	createDebuggerWindow();
+	createEditorWindow();
 
 	$("#source").addEventListener('keypress', e => {
 		if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) comp();
@@ -309,8 +342,6 @@ window.addEventListener("DOMContentLoaded", _ => {
 	$$('[role="tab"]').forEach(tab => tab.addEventListener("click", changeTabs));
 
 	$("#interface").value = Game.generateInterface();
-	$("#worldmap").innerHTML = Game.generateMap();
-	$("#gamereference").innerHTML = Game.generateDocumentation();
 
 	$$(".icon").forEach(element => element.addEventListener('click', e => {
 		let win = document.getElementById(element.getAttribute('data-for'));
@@ -333,17 +364,7 @@ window.addEventListener("DOMContentLoaded", _ => {
 	$("#source").value = localStorage.source || "// hello, world!";
 	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
 	$("#autoplay").checked = JSON.parse(localStorage.autoplay || "false");
-
-	for (let call in CALLS) {
-		let { parameters, operation, description } = CALLS[call];
-		let b = $("#control-buttons").appendChild(document.createElement('button'));
-		b.addEventListener('click', _ => gameplay(operation));
-		b.innerText = `${call}(${parameters ?? ''})`;
-		b.hint = description ?? '';
-	}
-
-	setTimeout(_ => comp(true), 1);
-});
+}
 
 
 
@@ -398,10 +419,11 @@ function updateDebuggerState(vm) {
 	for (let i = 0; i < vm.state.length; ++i, ++n) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
-		d.innerText = regFmt(SLOTS[i].name, vm.state[i]);
+		d.innerText = regFmt(SLOTS[i] ? SLOTS[i].name : i, vm.state[i]);
 	}
 
 	$("#codepoint").innerText = '';
+	if (asm)
 	for (let p = -3; p <= 3; ++p) {
 		let d = $("#codepoint").appendChild(document.createElement('pre'));
 		d.innerText = (vm.pc + p < 0 ? ' ' : asm.disassemble(vm.pc + p)) + '\n';

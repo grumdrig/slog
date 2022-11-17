@@ -1,3 +1,12 @@
+const SLOTS = [
+	{ name: 'GameOver' },
+	{ name: 'Step' },
+	{ name: 'Length' },
+	{ name: 'Head' },
+	{ name: 'Food' },
+	{ name: 'Seed' },
+];
+
 // State vector indices
 const GameOver = 0;
 const Step = 1;

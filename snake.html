@@ -1,25 +1,46 @@
 <!doctype html>
 <head><meta charset='utf-8'/>
 <title>Snake Slog</title>
+<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">
+<link rel=stylesheet href="ide.css">
 <style>
-
 </style>
 <script src="snake.js"></script>
 <script src="vm.js"></script>
+<script src="ide.js"></script>
+<script src="compiler.js"></script>
 </head>
 <body>
-<canvas width=400 height=400></canvas>
-<div>Score: <span id=score>0</span></div>
-<div id=gameover></div>
+
+<div class=window id=game-window>
+	<div class="title-bar">
+		<div class="title-bar-text">Snake</div>
+		<div class="title-bar-controls">
+			<button aria-label="Close" class=close></button>
+		</div>
+	</div>
+	<div class="window-body">
+		<canvas width=400 height=400></canvas>
+		<div>Score: <span id=score>0</span></div>
+		<div id=gameover></div>
+	</div>
+</div>
+
+<div class=icon data-for=game-window>
+	<img src=game.png>
+	<div>Game</div>
+</div>
+
 
 <script>
 
-function $(s) { return document.querySelector(s) }
+let Game = Snake;
 
-let can = $('canvas');
-let ctx = can.getContext('2d');
 
-function draw(state) {
+function updateGame(state) {
+
+	let can = $('canvas');
+	let ctx = can.getContext('2d');
 
 	for (let i = 0; i < D * D; i++) {
 		let s = state[Grid0 + i];
@@ -38,22 +59,36 @@ function draw(state) {
 		ctx.strokeStyle = '#444';
 		ctx.strokeRect(x * can.width / D, y * can.height / D, can.width / D, can.height / D);
 	}
+
+	$("#score").innerText = vm.state[Length] - 1;
+
+	$('#gameover').innerText =
+		vm.state[GameOver] == 0 ? '' :
+		vm.state[GameOver] == 1 ? 'Game Over. Crashed into wall.' :
+		vm.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
+		vm.state[GameOver] == 3 ? 'Game Over. Time is up.' :
+		'Game Over: ' + vm.state[GameOver];
 }
 
-const xhr = new XMLHttpRequest();
-xhr.open('GET', 'steve.bin');
-xhr.responseType = 'arraybuffer';
-xhr.onreadystatechange = e => {
-	if (xhr.readyState === 4) {
-		let buffer = xhr.response;
-		program = new Int16Array(buffer, 0, Math.floor(buffer.byteLength / 2));
-		go(program);
+window.addEventListener("DOMContentLoaded", _ => {
+	prepIDE();
+
+/*
+	const xhr = new XMLHttpRequest();
+	xhr.open('GET', 'steve.bin');
+	xhr.responseType = 'arraybuffer';
+	xhr.onreadystatechange = e => {
+		if (xhr.readyState === 4) {
+			let buffer = xhr.response;
+			program = new Int16Array(buffer, 0, Math.floor(buffer.byteLength / 2));
+			go(program);
+		}
 	}
-}
-xhr.send();
+	xhr.send();
+	*/
+});
 
-let vm;
-let step = -1;
+//let vm;
 
 function go(program) {
 	vm = new VirtualMachine(program, Snake);
@@ -61,29 +96,17 @@ function go(program) {
 	bigstep();
 }
 
-function bigstep() {
+function playmation(butStop) {
+	vm.bigstep();
 
-	while (vm.alive() && vm.state[Step] === step) {
-		vm.step();
-	}
-
-	step = vm.state[Step];
-
-	draw(vm.state);
-
-	$("#score").innerText = vm.state[Length] - 1;
+	updateGame(vm.state);
 
 	if (vm.alive()) {
-		setTimeout(bigstep, vm.state[Length] > 12 ? 1000 : 10);
+		if (!butStop)
+			setTimeout(playmation, 10);//vm.state[Length] > 12 ? 1000 : 10);
 	} else {
 		Snake.dumpState(vm.state);
 		vm.dumpState();
-		$('#gameover').innerText =
-			vm.state[GameOver] == 0 ? 'ok' :
-			vm.state[GameOver] == 1 ? 'Game Over. Crashed into wall.' :
-			vm.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
-			vm.state[GameOver] == 3 ? 'Game Over. Time is up.' :
-			'Game Over: ' + vm.state[GameOver];
 		// for (let i = 0; i < vm.memory.length; i += 1)
 		// 	if (vm.memory[i])
 		// 		console.log(i, vm.memory[i]);

@@ -1026,13 +1026,13 @@ class PrefixExpression {
 			},
 		'.': {
 			generate: (context, rhs) => {
+					const NUM_REGISTERS = 4;
 					if (rhs.isLiteral) {
-						const NUM_REGISTERS = 4;
 						context.emit('fetch ' +  (-1 - NUM_REGISTERS - rhs.value));
 					} else {
 						rhs.generate(context);
 						context.emit('unary NEG');
-						context.emit('sub 8');
+						context.emit('sub ' + (NUM_REGISTERS + 1));
 						context.emit('fetch');
 					}
 				},

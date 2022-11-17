@@ -427,6 +427,16 @@ assert happy(1) == 'i'
 assert happy(6) == 0
 
 
+////////////////
+// State vector
+///////////////
+
+external(5, 55)
+assert .5 == 55
+assert external(5, 66) == 55
+assert .v5 == 66
+
+
 ///////////////
 // Perverse
 ///////////////

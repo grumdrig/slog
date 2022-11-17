@@ -183,10 +183,10 @@ class VirtualMachine {
 	}
 
 	bigstep() {
-		step();
-		while (this.running && ((this.memory[this.pc] & 0x1F) != 0x3)) {
-			step();
+		while (this.alive() && ((this.memory[this.pc] & 0x1F) != 0x3)) {
+			this.step();
 		}
+    this.step();
 	}
 
 	step() {

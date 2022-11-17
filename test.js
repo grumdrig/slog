@@ -2,10 +2,18 @@ let { VirtualMachine } = require('./vm.js');
 
 class TestApp {
 
-	static create(program) { return new Int16Array(1) }
+	static create(program) { return new Int16Array(10) }
 
-	static handleInstruction(code, ...args) {
+	static handleInstruction(state, code, ...args) {
 		console.log("Test sees", code, ...args);
+
+		if (0 <= code && code < 10) {
+			let old = state[code];
+			state[code] = args[0];
+			return old;
+		}
+
+		return -1;
 	}
 }
 
