@@ -631,8 +631,7 @@ class Assembler {
 			this.assert(typeof this.labels[symbol] !== 'undefined', "undefined data label: " + symbol);
 			this.redata(pc, this.labels[symbol]);
 		}
-		let lastNontrivialIndex = this.code.reduce((n, v, i) => v ? i : n, 0);
-		this.code = this.code.slice(0, lastNontrivialIndex + 1);
+		this.code = removeTrailingZeros(this.code);
 	}
 
 	emit(opcode, parameter) {
@@ -660,10 +659,14 @@ class Assembler {
 	}
 
 	disassemble(address) {
+		return Assembler.disassemble(this.code, address);
+	}
+
+	static disassemble(code, address) {
 		if (typeof address === 'number') {
-			let inst = this.code[address] || 0;
+			let inst = code[address] || 0;
 			let disa;
-			if (address > 0 && isInlineModeInstruction(this.code[address - 1] || 0)) {
+			if (address > 0 && isInlineModeInstruction(code[address - 1] || 0)) {
 				disa = '.data ' + inst;
 			} else {
 				let opcode = OPCODES[inst & 0x1f] || '??';
@@ -686,13 +689,18 @@ class Assembler {
 					+ ' ' + disa
 					);
 		} else {
-			let result = Array.from(this.code.slice(0, this.pc)).map((inst, num) =>
-				this.disassemble(num));
+			let result = removeTrailingZeros(Array.from(code)).map((inst, num) =>
+				this.disassemble(code, num));
 			return result.join('\n');
 		}
 	}
 }
 
+function removeTrailingZeros(code) {
+	let i = code.length - 1;
+	while (i >= 0 && !code[i]) i -= 1;
+	return code.slice(0, i + 1);
+}
 
 function asCharIfPossible(v) {
 	let lsb = v & 0xFF;
@@ -737,6 +745,21 @@ function readFileAsWords(filename) {
 			view[i] = buffer[i];
 		return new Int16Array(ab);
 }
+
+function loadBinary(filepath, callback) {
+	const xhr = new XMLHttpRequest();
+	xhr.open('GET', filepath);
+	xhr.responseType = 'arraybuffer';
+	xhr.onreadystatechange = e => {
+		if (xhr.readyState === 4) {
+			let buffer = xhr.response;
+			program = new Int16Array(buffer, 0, Math.floor(buffer.byteLength / 2));
+			callback(program);
+		}
+	}
+	xhr.send();
+}
+
 
 if (typeof exports !== 'undefined') {
 	exports.VirtualMachine = VirtualMachine;

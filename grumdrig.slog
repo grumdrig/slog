@@ -4,7 +4,7 @@ initialize(StatConstitution, 1)
 initialize(StatIntelligence, 2)
 initialize(StatWisdom, 1)
 initialize(StatCharisma, 1)
-var name = "Q"
+var name = "Grumdrig"
 setname(name)
 startgame(2)
 
@@ -26,8 +26,8 @@ func goodHunting(forLevel) {
 }
 
 // while !forage(EquipmentTotem) { }
-// seekquest()
-// learn(1, HEAL_YEAH)
+seekquest()
+learn(1, HEAL_YEAH)
 // learn(3, BUFF)
 // while .InventoryReagents < 4 { forage(InventoryReagents) }
 // cast(BUFF)
@@ -50,9 +50,9 @@ while .Level < 88 {
     //drop(InventorySpoils, .InventorySpoils)
   }
   goto(18)
+  levelup()
   while .Health < .MaxHealth {
     rest()
   }
   sell(InventorySpoils, .InventorySpoils)
-  levelup()
 }

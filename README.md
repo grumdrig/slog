@@ -411,6 +411,11 @@ Boost stats or other factors. Just use the slot value to index its effect
 
 Some or all might be cursed. Once you have them you can't get rid of them.
 
+Or else have them be spells. Maybe it lets you cast them, or else gives the
+effect permanently.
+
+Maybe just get rid of these for v1.
+
 
 TOTEM
 
@@ -703,8 +708,12 @@ be transported to Sygnon Isle, to encounter and hopefully defeat the final
 boss.
 
 
-Basic PQ
---------
+Bugs & features
+---------------
 
-What if I just reproduce PQ basically as-is?
+Can sell anywhere & level up anywhere
+
+Gotta loot corpses - have an encounter listview
+
+The grumdrig.slog needs to know about overencumberance
 

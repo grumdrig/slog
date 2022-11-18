@@ -461,7 +461,7 @@ const SPELLS = [ null, {
 			healing *= Math.pow(GR, state[StatWisdom]);
 			healing = Math.round(healing);
 			healing = Math.min(healing, state[MaxHealth] - state[Health]);
-			inc(Health, healing);
+			state[Health] += healing;
 			return healing;
 		},
 		description: `Heal some or all of any damage you may have sustained.
@@ -1330,7 +1330,7 @@ class Bompton {
 		return state;
 	}
 
-	static prepareUI() {
+	static prepareIDE() {
 		$("#worldmap").innerHTML = this.generateMap();
 		$("#gamereference").innerHTML = this.generateDocumentation();
 
@@ -1932,7 +1932,6 @@ class Bompton {
 			if (!isInventorySlot(target)) return -1;
 
 			qty = rand() < 0.5 ? 1 : 0;
-			qty = Math.min(qty, inventoryCapacity());
 			inc(target, qty);
 
 			passTime('Foraging for ' + itemsName(target), 1);
@@ -2450,7 +2449,7 @@ Bompton.playmation = function(vm, butStop) {
 	$id('task').innerText = TASK;
 	setTaskBar();
 	if (!butStop)
-		runimate.timer = setTimeout(animate, 10);
+		window.gameplayTimer = setTimeout(animate, 10);
 }
 
 
@@ -2459,12 +2458,13 @@ function animate() {
 	animate.progress += 10;
 	setTaskBar();
 	if (animate.progress >= animate.duration) {
-		updateDebuggerState(vm);
+		if (typeof updateDebuggerState !== 'undefined') // TODO awkward as hell
+			updateDebuggerState(vm);
 		Bompton.updateUI(vm.state);
 		if (vm.alive())
-			runimate.timer = setTimeout(_ => Bompton.playmation(vm), 1);
+			window.gameplayTimer = setTimeout(_ => Bompton.playmation(vm), 1);
 	} else {
-		runimate.timer = setTimeout(animate, 10);
+		window.gameplayTimer = setTimeout(animate, 10);
 	}
 }
 
@@ -2487,8 +2487,8 @@ function setTaskBar() {
 return Bompton; })();
 
 
-if (typeof exports !== 'undefined') {
-	exports = Bompton;
+if (typeof module !== 'undefined') {
+	module.exports = Bompton;
 }
 
 
