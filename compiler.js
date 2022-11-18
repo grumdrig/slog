@@ -261,7 +261,6 @@ class Module {
 			} else if (item = FunctionDefinition.tryParse(source)) {
 				result.functions.push(item);
 			} else if (item = TagDefinition.tryParse(source)) {
-				console.log(result.tag);
 				if (result.tag) source.error("Tag already defined");
 				result.tag = item;
 			} else {
@@ -1511,6 +1510,22 @@ function compile(...texts) {
 	return c.code.join('\n');
 }
 
+
+function parseDocumentation(destination, text) {
+	let m = text.match(/^\/\/\/ Target:\s+(.+?)\s*$/m);
+	if (m) destination.target = m[1];
+
+	m = text.match(/^\/\/\/ Title:\s+(.+?)\s*$/m);
+	if (m) destination.title = m[1];
+
+	m = text.match(/^\/\/\/ Author:\s+(.+?)\s*$/m);
+	if (m) destination.author = m[1];
+
+	m = text.match(/^\/\/\/ Description:\s+(.+?)\s*$/m);
+	if (m) destination.description = m[1];
+}
+
+
 if (typeof exports !== 'undefined') {
 	exports.compile = compile;
 }
@@ -1521,11 +1536,27 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const { parseArgs } = require('util');
 	const { readFileSync, writeFileSync } = require('fs');
 
-	const { values: { output, interface }, positionals } = parseArgs({
+	const { values: { assembly, binary, disassembly, package, symbols, interface }, positionals } = parseArgs({
 		options: {
-			output: {
+			assembly: {
 				type: "string",
-				short: "o",
+				short: "a",
+			},
+			binary: {
+				type: "string",
+				short: "b",
+			},
+			disassembly: {
+				type: "string",
+				short: "d",
+			},
+			package: {
+				type: "string",
+				short: "p",
+			},
+			symbols: {
+				type: "boolean",
+				short: "s",
 			},
 			interface: {
 				type: 'string',
@@ -1540,10 +1571,10 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 	let sources = positionals.map(filename => readFileSync(filename, 'utf8'));
 
-	let code;
-		code = compile(...interfaces.concat(sources));
+	let asm;
+		asm = compile(...interfaces.concat(sources));
 /*	try {
-		code = compile(...interfaces.concat(sources));
+		asm = compile(...interfaces.concat(sources));
 	} catch (e) {
 		if (e instanceof ParseError) {
 			console.error('Parse Error: ' + e.message);
@@ -1555,9 +1586,34 @@ if (typeof module !== 'undefined' && !module.parent) {
 		process.exit(-1);
 	}*/
 
-	if (output) {
-		writeFileSync(output, code, 'utf8');
-	} else {
-		console.log(code);
+	if (assembly) {
+		if (assembly === '-')
+			console.log(asm);
+		else
+			writeFileSync(assembly, asm, 'utf8');
 	}
+
+	if (!binary && !disassembly && !package) return;
+
+	let { Assembler } = require('./vm');
+	let assembler = Assembler.assemble(asm);
+
+	if (binary) {
+		writeFileSync(binary, assembler.code);
+	}
+
+	if (disassembly) {
+		writeFileSync(disassembly, assembler.disassemble(), 'utf8');
+	}
+
+	if (package) {
+		let pack = {};
+		for (let source of sources) parseDocumentation(pack, source);
+		pack.binary = Array.from(assembler.code);
+		if (symbols) {
+			// TODO
+		}
+		writeFileSync(package, JSON.stringify(pack));
+	}
+
 }

@@ -1,10 +1,7 @@
 # Grumdrig game
 
 # compile
-node compiler.js -i ./bompton.js -o @grumdrig.asm grumdrig.slog
-
-# assemble
-node vm.js -a grumdrig.asm -d @grumdrig.dasm -o @grumdrig.bin -- grumdrig.asm
+node compiler.js -i ./bompton.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -p @grumdrig.json grumdrig.slog
 
 # execute
 node bompton.js -v grumdrig.bin -- grumdrig.bin
@@ -13,15 +10,15 @@ node bompton.js -v grumdrig.bin -- grumdrig.bin
 
 # Snake
 
-node compiler.js -i ./snake.js -o @steve.asm steve.slog
+node compiler.js -i ./snake.js -a @steve.asm steve.slog
 node vm.js -a steve.asm -o @steve.bin -- steve.asm
-node snake.js -v steve.bin -- steve.bin
+node snake.js steve.bin -- steve.bin
 
 
 # tests
 
 # compile
-node compiler.js -o @test.asm test.slog
+node compiler.js -a @test.asm test.slog
 
 # assemble
 node --trace-uncaught vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm

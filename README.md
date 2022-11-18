@@ -485,6 +485,9 @@ I think I need or it would be best to have splat syntax for at least macros
 
 	macro setName(letters*) external(66, *letters)
 
+Instead I went with the opaque thing of a negative external call code meaning
+the argument is a zero-terminated vector. However, setname should probably go.
+
 Check tag
 
 
