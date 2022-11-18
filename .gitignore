@@ -6,6 +6,7 @@ package.json
 grumdrig.asm
 grumdrig.bin
 grumdrig.dasm
+grumdrig.json
 
 steve.asm
 steve.bin
