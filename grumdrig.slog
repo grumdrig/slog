@@ -1,7 +1,7 @@
 /// Target: Bompton Island v1.1
-/// Title: Grumdrig Goes Hunting
+/// Title: Let's Go Hunting
 /// Author: Grumdrig
-/// Description: Greedily level up at all costs
+/// Description: Greedily slay beasts to level up at all costs. Just keep killing beasts. Lost of them.
 
 initialize(StatStrength, 4)
 initialize(StatAgility, 1)

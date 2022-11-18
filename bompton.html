@@ -11,13 +11,31 @@
 <script src="bompton.js"></script>
 <style>
 #newstuff {
+	min-width: 240px;
 	display: grid;
-	grid-template-columns: 1fr 2fr;
+	grid-template-columns: 40px 1fr;
+}
+#newstuff > fieldset {
+	grid-column: 1/3;
+	background-color: transparent;
+}
+#strat-author, #strat-title {
+	background: white;
+	padding: 2px;
+	border: solid 1px rgb(208,208,191);
+	border-radius: 4px;
+}
+#strat-desc {
+	width: 200px;
 }
 #sold {
 	grid-column: 1/3;
 	text-align: center;
 	margin-top: 4px;
+}
+fieldset > .field-row {
+	margin-top: 4px;
+	margin-bottom: 4px;
 }
 </style>
 </head>
@@ -44,8 +62,28 @@
 	<div class=window-body>
 		<div id=newstuff>
 			<label for=name>Name</label><input type=text id=name></input>
-			<label for=orders>Strategy</label>
-				<input type=text id=orders value='grumdrig.bin'></input>
+			<fieldset style="margin-top:10px">
+				<legend>Strategy</legend>
+				<div class=field-row>
+					<select name=strat id=strat>
+						<option selected>-- Pick a strat --</option>
+						<option value='grumdrig.bin'>Grumdrig</option>
+						<option><i>[ Upload... ]</i></option>
+					</select>
+					<button onclick="document.getElementById('chooser').classList.add('field-row')">Upload...</button>
+				</div>
+				<div id=chooser hidden class=XXfield-row>
+					<input type="file" name="client-file" id="get-files" accept=".strat" />
+				</div>
+				<div class=field-row style="margin-top:16px;display:grid;grid-template-columns:2fr 5fr">
+					<label for=strat-title>Title</label><div id=strat-title>(title)</div>
+					<label for=strat-author style=margin-left:0>Author</label><div id=strat-author>(author)</div>
+				</div>
+				<fieldset class=field-row style="grid-column:1/3">
+						<legend>Description</legend>
+						<div class=field-row id=strat-desc>(description)</div>
+				</fieldset>
+			</fieldset>
 			<div id=sold><button onclick="sold()">Go!</button></div>
 		</div>
 	</div>
@@ -85,6 +123,9 @@
 
 let vm;
 
+
+//hide("#chooser");
+
 window.addEventListener('load', e => {
 	let game = Bompton;
 	$("#game-window .title-bar-text").innerHTML = game.title;
@@ -94,15 +135,32 @@ window.addEventListener('load', e => {
 
 	show('#newgame-window');
 	hide('#game-window');
+
+	$("input[type=file]").addEventListener('change', upload);
 });
+
+let PACKAGE;
+
+function upload(e) {
+	let f = e.target.files[0];
+	if (f) loadPackage(f.name, package => {
+		PACKAGE = package;
+		$("#strat-title").innerText = package.title || '(untitled)';
+		$("#strat-author").innerText = package.author || '(anonymous)';
+		$("#strat-desc").innerText = package.description || '(no description)';
+	});
+}
 
 function sold() {
 	hide('#newgame-window');
 
-	loadBinary($('#orders').value, program => {
-		vm = new VirtualMachine(program, Bompton);
-		play();
-	});
+	// loadBinary($('#orders').value, program => {
+	// 	vm = new VirtualMachine(program, Bompton);
+	// 	play();
+	// });
+	vm = new VirtualMachine(PACKAGE.binary, Bompton);
+	play();
+
 }
 
 

@@ -753,8 +753,22 @@ function loadBinary(filepath, callback) {
 	xhr.onreadystatechange = e => {
 		if (xhr.readyState === 4) {
 			let buffer = xhr.response;
-			program = new Int16Array(buffer, 0, Math.floor(buffer.byteLength / 2));
+			let program = new Int16Array(buffer, 0, Math.floor(buffer.byteLength / 2));
 			callback(program);
+		}
+	}
+	xhr.send();
+}
+
+function loadPackage(filepath, callback) {
+	const xhr = new XMLHttpRequest();
+	xhr.open('GET', filepath);
+	xhr.responseType = 'text';
+	xhr.onreadystatechange = e => {
+		if (xhr.readyState === 4) {
+			let buffer = xhr.response;
+			let package = JSON.parse(buffer);
+			callback(package);
 		}
 	}
 	xhr.send();
