@@ -9,6 +9,17 @@
 <script src="vm.js"></script>
 <script src="os.js"></script>
 <script src="bompton.js"></script>
+<style>
+#newstuff {
+	display: grid;
+	grid-template-columns: 1fr 2fr;
+}
+#sold {
+	grid-column: 1/3;
+	text-align: center;
+	margin-top: 4px;
+}
+</style>
 </head>
 <body>
 
@@ -31,7 +42,12 @@
 		</div>
 	</div>
 	<div class=window-body>
-
+		<div id=newstuff>
+			<label for=name>Name</label><input type=text id=name></input>
+			<label for=orders>Orders URL</label>
+				<input type=text id=orders value='grumdrig.bin'></input>
+			<div id=sold><button onclick="sold()">Go!</button></div>
+		</div>
 	</div>
 </div>
 
@@ -55,6 +71,11 @@
 	<div>Game</div>
 </div>
 
+<div class=icon data-for=newgame-window>
+	<img src=game.png>
+	<div>New Game</div>
+</div>
+
 <div class=icon data-for=map-window>
 	<img src=map.png>
 	<div>Map</div>
@@ -71,13 +92,18 @@ window.addEventListener('load', e => {
 
 	prepOS();
 
-	hide($id('newgame-window'));
+	show('#newgame-window');
+	hide('#game-window');
+});
 
-	loadBinary("grumdrig.bin", program => {
+function sold() {
+	hide('#newgame-window');
+
+	loadBinary($('#orders').value, program => {
 		vm = new VirtualMachine(program, Bompton);
 		play();
-	})
-});
+	});
+}
 
 
 function play() {

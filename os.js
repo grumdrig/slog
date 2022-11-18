@@ -1,11 +1,11 @@
-function $(s) { return document.querySelector(s) }
+function $(s) { return typeof s === 'string' ? document.querySelector(s) : s }
 function $$(s) { return document.querySelectorAll(s) }
 HTMLElement.prototype.$ = HTMLElement.prototype.querySelector;
 HTMLElement.prototype.$$ = HTMLElement.prototype.querySelectorAll;
 function $id(s) { return document.getElementById(s) }
 
-function hide(win) { win.setAttribute('hidden', true) }
-function show(win) { win.removeAttribute('hidden') }
+function hide(win) { $(win).setAttribute('hidden', true) }
+function show(win) { $(win).removeAttribute('hidden') }
 
 function prepOS() {
 	$$('[role="tab"]').forEach(tab => tab.addEventListener("click", changeTabs));
