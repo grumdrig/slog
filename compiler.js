@@ -720,12 +720,14 @@ class WhileStatement {
 		let loopStartLabel = context.uniqueLabel('while');
 		context.emit(loopStartLabel + ':');
 
-		// Test loop condition
-		condition.generate(context);
-		context.emit('unary NOT');
+		if (!OPTIMIZE || !condition.isLiteral) {
+			// Test loop condition
+			condition.generate(context);
+			context.emit('unary NOT');
 
-		// Exit loop if it's false
-		context.emit('.branch ' + context.breakLabel);
+			// Exit loop if it's false
+			context.emit('.branch ' + context.breakLabel);
+		}
 
 		this.body.generate(context);
 
