@@ -1593,27 +1593,27 @@ if (typeof module !== 'undefined' && !module.parent) {
 			writeFileSync(assembly, asm, 'utf8');
 	}
 
-	if (!binary && !disassembly && !package) return;
+	if (binary || disassembly || package) {
 
-	let { Assembler } = require('./vm');
-	let assembler = Assembler.assemble(asm);
+		let { Assembler } = require('./vm');
+		let assembler = Assembler.assemble(asm);
 
-	if (binary) {
-		writeFileSync(binary, assembler.code);
-	}
-
-	if (disassembly) {
-		writeFileSync(disassembly, assembler.disassemble(), 'utf8');
-	}
-
-	if (package) {
-		let pack = {};
-		for (let source of sources) parseDocumentation(pack, source);
-		pack.binary = Array.from(assembler.code);
-		if (symbols) {
-			// TODO
+		if (binary) {
+			writeFileSync(binary, assembler.code);
 		}
-		writeFileSync(package, JSON.stringify(pack));
-	}
 
+		if (disassembly) {
+			writeFileSync(disassembly, assembler.disassemble(), 'utf8');
+		}
+
+		if (package) {
+			let pack = {};
+			for (let source of sources) parseDocumentation(pack, source);
+			pack.binary = Array.from(assembler.code);
+			if (symbols) {
+				// TODO
+			}
+			writeFileSync(package, JSON.stringify(pack));
+		}
+	}
 }

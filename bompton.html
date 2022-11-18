@@ -37,6 +37,15 @@ fieldset > .field-row {
 	margin-top: 4px;
 	margin-bottom: 4px;
 }
+#strat {
+	margin-bottom: 6px;
+	margin-top: -6px;
+}
+#file {
+	margin-bottom: 3px;
+	margin-top: -3px;
+}
+hr { margin: 16px }
 </style>
 </head>
 <body>
@@ -64,18 +73,19 @@ fieldset > .field-row {
 			<label for=name>Name</label><input type=text id=name></input>
 			<fieldset style="margin-top:10px">
 				<legend>Strategy</legend>
-				<div class=field-row>
+				<div style="display:grid;grid-template-columns:50px 1fr;gap:4px">
+					<div>Preset</div>
 					<select name=strat id=strat>
 						<option selected>-- Pick a strat --</option>
 						<option value='grumdrig.bin'>Grumdrig</option>
-						<option><i>[ Upload... ]</i></option>
 					</select>
-					<button onclick="document.getElementById('chooser').classList.add('field-row')">Upload...</button>
+					<div>or Upload</div>
+					  <input type="file" name="client-file" id="file" accept=".strat" />
+					<div>or URL</div><input type=url id=url></input>
+					<div style="grid-column:1/3">or <a href=index.html>program your own!</a></div>
 				</div>
-				<div id=chooser hidden class=XXfield-row>
-					<input type="file" name="client-file" id="get-files" accept=".strat" />
-				</div>
-				<div class=field-row style="margin-top:16px;display:grid;grid-template-columns:1fr 4fr">
+				<hr/>
+				<div class=field-row style="display:grid;grid-template-columns:1fr 4fr;">
 					<label for=strat-title>Title</label><div id=strat-title>&nbsp;</div>
 					<label for=strat-author style=margin-left:0>Author</label><div id=strat-author>&nbsp;</div>
 				</div>
