@@ -84,7 +84,8 @@ class Snake {
 		return state;
 	}
 
-	static name = "Snake";
+	static title = "Snake";
+
 	static SLOTS = SLOTS;
 
 	static windowContent = `
@@ -99,9 +100,10 @@ class Snake {
 		for (let i = 0; i < D * D; i++) {
 			let s = state[Grid0 + i];
 			if (s > 1) {
-				ctx.fillStyle = 'white';
+				let c = 255 - Math.floor(128 * s/state[Length]);
+				ctx.fillStyle = 'rgb(0,'+c+',0)';
 			} else if (s === 1) {
-				ctx.fillStyle = '#0a0';
+				ctx.fillStyle = 'white';
 			} else if (s < 0) {
 				ctx.fillStyle = 'red';
 			} else {

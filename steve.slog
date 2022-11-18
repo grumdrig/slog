@@ -1,18 +1,36 @@
 macro x(i) i % D
 macro y(i) i / D
 
-macro northward() y(.Head) > 0   and .(Grid0 + .Head - D) <= 0
-macro eastward()  x(.Head) < D-1 and .(Grid0 + .Head + 1) <= 0
-macro southward() y(.Head) < D-1 and .(Grid0 + .Head + D) <= 0
-macro westward()  x(.Head) > 0   and .(Grid0 + .Head - 1) <= 0
+macro northclear() y(.Head) > 0   and .(Grid0 + .Head - D) <= 0
+macro eastclear()  x(.Head) < D-1 and .(Grid0 + .Head + 1) <= 0
+macro southclear() y(.Head) < D-1 and .(Grid0 + .Head + D) <= 0
+macro westclear()  x(.Head) > 0   and .(Grid0 + .Head - 1) <= 0
+
+func go(goal) {
+	if .Head == goal { return 0 }
+	if      x(.Head) < x(goal) and eastclear()  { east() }
+	else if x(.Head) > x(goal) and westclear()  { west() }
+	else if y(.Head) < y(goal) and southclear() { south() }
+	else if y(.Head) > y(goal) and northclear() { north() }
+	else if eastclear()  { east() }
+	else if westclear()  { west() }
+	else if southclear() { south() }
+	else                 { north() }
+	if .Head == goal { return 0 }
+	return 1
+}
+
+macro go2(x, y) go(x + y * D)
+
 
 while 1 {
-	if      x(.Head) < x(.Food) and eastward()  { east() }
-	else if x(.Head) > x(.Food) and westward()  { west() }
-	else if y(.Head) < y(.Food) and southward() { south() }
-	else if y(.Head) > y(.Food) and northward() { north() }
-	else if eastward()  { east() }
-	else if westward()  { west() }
-	else if southward() { south() }
-	else                { north() }
+	while go(.Food) {}
+	/*
+	var goal = y(.Head)
+	while go2(0,   goal) {}
+	while go2(0,   0) {}
+	while go2(D-1, 0) {}
+	while go2(D-1, D-1) {}
+	while go2(0,   D-1) {}
+	*/
 }
