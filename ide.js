@@ -197,7 +197,10 @@ function updateDebuggerState(vm) {
 		$("#memory").innerText = '';  // in case the vm has changed sizes
 	for (let i = 0; i < vm.memory.length; ++i) {
 		let d = $("#memory").children[i] || $("#memory").appendChild(document.createElement('pre'));
-		d.innerText = `${('000' + i).substr(-4)}: ` + hexDec(vm.memory[i]);
+		let addr = (asm && asm.symbolTable[i]) ?
+			(asm.symbolTable[i] + '    ').substr(0,4) :
+			('000' + i).substr(-4);
+		d.innerText = addr + ': ' + hexDec(vm.memory[i]);
 	}
 }
 

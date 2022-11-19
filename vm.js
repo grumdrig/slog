@@ -632,6 +632,10 @@ class Assembler {
 			this.redata(pc, this.labels[symbol]);
 		}
 		this.code = removeTrailingZeros(this.code);
+
+		this.symbolTable = [];
+		for (let i in this.labels)
+			this.symbolTable[this.labels[i]] = i;
 	}
 
 	emit(opcode, parameter) {
