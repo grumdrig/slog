@@ -186,7 +186,7 @@ function updateDebuggerState(vm) {
 
 	$("#stackdepth").innerText = vm.memory.length - vm.sp;
 	$("#stack").innerText = '';
-	for (let i = vm.sp; i < vm.sp + 7 && i < vm.memory.length; ++i) {
+	for (let i = vm.sp; i < vm.memory.length; ++i) {
 		let d = $("#stack").appendChild(document.createElement('pre'));
 		d.innerText = `${('000' + i).substr(-4)}: ` + hexDec(vm.memory[i]);
 		if (i === vm.sp) d.style.backgroundColor="yellow";

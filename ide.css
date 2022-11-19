@@ -25,13 +25,14 @@
 	border: none;
 }
 #stackmom {
-	position: relative;
+	display: flex;
+	flex-direction: column;
+}
+.smash {
+	flex-grow: 1;
 }
 #stack {
 	background-color: white;
-	position: absolute;
-	bottom: 0;
-	left: 0;
 	width: 100%;
 }
 .brain {
