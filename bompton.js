@@ -1989,6 +1989,7 @@ class Bompton {
 	}
 
 	static xpNeededForLevel(level) {
+		if (level <= 1) return 0;
 		return 0 + Math.floor(Math.pow(level - 1, GR)) * 200;
 	}
 
@@ -2213,7 +2214,7 @@ div.header {
 
 
 function setBar(id, value, end, start=0, color='#ace97c') {
-	let progress = Math.round(100 * (value - start) / (end - start));
+	let progress = end == start ? 0 : Math.round(100 * (value - start) / (end - start));
 	let bi = `linear-gradient(left, ${color}, ${color} ${progress}%, transparent ${progress}%, transparent 100%)`
 	$id(id).style.backgroundImage = bi;
 	$id(id).style.backgroundImage = '-webkit-' + bi;
