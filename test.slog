@@ -466,5 +466,13 @@ while i < 2 {
 }
 assert r == 3
 
+func fff(uuu) {
+	var uuu = uuu
+	// to make this work the way I'd want it to probably need a new context for each decl
+	// but it should at least complain rather than working counterintuitively
+	return uuu
+}
+assert fff(3) == 0
+
 
 checksp()
