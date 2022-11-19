@@ -1446,7 +1446,8 @@ class Bompton {
 		function doMobAttack() {
 			let info = DENIZENS[state[MobType]];
 			if (!info) return 0;
-			let damage = rollAttack(state[MobLevel], state[StatAgility], state[MobLevel]);
+			const defense = state[StatAgility] + state[ArmorClass];
+			let damage = rollAttack(state[MobLevel], defense, state[MobLevel]);
 			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
@@ -1467,7 +1468,8 @@ class Bompton {
 			let info = DENIZENS[state[MobType]];
 			if (!info) return;
 			const offense = state[StatAgility] + weaponPower(state[EquipmentWeapon]);
-			let damage = rollAttack(offense, state[MobLevel], state[StatStrength]);
+			const sharpness = state[StatStrength] + weaponPower(state[EquipmentWeapon]);
+			let damage = rollAttack(offense, state[MobLevel], sharpness);
 			dec(MobHealth, Math.min(state[MobHealth], damage));
 
 			if (state[MobHealth] <= 0) {
@@ -1926,7 +1928,7 @@ class Bompton {
 			level += d(2) - d(2);
 			state[MobType] = type;
 			state[MobLevel] = level;
-			state[MobHealth] = state[MobMaxHealth] = level * 2;
+			state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
 			return state[MobType] ? 1 : 0;
 
 		} else if (operation === rest) {
@@ -2321,11 +2323,12 @@ function updateGame(state) {
 		value = value ?? '';
 		value = value.toString();
 		let elt = document.getElementById(id);
-			if (state[Level] > 0) {
+		if (!state[Level] > 0) value = '&nbsp;';
 		if (elt.innerHTML !== value) {
 			elt.innerHTML = value;
+			if (state[Level] > 0) {
 				if (!updateGame.UNHILITE) {
-					updateGame.UNHILITE = setTimeout(_ => unhilite(true), 10000);
+					updateGame.UNHILITE = setTimeout(_ => unhilite(true), 5000);
 				}
 				elt.classList.add('changed');
 			}
@@ -2444,22 +2447,24 @@ function updateGame(state) {
 	set('gameprogress', `${Math.round(100 * Math.max(0, state[Act] - 1) / 10)}%`);
 	setBar('gameprogress', state[Act] - 1, 10);
 
-	if (state[GameOver] === 401) {
-			TASK = 'Game over. Character has retired.';
+	if (state[Level] == 0) {
+		TASK = '&nbsp;';
+	} else if (state[GameOver] === 401) {
+		TASK = 'Game over. Character has retired.';
 	} else if (state[GameOver] === 333) {
-			TASK = 'Game over. Simulation has crashed!';
+		TASK = 'Game over. Simulation has crashed!';
 	} else if (state[GameOver] === 100) {
-			TASK = 'Game over. Character has aged out.';
+		TASK = 'Game over. Character has aged out.';
 	} else if (state[GameOver] === 86) {
-			TASK = 'Game over. You died.';
+		TASK = 'Game over. You died.';
 	} else if (state[GameOver] === 1) {
-			TASK = 'Game complete! Victory!';
+		TASK = 'Game complete! Victory!';
 	} else if (state[GameOver]) {
-			TASK = 'Game over!';
+		TASK = 'Game over!';
 	} else if (!vm.running) {
-			TASK = 'Halted.';
+		TASK = 'Halted.';
 	}
-	$id('task').innerText = TASK;
+	$id('task').innerHTML = TASK;
 	setTaskBar();
 }
 

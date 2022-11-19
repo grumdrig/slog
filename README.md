@@ -470,10 +470,6 @@ Binary operators are taking up most of the opcodes. Should maybe have another
 that works like UNARY and takes both params from the stack, but only for the
 lesser-used operators.
 
-Output a symbol table for the debugger
-
-Change 'var' to 'let'?
-
 It would seem more natural if function call argments were pushed on the stack
 from last to first? Or am I thinking about this wrong right now? I guess it's
 the opposite of how binary operators work. I'm doing external function calls
