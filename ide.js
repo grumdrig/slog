@@ -146,8 +146,12 @@ function prepIDE() {
 
 function updateDebuggerState(vm) {
 
+	function hexDec(v) {
+		return '$' + ('0000'+(v & 0xFFFF).toString(16)).substr(-4) + ' ' + ('     ' + v).substr(-6);
+	}
+
 	function regFmt(name, value) {
-		return `${(name + ' '.repeat(23)).substr(0,23)} $${('0000'+value.toString(16)).substr(-4)} ${value}`;
+		return `${(name + ' '.repeat(23)).substr(0,23)} ` + hexDec(value);
 	}
 
 	// Registers & State
@@ -184,7 +188,7 @@ function updateDebuggerState(vm) {
 	$("#stack").innerText = '';
 	for (let i = vm.sp; i < vm.sp + 7 && i < vm.memory.length; ++i) {
 		let d = $("#stack").appendChild(document.createElement('pre'));
-		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
+		d.innerText = `${('000' + i).substr(-4)}: ` + hexDec(vm.memory[i]);
 		if (i === vm.sp) d.style.backgroundColor="yellow";
 		if (i === vm.fp) d.style.border='solid 1px black';
 	}
@@ -193,7 +197,7 @@ function updateDebuggerState(vm) {
 		$("#memory").innerText = '';  // in case the vm has changed sizes
 	for (let i = 0; i < vm.memory.length; ++i) {
 		let d = $("#memory").children[i] || $("#memory").appendChild(document.createElement('pre'));
-		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
+		d.innerText = `${('000' + i).substr(-4)}: ` + hexDec(vm.memory[i]);
 	}
 }
 
