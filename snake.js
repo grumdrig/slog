@@ -2,26 +2,26 @@ const Snake = (_ => {
 
 const SLOTS = [
 	{ name: 'GameOver' },
+	{ name: 'Seed' },
 	{ name: 'Step' },
 	{ name: 'Length' },
-	{ name: 'Head' },
 	{ name: 'Food' },
-	{ name: 'Seed' },
+	{ name: 'Head' },
 ];
 
 // State vector indices
 const GameOver = 0;
-const Step = 1;
-const Length = 2;
-const Head = 3;
+const Seed = 1;
+const Step = 2;
+const Length = 3;
 const Food = 4;
-const Seed = 5;
+const Head = 5;
 
-const Grid0 = 6;
-const D = 20;
+const MaxLength = 1000;
+const D = 64;
 
 const INTERFACE = `
-tag('Sn', $101)
+tag('Sn', $102)
 
 macro north() external(1)
 macro east()  external(2)
@@ -29,12 +29,13 @@ macro south() external(3)
 macro west()  external(4)
 
 const GameOver = ${GameOver}
+const Seed = ${Seed}
 const Step = ${Step}
 const Length = ${Length}
-const Head = ${Head}
 const Food = ${Food}
-const Seed = ${Seed}
-const Grid0 = ${Grid0}
+const Head = ${Head}
+
+const MaxLength = ${MaxLength}
 const D = ${D}
 `;
 
@@ -48,20 +49,20 @@ function hash(...keys) {
 	return x ;
 }
 
-function icell(state, i, value) {
-	if (typeof value !== 'undefined')
-		state[i + Grid0] = value;
-	return state[i + Grid0];
+function snakeAt(state, cell) {
+	for (let s = 0; s < state[Length]; s += 1)  {
+		if (state[Head + s] === cell) {
+			return true;
+		}
+	}
+	return false;
 }
-
-function cell(state, x, y, value) { return icell(state, x + y * D, value) }
-
 
 function plantFood(state) {
 	for (let attempt = 0; attempt < 1000; attempt += 1) {
 		let i = hash(state[Seed], state[Step], 0xF00D, attempt) % (D * D);
-		if (icell(state, i) === 0) {
-			icell(state, i, -1);
+		let ok = true;
+		if (!snakeAt(state, i)) {
 			state[Food] = i;
 			return;
 		}
@@ -74,11 +75,10 @@ function plantFood(state) {
 class Snake {
 
 	static create(code) {
-		let state = new Int16Array(Grid0 + D * D);
+		let state = new Int16Array(Head + MaxLength);
 		state[Seed] = hash(0x54ec, ...code);
 		state[Length] = 1;
 		state[Head] = Math.floor(D/2) * (1 + D);
-		icell(state, state[Head], 1);
 
 		plantFood(state);
 		return state;
@@ -97,32 +97,31 @@ class Snake {
 		let can = $('#snakepit');
 		let ctx = can.getContext('2d');
 
-		for (let i = 0; i < D * D; i++) {
-			let s = state[Grid0 + i];
-			if (s > 1) {
-				let c = 255 - Math.floor(128 * s/state[Length]);
-				ctx.fillStyle = 'rgb(0,'+c+',0)';
-			} else if (s === 1) {
+		ctx.fillStyle = 'black';
+		ctx.fillRect(0, 0, can.width, can.height);
+		for (let s = -1; s < state[Length]; s += 1) {
+			if (s === 0) {
 				ctx.fillStyle = 'white';
 			} else if (s < 0) {
 				ctx.fillStyle = 'red';
 			} else {
-				ctx.fillStyle = 'black';
+				let c = 255 - Math.floor(128 * s/state[Length]);
+				ctx.fillStyle = 'rgb(0,'+c+',0)';
 			}
+			let i = state[Head + s];
 			let x = i % D;
 			let y = Math.floor(i / D);
-			ctx.fillRect(x * can.width / D + 1, y * can.height / D + 1, can.width / D - 2, can.height / D - 2);
-			ctx.strokeStyle = '#444';
-			ctx.strokeRect(x * can.width / D, y * can.height / D, can.width / D, can.height / D);
+			ctx.fillRect(x * can.width / D, y * can.height / D, can.width / D, can.height / D);
 		}
 
 		$("#score").innerText = this.score(vm.state);
 
 		$('#gameover').innerText =
 			vm.state[GameOver] == 0 ? '' :
-			vm.state[GameOver] == 1 ? 'Game Over. Crashed into wall.' :
+			vm.state[GameOver] == 1 ? 'Game Over. Victory!' :
 			vm.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
 			vm.state[GameOver] == 3 ? 'Game Over. Time is up.' :
+			vm.state[GameOver] == 4 ? 'Game Over. Crashed into wall.' :
 			'Game Over: ' + vm.state[GameOver];
 	}
 
@@ -130,12 +129,6 @@ class Snake {
 
 	static handleInstruction(state, operation, ...args) {
 		if (state[GameOver]) return 0;
-
-		if (icell(state, state[Food]) !== -1 ||
-			icell(state, state[Head]) !==  1) {
-			Snake.dumpState(state);
-			throw "Invalid game state";
-		}
 
 		let next_x = state[Head] % D;
 		let next_y = Math.floor(state[Head] / D);
@@ -149,29 +142,26 @@ class Snake {
 
 		if (next_x < 0 || next_y < 0 || next_x >= D || next_y >= D) {
 			// Ran into wall
-			state[GameOver] = 1;
-		} else if (icell(state, next) > 0) {
-			// Crashed into self
-			state[GameOver] = 2;
+			state[GameOver] = 4;
 		} else if (state[Step] == 0x7FFF) {
 			// Time is up
 			state[GameOver] = 3;
 		} else if (next === state[Food]) {
 			// Found food
 			state[Length] += 1;
-			plantFood(state);
+			if (state[Length] >= MaxLength)
+				state[GameOver] = 1;  // victory
+			else
+				plantFood(state);
+		} else if (snakeAt(state, next)) {
+			// Crashed into self
+			state[GameOver] = 2;
 		}
 
 		if (!state[GameOver]) {
-			for (let i = 0; i < D * D; ++i) {
-				let v = icell(state, i);
-				if (v >= state[Length]) {
-					icell(state, i, 0);
-				} else if (v > 0) {
-					icell(state, i, v + 1);
-				}
+			for (let i = state[Length] - 1; i > 0; i -= 1) {
+				state[Head + i] = state[Head + i - 1];
 			}
-			icell(state, next, 1);
 			state[Head] = next;
 			state[Step] += 1;
 		}

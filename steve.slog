@@ -1,10 +1,19 @@
 macro x(i) i % D
 macro y(i) i / D
 
-macro northclear() y(.Head) > 0   and .(Grid0 + .Head - D) <= 0
-macro eastclear()  x(.Head) < D-1 and .(Grid0 + .Head + 1) <= 0
-macro southclear() y(.Head) < D-1 and .(Grid0 + .Head + D) <= 0
-macro westclear()  x(.Head) > 0   and .(Grid0 + .Head - 1) <= 0
+func clear(c) {
+	var s = 0
+	while s < .Length {
+		if c == .(Head + s) { return 0 }
+		s += 1
+	}
+	return 1
+}
+
+macro northclear() y(.Head) > 0   and clear(.Head - D)
+macro eastclear()  x(.Head) < D-1 and clear(.Head + 1)
+macro southclear() y(.Head) < D-1 and clear(.Head + D)
+macro westclear()  x(.Head) > 0   and clear(.Head - 1)
 
 func go(goal) {
 	if .Head == goal { return 0 }
