@@ -2059,9 +2059,22 @@ const BOMPTON_WINDOW_CONTENT = `
 
 #spells > div:nth-child(2n+3) { font-style: italic }
 
-#tp {
+#tp, #encumbrance {
 	float: right;
 	padding-right: 4px;
+}
+
+#encumbrance {
+	display: inline-block;
+	width: 90px;
+	background-color: white;
+}
+
+div.footer {
+	grid-column: 1/3;
+	background-color: rgb(236, 233, 216);
+	// height: 14px;
+	padding-top: 3px !IMPORTANT;
 }
 
 div.header {
@@ -2197,7 +2210,7 @@ div.header {
 			<div>Treasures</div><div id=i5></div>
 			<div>Healing Potions</div><div id=i6></div>
 			<div>Life Potions</div><div id=i7></div>
-			<div>Encumbrance</div><div id=encumbrance class=prog data-warning='#fb4' data-emergency='#f99'></div>
+			<div class=footer>Encumbrance<div id=encumbrance class=prog data-warning='#fb4' data-emergency='#f99'></div></div>
 		</div>
 	</div>
 
