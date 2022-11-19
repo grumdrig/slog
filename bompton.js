@@ -2075,7 +2075,8 @@ div.header {
 
 .changed { background-color: yellow }
 
-.dead { background-color: #fcc }
+.warning { background-color: #acac7c }
+.dead    { background-color: #fcc }
 
 [role="progressbar"] {
 	height: 15px;
@@ -2171,8 +2172,7 @@ div.header {
 			<div>Totem</div>    <div id=e7></div>
 		</div>
 		<div id=inventory class=listview>
-			<div class=header>Inventory
-				(Encumbrance: <span id=encumbrance></span>/<span id=capacity></span>)</div>
+			<div class=header>Inventory</div>
 			<div>Gold</div><div id=i0></div>
 			<div>Drops</div><div id=i1></div>
 			<div>Reagents</div><div id=i2></div>
@@ -2181,6 +2181,7 @@ div.header {
 			<div>Treasures</div><div id=i5></div>
 			<div>Healing Potions</div><div id=i6></div>
 			<div>Life Potions</div><div id=i7></div>
+			<div>Encumbrance</div><div id=encumbrance class=prog></div>
 		</div>
 	</div>
 
@@ -2226,6 +2227,7 @@ div.header {
 
 
 function setBar(id, value, end, start=0, color='#ace97c') {
+	if (value > end) color = value > (end - start) * 1.5 ? '#f99' : '#fb4';
 	let progress = end == start ? 0 : Math.round(100 * (value - start) / (end - start));
 	let bi = `linear-gradient(left, ${color}, ${color} ${progress}%, transparent ${progress}%, transparent 100%)`
 	$id(id).style.backgroundImage = bi;
@@ -2408,8 +2410,18 @@ function updateGame(state) {
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
 		set('i' + i, state[INVENTORY_0 + i]);
 	}
-	set('encumbrance', state[Encumbrance]);
-	set('capacity', state[Capacity]);
+	setProgress('encumbrance', state[Encumbrance], state[Capacity]);
+	/*
+	if (state[Encumbrance] <= state[Capacity]) {
+		$id('encumbrance').classList.remove('warning');
+		$id('encumbrance').classList.remove('dead');
+	} else if (state[Encumbrance] <= state[Capacity] * 1.5) {
+		$id('encumbrance').classList.add('warning');
+		$id('encumbrance').classList.remove('dead');
+	} else {
+		$id('encumbrance').classList.add('dead');
+		$id('encumbrance').classList.remove('warning');
+	}*/
 
 	let local = Bompton.mapInfo(state[Location], state) || {};
 
