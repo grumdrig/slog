@@ -1434,7 +1434,7 @@ class Bompton {
 			let defenseRoll = d(DIE);
 			if (attackRoll === 1) return 0;
 			if (attackRoll === DIE || attackRoll + offsense > defenseRoll + defense) {
-				let damage = d(sharpness);
+				let damage = d(Math.max(1, sharpness));
 				if (defenseRoll == DIE && damage > 1) damage = 1;
 				if (defenseRoll == 1) damage >>= 1;
 				return damage;
@@ -2064,6 +2064,7 @@ div.header {
 
 .changed { background-color: yellow }
 
+.dead { background-color: #fcc }
 
 [role="progressbar"] {
 	height: 15px;
@@ -2353,6 +2354,10 @@ function updateGame(state) {
 			Bompton.xpNeededForLevel(state[Level] + 1),
 			Bompton.xpNeededForLevel(state[Level]));
 	setProgress('health', state[Health], state[MaxHealth]);
+	if (state[Health] == 0 && state[MaxHealth] > 0)
+		$id('health').classList.add('dead');
+	else
+		$id('health').classList.remove('dead');
 	setProgress('energy', state[Energy], state[MaxEnergy]);
 	let spell = SPELLS[state[Enchantment] & 0xFF];
 	set('enchantment', spell ? spell.name : '');
@@ -2415,6 +2420,11 @@ function updateGame(state) {
 	set('mob', state[MobType] ?
 		`${Bompton.DENIZENS[state[MobType]].name} (level ${state[MobLevel]})` : '');
 	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
+	if (state[MobHealth] == 0 && state[MobMaxHealth] > 0)
+		$id('mobHealth').classList.add('dead');
+	else
+		$id('mobHealth').classList.remove('dead');
+
 
 	let questal = Bompton.mapInfo(state[QuestLocation], state);
 	let original = Bompton.mapInfo(state[QuestOrigin], state);
