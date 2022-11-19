@@ -675,6 +675,8 @@ class Assembler {
 												(inst >> 5);
 				if (['fetch','store'].includes(opcode))
 					immediate = REGISTER_NAMES[immediate] || immediate;
+				if (opcode === 'unary' && UNARY_OPERATORS[immediate])
+					immediate = UNARY_OPERATORS[immediate].mnemonic;
 				disa = ('$' + ('00' + (inst & 0x1f).toString(16)).substr(-2)
 					+ ' $' + ('00' + (0x7ff & (inst >> 5)).toString(16)).substr(-3)
 					+ ' ' + opcode

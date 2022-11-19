@@ -711,15 +711,6 @@ be transported to Sygnon Isle, to encounter and hopefully defeat the final
 boss.
 
 
-Bugs & features
----------------
-
-Can sell anywhere & level up anywhere
-
-Gotta loot corpses - have an encounter listview
-
-The grumdrig.slog needs to know about overencumberance
-
 
 Stats
 -----

@@ -1722,6 +1722,7 @@ class Bompton {
 			return qty;
 
 		} else if (operation === sell || operation === give || operation === drop) {
+			if (operation === sell && local.terrain != TOWN) return -1;
 			let [slot, qty] = [arg1, arg2];
 			let unitValue;
 			if (isEquipmentSlot(slot)) {
@@ -1966,6 +1967,7 @@ class Bompton {
 			return qty;
 
 		} else if (operation === levelup) {
+			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 99) return 0;
 			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
 				return 0;
