@@ -2088,10 +2088,11 @@ div.header {
 	border-right: groove 1px #ddd;
 }
 
-.changed { background-color: yellow }
+.changed {
+	background-color: #ffa
+}
 
-.warning { background-color: #acac7c }
-.dead    { background-color: #fcc }
+.dead { background-color: #fcc }
 
 [role="progressbar"] {
 	height: 15px;
@@ -2149,7 +2150,7 @@ div.header {
 			<div>Name</div><div id="name"></div>
 			<div>Species</div><div id="species"></div>
 			<div>Level</div><div id="level"></div>
-			<div>Experience</div><div id="xp" class=prog></div>
+			<div>Experience</div><div id="xp" class=prog data-warning='#CDFF2F'></div>
 			<div>Health</div><div id="health" class=prog></div>
 			<div>Energy</div><div id="energy" class=prog></div>
 			<div>Enchantment</div><div id="enchantment"></div>
@@ -2196,7 +2197,7 @@ div.header {
 			<div>Treasures</div><div id=i5></div>
 			<div>Healing Potions</div><div id=i6></div>
 			<div>Life Potions</div><div id=i7></div>
-			<div>Encumbrance</div><div id=encumbrance class=prog></div>
+			<div>Encumbrance</div><div id=encumbrance class=prog data-warning='#fb4' data-emergency='#f99'></div>
 		</div>
 	</div>
 
@@ -2242,11 +2243,13 @@ div.header {
 
 
 function setBar(id, value, end, start=0, color='#ace97c') {
-	if (value > end) color = value > (end - start) * 1.5 ? '#f99' : '#fb4';
+	let bar = $id(id);
+	if (value > end && bar.getAttribute('data-warning')) color = bar.getAttribute('data-warning');
+	if (value > (end - start) * 1.5 && bar.getAttribute('data-emergency')) color = bar.getAttribute('data-emergency');
 	let progress = end == start ? 0 : Math.round(100 * (value - start) / (end - start));
 	let bi = `linear-gradient(left, ${color}, ${color} ${progress}%, transparent ${progress}%, transparent 100%)`
-	$id(id).style.backgroundImage = bi;
-	$id(id).style.backgroundImage = '-webkit-' + bi;
+	bar.style.backgroundImage = bi;
+	bar.style.backgroundImage = '-webkit-' + bi;
 }
 
 
