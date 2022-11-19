@@ -1597,17 +1597,17 @@ class Bompton {
 
 		function randomMobNearLevel(goal, repeats=4) {
 			let type = randomMob();
-			let level = DENIZENS[type].hitdice + d(2) - d(2);
+			let level = DENIZENS[type].hitdice;
 			for (let i = 0; i < repeats; ++i) {
 				let t = randomMob();
-				let l = DENIZENS[t].hitdice + d(2) - d(2);
+				let l = DENIZENS[t].hitdice;
 
 				if (Math.abs(l - goal) < Math.abs(level - goal)) {
 					type = t;
 					level = l;
 				}
 			}
-			return { type, level };
+			return type;
 		}
 
 
@@ -1677,7 +1677,8 @@ class Bompton {
 			}
 
 			inc(InventorySpoils, 1);
-			clearMob(state);
+			if (!state[MobHealth])
+				clearMob(state);
 
 		} else if (operation === buy) {
 			let slot = arg1;
@@ -1912,20 +1913,16 @@ class Bompton {
 		} else if (operation === hunt) {
 			passTime('Hunting for a suitable local victim', 1);
 			clearMob(state);
-			let t = irand(6);
-			let type, level;
-			if (t === 0 && local.denizen) {
-				type = local.mobType;
-				level = DENIZENS[type] + d(2) - d(2);
-			} else if (t === 1 && state[QuestMob] &&
-						state[QuestLocation] === state[Location]) {
+			let type;
+			if (local.denizen && (!local.density || d(100) <= local.density)) {
+				type = local.denizen;
+			} else if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
 				type = state[QuestMob];
-				level = DENIZENS[type] + d(2) - d(2);
 			} else {
-				let tl = randomMobNearLevel(local.level);
-				type = tl.type;
-				level = tl.level;
+				type = randomMobNearLevel(local.level);
 			}
+			let level = DENIZENS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
+			level += d(2) - d(2);
 			state[MobType] = type;
 			state[MobLevel] = level;
 			state[MobHealth] = state[MobMaxHealth] = level * 2;
