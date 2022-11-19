@@ -1,7 +1,7 @@
 # Grumdrig game
 
 # compile
-node compiler.js -i ./bompton.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -p @grumdrig.strat grumdrig.slog
+node compiler.js -i ./bompton.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
 
 # execute
 node bompton.js -v grumdrig.bin -- grumdrig.bin

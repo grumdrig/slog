@@ -182,7 +182,7 @@ function updateDebuggerState(vm) {
 
 	$("#stackdepth").innerText = vm.memory.length - vm.sp;
 	$("#stack").innerText = '';
-	for (let i = Math.min(vm.sp + 5, vm.memory.length - 1); i >= vm.sp; --i) {
+	for (let i = vm.sp; i < vm.sp + 7 && i < vm.memory.length; ++i) {
 		let d = $("#stack").appendChild(document.createElement('pre'));
 		d.innerText = `${('000' + i).substr(-4)}: $${('0000'+vm.memory[i].toString(16)).substr(-4)} ${vm.memory[i]}`;
 		if (i === vm.sp) d.style.backgroundColor="yellow";

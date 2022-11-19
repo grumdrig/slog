@@ -1611,7 +1611,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 			for (let source of sources) parseDocumentation(pack, source);
 			pack.binary = Array.from(assembler.code);
 			if (symbols) {
-				// TODO
+				pack.symbols = assembler.labels;
 			}
 			writeFileSync(package, JSON.stringify(pack));
 		}

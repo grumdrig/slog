@@ -24,7 +24,16 @@
 #debugger > div.nobo {
 	border: none;
 }
-#stack { background-color: white }
+#stackmom {
+	position: relative;
+}
+#stack {
+	background-color: white;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+}
 .brain {
 	overflow: auto;
 	max-height: 112px;
