@@ -60,10 +60,10 @@ const SLOTS = [
 	{ name: 'StatAgility',
 	  description: `Ability to move around, avoid death, etc.` },
 
-	{ name: 'StatConstitution',
+	{ name: 'StatEndurance',
 	  description: `Ability to absorb damage and retain energy.` },
 
-	{ name: 'StatIntelligence',
+	{ name: 'StatIntellect',
 	  description: `Rating of cognitive ability and perception.` },
 
 	{ name: 'StatWisdom',
@@ -561,7 +561,7 @@ const SPELLS = [ null, {
 			{ slot: InventoryReagents, qty: 4 },
 			],
 		enchantment: [
-			{ slot: StatIntelligence, increment: 4 },
+			{ slot: StatIntellect, increment: 4 },
 		],
 		description: `Become just that much stronger.`,
 	}, {
@@ -903,10 +903,10 @@ const DENIZENS = [
 		proficiency: SMASH,
 		badat: SLASH,
 		startState: [
-			{ slot: StatConstitution, increment: +2 },
+			{ slot: StatEndurance, increment: +2 },
 			{ slot: StatStrength, increment: +1 },
 			{ slot: StatAgility, increment: -1 },
-			{ slot: StatIntelligence, increment: -2 },
+			{ slot: StatIntellect, increment: -2 },
 
 			{ slot: EquipmentWeapon, value: 1},
 			{ slot: EquipmentShield, value: 1},
@@ -923,9 +923,9 @@ const DENIZENS = [
 		proficiency: [POKE, SHOOT],
 		badat: SMASH,
 		startState: [
-			{ slot: StatIntelligence, increment: +2 },
+			{ slot: StatIntellect, increment: +2 },
 			{ slot: StatWisdom, increment: +1 },
-			{ slot: StatConstitution, increment: -1 },
+			{ slot: StatEndurance, increment: -1 },
 			{ slot: StatCharisma, increment: -2 },
 
 			{ slot: EquipmentWeapon,   value: 3},
@@ -1558,8 +1558,8 @@ class Bompton {
 
 				state[Level] = 1;
 				state[Location] = BOMPTON;
-				state[Health] = state[MaxHealth] = 6 + state[StatConstitution];
-				state[Energy] = state[MaxEnergy] = 6 + state[StatIntelligence];
+				state[Health] = state[MaxHealth] = 6 + state[StatEndurance];
+				state[Energy] = state[MaxEnergy] = 6 + state[StatIntellect];
 				actUp();
 				passTime('Loading', 1);
 
@@ -1651,7 +1651,7 @@ class Bompton {
 				if (!remote) return -1;  // but shouldn't happen
 			}
 			let hours = 24;
-			let travelspeed = (state[StatConstitution] + state[EquipmentMount]) / 5;
+			let travelspeed = (state[StatEndurance] + state[EquipmentMount]) / 5;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
@@ -1933,7 +1933,7 @@ class Bompton {
 
 		} else if (operation === rest) {
 			passTime('Resting up', 0, 1);
-			let hp = d(state[StatConstitution]);
+			let hp = d(state[StatEndurance]);
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rand() * rand());
 			hp = Math.min(hp, state[MaxHealth] - state[Health]);
@@ -1952,7 +1952,7 @@ class Bompton {
 			let qty;
 			if (target === EquipmentTotem) {
 				passTime('Seeking the local totem', 6);
-				if (d(20) <= state[StatIntelligence]) {
+				if (d(20) <= state[StatIntellect]) {
 					state[EquipmentTotem] = state[Location];
 					return 1;
 				} else {
@@ -1974,7 +1974,7 @@ class Bompton {
 			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
 				return 0;
 			inc(Level, 1);
-			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[StatConstitution]));
+			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[StatEndurance]));
 			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[StatWisdom]));
 			passTime('Levelling up', 1);
 			return 1;
@@ -2132,8 +2132,8 @@ div.header {
 			<div class=header>Stats</div>
 			<div>Strength</div>     <div id="s0"></div>
 			<div>Agility</div>      <div id="s1"></div>
-			<div>Constitution</div> <div id="s2"></div>
-			<div>Intelligence</div> <div id="s3"></div>
+			<div>Endurance</div> <div id="s2"></div>
+			<div>Intellect</div> <div id="s3"></div>
 			<div>Wisdom</div>       <div id="s4"></div>
 			<div>Charisma</div>     <div id="s5"></div>
 		</div>
