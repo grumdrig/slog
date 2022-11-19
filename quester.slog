@@ -1,0 +1,44 @@
+/// Target: Bompton Island v1.1
+/// Title: Let's Get Questing
+/// Author: Grumdrig
+/// Description: Complete quests until you can't no more.
+
+initialize(StatStrength, 2)
+initialize(StatAgility, 2)
+initialize(StatEndurance, 2)
+initialize(StatIntellect, 1)
+initialize(StatWisdom, 1)
+initialize(StatCharisma, 2)
+startgame(1)
+
+const BOMPTON = 18
+
+macro goto(dest) {
+  while travel(dest) > 0 { }
+}
+
+
+while 1 {
+  if !.QuestOrigin { seekquest() }
+  goto(.QuestLocation)
+  if .QuestObject {
+    while .Encumbrance < .Capacity and ..QuestObject < .QuestQty {
+      forage(.QuestObject)
+    }
+  } else if .QuestMob {
+    while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
+      while .MobType != .QuestMob or !.MobHealth {
+        hunt()
+      }
+      melee()
+    }
+  }
+
+  goto(BOMPTON)
+
+  if .QuestObject { give(.QuestObject, ..QuestObject <? (.QuestQty - .QuestProgress)) }
+
+  completequest()
+  levelup()
+  while .Health < .MaxHealth { rest() }
+}

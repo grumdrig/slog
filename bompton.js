@@ -1284,13 +1284,13 @@ function carryCapacity(state) {
 }
 
 DATABASE[InventoryGold] =        { value: 1, weight: 1/256 };
-DATABASE[InventorySpoils] =      { value: 1, weight: 1 };
+DATABASE[InventorySpoils] =      { value: 1/10, weight: 1 };
 DATABASE[InventoryReagents] =    { value: 1, weight: 1 };
-DATABASE[InventoryResources] =   { value: 1, weight: 1 };
+DATABASE[InventoryResources] =   { value: 1/10, weight: 1 };
 DATABASE[InventoryFood] =        { value: 1, weight: 1 };
 DATABASE[InventoryTreasures] =   { value: 1000, weight: 3 };
-DATABASE[InventoryPotions] = 	 { value: 1, weight: 1 };
-DATABASE[InventoryLifePotions] = { value: 1, weight: 1 };
+DATABASE[InventoryPotions] = 	 { value: 100, weight: 1 };
+DATABASE[InventoryLifePotions] = { value: 10000, weight: 1 };
 
 
 function encumbrance(state) {
@@ -1796,20 +1796,25 @@ class Bompton {
 			return qty;
 
 		} else if (operation === seekquest) {
-			passTime('Asking around about quests', 1, 0);
+			let hours = 4 + Math.round(20 * Math.pow(GR, -state[StatCharisma]));
+			passTime('Asking around about quests', hours);
+
 			if (local.terrain !== TOWN) return -1;
+
 			let questTypes = [_ => {
 				// Exterminate the ___
 				state[QuestLocation] = randomLocation();
-				state[QuestMob] = randomMobNearLevel(state[Level]);
+				state[QuestMob] = randomMobNearLevel(state[Level], state[StatCharisma]);
 				state[QuestObject] = 0;
 				state[QuestQty] = 5 + d(10);
 			}, _ => {
 				// Bring me N of SOMETHING
-				state[QuestLocation] = 0;
+				let value = state[Level] * 100 * Math.pow(GR, -state[StatCharisma]) * (0.5 * rand());
+				state[QuestLocation] = randomLocation();
 				state[QuestObject] = INVENTORY_0 + irand(INVENTORY_COUNT);
 				state[QuestMob] = 0;
-				state[QuestQty] = 5 * d(10);
+				let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
+				state[QuestQty] = qty;
 			},
 			/* totem quests arent so clear right now
 			_ => {
@@ -1917,10 +1922,10 @@ class Bompton {
 			passTime('Hunting for a suitable local victim', 1);
 			clearMob(state);
 			let type;
-			if (local.denizen && (!local.density || d(100) <= local.density)) {
-				type = local.denizen;
-			} else if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
+			if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
 				type = state[QuestMob];
+			} else if (local.denizen && (!local.density || d(100) <= local.density)) {
+				type = local.denizen;
 			} else {
 				type = randomMobNearLevel(local.level);
 			}
@@ -1962,7 +1967,13 @@ class Bompton {
 
 			if (!isInventorySlot(target)) return -1;
 
-			qty = rand() < 0.5 ? 1 : 0;
+			let chance = 1/3;
+			if (state[Location] === state[QuestLocation] &&
+					target === state[QuestObject]) {
+				chance = 2/3;
+			}
+
+			qty = rand() < chance ? 1 : 0;
 			inc(target, qty);
 
 			passTime('Foraging for ' + itemsName(target), 1);
