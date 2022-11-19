@@ -9,8 +9,8 @@ initialize(StatConstitution, 1)
 initialize(StatIntelligence, 2)
 initialize(StatWisdom, 1)
 initialize(StatCharisma, 1)
-var name = "Grumdrig"
-setname(name)
+// var name = "Grumdrig"
+// setname(name)
 startgame(2)
 
 
@@ -40,10 +40,10 @@ while .Level < 88 {
   goto(goodHunting(.Level))
   raids += 1
   while .Health >= (2 * .MaxHealth / 3) { // and .Encumbrance < .Capacity {
-    while !.MobType or .MobLevel > .Level {
+    while !.MobHealth or .MobLevel > .Level {
       hunt()
     }
-    while .MobType and .Health >= (.MaxHealth / 3) {
+    while .MobHealth and .Health >= (.MaxHealth / 3) {
       melee()
     }
     while .Health < .MaxHealth {

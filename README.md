@@ -1,5 +1,5 @@
-PQASM
-=====
+SLOG
+====
 
 Or CHASM.
 
@@ -677,7 +677,7 @@ acts on them, We might call these instructions a "program".
 The SVM is documented in some detail, but the player will probably not need to
 know most of that. Instead the program can be produced by compiling a
 higher-level language called Slog, using the slog compiler. (Of course it
-would be possible to compile other languages to provide code suitable for the
+would be possible to compile other languages into code suitable for the
 SVM.)
 
 The program interacts with the game code in two ways. There is a `state`
@@ -691,10 +691,10 @@ program by prefixing the `.` operator to that index, i.e., by `.Level`.
 Similarly, to give some other examples, the character's currest strength
 rating is `.Strength`, and current location is `.Location`.
 
-The other interfaces with the game world from within a character program are a
-number of functions which may be called to take some game action. For
-example, the `travel` function is used to change location, so this statement
-would move towards or into Iperko Forest:
+The other interface with the game world from within a character program is a
+set of functions which are called when it's time for your charact to take
+some action in the game. For example, the `travel` function is used to change
+location, so this statement would move towards or into Iperko Forest:
 
 	travel(IperkoForest)
 
@@ -720,3 +720,13 @@ Gotta loot corpses - have an encounter listview
 
 The grumdrig.slog needs to know about overencumberance
 
+
+Stats
+-----
+
+Strength
+Agility
+Constitution -> Endurance
+Intelligence -> Intellect
+Wisdom -> Perception?
+Charisma

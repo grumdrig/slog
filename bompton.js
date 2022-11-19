@@ -154,9 +154,11 @@ const SLOTS = [
 
 	  description: `` },
 
-	{ name: 'MobDamage',
+	{ name: 'MobHealth',
+	  description: `Current health of the nearby creature.` },
 
-	  description: `` },
+	{ name: 'MobMaxHealth',
+	  description: `Maximum health of the nearby creature.` },
 
 
 	{ name: 'QuestObject', // item, by slot, or 0
@@ -318,6 +320,11 @@ const CALLS = {
 		description: `Comb the local area for InventoryFood, or
 		InventoryResources, or whatever you might seek.` },
 
+	loot: {
+		description: `Loot any nearby corpse for whatever goodies they may
+		hold. Now, if they aren't a corpse, then this is an attempt to
+		pickpocket.` },
+
 	rest: {
 		description: `Grab some downtime to reduce fatigue and damage. Resting
 		is much more effected in town than it is out in the wilderness.` },
@@ -475,7 +482,7 @@ const SPELLS = [ null, {
 			{ slot: InventoryReagents, qty: 2 },
 			],
 		effect: state => {
-			return battle(state, true);
+			return battle(true);
 		},
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
@@ -870,16 +877,16 @@ const DENIZENS = [
 		moniker: 'DUNKLING',
 		aka: "Nerfling",
 		playable: true,
-		index: 1,
 		esteems: 2,
 		waryof: 3,
 		proficiency: SLASH,
 		badat: [POKE, SHOOT],
 		startState: [
-			// { slot: StatAgility, increment: +2 },
-			// { slot: StatCharisma, increment: +1 },
-			// { slot: StatStrength, increment: -1 },
-			// { slot: StatWisdom, increment: -2 },
+			{ slot: StatAgility, increment: +2 },
+			{ slot: StatCharisma, increment: +1 },
+			{ slot: StatStrength, increment: -1 },
+			{ slot: StatWisdom, increment: -2 },
+
 			{ slot: EquipmentWeapon,   value: 2},
 			{ slot: EquipmentHeadgear, value: 1},
 			{ slot: InventoryFood,     value: 1 },
@@ -891,16 +898,16 @@ const DENIZENS = [
 		moniker: 'HARDWARF',
 		plural: "Hardwarves",
 		playable: true,
-		index: 2,
 		esteems: 3,
 		waryof: 1,
 		proficiency: SMASH,
 		badat: SLASH,
 		startState: [
-			// { slot: StatConstitution, increment: +2 },
-			// { slot: StatStrength, increment: +1 },
-			// { slot: StatAgility, increment: -1 },
-			// { slot: StatIntelligence, increment: -2 },
+			{ slot: StatConstitution, increment: +2 },
+			{ slot: StatStrength, increment: +1 },
+			{ slot: StatAgility, increment: -1 },
+			{ slot: StatIntelligence, increment: -2 },
+
 			{ slot: EquipmentWeapon, value: 1},
 			{ slot: EquipmentShield, value: 1},
 			{ slot: InventoryGold,   value: 1 },
@@ -911,12 +918,16 @@ const DENIZENS = [
 		name: "Eelman",
 		moniker: 'EELMAN',
 		playable: true,
-		index: 3,
 		esteems: 1,
 		waryof: 2,
 		proficiency: [POKE, SHOOT],
 		badat: SMASH,
 		startState: [
+			{ slot: StatIntelligence, increment: +2 },
+			{ slot: StatWisdom, increment: +1 },
+			{ slot: StatConstitution, increment: -1 },
+			{ slot: StatCharisma, increment: -2 },
+
 			{ slot: EquipmentWeapon,   value: 3},
 			{ slot: EquipmentFootwear, value: 1},
 			{ slot: InventoryReagents, value: 1 },
@@ -1317,6 +1328,14 @@ function itemsName(sloth) {
 }
 
 
+function clearMob(state) {
+	state[MobType] = 0;
+	state[MobLevel] = 0;
+	state[MobHealth] = 0;
+	state[MobMaxHealth] = 0;
+}
+
+
 let TASK = '';
 
 class Bompton {
@@ -1409,78 +1428,81 @@ class Bompton {
 
 		function randomPick(a) { return a[irand(a.length)] }
 
-		function battle(invulnerable=false) {
-			if (!state[MobType]) return -1;
-
-			let info = DENIZENS[state[MobType]];
-			if (!info) return -1;
-
-			if (info.esteemSlot)
-				state[info.esteemSlot] = Math.max(state[info.esteemSlot] - 1, 0);
-
-			let mobLevel = info.hitdice;
-			let mobOffsense = info.hitdice;
-			let mobDefense = info.hitdice;
-			let mobSharpness = info.hitdice;
-			let mobMaxHP = info.hitdice * 2;
-
-			// Player attack
-			function rollAttack(offsense, defense, sharpness) {
-				let DIE = 10;
-				let attackRoll = d(DIE);
-				let defenseRoll = d(DIE);
-				if (attackRoll === 1) return 0;
-				if (attackRoll === DIE || attackRoll + offsense > defenseRoll + defense) {
-					let damage = d(sharpness);
-					if (defenseRoll == DIE && damage > 1) damage = 1;
-					if (defenseRoll == 1) damage >>= 1;
-					return damage;
-				} else {
-					return 0;
-				}
-			}
-
-			const playerAttack = state[StatAgility] + weaponPower(state[EquipmentWeapon]);
-
-			let dealtToMob = rollAttack(state[StatAgility], mobDefense, state[StatStrength]);
-			let dealtToPlayer = rollAttack(mobOffsense, state[StatAgility], mobSharpness);
-
-			if (state[StatAgility] + d(6) >= mobLevel + d(6)) {
-				// Player attacks first
-				inc(MobDamage, dealtToMob);
-				if (state[MobDamage] < mobMaxHP) {
-					inc(Health, -Math.min(dealtToPlayer, state[Health]));
-				}
+		function rollAttack(offsense, defense, sharpness) {
+			let DIE = 10;
+			let attackRoll = d(DIE);
+			let defenseRoll = d(DIE);
+			if (attackRoll === 1) return 0;
+			if (attackRoll === DIE || attackRoll + offsense > defenseRoll + defense) {
+				let damage = d(sharpness);
+				if (defenseRoll == DIE && damage > 1) damage = 1;
+				if (defenseRoll == 1) damage >>= 1;
+				return damage;
 			} else {
-				inc(Health, -Math.min(dealtToPlayer, state[Health]));
-				if (state[Health] > 0) {
-					inc(MobDamage, dealtToMob);
-				}
+				return 0;
 			}
+		}
 
-			let levelDisadvantage = state[MobLevel] - state[Level];
-			if (state[MobDamage] >= mobMaxHP) {
-				inc(Experience, 10 * state[MobLevel] * Math.pow(1.5, levelDisadvantage));
-				let ndrops = Math.min(1, carryCapacity(state));
-				inc(InventorySpoils, ndrops);
-				if (state[MobType] == state[QuestMob]) inc(QuestProgress, 1);
-				state[MobDamage] = 0;
-				state[MobType] = 0;
-				state[MobLevel] = 0;
-			}
+		function doMobAttack() {
+			let info = DENIZENS[state[MobType]];
+			if (!info) return 0;
+			let damage = rollAttack(state[MobLevel], state[StatAgility], state[MobLevel]);
+			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
 				if (state[InventoryLifePotions] > 0) {
-					inc(InventoryLifePotions, -1);
+					dec(InventoryLifePotions, 1);
 					state[Health] = 1;  // or max health?
 				} else {
-					// dead. now what?
+					state[GameOver] = 86;
 				}
 				return 0;
 			} else {
 				return 1;
 			}
 		}
+
+		function doPlayerAttack() {
+			if (state[MobHealth] <= 0) return;
+			let info = DENIZENS[state[MobType]];
+			if (!info) return;
+			const offense = state[StatAgility] + weaponPower(state[EquipmentWeapon]);
+			let damage = rollAttack(offense, state[MobLevel], state[StatStrength]);
+			dec(MobHealth, Math.min(state[MobHealth], damage));
+
+			if (state[MobHealth] <= 0) {
+				let levelDisadvantage = state[MobLevel] - state[Level];
+				inc(Experience, 10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
+				if (state[MobType] == state[QuestMob]) inc(QuestProgress, 1);
+			}
+		}
+
+		function battle(invulnerable=false) {
+			if (!state[MobType]) return -1;
+			if (state[MobHealth] <= 0) return -1;
+
+			let info = DENIZENS[state[MobType]];
+			if (!info) return -1;
+
+			if (info.esteemSlot)
+				dec(state[info.esteemSlot], 1);
+
+
+			if (state[StatAgility] + d(6) >= state[MobLevel] + d(6)) {
+				// Player attacks first
+				doPlayerAttack();
+				if (state[MobHealth] > 0) {
+					doMobAttack();
+				}
+			} else {
+				// Mob attacks first
+				doMobAttack();
+				if (state[Health] > 0) {
+					doPlayerAttack();
+				}
+			}
+		}
+
 
 		function actUp() {
 			if (state[ActProgress] >= state[ActDuration]) {
@@ -1633,9 +1655,7 @@ class Bompton {
 			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
 			hours = Math.round(hours / travelspeed);
 			state[Location] = destination;
-			state[MobType] = 0;
-			state[MobLevel] = 0;
-			state[MobDamage] = 0;
+			clearMob(state);
 			let plan = 'Travelling to ' + remote.name;
 			if (goal !== remote) plan += ' en route to ' + goal.name;
 			passTime(plan, hours);
@@ -1645,6 +1665,19 @@ class Bompton {
 			if (!state[MobType]) return -1;
 			passTime('Engaging this ' + DENIZENS[state[MobType]].name.toLowerCase() + ' in battle!', 1);
 			return battle();
+
+		} else if (operation === loot) {
+			if (!state[MobType]) return -1;
+			if (state[MobHealth] > 0 && d(20) > state[StatAgility]) {
+				dec(Health, rollMobAttack());
+				if (state[Health] <= 0) return 0;
+				let info = DENIZENS[state[MobType]];
+				if (info.esteemSlot)
+					dec(state[info.esteemSlot], 1);
+			}
+
+			inc(InventorySpoils, 1);
+			clearMob(state);
 
 		} else if (operation === buy) {
 			let slot = arg1;
@@ -1878,9 +1911,7 @@ class Bompton {
 
 		} else if (operation === hunt) {
 			passTime('Hunting for a suitable local victim', 1);
-			state[MobType] = 0;
-			state[MobLevel] = 0;
-			state[MobDamage] = 0;
+			clearMob(state);
 			let t = irand(6);
 			let type, level;
 			if (t === 0 && local.denizen) {
@@ -1897,7 +1928,7 @@ class Bompton {
 			}
 			state[MobType] = type;
 			state[MobLevel] = level;
-			state[MobDamage] = 0;
+			state[MobHealth] = state[MobMaxHealth] = level * 2;
 			return state[MobType] ? 1 : 0;
 
 		} else if (operation === rest) {
@@ -1999,6 +2030,7 @@ const BOMPTON_WINDOW_CONTENT = `
 #col1 > #spells { grid-template-columns: 1fr 2fr }
 #col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
 #col3 > #environment { grid-template-columns: 2fr 3fr; }
+#col3 > #encounter   { grid-template-columns: 2fr 3fr; }
 #col3 > #quest { grid-template-columns: 3fr 7fr; }
 #col3 > #plot { grid-template-columns: 3fr 7fr; }
 
@@ -2146,8 +2178,11 @@ div.header {
 			<div>Coordinates</div><div id=location></div>
 			<div>Locale</div><div id=locale></div>
 			<div>Terrain</div><div id=terrain></div>
+		</div>
+		<div id=encounter class=listview>
+			<div class=header>Encounter</div>
 			<div>Creature</div><div id=mob></div>
-			<div>Damage</div><div id=mobDamage></div>
+			<div>Health</div><div id=mobHealth class=prog></div>
 		</div>
 		<div id=quest class=listview>
 			<div class=header>Quest</div>
@@ -2299,7 +2334,10 @@ function updateGame(state) {
 	}
 
 	function setProgress(id, value, end, start = 0) {
-		set(id, `${value}&nbsp;/&nbsp;${end}`);
+		if (end != 0)
+			set(id, `${value}&nbsp;/&nbsp;${end}`);
+		else
+			set(id, '&nbsp;');
 		setBar(id, value, end, start);
 	}
 
@@ -2373,7 +2411,7 @@ function updateGame(state) {
 	set('terrain', (Bompton.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobType] ?
 		`${Bompton.DENIZENS[state[MobType]].name} (level ${state[MobLevel]})` : '');
-	set('mobDamage', state[MobType] ? state[MobDamage] : '');
+	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
 
 	let questal = Bompton.mapInfo(state[QuestLocation], state);
 	let original = Bompton.mapInfo(state[QuestOrigin], state);
@@ -2391,10 +2429,8 @@ function updateGame(state) {
 	set('questgoal',
 		state[QuestObject] === EquipmentTotem ?
 		(state[QuestQty] ? 'Seek the totem' : 'Deliver the totem') :
-		state[QuestObject] ?	`
-		Bring me ` + friendlySlotNames[SLOTS[state[QuestObject]].name] :
-		state[QuestMob] ?
-		`Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
+		state[QuestObject] ? `Bring me ${state[QuestQty]} ${friendlySlotNames[SLOTS[state[QuestObject]].name]}` :
+		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questlocation', questal && (questal.name + ' #' + state[QuestLocation]) || '');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
