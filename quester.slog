@@ -22,22 +22,34 @@ drop(InventoryFood, .InventoryFood)
 while 1 {
   if !.QuestOrigin { seekquest() }
   goto(.QuestLocation)
-  if .QuestObject {
-    while .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
-      forage(.QuestObject)
-    }
-  } else if .QuestMob {
-    while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
-      while .MobType != .QuestMob or !.MobHealth {
+  if .QuestMob and .QuestObject {
+    // Trophy hunting
+    while .Health > .MaxHealth / 2 and
+          .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
+      while .MobSpecies != .QuestMob or !.MobHealth {
         hunt()
       }
       melee()
+      if !.MobHealth { loot() }
+    }
+  } else if .QuestMob {
+    // Killing
+    while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
+      while .MobSpecies != .QuestMob or !.MobHealth {
+        hunt()
+      }
+      melee()
+    }
+  } else if .QuestObject {
+    // Foraging
+    while .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
+      forage(.QuestObject)
     }
   }
 
   goto(BOMPTON)
 
-  if .QuestObject { give(.QuestObject, ..QuestObject <? (.QuestQty - .QuestProgress)) }
+  if .QuestObject { give(.QuestObject, ..QuestObject) }
 
   completequest()
   levelup()

@@ -7,6 +7,14 @@ node compiler.js -i ./bompton.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig
 node bompton.js -v grumdrig.bin -- grumdrig.bin
 
 
+# Quester game
+
+# compile
+node compiler.js -i ./bompton.js -b @quester.bin quester.slog
+
+# execute
+node bompton.js -v quester.bin -- quester.bin
+
 
 # Snake
 

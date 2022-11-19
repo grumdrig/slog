@@ -49,9 +49,13 @@ const SLOTS = [
 	{ name: 'Capacity',
 	  description: `Maximum weight you could possibly carry.` },
 
-
 	{ name: 'Enchantment',
 	  description: `Active enchantment currently affecting you.` },
+
+	{ name: 'TrophyMob',
+	  description: `If all trophies were looted from the same mob type, that's
+	  kept track of here. When trophies are looted from multiple mob species,
+	  they tend to get all jumbled up and confused.` },
 
 
 	{ name: 'StatStrength',
@@ -115,8 +119,8 @@ const SLOTS = [
 	{ name: 'InventoryGold',
 	  description: `Gold coins are the common medium of value storage and exchange.` },
 
-	{ name: 'InventorySpoils',
-	  description: `` },
+	{ name: 'InventoryTrophies',
+	  description: `Skins, horns, teeth, etc. collected from slain enemies.` },
 
 	{ name: 'InventoryReagents',
 
@@ -146,7 +150,7 @@ const SLOTS = [
 	{ name: 'Location',
 	  description: `The localities of Bompton Island are numbered from one to thirty-eight.` },
 
-	{ name: 'MobType',
+	{ name: 'MobSpecies',
 
 	  description: `` },
 
@@ -524,9 +528,9 @@ const SPELLS = [ null, {
 			{ slot: InventoryReagents, qty: 3 },
 			],
 		effect: state => {
-			if (!state[MobType]) return -1;
+			if (!state[MobSpecies]) return -1;
 			// TODO: lose current species bonuses
-			return state[Species] = state[MobType];
+			return state[Species] = state[MobSpecies];
 			// TODO: this won't work yet
 		},
 		description: `Turn yourself in to one of those things. One of those things over there.`,
@@ -1284,7 +1288,7 @@ function carryCapacity(state) {
 }
 
 DATABASE[InventoryGold] =        { value: 1, weight: 1/256 };
-DATABASE[InventorySpoils] =      { value: 1/10, weight: 1 };
+DATABASE[InventoryTrophies] =    { value: 1/10, weight: 1 };
 DATABASE[InventoryReagents] =    { value: 1, weight: 1 };
 DATABASE[InventoryResources] =   { value: 1/10, weight: 1 };
 DATABASE[InventoryFood] =        { value: 1, weight: 1 };
@@ -1329,7 +1333,7 @@ function itemsName(sloth) {
 
 
 function clearMob(state) {
-	state[MobType] = 0;
+	state[MobSpecies] = 0;
 	state[MobLevel] = 0;
 	state[MobHealth] = 0;
 	state[MobMaxHealth] = 0;
@@ -1398,6 +1402,9 @@ class Bompton {
 			} else if (state[Act] > 9) {
 				state[GameOver] = 1;
 			}
+
+			if (state[InventoryTrophies] === 0)
+				state[TrophyMob] = 0;
 		}
 
 		return result;
@@ -1444,7 +1451,7 @@ class Bompton {
 		}
 
 		function doMobAttack() {
-			let info = DENIZENS[state[MobType]];
+			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return 0;
 			const defense = state[StatAgility] + state[ArmorClass];
 			let damage = rollAttack(state[MobLevel], defense, state[MobLevel]);
@@ -1465,7 +1472,7 @@ class Bompton {
 
 		function doPlayerAttack() {
 			if (state[MobHealth] <= 0) return;
-			let info = DENIZENS[state[MobType]];
+			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return;
 			const offense = state[StatAgility] + weaponPower(state[EquipmentWeapon]);
 			const sharpness = state[StatStrength] + weaponPower(state[EquipmentWeapon]);
@@ -1475,15 +1482,15 @@ class Bompton {
 			if (state[MobHealth] <= 0) {
 				let levelDisadvantage = state[MobLevel] - state[Level];
 				inc(Experience, 10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
-				if (state[MobType] == state[QuestMob]) inc(QuestProgress, 1);
+				if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) inc(QuestProgress, 1);
 			}
 		}
 
 		function battle(invulnerable=false) {
-			if (!state[MobType]) return -1;
+			if (!state[MobSpecies]) return -1;
 			if (state[MobHealth] <= 0) return -1;
 
-			let info = DENIZENS[state[MobType]];
+			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return -1;
 
 			if (info.esteemSlot)
@@ -1664,41 +1671,45 @@ class Bompton {
 			return 1;
 
 		} else if (operation === melee) {
-			if (!state[MobType]) return -1;
-			passTime('Engaging this ' + DENIZENS[state[MobType]].name.toLowerCase() + ' in battle!', 1);
+			if (!state[MobSpecies]) return -1;
+			passTime('Engaging this ' + DENIZENS[state[MobSpecies]].name.toLowerCase() + ' in battle!', 1);
 			return battle();
 
 		} else if (operation === loot) {
-			if (!state[MobType]) return -1;
+			if (!state[MobSpecies]) return -1;
 			if (state[MobHealth] > 0 && d(20) > state[StatAgility]) {
-				dec(Health, rollMobAttack());
+				doMobAttack();
 				if (state[Health] <= 0) return 0;
-				let info = DENIZENS[state[MobType]];
+				let info = DENIZENS[state[MobSpecies]];
 				if (info.esteemSlot)
 					dec(state[info.esteemSlot], 1);
 			}
 
-			inc(InventorySpoils, 1);
+			if (state[TrophyMob] == state[MobSpecies] || state[InventoryTrophies] == 0)
+				state[TrophyMob] = state[MobSpecies];
+			else
+				state[TrophyMob] = 0;
+			inc(InventoryTrophies, 1);
 			if (!state[MobHealth])
 				clearMob(state);
 
 		} else if (operation === buy) {
 			let slot = arg1;
 			if (!local.forSale) return -1;  // nothing to buy here
-			let qty, levelToBe, capacity, price;
+			let qty, levelToBe, price;
 			if (isEquipmentSlot(slot)) {
 				qty = 1;
 				levelToBe = arg2;
-				capacity = state[slot] ? 0 : 1;
 				if (local.forSale.filter(fsi => fsi.slot === slot &&
 					                             fsi.item == levelToBe).length === 0)
 					return -1;
 				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
 				price = Math.round(DATABASE[slot].basePrice * Math.exp(GR, levelToBe));
 			} else if (isInventorySlot(slot)) {
+				// TODO generally can't buy some items
 				qty = arg2;
-				levelToBe = state[slot] + qty;
-				capacity = carryCapacity(state) - encumbrance(state);
+				if (qty < 0) return -1;
+				levelToBe = Math.min(MAX_INT, state[slot] + qty);
 				price = DATABASE[slot].value;
 			} else {
 				return -1;
@@ -1715,7 +1726,6 @@ class Bompton {
 
 			price *= qty;
 			if (state[InventoryGold] < price) return -1;  // Can't afford it
-			if (capacity < qty) return -1;  // No room
 
 			// You may proceed with the purchase
 			inc(InventoryGold, -price);
@@ -1744,7 +1754,7 @@ class Bompton {
 			if (operation === sell) {
 				inc(InventoryGold, Math.floor(price));
 			}
-			if (operation === give && state[QuestObject] === slot) {
+			if (operation === give && state[QuestObject] === slot && [0,state[TrophyMob]].includes(state[QuestMob])) {
 				inc(QuestProgress, qty);
 			}
 			dec(slot, qty);
@@ -1804,14 +1814,21 @@ class Bompton {
 			let questTypes = [_ => {
 				// Exterminate the ___
 				state[QuestLocation] = randomLocation();
-				state[QuestMob] = randomMobNearLevel(state[Level], state[StatCharisma]);
+				state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
 				state[QuestObject] = 0;
-				state[QuestQty] = 5 + d(10);
+				state[QuestQty] = 2 + 2 * state[Act] + d(2) - d(2);  // TODO use charisma here (instead?)
 			}, _ => {
-				// Bring me N of SOMETHING
+				// Bring me N trophies
+				state[QuestLocation] = randomLocation();
+				state[QuestObject] = InventoryTrophies;
+				state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
+				let qty = 1 + state[Act] + d(2) - d(2);
+				state[QuestQty] = qty;
+			}, _ => {
+				// Bring me N of SOMETHING generally
 				let value = state[Level] * 100 * Math.pow(GR, -state[StatCharisma]) * (0.5 * rand());
 				state[QuestLocation] = randomLocation();
-				state[QuestObject] = INVENTORY_0 + irand(INVENTORY_COUNT);
+				state[QuestObject] = InventoryResources;  // something you can forage for
 				state[QuestMob] = 0;
 				let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
 				state[QuestQty] = qty;
@@ -1931,10 +1948,10 @@ class Bompton {
 			}
 			let level = DENIZENS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
 			level += d(2) - d(2);
-			state[MobType] = type;
+			state[MobSpecies] = type;
 			state[MobLevel] = level;
 			state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
-			return state[MobType] ? 1 : 0;
+			return state[MobSpecies] ? 1 : 0;
 
 		} else if (operation === rest) {
 			passTime('Resting up', 0, 1);
@@ -2174,7 +2191,7 @@ div.header {
 		<div id=inventory class=listview>
 			<div class=header>Inventory</div>
 			<div>Gold</div><div id=i0></div>
-			<div>Drops</div><div id=i1></div>
+			<div id=trophies>Trophies</div><div id=i1></div>
 			<div>Reagents</div><div id=i2></div>
 			<div>Resources</div><div id=i3></div>
 			<div>Rations</div><div id=i4></div>
@@ -2411,6 +2428,9 @@ function updateGame(state) {
 		set('i' + i, state[INVENTORY_0 + i]);
 	}
 	setProgress('encumbrance', state[Encumbrance], state[Capacity]);
+	$id('trophies').innerText = state[TrophyMob] && state[InventoryTrophies] ?
+		DENIZENS[state[TrophyMob]].name + ' trophies' : 'Trophies';
+
 	/*
 	if (state[Encumbrance] <= state[Capacity]) {
 		$id('encumbrance').classList.remove('warning');
@@ -2440,8 +2460,8 @@ function updateGame(state) {
 		`#${state[Location]} &lt;${longitude(state[Location])}, ${latitude(state[Location])}&gt;` : '');
 	set('locale', local ? local.name + ' #' + state[Location] : '');
 	set('terrain', (Bompton.TERRAIN_TYPES[local.terrain] ?? {}).name);
-	set('mob', state[MobType] ?
-		`${Bompton.DENIZENS[state[MobType]].name} (level ${state[MobLevel]})` : '');
+	set('mob', state[MobSpecies] ?
+		`${Bompton.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
 	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
 	if (state[MobHealth] == 0 && state[MobMaxHealth] > 0)
 		$id('mobHealth').classList.add('dead');
@@ -2451,10 +2471,10 @@ function updateGame(state) {
 
 	let questal = Bompton.mapInfo(state[QuestLocation], state);
 	let original = Bompton.mapInfo(state[QuestOrigin], state);
-	let friendlySlotNames = {
+	const friendlySlotNames = {
 		EquipmentTotem: 'totem',
 		InventoryGold: 'gold',
-		InventorySpoils: 'spoils',
+		InventoryTrophies: 'trophies',
 		InventoryReagents: 'reagents',
 		InventoryResources: 'resources',
 		InventoryFood: 'food',
@@ -2465,6 +2485,7 @@ function updateGame(state) {
 	set('questgoal',
 		state[QuestObject] === EquipmentTotem ?
 		(state[QuestQty] ? 'Seek the totem' : 'Deliver the totem') :
+		state[QuestObject] == InventoryTrophies ? `Bring me ${state[QuestQty]} ${DENIZENS[state[QuestMob]].name} trophies` :
 		state[QuestObject] ? `Bring me ${state[QuestQty]} ${friendlySlotNames[SLOTS[state[QuestObject]].name]}` :
 		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');

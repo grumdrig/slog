@@ -717,3 +717,25 @@ Constitution -> Endurance
 Intelligence -> Intellect
 Wisdom -> Perception?
 Charisma
+
+
+Skins
+-----
+
+Spoils/drops becomes skins. (Could call them trophies but it sounds a little
+grand.) There's a SkinMob field. When you loot skins if SkinMob matches the mob
+then SkinMob is that beast, otherwise becomes 0 and the skins are generic. Then
+the skins can be quest items.
+
+In general inventory items can't be purchased and can only be gotten some
+other way.
+
+Resources or something: foraging. Or call it forage.
+
+Not sure about other items.
+
+Maybe you can buy reagents.
+
+Maybe you get treasures for completing quests?
+
+
