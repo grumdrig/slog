@@ -3,13 +3,23 @@
 /// Author: Grumdrig
 /// Description: Complete quests until you can't no more.
 
+startgame(1)
+
+func initialize(stat, count) {
+  while count {
+    train(stat)
+    count -= 1
+  }
+}
+
+
 initialize(StatStrength, 4)
 initialize(StatAgility, 1)
 initialize(StatEndurance, 1)
 initialize(StatIntellect, 1)
 initialize(StatWisdom, 1)
 initialize(StatCharisma, 2)
-startgame(1)
+
 
 const BOMPTON = 18
 

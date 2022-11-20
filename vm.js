@@ -113,7 +113,7 @@ class VirtualMachine {
 	state;  // negative memory beyond registers
 	running = true;
 	clock = 0;  // elapsed cycles since start
-	debugLimit = 1000*1000;
+	debugLimit = 10*1000*1000;
 
 	get pc() { return this.registers[-1-REGISTERS.PC] }
 	set pc(v) { this.registers[-1-REGISTERS.PC] = v }

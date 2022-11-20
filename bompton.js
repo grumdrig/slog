@@ -40,12 +40,14 @@ const SLOTS = [
 	  description: `Energy available at the moment, from MaxEnergy down to zero.
 	  It drops as fatigue sets in.` },
 
+	{ name: 'TrainingPoints',
+	  description: `Training points are required to be able to train up stats.` },
+
 	{ name: 'ArmorClass',
 	  description: `Defensive rating calculated based on equipment and bonuses.` },
 
 	{ name: 'Encumbrance',
 	  description: `Total weight of carried items, not to exceed Capacity.` },
-
 	{ name: 'Capacity',
 	  description: `Maximum weight you could possibly carry.` },
 
@@ -261,11 +263,6 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 
 
 const CALLS = {
-	initialize: { parameters: 'slot,value',
-		description: `Before the game starts, the character may assign up to a
-		total of ten points to their six stat slots (STATE_STRENGTH, etc)
-		using this function.` },
-
 	startgame: { parameters: 'species',
 		description: 'Pick a species for your character and begin the game!' },
 
@@ -1519,6 +1516,7 @@ class Bompton {
 				const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
 				state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
 				state[ActProgress] = 0;
+				inc(TrainingPoints, 1);
 			}
 		}
 
@@ -1531,17 +1529,7 @@ class Bompton {
 
 		if (state[Level] === 0) {
 			// game hasn't begun
-			if (operation === initialize) {
-				let [slot, value] = [arg1, arg2];
-				if (value < 0) return -1
-				if (isStatSlot(slot)) {
-					state[slot] = value;
-				} else {
-					return -1;
-				}
-				return state[slot];
-
-			} else if (operation === setname) {
+			if (operation === setname) {
 				for (let i = 0; i < NAME_COUNT; ++i) {
 					state[Name + i] = i < args.length ? args[i] : 0;
 				}
@@ -1567,6 +1555,7 @@ class Bompton {
 				state[Location] = BOMPTON;
 				state[Health] = state[MaxHealth] = 6 + state[StatEndurance];
 				state[Energy] = state[MaxEnergy] = 6 + state[StatIntellect];
+				state[TrainingPoints] = 10;
 				actUp();
 				passTime('Loading', 1);
 
@@ -1873,14 +1862,17 @@ class Bompton {
 			let slot = arg1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isStatSlot(slot)) return -1;
+			if (state[TrainingPoints] <= 0) return -1;
 			if (state[slot] >= 99) return 0;
 			let hours = 24;
 			hours *= Math.pow(GR, state[slot]);
 			hours *= 10 / (10 + state[StatWisdom]);
+			hours = Math.min(1, Math.round(hours));
 			// TODO: town stat-learning bonuses
-			// TODO: racial stat-learning bonuses
-			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), Math.round(hours));
+			// TODO: special stat-learning bonuses
+			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), hours);
 			inc(slot, 1);
+			dec(TrainingPoints, 1);
 			return state[slot];
 
 		} else  if (operation == learn) {
@@ -2004,6 +1996,7 @@ class Bompton {
 			inc(Level, 1);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[StatEndurance]));
 			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[StatWisdom]));
+			inc(TrainingPoints, 1);
 			passTime('Levelling up', 1);
 			return 1;
 
@@ -2066,6 +2059,24 @@ const BOMPTON_WINDOW_CONTENT = `
 
 #spells > div:nth-child(2n+3) { font-style: italic }
 
+#tp, #encumbrance {
+	float: right;
+	padding-right: 4px;
+}
+
+#encumbrance {
+	display: inline-block;
+	width: 90px;
+	background-color: white;
+}
+
+div.footer {
+	grid-column: 1/3;
+	background-color: rgb(236, 233, 216);
+	// height: 14px;
+	padding-top: 3px !IMPORTANT;
+}
+
 div.header {
 	grid-column: 1 / 3;
 	height: 14px;
@@ -2090,10 +2101,11 @@ div.header {
 	border-right: groove 1px #ddd;
 }
 
-.changed { background-color: yellow }
+.changed {
+	background-color: #ffa
+}
 
-.warning { background-color: #acac7c }
-.dead    { background-color: #fcc }
+.dead { background-color: #fcc }
 
 [role="progressbar"] {
 	height: 15px;
@@ -2151,14 +2163,14 @@ div.header {
 			<div>Name</div><div id="name"></div>
 			<div>Species</div><div id="species"></div>
 			<div>Level</div><div id="level"></div>
-			<div>Experience</div><div id="xp" class=prog></div>
+			<div>Experience</div><div id="xp" class=prog data-warning='#CDFF2F'></div>
 			<div>Health</div><div id="health" class=prog></div>
 			<div>Energy</div><div id="energy" class=prog></div>
 			<div>Enchantment</div><div id="enchantment"></div>
 		</div>
 
 		<div id=stats class=listview>
-			<div class=header>Stats</div>
+			<div class=header>Stats <span id=tp></span></div>
 			<div>Strength</div>     <div id="s0"></div>
 			<div>Agility</div>      <div id="s1"></div>
 			<div>Endurance</div> <div id="s2"></div>
@@ -2198,7 +2210,7 @@ div.header {
 			<div>Treasures</div><div id=i5></div>
 			<div>Healing Potions</div><div id=i6></div>
 			<div>Life Potions</div><div id=i7></div>
-			<div>Encumbrance</div><div id=encumbrance class=prog></div>
+			<div class=footer>Encumbrance<div id=encumbrance class=prog data-warning='#fb4' data-emergency='#f99'></div></div>
 		</div>
 	</div>
 
@@ -2244,11 +2256,13 @@ div.header {
 
 
 function setBar(id, value, end, start=0, color='#ace97c') {
-	if (value > end) color = value > (end - start) * 1.5 ? '#f99' : '#fb4';
+	let bar = $id(id);
+	if (value > end && bar.getAttribute('data-warning')) color = bar.getAttribute('data-warning');
+	if (value > (end - start) * 1.5 && bar.getAttribute('data-emergency')) color = bar.getAttribute('data-emergency');
 	let progress = end == start ? 0 : Math.round(100 * (value - start) / (end - start));
 	let bi = `linear-gradient(left, ${color}, ${color} ${progress}%, transparent ${progress}%, transparent 100%)`
-	$id(id).style.backgroundImage = bi;
-	$id(id).style.backgroundImage = '-webkit-' + bi;
+	bar.style.backgroundImage = bi;
+	bar.style.backgroundImage = '-webkit-' + bi;
 }
 
 
@@ -2395,6 +2409,7 @@ function updateGame(state) {
 	for (let i = 0; i < STAT_COUNT; ++i) {
 		set('s' + i, state[STAT_0 + i]);
 	}
+	$('#tp').innerText = state[TrainingPoints] ? 'TP: ' + state[TrainingPoints] : '';
 
 	for (let i = 0; i < SPELLBOOK_COUNT; ++i) {
 		const slot = SPELLBOOK_0 + i;
