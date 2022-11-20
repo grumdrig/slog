@@ -193,14 +193,22 @@ function updateDebuggerState(vm) {
 		if (i === vm.fp) d.style.border='solid 1px black';
 	}
 
-	if (vm.memory.length < $("#memory").children.length)
-		$("#memory").innerText = '';  // in case the vm has changed sizes
+	$("#memory").innerText = '';
 	for (let i = 0; i < vm.memory.length; ++i) {
-		let d = $("#memory").children[i] || $("#memory").appendChild(document.createElement('pre'));
-		let addr = (asm && asm.symbolTable[i]) ?
-			(asm.symbolTable[i] + '    ').substr(0,4) :
-			('000' + i).substr(-4);
-		d.innerText = addr + ': ' + hexDec(vm.memory[i]);
+		let d = $("#memory").appendChild(document.createElement('pre'));
+		let zs = 0;
+		while (i > 0 && i < vm.memory.length - 1 &&
+				vm.memory[i - 1 + zs] === 0 && !asm.symbolTable[i - 1 + zs])
+			zs += 1;
+		if (zs >= 4) {
+			d.innerText = '...';
+			i += zs - 3;
+		} else {
+			let addr = (asm && asm.symbolTable[i]) ?
+				(asm.symbolTable[i] + '    ').substr(0,4) :
+				('000' + i).substr(-4);
+			d.innerText = addr + ': ' + hexDec(vm.memory[i]);
+		}
 	}
 }
 
