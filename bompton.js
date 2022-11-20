@@ -133,8 +133,9 @@ const SLOTS = [
 	  description: `` },
 
 	{ name: 'InventoryFood',
-
-	  description: `` },
+	  description: `Adventures eat food every time they travel. If they're out
+	  of food, travelling takes longer due to extra time spent hunting and
+	  foraging and complaining about being hungry.` },
 
 	{ name: 'InventoryTreasures',
 
@@ -262,6 +263,8 @@ function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < EQUIPMENT_
 function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_0 + INVENTORY_COUNT }
 
 
+// TODO bell() commmand? CHA makes it more accurate
+
 const CALLS = {
 	startgame: { parameters: 'species',
 		description: 'Pick a species for your character and begin the game!' },
@@ -338,6 +341,11 @@ const CALLS = {
 		can take yourself to the next level by levelling up. This will
 		increase your general effectiveness accross the board, and may
 		result in stat or other bonuses.` },
+
+	viewcinematic: {
+		description: `To complete each act, you must return to Bompton Town
+		and view the in-game cinematic to usher in the next act of the
+		plot. Or at the completion of the final Act IX, conclude the game!` },
 
 	give: { parameters: 'slot,quantity',
 		description: `Hand over in item to whomever is nearby.` },
@@ -594,7 +602,21 @@ const SPELLS = [ null, {
 			// TODO: the effect
 		},
 		description: `Bring a ghost town into existence where you now stand.`,
+	}, {
+		name: 'Health Plan',
+		moniker: 'HEALTH_PLAN',
+		level: 8,
+		costs: [
+			{ slot: Energy, qty: 30 },
+			{ slot: InventoryReagents, qty: 20 },
+			],
+		effect: state => {
+			state[Health] = Math.min(MAX_INT, state[Health] + state[InventoryGold]);
+			state[InventoryGold] = 0;
+		},
+		description: `Money CAN buy you health, because magic.`,
 	},
+	// TODO money can buy youth too
 ];
 
 SPELLS.forEach((spell, index) => spell && define(spell.moniker, index));
@@ -870,6 +892,8 @@ TERRAIN_TYPES.forEach((info, index) => {
 
 
 // Denizens
+
+// TODO stat adjustments for mobs
 
 const DENIZENS = [
 	null,
@@ -1511,13 +1535,13 @@ class Bompton {
 
 
 		function actUp() {
-			if (state[ActProgress] >= state[ActDuration]) {
-				inc(Act);
-				const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
-				state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
-				state[ActProgress] = 0;
-				inc(TrainingPoints);
-			}
+			if (state[ActProgress] < state[ActDuration]) return false;
+
+			inc(Act);
+			const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
+			state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
+			state[ActProgress] = 0;
+			return true;
 		}
 
 		if (operation === cheat) {
@@ -1852,7 +1876,6 @@ class Bompton {
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			inc(Experience, 100);
 			inc(ActProgress);
-			actUp();
 			state[QuestObject] = 0;
 			state[QuestMob] = 0;
 			state[QuestLocation] = 0;
@@ -1861,6 +1884,14 @@ class Bompton {
 			state[QuestQty] = 0;
 			passTime('Taking care of paperwork; this quest is done!', 3);
 			return 1;
+
+		} else if (operation === viewcinematic) {
+			if (state[Location] !== BOMPTON) return -1;
+			if (actUp()) {
+				passTime('Viewing a beautifully rendered in-game cinematic sequence', 2);
+				inc(TrainingPoints);
+				inc(InventoryTreasures);
+			}
 
 		} else  if (operation === train) {
 			let slot = arg1;
@@ -1874,6 +1905,9 @@ class Bompton {
 			hours = Math.min(1, Math.round(hours));
 			// TODO: town stat-learning bonuses
 			// TODO: special stat-learning bonuses
+			// TODO: DEX helps with STR and CON
+			// TODO: INT helps with CHA and WIS
+
 			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), hours);
 			inc(slot);
 			dec(TrainingPoints);
@@ -1902,6 +1936,8 @@ class Bompton {
 			if (state.slice(SPELLBOOK_0, SPELLBOOK_0 + SPELLBOOK_COUNT)
 				.filter((spell, slot) => spell == spellType)
 				.length == 0) return -1;  // Don't know it
+
+			// TODO have int and or wis help
 
 			let level = spell.level;
 
@@ -1977,6 +2013,8 @@ class Bompton {
 					return 0;
 				}
 			}
+
+			// TODO int or perception helps
 
 			if (!isInventorySlot(target)) return -1;
 

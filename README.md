@@ -1,7 +1,5 @@
-SLOG
+Slog
 ====
-
-Or CHASM.
 
 Here's the idea. Run PQ-esque characters in an RPG world based on a very
 limited-length assembly code which guides their behavior. Have them start as
@@ -17,170 +15,10 @@ Names For Everything
 
 I've named the game Bompton Island but maybe Chinbreak Island is better?
 
-I guess the high level language is called Slog?
-
-
-
-
-
-MAP
-===
-
-I'm thinking have a fixed world map with specific stuff at specific places 256^2 probably enough
-
-Could have a underworld layer(s)
-
-If tiled, no bigger than 32K square of course
-
-High mountains block progress
-
-Deep waters cause you to drown
-
-
-
-KNOWABILITY
-===========
-
-Run the sim on the client side or on the server side and send back a replay?
-
-Maybe a testing ground on client side with a known map?
-
-Probably provide nothing to players but the ability to run games on the server
-and get a result back.
-
-Since the game as I envision it will have lots of stuff to discover, the
-player will have to run a zillion games. Maybe that means the game should be
-a client-side executable.
-
-
-CONVERSING
-==========
-
-Idea: Instead of generating a log from anywhere, have an NPC who is a
-biographer. When you come and TALK to him, your ALLEGIANCE text gets written
-into some record. This way information gathered abroad needs to be brought
-back to get to the player. This could still be done by not letting the player
-see the log unless they player returns home.
-
-Perhaps ALLEGIANCE should be a longer statement. But perhaps not. Or maybe it
-should just be called "statement" or something.
-
-Interrupt address for responses or any time a beast says anything. Set an
-address in INT_R and execution goes there with PC on the stack until JUMP
-(as a return).
-
-Perhaps there should be other interrupts.
-
-
-GAME-SPECIFIC INFO
-==================
-
-Various things are, or could be, game-specific. For example:
-
-* Leveling schedule (xp for a given level)
-* Spell names and effects
-* Terrain types and how they work
-* Victory conditions
-* Equipment descriptions
-* NPCs and their info
-
-Not clear, in each case, if they should be:
-
-* Shared as meta-info about the game
-* Set in the VM special area
-* Left to puzzle out empyrically
-* Mentioned/described in in-game dialogues
-* Fixed for all games
-
-but the first seems best in most cases at the moment.
-
-
-INFORMATION RETURNED
-====================
-
-Can you watch the whole game? Or just see the final state?
 
 
 PQ6
 ===
-
-Maybe the thing to start out with is something pretty close to PQ 6. Even
-closer, that is, than the above. As simply as can be.
-
-* travel(location)
-
-Relocate to town or else the killng fields, or one of many such. Some might be good for completing quests, some might be good for gaining xp, some for training.
-CON helps
-
-* execute(): Fight the mob that's there (Ill effects if done in town!)
-
-There's a not-too-long list of mobs and what they drop.
-This causes some damage and may kill you.
-STR or DEX depending on weapon
-
-* sell(slot, qty)
-
-Sell anything you have that's saleable. Or make them select a slot.
-Maybe you get 0 for stuff if you're not at a store (so it's also drop())
-CHA helps
-INT helps?
-
-qty 0 to ask price
-
-* buy(equipment_slot, level)
-
-Upgrade equipment
-CHA helps prices
-WIS helps?
-
-0 to ask price
-
-* seekquest()
-
-Get yourself a quest.
-Maybe it has a location you have to walk to too.
-You can seek to abandon a quest.
-CHA helps
-
-* completequest()
-
-Once progress is full, get spoils.
-
-* study(spell)
-
-Learn or upgrade a spell.
-Different locationas are better for certain spells.
-INT helps
-
-* train(stat)
-
-Different locations will be better for training certain stats.
-DEX helps with STR and CON
-INT helps with CHA and WIS
-
-* cast(spell)
-
-Uses energy, natch.
-INT or WIS depending on spell
-
-* bell(freq)
-
-Plays a sound effect
-CHA helps
-
-* forage()
-
-Look for good stuff to add to inventory
-INT helps
-
-* levelup()
-
-CON helps HP
-WIS helps MP or is it energy?
-
-* give(slot)
-
-Spurs along quests
 
 
 ### Towns
@@ -295,11 +133,6 @@ Monster brainstorm with Andy, transformed:
 Spells should maybe be crazy, like turn gold into HP. Hard to think of crazy
 stuff within this universe
 
-* Become the species of the nearby mob
-* Double your money
-* Scramble the map
-* Create a ghost city where you stand
-* Go back to year 0
 
 Maybe have spells use a tech ladder, so you gotta learn A and B to be able to
 learn C, which replaces them.
@@ -333,14 +166,6 @@ List of spells from a note on my phone:
 * more?
 
 
-### Um...
-
-This is starting to look a bit like the complicated original-ish idea.
-
-For training stats and spells, maybe just have a % chance of success rather
-than keeping track of progress. Less info to manage, but otoh it better to
-have less randomness I think
-
 
 ### Charcter race
 
@@ -362,13 +187,6 @@ Change Eff to Eel Man or Eelman?
 ### Character class
 
 Might affect weapon options, some stat-learning bias, etc
-
-
-### Initialization
-
-Start at level 0. None of the external calls work except initialize() and
-startGame(). Give character 8 points to assign to stats via initialize() also
-set the race and class slots. Then call startGame().
 
 
 ### Proficiency
@@ -440,6 +258,7 @@ Health = CON
 
 Spell attack = INT + spell level
 
+TODO have bows depend on dex not str
 
 
 ### Predictablility

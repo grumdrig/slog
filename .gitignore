@@ -3,17 +3,16 @@ node_modules/
 package-lock.json
 package.json
 
+*.bin
+
 grumdrig.asm
-grumdrig.bin
 grumdrig.dasm
 grumdrig.strat
 
 steve.asm
-steve.bin
 steve.dasm
 
 test.asm
-test.bin
 test.dasm
 
 map.html
