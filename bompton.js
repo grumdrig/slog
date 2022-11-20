@@ -1479,7 +1479,7 @@ class Bompton {
 			if (state[MobHealth] <= 0) {
 				let levelDisadvantage = state[MobLevel] - state[Level];
 				inc(Experience, 10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
-				if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) inc(QuestProgress, 1);
+				if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) inc(QuestProgress);
 			}
 		}
 
@@ -1512,11 +1512,11 @@ class Bompton {
 
 		function actUp() {
 			if (state[ActProgress] >= state[ActDuration]) {
-				inc(Act, 1);
+				inc(Act);
 				const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
 				state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
 				state[ActProgress] = 0;
-				inc(TrainingPoints, 1);
+				inc(TrainingPoints);
 			}
 		}
 
@@ -1576,7 +1576,7 @@ class Bompton {
 			inc(Hours, hours);
 			while (state[Hours] > HOURS_PER_YEAR) {
 				inc(Hours, -HOURS_PER_YEAR);
-				inc(Years, 1);
+				inc(Years);
 			}
 		}
 
@@ -1613,13 +1613,13 @@ class Bompton {
 			return Math.max(0, carryCapacity(state) - encumbrance(state));
 		}
 
-		function inc(slot, qty) {
+		function inc(slot, qty=1) {
 			const MIN_INT = -0x8000;
 			const MAX_INT =  0x7FFF;
 			return state[slot] = Math.min(MAX_INT, Math.max(MIN_INT, state[slot] + qty));
 		}
 
-		function dec(slot, qty) { return inc(slot, -qty) }
+		function dec(slot, qty=1) { return inc(slot, -qty) }
 
 
 		if (operation === travel) {
@@ -1651,6 +1651,10 @@ class Bompton {
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
+			if (state[InventoryFood] >= 1)
+				dec(InventoryFood)
+			else
+				hours *= 2;
 			hours = Math.round(hours / travelspeed);
 			state[Location] = destination;
 			clearMob(state);
@@ -1678,7 +1682,7 @@ class Bompton {
 				state[TrophyMob] = state[MobSpecies];
 			else
 				state[TrophyMob] = 0;
-			inc(InventoryTrophies, 1);
+			inc(InventoryTrophies);
 			if (!state[MobHealth])
 				clearMob(state);
 
@@ -1779,14 +1783,14 @@ class Bompton {
 			qty = Math.min(qty, state[fromSlot]);
 
 			if (qty > 0) {
-				inc(fromSlot, -qty);
-				inc(toSlot,    qty);
+				dec(fromSlot, qty);
+				inc(toSlot,   qty);
 
 				// Charge a 1 gold commission per transaction
 				if (isDeposit) {
-					inc(state[InventoryGold] > 0 ? InventoryGold : BalanceGold, -1);
+					dec(state[InventoryGold] > 0 ? InventoryGold : BalanceGold);
 				} else {
-					inc(state[BalanceGold] > 0 ? BalanceGold : InventoryGold, -1);
+					dec(state[BalanceGold] > 0 ? BalanceGold : InventoryGold);
 				}
 
 				passTime('Making a bank ' + isDeposit ? 'deposit' : 'withdrawal', 1);
@@ -1847,7 +1851,7 @@ class Bompton {
 			if (state[QuestOrigin] && (state[QuestOrigin] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			inc(Experience, 100);
-			inc(ActProgress, 1);
+			inc(ActProgress);
 			actUp();
 			state[QuestObject] = 0;
 			state[QuestMob] = 0;
@@ -1871,8 +1875,8 @@ class Bompton {
 			// TODO: town stat-learning bonuses
 			// TODO: special stat-learning bonuses
 			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), hours);
-			inc(slot, 1);
-			dec(TrainingPoints, 1);
+			inc(slot);
+			dec(TrainingPoints);
 			return state[slot];
 
 		} else  if (operation == learn) {
@@ -1907,14 +1911,14 @@ class Bompton {
 			passTime('Casting ' + spell.name, spell.duration ?? 10);
 
 			for (let { slot, qty } of spell.costs)
-				inc(slot, -qty);
+				dec(slot, qty);
 
 			if (spell.enchantment) {
 				let current = SPELLS[state[Enchantment] & 0xFF];
 				if (current) {
 					// Reverse current enchantment
 					for (let { slot, increment } of current.enchantment) {
-						inc(slot, -increment);
+						dec(slot, increment);
 					}
 				}
 				for (let { slot, increment } of spell.enchantment) {
@@ -1993,10 +1997,10 @@ class Bompton {
 			if (state[Level] >= 99) return 0;
 			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
 				return 0;
-			inc(Level, 1);
+			inc(Level);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[StatEndurance]));
 			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[StatWisdom]));
-			inc(TrainingPoints, 1);
+			inc(TrainingPoints);
 			passTime('Levelling up', 1);
 			return 1;
 
