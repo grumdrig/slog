@@ -27,6 +27,20 @@ macro goto(dest) {
   while travel(dest) > 0 { }
 }
 
+/* Cheat to the end
+cheat(Act, 9)
+cheat(ActProgress, 2)
+seekquest()
+goto(.QuestLocation)
+while !forage(EquipmentTotem) {}
+goto (.QuestOrigin)
+give(EquipmentTotem, 1)
+completequest()
+seekquest()
+while .QuestMob != .MobSpecies { hunt() }
+*/
+
+
 drop(InventoryFood, .InventoryFood)
 
 while 1 {

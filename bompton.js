@@ -1847,7 +1847,7 @@ class Bompton {
 					} while (state[QuestLocation] == state[QuestOrigin]);
 					state[QuestQty] = 2; // pick up, drop off
 				} else if (state[ActProgress] == state[ActDuration] - 1) {
-					state[QuestMob] = MAIN_BOSS;
+					state[QuestMob] = Main_Boss;
 					state[QuestQty] = 1;
 					state[QuestLocation] = EMKELL_PEAK;
 				} else {
@@ -1902,7 +1902,7 @@ class Bompton {
 			return 1;
 
 		} else if (operation === viewcinematic) {
-			if (state[Location] !== BOMPTON) return -1;
+			if (local.terrain !== TOWN) return -1;  // TODO should be just bompton or sygnon
 			if (actUp()) {
 				passTime('Viewing a beautifully rendered in-game cinematic sequence', 2);
 				inc(TrainingPoints);
@@ -2567,14 +2567,14 @@ function updateGame(state) {
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
 	set('questorigin', original && (original.name + ' #' + state[QuestOrigin]) || '');
 
-	set('act', 'Act ' + toRoman(state[Act]));
+	set('act', state[Act] > 9 ? 'Afterlife' : 'Act ' + toRoman(state[Act]));
 	if (state[ActDuration])
 		set('actprogress', Math.round(100 * state[ActProgress]/state[ActDuration]) + '%');
 	else
 		set('actprogress', '0%');
 	setBar('actprogress', state[ActProgress], state[ActDuration]);
-	set('gameprogress', `${Math.round(100 * Math.max(0, state[Act] - 1) / 10)}%`);
-	setBar('gameprogress', state[Act] - 1, 10);
+	set('gameprogress', `${Math.round(100 * Math.max(0, state[Act] - 1) / 9)}%`);
+	setBar('gameprogress', state[Act] - 1, 9);
 
 	if (state[Level] == 0) {
 		TASK = '&nbsp;';
