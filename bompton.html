@@ -70,7 +70,7 @@ hr { margin: 16px }
 	</div>
 	<div class=window-body>
 		<div id=newstuff>
-			<label for=name>Name</label><input type=text id=name></input>
+			<label for=namein>Name</label><input type=text id=namein></input>
 			<fieldset style="margin-top:10px">
 				<legend>Strategy</legend>
 				<div style="display:grid;grid-template-columns:50px 1fr;gap:4px">
@@ -94,7 +94,7 @@ hr { margin: 16px }
 						<div class=field-row id=strat-desc>&nbsp;</div>
 				</fieldset>
 			</fieldset>
-			<div id=sold><button onclick="sold()">Go!</button></div>
+			<div id=sold><button disabled onclick="sold()">Go!</button></div>
 		</div>
 	</div>
 </div>
@@ -147,6 +147,9 @@ window.addEventListener('load', e => {
 	hide('#game-window');
 
 	$("input[type=file]").addEventListener('change', upload);
+
+	$('#namein').addEventListener('input', e => $('#sold button').disabled = $('#namein').value.trim().length == 0);
+	$('#namein').focus();
 });
 
 let PACKAGE;
@@ -168,6 +171,8 @@ function sold() {
 	// 	vm = new VirtualMachine(program, Bompton);
 	// 	play();
 	// });
+
+	$('#name').innerText = $('#namein').value;
 	vm = new VirtualMachine(PACKAGE.binary, Bompton);
 	play();
 

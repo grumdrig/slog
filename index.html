@@ -252,16 +252,17 @@ prove!
 
 let Game;
 
-// window.addEventListener('load', e => {
-window.addEventListener("DOMContentLoaded", _ => {
+window.addEventListener('load', e => {
+// window.addEventListener("DOMContentLoaded", _ => {
 	prepIDE();
 
-	if (window.location.search === '?snake')
+
+	if (window.location.search === '?snake') {
 		loadGame(Snake);
-	else if (window.location.search === '?bompton')
+	} else { // if (window.location.search === '?bompton') {
 		loadGame(Bompton);
-	else
-		loadGame(Bompton);
+		$('#name').innerText = 'Test Pilot';
+	} // TODO some kind of picker for game
 });
 
 

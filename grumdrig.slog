@@ -3,8 +3,6 @@
 /// Author: Grumdrig
 /// Description: Greedily slay beasts to level up at all costs.
 
-// var name = "Grumdrig"
-// setname(name)
 startgame(2)
 
 macro initialize(stat, count) {
