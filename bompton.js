@@ -1540,7 +1540,8 @@ class Bompton {
 			if (state[ActProgress] < state[ActDuration]) return false;
 
 			inc(Act);
-			const ACT_LENGTHS = [10, 10, 10, 10, 10, 10, 10, 10, 10, 0]
+			//                   1  2  3  4   5   6   7   8  9
+			const ACT_LENGTHS = [6, 7, 8, 9, 10, 10, 10, 10, 7, 0]
 			state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
 			state[ActProgress] = 0;
 			return true;
