@@ -900,6 +900,7 @@ const DENIZENS = [
 			{ slot: InventoryFood,     value: 1 },
 		],
 		description: "Likable, lithe creatures of small stature, often underestimated",
+		occurrence: 0.2,
 	},
 	{
 		name: "Hardwarf",
@@ -921,6 +922,7 @@ const DENIZENS = [
 			{ slot: InventoryGold,   value: 1 },
 		],
 		description: "Sturdy sorts with a...direct approch to problems",
+		occurrence: 0.1,
 	},
 	{
 		name: "Eelman",
@@ -941,8 +943,11 @@ const DENIZENS = [
 			{ slot: InventoryReagents, value: 1 },
 		],
 		description: "Proud, sometimes haughty, intellectuals",
+		occurrence: 0.1,
 	}, {
 		name: "Gust",
+		hitdice: 10,
+		occurrence: 0.01,
 	}, {
 		name: "Parakeet",
 		badassname: "Triplikeet",
@@ -1004,6 +1009,11 @@ const DENIZENS = [
 		badassname: "Veilerwyrmogon",
 		domain: DESERT,
 		hitdice: 12,
+	}, {
+		name: "Main Boss",  // TODO: need a name
+		domain: MOUNTAINS,
+		hitdice: 16,
+		occurrence: 0,
 	}
 ];
 
@@ -1600,7 +1610,7 @@ class Bompton {
 		function randomMob() {
 			while (true) {
 				let mob = d(DENIZENS.length - 1);
-				if (DENIZENS[mob].hitdice) return mob;
+				if (rand() < (DENIZENS[mob].occurrence ?? 1)) return mob;
 			}
 		}
 
@@ -1740,15 +1750,17 @@ class Bompton {
 		} else if (operation === sell || operation === give || operation === drop) {
 			if (operation === sell && local.terrain != TOWN) return -1;
 			let [slot, qty] = [arg1, arg2];
-			let unitValue;
+			let unitValue, newqty;
 			if (isEquipmentSlot(slot)) {
 				qty = Math.min(qty, 1);
 				unitValue = state[slot];
 				if (!unitValue) return -1;
 				if (slot === EquipmentWeapon) unitValue = weaponPower(unitValue);
 				unitValue = Math.round(Math.pow(GR, unitValue));
+				newqty = 0;
 			} else if (isInventorySlot(slot)) {
 				qty = Math.min(qty, state[slot]);
+				newqty = state[slot] - qty;
 				unitValue = DATABASE[slot].value;
 			} else {
 				return -1;
@@ -1758,10 +1770,18 @@ class Bompton {
 			if (operation === sell) {
 				inc(InventoryGold, Math.floor(price));
 			}
-			if (operation === give && state[QuestObject] === slot && [0,state[TrophyMob]].includes(state[QuestMob])) {
-				inc(QuestProgress, qty);
+			if (operation === give &&
+					state[QuestObject] === slot &&
+					state[Location] === state[QuestOrigin] &&
+					[0,state[TrophyMob]].includes(state[QuestMob])) {
+				if (state[QuestObject] === EquipmentTotem) {
+					if (state[QuestProgress] === 1)
+						state[QuestProgress] = 2;
+				} else {
+					inc(QuestProgress, qty);
+				}
 			}
-			dec(slot, qty);
+			state[slot] = newqty;
 			if (operation === sell) {
 				passTime('Selling some ' + itemsName(slot), 3);
 			} else if (operation === give) {
@@ -1817,46 +1837,52 @@ class Bompton {
 
 			if (local.terrain !== TOWN) return -1;
 
-			let questTypes = [_ => {
-				// Exterminate the ___
-				state[QuestLocation] = randomLocation();
-				state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
-				state[QuestObject] = 0;
-				state[QuestQty] = 2 + 2 * state[Act] + d(2) - d(2);  // TODO use charisma here (instead?)
-			}, _ => {
-				// Bring me N trophies
-				state[QuestLocation] = randomLocation();
-				state[QuestObject] = InventoryTrophies;
-				state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
-				let qty = 1 + state[Act] + d(2) - d(2);
-				state[QuestQty] = qty;
-			}, _ => {
-				// Bring me N of SOMETHING generally
-				let value = state[Level] * 100 * Math.pow(GR, -state[StatCharisma]) * (0.5 * rand());
-				state[QuestLocation] = randomLocation();
-				state[QuestObject] = InventoryResources;  // something you can forage for
-				state[QuestMob] = 0;
-				let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
-				state[QuestQty] = qty;
-			},
-			/* totem quests arent so clear right now
-			_ => {
-				if (state[EquipmentTotem]) {
-					// Deliver this totem
+			if (state[Act] == 9) {
+				if (state[ActProgress] < 3) {
+					// Bring the totem from origin to location
 					state[QuestObject] = EquipmentTotem;
-					state[QuestLocation] = randomLocation();
-					state[QuestQty] = 0;
-				} else {
-					// Seek the totem
-					state[QuestObject] = EquipmentTotem;
-					state[QuestLocation] = randomLocation();
+					state[QuestOrigin] = d(36);
+					do { state[QuestLocation] = d(36);
+					} while (state[QuestLocation] == state[QuestOrigin]);
+					state[QuestQty] = 2; // pick up, drop off
+				} else if (state[ActProgress] == state[ActDuration] - 1) {
+					state[QuestMob] = MAIN_BOSS;
 					state[QuestQty] = 1;
+					state[QuestLocation] = EMKELL_PEAK;
+				} else {
+					// Exterminate the ___
+					state[QuestLocation] = EMKELL_PEAK;
+					state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
+					state[QuestObject] = 0;
+					state[QuestQty] = 25 + d(4) - d(4);
 				}
-			}*/
-			];
-			randomPick(questTypes)();
+			} else {
+				let questTypes = [_ => {
+					// Exterminate the ___
+					state[QuestLocation] = randomLocation();
+					state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
+					state[QuestObject] = 0;
+					state[QuestQty] = 2 + 2 * state[Act] + d(2) - d(2);  // TODO use charisma here (instead?)
+				}, _ => {
+					// Bring me N trophies
+					state[QuestLocation] = randomLocation();
+					state[QuestObject] = InventoryTrophies;
+					state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
+					let qty = 1 + state[Act] + d(2) - d(2);
+					state[QuestQty] = qty;
+				}, _ => {
+					// Bring me N of SOMETHING generally
+					let value = state[Level] * 100 * Math.pow(GR, -state[StatCharisma]) * (0.5 * rand());
+					state[QuestLocation] = randomLocation();
+					state[QuestObject] = InventoryResources;  // something you can forage for
+					state[QuestMob] = 0;
+					let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
+					state[QuestQty] = qty;
+				}];
+				randomPick(questTypes)();
+				state[QuestOrigin] = state[Location];
+			}
 			state[QuestProgress] = 0;
-			state[QuestOrigin] = state[Location];
 			return 1;
 
 		} else if (operation === completequest) {
@@ -1866,7 +1892,12 @@ class Bompton {
 			inc(Experience, 50 * state[Act]);
 			inc(ActProgress);
 			clearQuest(state);
-			passTime('Taking care of paperwork; this quest is done!', 3);
+			if (state[Act] === 9 && state[ActProgress] === 3) {
+				passTime('Being magically transported to Sygnon Isle!', 3);
+				state[Location] = SYGNON_TOWER;
+			} else {
+				passTime('Taking care of paperwork; this quest is done!', 3);
+			}
 			return 1;
 
 		} else if (operation === viewcinematic) {
@@ -1992,6 +2023,10 @@ class Bompton {
 				passTime('Seeking the local totem', 6);
 				if (d(20) <= state[StatIntellect]) {
 					state[EquipmentTotem] = state[Location];
+					if (state[QuestObject] === EquipmentTotem &&
+							state[Location] === state[QuestLocation]) {
+						state[QuestProgress] = 1;
+					}
 					return 1;
 				} else {
 					return 0;
