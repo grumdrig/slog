@@ -184,10 +184,12 @@ vec3 simplex(vec3 xyz, int octaves) {
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     vec2 uv = fragCoord/iResolution.x - vec2(0.5, 0.5 * iResolution.y / iResolution.x);
-    vec3 per = simplex(vec3(uv * 120., iTime * 0.5), 5);
-    float a = dot(normalize(per), normalize(vec3(uv, 0.1)));
+    vec3 per = simplex(vec3(uv * 120., iTime * 1.0), 5);
+    per = normalize(per);
+    float a = dot(per, normalize(vec3(uv, 0.1)));
     a = 1. * pow(a, 5.);
-    fragColor.rgb = vec3(a) * 1.;
+    fragColor.rgb = vec3(0.5 * per.r, 0.1, 1.0 * per.b) * a * 1.;
+    fragColor.rgb = 0.1 + 0.8 * fragColor.rgb;
     fragColor.a = 1.0;
 }
 
