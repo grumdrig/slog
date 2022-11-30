@@ -321,7 +321,7 @@ const CALLS = {
 
 	levelup: {
 		description: `Level up! When you've accumulated enough experience, you
-		can take yourself to the next level by levelling up. This will
+		can take yourself to the next level by leveling up. This will
 		increase your general effectiveness accross the board, and may
 		result in stat or other bonuses.` },
 
@@ -2058,8 +2058,8 @@ class Bompton {
 			inc(Level);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[StatEndurance]));
 			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[StatWisdom]));
-			inc(TrainingPoints);
-			passTime('Levelling up', 1);
+			inc(TrainingPoints, 2);
+			passTime('Leveling up', 1);
 			return 1;
 
 		} else if (operation === retire) {
