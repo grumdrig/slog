@@ -1540,8 +1540,8 @@ class Bompton {
 			if (state[ActProgress] < state[ActDuration]) return false;
 
 			inc(Act);
-			//                   1  2  3  4   5   6   7   8  9
-			const ACT_LENGTHS = [6, 7, 8, 9, 10, 10, 10, 10, 7, 0]
+			//                   1  2  3  4  5  6   7   8  9
+			const ACT_LENGTHS = [6, 7, 8, 7, 8, 9, 10, 10, 7, 0]
 			state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
 			state[ActProgress] = 0;
 			return true;
@@ -1705,8 +1705,7 @@ class Bompton {
 			else
 				state[TrophyMob] = 0;
 			inc(InventoryTrophies);
-			if (!state[MobHealth])
-				clearMob(state);
+			clearMob(state);
 
 		} else if (operation === buy) {
 			let slot = arg1;
@@ -2132,6 +2131,13 @@ const BOMPTON_WINDOW_CONTENT = `
 	background-color: white;
 }
 
+#questdesc {
+	grid-column: 1/3;
+}
+#questdesc {
+	font-style: italic;
+}
+
 div.footer {
 	grid-column: 1/3;
 	background-color: rgb(236, 233, 216);
@@ -2292,9 +2298,8 @@ div.header {
 		</div>
 		<div id=quest class=listview>
 			<div class=header>Quest</div>
-			<div>Object</div> <div id=questgoal></div>
-			<div>Location</div> <div id=questlocation></div>
-			<div>Origin</div> <div id=questorigin></div>
+			<div>Goal</div><div id=questgoal></div>
+			<div id=questdesc></div>
 			<div>Progress</div> <div id=questprogress class=prog></div>
 		</div>
 		<div id=plot class=listview>
@@ -2544,7 +2549,9 @@ function updateGame(state) {
 
 
 	let questal = Bompton.mapInfo(state[QuestLocation], state);
+	questal &&= questal.name;
 	let original = Bompton.mapInfo(state[QuestOrigin], state);
+	original &&= original.name;
 	const friendlySlotNames = {
 		EquipmentTotem: 'totem',
 		InventoryGold: 'gold',
@@ -2557,15 +2564,18 @@ function updateGame(state) {
 		InventoryLifePotions: 'life potions',
 	};
 	set('questgoal',
-		state[QuestObject] === EquipmentTotem ?
-		(state[QuestQty] ? 'Seek the totem' : 'Deliver the totem') :
-		state[QuestObject] == InventoryTrophies ? `Bring me ${state[QuestQty]} ${DENIZENS[state[QuestMob]].name} trophies` :
+		state[QuestObject] === EquipmentTotem ? 'Deliver the totem' :
+		state[QuestObject] == InventoryTrophies ? `Bring me ${state[QuestQty]} ${DENIZENS[state[QuestMob]].name.toLowerCase()} trophies` :
 		state[QuestObject] ? `Bring me ${state[QuestQty]} ${friendlySlotNames[SLOTS[state[QuestObject]].name]}` :
 		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');
-	set('questlocation', questal && (questal.name + ' #' + state[QuestLocation]) || '');
+	set('questdesc',
+		state[QuestObject] === EquipmentTotem ? `Collect the local totem from ${original} and deliver it to ${questal}` :
+		state[QuestObject] == InventoryTrophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
+		state[QuestObject] ? `We of ${original} stand in need of ${friendlySlotNames[SLOTS[state[QuestObject]].name]}. They say there's no shortage of them in ${questal}.` :
+		state[QuestMob] ? 	 `It's time to put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
+		'<br>&nbsp;');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
-	set('questorigin', original && (original.name + ' #' + state[QuestOrigin]) || '');
 
 	set('act', state[Act] > 9 ? 'Afterlife' : 'Act ' + toRoman(state[Act]));
 	if (state[ActDuration])
