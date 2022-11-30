@@ -48,6 +48,9 @@ fieldset > .field-row {
 }
 hr { margin: 16px }
 
+div.icon > div {
+	text-shadow: 0 0 2px white, 0 0 3px white;
+}
 
 </style>
 </head>
@@ -188,6 +191,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
     per = normalize(per);
     float a = dot(per, normalize(vec3(uv, 0.1)));
     a = 1. * pow(a, 5.);
+    a = 1. - a;
     fragColor.rgb = vec3(0.5 * per.r, 0.1, 1.0 * per.b) * a * 1.;
     fragColor.rgb = 0.1 + 0.8 * fragColor.rgb;
     fragColor.a = 1.0;
