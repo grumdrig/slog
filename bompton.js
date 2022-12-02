@@ -2570,7 +2570,7 @@ function updateGame(state) {
 		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questdesc',
-		state[QuestObject] === EquipmentTotem ? `Collect the local totem from ${original} and deliver it to ${questal}` :
+		state[QuestObject] === EquipmentTotem ? `Collect the ${questal} Totem and deliver it to ${original}` :
 		state[QuestObject] == InventoryTrophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
 		state[QuestObject] ? `We of ${original} stand in need of ${friendlySlotNames[SLOTS[state[QuestObject]].name]}. They say there's no shortage of them in ${questal}.` :
 		state[QuestMob] ? 	 `It's time to put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
