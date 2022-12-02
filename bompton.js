@@ -2111,6 +2111,7 @@ const BOMPTON_WINDOW_CONTENT = `
 	grid-template-columns: 2fr 1fr;
 }
 #col1 > #vitals { grid-template-columns: 3fr 3fr }
+#col1 > #stats { grid-template-columns: 3fr 1fr 3fr 1fr }
 #col1 > #spells { grid-template-columns: 1fr 2fr }
 #col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
 #col3 > #environment { grid-template-columns: 2fr 3fr; }
@@ -2148,6 +2149,10 @@ div.footer {
 div.header {
 	grid-column: 1 / 3;
 	height: 14px;
+}
+
+#stats > div.header {
+	grid-column: 1/5;
 }
 
 .listview {
@@ -2239,12 +2244,12 @@ div.header {
 
 		<div id=stats class=listview>
 			<div class=header>Stats <span id=tp></span></div>
-			<div>Strength</div>     <div id="s0"></div>
-			<div>Agility</div>      <div id="s1"></div>
+			<div>Strength</div>  <div id="s0"></div>
+			<div>Agility</div>   <div id="s1"></div>
 			<div>Endurance</div> <div id="s2"></div>
 			<div>Intellect</div> <div id="s3"></div>
-			<div>Wisdom</div>       <div id="s4"></div>
-			<div>Charisma</div>     <div id="s5"></div>
+			<div>Wisdom</div>    <div id="s4"></div>
+			<div>Charisma</div>  <div id="s5"></div>
 		</div>
 
 		<div id=spells class=listview>
