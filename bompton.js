@@ -2108,6 +2108,7 @@ const BOMPTON_WINDOW_CONTENT = `
 	grid-template-columns: 2fr 1fr;
 }
 #col1 > #vitals { grid-template-columns: 3fr 3fr }
+#col1 > #stats { grid-template-columns: 3fr 1fr 3fr 1fr }
 #col1 > #spells { grid-template-columns: 1fr 2fr }
 #col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
 #col3 > #environment { grid-template-columns: 2fr 3fr; }
@@ -2145,6 +2146,10 @@ div.footer {
 div.header {
 	grid-column: 1 / 3;
 	height: 14px;
+}
+
+#stats > div.header {
+	grid-column: 1/5;
 }
 
 .listview {
@@ -2236,12 +2241,12 @@ div.header {
 
 		<div id=stats class=listview>
 			<div class=header>Stats <span id=tp></span></div>
-			<div>Strength</div>     <div id="s0"></div>
-			<div>Agility</div>      <div id="s1"></div>
+			<div>Strength</div>  <div id="s0"></div>
+			<div>Agility</div>   <div id="s1"></div>
 			<div>Endurance</div> <div id="s2"></div>
 			<div>Intellect</div> <div id="s3"></div>
-			<div>Wisdom</div>       <div id="s4"></div>
-			<div>Charisma</div>     <div id="s5"></div>
+			<div>Wisdom</div>    <div id="s4"></div>
+			<div>Charisma</div>  <div id="s5"></div>
 		</div>
 
 		<div id=spells class=listview>
@@ -2567,7 +2572,7 @@ function updateGame(state) {
 		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questdesc',
-		state[QuestObject] === EquipmentTotem ? `Collect the local totem from ${original} and deliver it to ${questal}` :
+		state[QuestObject] === EquipmentTotem ? `Collect the ${questal} Totem and deliver it to ${original}` :
 		state[QuestObject] == InventoryTrophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
 		state[QuestObject] ? `We of ${original} stand in need of ${friendlySlotNames[SLOTS[state[QuestObject]].name]}. They say there's no shortage of them in ${questal}.` :
 		state[QuestMob] ? 	 `It's time to put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
