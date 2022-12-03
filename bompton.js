@@ -151,15 +151,13 @@ const SLOTS = [
 
 
 	{ name: 'Location',
-	  description: `The localities of Bompton Island are numbered from one to thirty-eight.` },
+	  description: `Current location. The localities of Bompton Island are numbered from one to thirty-eight.` },
 
 	{ name: 'MobSpecies',
-
-	  description: `` },
+	  description: `Species of the nearby creature.` },
 
 	{ name: 'MobLevel',
-
-	  description: `` },
+	  description: `Overall puissance of the nearby creature.` },
 
 	{ name: 'MobHealth',
 	  description: `Current health of the nearby creature.` },
@@ -168,9 +166,8 @@ const SLOTS = [
 	  description: `Maximum health of the nearby creature.` },
 
 
-	{ name: 'QuestObject', // item, by slot, or 0
-
-	  description: `` },
+	{ name: 'QuestObject',
+	  description: `The item which is the target of the current quest, or 0 if none.` },
 
 	{ name: 'QuestMob', // monster (by id)
 
