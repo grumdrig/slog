@@ -10,58 +10,16 @@ about, etc.
 In other words the character runs a virtual machine.
 
 
-Names For Everything
-====================
 
-I've named the game Bompton Island but maybe Chinbreak Island is better?
-
-
-
-PQ6
-===
+Bompton Island / Chinbreak Island module
+========================================
 
 
 ### Towns
 
 Different
 * prices,
-* stat training,
-* spell training,
-* available equipment?,
 * quests
-* npc species
-
-Yar:
-	0,1
-	Good for training wisdom.
-	Eff
-
-Pillary:
-	2,3
-	Good for strength
-	Hardwarf
-
-Hohamp:
-	3,0
-	Good for constitution
-	Hardwarf
-
-Bompton:
-	5,2
-	Good for charisma
-	Dunkling
-	HOME
-
-Cholar:
-	0,5
-	Good for intelligence
-	Dunkling
-
-Delial:
-	4,4
-	Good for agility
-	Dunkling
-
 
 
 ### Mobs
@@ -70,8 +28,7 @@ Say 12 but with different variations that make them stronger?
 
 Naybe the buffer version have greaterlevel = ceil(lesserlevel * 1.5)
 
-Maybe just level 1, level 2, etc. But I've got here some scarier names to sub
-in at higher levels
+Maybe just level 1, level 2, etc. But I've got here some scarier names to sub in at higher levels
 
 
 Monster brainstorm with Andy, transformed:
@@ -148,7 +105,6 @@ List of spells from a note on my phone:
 * Snowmound
 * Go Fuck Yourself, Janine
 * Ferment
-* Horsewheels
 * Spectral Bampot
 * Unusual Greeting
 * Tacklebox
@@ -159,15 +115,8 @@ List of spells from a note on my phone:
 * Delta P
 
 
-### Quests
 
-* Give # of something to somewhere
-* Kill # mobs
-* more?
-
-
-
-### Charcter race
+### Charawcter race
 
 Maybe we should belong to one of the races.
 
@@ -180,8 +129,6 @@ Hardwarf  Eff      Nerfling
 Maybe should have human too, even though no such home town. Or make Bompton human.
 
 Maybe should allow monster races too, though it will be hard on the player.
-
-Change Eff to Eel Man or Eelman?
 
 
 ### Character class
@@ -197,8 +144,6 @@ Weapon types:
 2. Bows
 
 Choose? Or determined by race? The latter I guess.
-
-Weapons numbered so that `N % 3` is the weapon type.
 
 
 ### Endgame
@@ -245,9 +190,6 @@ Could be they boost something too though.
 
 
 ### Combat
-
-Not sure if should do combat round-by-round or abstract to the full fight. The
-former is probably easier.
 
 Stats are low, like starting 1-3. They and weapon create an attack value, armor and dex creates a defend value, add each of those to a die roll, if attacker's roll is higher than the defenders its a hit. Should be some non-zero chance of guaranteed hit. Then there's a number of dice for damage, maybe d2's.
 

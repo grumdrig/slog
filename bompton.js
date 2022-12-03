@@ -475,6 +475,14 @@ const SPELLS = [ null, {
 		},
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
+		name: 'Horsewheels',
+		moniker: 'HORSEWHEELS',
+		level: 3,
+		costs[
+			{ slot: InventoryReagents, qty: 3 },
+			],
+		enchantment: [],  // handled in code: speed boost
+	}, {
 		name: 'Spectral Coinpurse',
 		moniker: 'SPECTRAL_COINPURSE',
 		level: 5,
@@ -1035,6 +1043,7 @@ const MAP = [null,
 		name: "Hohamp",
 		terrain: TOWN,
 		denizen: Hardwarf,
+		trainingBoost: StatEndurance,
 		level: 0,
 	}, {
 		name: "Skiddo",
@@ -1049,6 +1058,8 @@ const MAP = [null,
 		name: "Yar",
 		terrain: TOWN,
 		denizen: Eelman,
+		trainingBoost: StatWisdom,
+		learningBoost: 1,
 		level: 0,
 	}, {
 		name: "Deepni Woods",
@@ -1095,6 +1106,7 @@ const MAP = [null,
 		name: "Bompton",
 		terrain: TOWN,
 		denizen: Dunkling,
+		trainingBoost: StatCharisma,
 		level: 0,
 		hasBank: true,
 
@@ -1110,6 +1122,7 @@ const MAP = [null,
 		name: "Pillary",
 		terrain: TOWN,
 		denizen: Hardwarf,
+		trainingBoost: StatStrength,
 		level: 0,
 	}, {
 		name: "Grein Hills",
@@ -1144,6 +1157,7 @@ const MAP = [null,
 		name: "Delial",
 		terrain: TOWN,
 		denizen: Dunkling,
+		trainingBoost: StatAgility,
 		level: 0,
 	}, {
 		name: "Solla Desert",
@@ -1154,6 +1168,7 @@ const MAP = [null,
 		name: "Cholar",
 		terrain: TOWN,
 		denizen: Dunkling,
+		trainingBoost: StatIntellect,
 		level: 0,
 	}, {
 		name: "Ritoli Marsh",
@@ -1667,6 +1682,7 @@ class Bompton {
 			}
 			let hours = 24;
 			let travelspeed = (state[StatEndurance] + state[EquipmentMount]) / 5;
+			if (state[Enchantment] === HORSEWHEELS) travelspeed += 1;å
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
@@ -1913,10 +1929,9 @@ class Bompton {
 			if (state[slot] >= 99) return 0;
 			let hours = 24;
 			hours *= Math.pow(GR, state[slot]);
-			hours *= 10 / (10 + state[StatWisdom]);
+			hours *= 10 / (10 + (state[StatWisdom] + (local.trainingBoost == slot ? 1 : 0)));
 			hours = Math.min(1, Math.round(hours));
-			// TODO: town stat-learning bonuses
-			// TODO: special stat-learning bonuses
+			// TODO: special stat-learning bonuses (special as in species)
 			// TODO: DEX helps with STR and CON
 			// TODO: INT helps with CHA and WIS
 
@@ -1933,7 +1948,7 @@ class Bompton {
 			if (!isSpellSlot(slot)) return -1;
 			let hours = 24;
 			hours *= Math.pow(GR, spell.level);
-			hours *= 10 / (10 + state[StatWisdom]);
+			hours *= 10 / (10 + (state[StatWisdom] + (local.learningBoost ?? 0)));
 			// TODO: town spell-learning bonuses?
 			// TODO: racial spell-learning bonuses?
 			passTime('Inscribing "' + spell.name + '" into my spell book', Math.round(hours));
