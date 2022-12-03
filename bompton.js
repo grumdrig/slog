@@ -478,7 +478,7 @@ const SPELLS = [ null, {
 		name: 'Horsewheels',
 		moniker: 'HORSEWHEELS',
 		level: 3,
-		costs[
+		costs: [
 			{ slot: InventoryReagents, qty: 3 },
 			],
 		enchantment: [],  // handled in code: speed boost
@@ -1682,7 +1682,7 @@ class Bompton {
 			}
 			let hours = 24;
 			let travelspeed = (state[StatEndurance] + state[EquipmentMount]) / 5;
-			if (state[Enchantment] === HORSEWHEELS) travelspeed += 1;å
+			if (state[Enchantment] === HORSEWHEELS) travelspeed += 1;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
