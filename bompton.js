@@ -386,7 +386,7 @@ function generateInterface() {
 	interface.push('');
 
 	SPELLS.forEach((spell, index) =>
-		spell && interface.push(`const ${spell.moniker} = ${index}`));
+		spell && interface.push(`const ${moniker(spell.name)} = ${index}`));
 
 	interface.push('');
 
@@ -406,11 +406,21 @@ function generateDocumentation() {
 		font-size: 18px;
 		margin: 16px 0 10px 0;
 	}
+	#weaps {
+		display: grid;
+		grid-template-columns: 20px 150px 50px 20px;
+		gap: 0;
+	}
+	#weaps div {
+		padding: 0;
+		margin: 0;
+	}
 	</style>`;
 
 	function head(h) { result += `<h3>${h}</h3>`; }
 	function subhead(s, d) { result += `<h4>${s}</h4><p>${d ?? ''}`; }
 	function p(text) { result += '<p>' + text + '</p>' }
+	function div(text, and) { result += `<div ${and ?? ''}>${text}</div>` }
 
 	head('Gameplay Functions');
 
@@ -433,10 +443,38 @@ function generateDocumentation() {
 
 	head('Spells');
 
-	for (let {name, moniker, enchantment, description} of SPELLS.filter(x=>x)) {
-		if (enchantment) moniker += ' (enchantment)';
-		subhead(`${moniker}`, description);
+	p(`Spell are cast using the \`cast\` function. Use the spell name, replacing
+		spaces with underscores. For example, \`cast(Heal_Yeah)\`. Each spell has
+		an energy cost and may consume physical reagents too. Spells may be learned
+		using the \`learn\` gameplay function.`);
+
+	p(`Some spells are enchantments, meaning they remain active until the
+	caster loses concentration, either by casting another spell or resting.`);
+
+	for (let {name, enchantment, description, level, costs} of SPELLS.filter(x=>x)) {
+		if (enchantment) name += ' (enchantment)';
+		subhead(`${name}`, description);
+		p('Level ' + level);
+		if (costs)
+			p('Cost: ' + costs.map(({slot, qty}) => qty + ' ' + SLOTS[slot].name).join(', '));
 	}
+
+	head('Weapons');
+	result += '<div class=listview id=weaps>';
+	div('n', 'class=header');
+	div('Weapon', 'class=header');
+	div('Type', 'class=header');
+	div('Power', 'class=header');
+	WEAPON_NAMES.forEach((w,i) => {
+		if (w) {
+			div(i);
+			div(w);
+			div(weaponTypeNames[weaponType(i)]);
+			div(weaponPower(i));
+		}
+	});
+
+	result += '</div>'
 
 	return result;
 }
@@ -446,7 +484,6 @@ function generateDocumentation() {
 
 const SPELLS = [ null, {
 		name: 'Heal Yeah',
-		moniker: 'HEAL_YEAH',
 		level: 1,
 		costs: [
 			{ slot: Energy, qty: 1 },
@@ -464,7 +501,6 @@ const SPELLS = [ null, {
 		The effectiveness of this spell is aided by higher wisdom`,
 	}, {
 		name: 'Pyroclastic Orb',
-		moniker: 'PYROCLASTIC_ORB',
 		level: 2,
 		costs: [
 			{ slot: Energy, qty: 2 },
@@ -476,7 +512,6 @@ const SPELLS = [ null, {
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
 		name: 'Horsewheels',
-		moniker: 'HORSEWHEELS',
 		level: 3,
 		costs: [
 			{ slot: InventoryReagents, qty: 3 },
@@ -484,7 +519,6 @@ const SPELLS = [ null, {
 		enchantment: [],  // handled in code: speed boost
 	}, {
 		name: 'Spectral Coinpurse',
-		moniker: 'SPECTRAL_COINPURSE',
 		level: 5,
 		costs: [
 			{ slot: Energy, qty: 5 },
@@ -498,11 +532,10 @@ const SPELLS = [ null, {
 		description: `Double. Your. Money.... Overnight! <sup>*</sup>Terms and conditions apply. Doubling is limited by cargo capacity.`,
 	}, {
 		name: 'Delta P',
-		moniker: 'DELTA_P',
 		description: `Release a massive pressure discontinuity.`
+		// TODO an effect
 	}, {
 		name: 'History Lessen',
-		moniker: 'HISTORY_LESSEN',
 		level: 10,
 		costs: [
 			{ slot: Energy, qty: 10 },
@@ -513,8 +546,7 @@ const SPELLS = [ null, {
 		},
 		description: `Go back to when this crazy adventure all started. You get to keep your stuff though.`,
 	}, {
-		name: "Morph's Outpost",
-		moniker: 'MORPHS_OUTPOST',
+		name: "Xform",
 		level: 3,
 		costs: [
 			{ slot: Energy, qty: 3 },
@@ -529,7 +561,6 @@ const SPELLS = [ null, {
 		description: `Turn yourself in to one of those things. One of those things over there.`,
 	}, {
 		name: 'Buff',
-		moniker: 'BUFF',
 		level: 4,
 		costs: [
 			{ slot: Energy, qty: 4 },
@@ -541,7 +572,6 @@ const SPELLS = [ null, {
 		description: `Become just that much stronger.`,
 	}, {
 		name: 'Invisibility',
-		moniker: 'INVISIBILITY',
 		level: 6,
 		costs: [
 			{ slot: Energy, qty: 6 },
@@ -551,7 +581,6 @@ const SPELLS = [ null, {
 		description: `This doesn't do anything to help; it's just cool.`,
 	}, {
 		name: 'Smort',
-		moniker: 'SMORT',
 		level: 4,
 		costs: [
 			{ slot: Energy, qty: 4 },
@@ -563,7 +592,6 @@ const SPELLS = [ null, {
 		description: `Become just that much stronger.`,
 	}, {
 		name: 'Scrambled Eggs',
-		moniker: 'SCRAMBLED_EGGS',
 		level: 9,
 		costs: [
 			{ slot: Energy, qty: 9 },
@@ -577,7 +605,6 @@ const SPELLS = [ null, {
 		description: `Royally scramble the island.`,
 	}, {
 		name: 'Ghost Town',
-		moniker: 'GHOST_TOWN',
 		level: 5,
 		costs: [
 			{ slot: Energy, qty: 5 },
@@ -587,12 +614,10 @@ const SPELLS = [ null, {
 		effect: (state, spellid) => {
 			if (state[Location] > 36) return -1;
 			state[Enchantment] = spellid + (state[Location] << 8);
-			// TODO: the effect
 		},
 		description: `Bring a ghost town into existence where you now stand.`,
 	}, {
 		name: 'Health Plan',
-		moniker: 'HEALTH_PLAN',
 		level: 8,
 		costs: [
 			{ slot: Energy, qty: 30 },
@@ -603,11 +628,25 @@ const SPELLS = [ null, {
 			state[InventoryGold] = 0;
 		},
 		description: `Money CAN buy you health, because magic.`,
+	}, {
+		name: 'Macrobian',
+		// TODO get rid of these monikers and just use the spell name
+		level: 15,
+		costs: [
+			{ slot: InventoryTreasures, qty: 49 },
+			],
+		effect: state => {
+			state[Years] = Math.min(state[Years], 14);
+		},
+		description: `Drink from the magical spring of youth.`,
 	},
-	// TODO money can buy youth too
 ];
 
-SPELLS.forEach((spell, index) => spell && define(spell.moniker, index));
+function moniker(s) {
+	return s.replace(' ', '_');
+}
+
+SPELLS.forEach((spell, index) => spell && define(moniker(spell.name), index));
 
 
 /////////// Weapons
@@ -737,7 +776,10 @@ function weaponPower(n) {
 	return Math.floor((n + NUM_WEAPON_TYPES - 1) / NUM_WEAPON_TYPES);
 }
 
-function weaponType(n) { return (n - 1) % NUM_WEAPON_TYPES }
+function weaponType(n) { return 1 + (n - 1) % NUM_WEAPON_TYPES }
+
+const weaponTypeNames = [];
+WEAPON_DB.forEach((t, i) => { if (t) weaponTypeNames[i] = t.name} );
 
 /////// Armor and other equipment
 
@@ -887,7 +929,6 @@ const DENIZENS = [
 	null,
 	{
 		name: "Dunkling",
-		moniker: 'DUNKLING',
 		aka: "Nerfling",
 		playable: true,
 		esteems: 2,
@@ -909,7 +950,6 @@ const DENIZENS = [
 	},
 	{
 		name: "Hardwarf",
-		moniker: 'HARDWARF',
 		plural: "Hardwarves",
 		playable: true,
 		esteems: 3,
@@ -931,7 +971,6 @@ const DENIZENS = [
 	},
 	{
 		name: "Eelman",
-		moniker: 'EELMAN',
 		playable: true,
 		esteems: 1,
 		waryof: 2,
@@ -1204,6 +1243,12 @@ const MAP = [null,
 		denizen: Gust,
 		level: 0,
 		offshore: true,
+
+	}, {
+		name: "Gus Town",
+		terrain: TOWN,
+		denizen: Gust,
+		level: 8,
 	}];
 
 const MAINLAND_TOWNS = [];
@@ -1253,9 +1298,13 @@ function longitude(location) { return location > 36 ? 8 : (location - 1) % 6; }
 function latitude(location) { return location > 36 ? location - 34 : ((location - 1) / 6) >> 0; }
 
 function mapInfo(location, state) {
-	if (0 < location && location <= 36 && (state[Enchantment] & 0xFF) == SCRAMBLED_EGGS) {
+	if (0 < location && location <= 36 && (state[Enchantment] & 0xFF) == Scrambled_Eggs) {
 		let fixed = state[Enchantment] >> 8;
 		location = (((location + 36 - fixed) * 23) + fixed - 1) % 36 + 1;  // whew!
+	}
+	else if ((state[Enchantment] & 0xFF) === Ghost_Town &&
+			 (state[Enchantment] >> 8) === location) {
+		location = 39;
 	}
 	return MAP[location];
 }
@@ -1547,6 +1596,16 @@ class Bompton {
 			}
 		}
 
+		function endEnchantment() {
+			let current = SPELLS[state[Enchantment] & 0xFF];
+			if (current) {
+				// Reverse current enchantment
+				for (let { slot, increment } of current.enchantment) {
+					dec(slot, increment);
+				}
+			}
+			state[Enchantment] = 0;
+		}
 
 		function actUp() {
 			if (state[ActProgress] < state[ActDuration]) return false;
@@ -1682,7 +1741,7 @@ class Bompton {
 			}
 			let hours = 24;
 			let travelspeed = (state[StatEndurance] + state[EquipmentMount]) / 5;
-			if (state[Enchantment] === HORSEWHEELS) travelspeed += 1;
+			if (state[Enchantment] === Horsewheels) travelspeed += 1;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
@@ -1976,14 +2035,9 @@ class Bompton {
 			for (let { slot, qty } of spell.costs)
 				dec(slot, qty);
 
+			endEnchantment();
+
 			if (spell.enchantment) {
-				let current = SPELLS[state[Enchantment] & 0xFF];
-				if (current) {
-					// Reverse current enchantment
-					for (let { slot, increment } of current.enchantment) {
-						dec(slot, increment);
-					}
-				}
 				for (let { slot, increment } of spell.enchantment) {
 					inc(slot, increment);
 				}
@@ -2013,6 +2067,8 @@ class Bompton {
 			return state[MobSpecies] ? 1 : 0;
 
 		} else if (operation === rest) {
+			endEnchantment();
+
 			passTime('Resting up', 0, 1);
 			let hp = d(state[StatEndurance]);
 			if (local.terrain !== TOWN)
@@ -2723,10 +2779,11 @@ if (typeof module !== 'undefined' && !module.parent) {
 		console.log(generateMap());
 	}
 	if (flags['generate-documentation']) {
-		console.log(generateMap());
+		console.log(`<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">`);
+		console.log(Bompton.generateDocumentation());
 	}
 
-	if (positionals) {
+	if (positionals.length) {
 		let { readFileAsWords, VirtualMachine } = require('./vm.js');
 		let code = readFileAsWords(positionals[0]);
 		let vm = new VirtualMachine(code, Bompton);

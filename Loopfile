@@ -42,3 +42,4 @@ node test.js -- test.bin
 node_modules/marked/bin/marked.js -i vm.md -o @vm.html
 node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
 node_modules/marked/bin/marked.js -i compiler.md -o @compiler.html
+node bompton.js --generate-documentation > @bompton-doc.html
