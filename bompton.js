@@ -476,6 +476,59 @@ function generateDocumentation() {
 
 	result += '</div>'
 
+	head('Equipment');
+	for (let t = EQUIPMENT_0; t < EQUIPMENT_0 + EQUIPMENT_COUNT; t += 1) {
+		if (DATABASE[t]) {
+			subhead(SLOTS[t].name);
+			p('Base price: ' + DATABASE[t].basePrice);
+			DATABASE[t].names.forEach((e,i) => {
+				if (e) p(i + ': ' + e);
+			});
+		}
+	}
+
+	head('Terrain types');
+	TERRAIN_TYPES.forEach((t,i) => { if (t) {
+		subhead(t.name);
+		p('Move cost: ' + (t.moveCost ?? 1));
+		if (t.forage) p('Forage: ' + SLOTS[t.forage.item].name + ' ' + t.forage.rate);
+	} });
+
+	head('Denizens');
+
+	DENIZENS.forEach((d,i) => { if (d) {
+		subhead(d.name);
+		if (d.description) p(d.description);
+		if (d.playable) p("Playable species.");
+		if (d.domain) p("Often found in " + TERRAIN_TYPES[d.domain].name + '.');
+		let prof = '';
+		if (d.proficiency) p('Proficient with ' + d.proficiency.map(t => weaponTypeNames[t]).join(' and ') + ' weapons. ');
+		// TODO: don't really need the badat shit
+		// TODO: stat bonuses
+		if (d.hitdice) p('General formidableness rating is ' + d.hitdice);
+	} });
+
+	head('Map Locations');
+
+
+	MAP.forEach((tile,i) => { if (tile && !tile.ephemeral) {
+		subhead(`${tile.name} (#${i})`);
+		p(`Coordinates: ${latitude(i)}S x ${longitude(i)}E`);
+		p(`Terrain: ${TERRAIN_TYPES[tile.terrain].name}`);
+		p(`Mob level: ` + tile.level);
+		if (tile.denizen)
+			p(`Principal occupant: ` + DENIZENS[tile.denizen].name);
+	} });
+
+
+	head('Inventory Items');
+
+	for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
+		subhead(SLOTS[i].name);
+		p(`Value: $` + DATABASE[i].value);
+		p(`Weight: ${DATABASE[i].weight}#`);
+	}
+
 	return result;
 }
 
@@ -933,7 +986,7 @@ const DENIZENS = [
 		playable: true,
 		esteems: 2,
 		waryof: 3,
-		proficiency: SLASH,
+		proficiency: [SLASH],
 		badat: [POKE, SHOOT],
 		startState: [
 			{ slot: StatAgility, increment: +2 },
@@ -954,7 +1007,7 @@ const DENIZENS = [
 		playable: true,
 		esteems: 3,
 		waryof: 1,
-		proficiency: SMASH,
+		proficiency: [SMASH],
 		badat: SLASH,
 		startState: [
 			{ slot: StatEndurance, increment: +2 },
@@ -1249,6 +1302,7 @@ const MAP = [null,
 		terrain: TOWN,
 		denizen: Gust,
 		level: 8,
+		ephemeral: true,
 	}];
 
 const MAINLAND_TOWNS = [];
