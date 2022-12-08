@@ -396,49 +396,64 @@ function generateInterface() {
 
 function generateDocumentation() {
 
-	let result = `<style>
-	#gamereference {
-		width: 740px;
-		padding: 0 20px;
-		border: inset 1px silver;
-	}
-	#gamereference h4 {
-		font-size: 18px;
-		margin: 16px 0 10px 0;
-	}
-	#weaps {
-		display: grid;
-		grid-template-columns: 20px 150px 50px 20px;
-		gap: 0;
-	}
-	#weaps div {
-		padding: 0;
-		margin: 0;
-	}
-	</style>`;
+	let result = `<!doctype html>
+<head><title>Bompton Island Reference</title>
+
+<style>
+* {
+	font-family: Verdana, Helvetica, sans-serif;
+}
+h1 {
+	font-size: 40px;
+}
+body {
+	margin: 50px 100px;
+}
+h4 {
+	font-size: 18px;
+	margin: 16px 0 10px 0;
+}
+#weaps {
+	display: grid;
+	grid-template-columns: 20px 150px 50px 20px;
+	gap: 0;
+}
+#weaps div {
+	padding: 0;
+	margin: 0;
+}
+</style>
+</head><body>
+<h1>Bompton Island Programmer's Reference</h1>
+	`;
 
 	function head(h) { result += `<h3>${h}</h3>`; }
 	function subhead(s, d) { result += `<h4>${s}</h4><p>${d ?? ''}`; }
 	function p(text) { result += '<p>' + text + '</p>' }
 	function div(text, and) { result += `<div ${and ?? ''}>${text}</div>` }
 
+	function code(text) { return '<code>' + text + '</code>'; }
+	function i(text) { return '<i>' + text + '</i>' }
+
 	head('Gameplay Functions');
 
 	for (let call in CALLS) {
 		let { parameters, description } = CALLS[call];
-		subhead(call + '(' + (parameters ?? '').replace(',',', ') + ')', description);
+		subhead(code(call + '(' + i(parameters ?? '').replace(',',', ') + ')'), description);
 	}
 
 	head('Game State Slots');
 
-	p(`The constants listed here are indices into the game state vector.
-	They are sometimes passed to the gameplay functions above (such as
-	<code>train</code> or <code>give</code>); or their value may be accessed using
-	the state vector access operator (<code>.</code>). For example <code>.Level</code>
-	is the player character's current level.`);
+	p(`The constants listed here are indices into the game state vector. These
+	indices are passed to some of the gameplay functions above (such as
+	<code>train</code> or <code>give</code>).`)
+
+	p(`The current value of any state vector element may be accessed using the
+	state vector access operator (<code>.</code>). For example
+	<code>.Level</code> is the player character's current level.`);
 
 	for (let { name, description } of SLOTS) {
-		subhead(name, description);
+		subhead(code(name), description);
 	}
 
 	head('Spells');
@@ -453,7 +468,7 @@ function generateDocumentation() {
 
 	for (let {name, enchantment, description, level, costs} of SPELLS.filter(x=>x)) {
 		if (enchantment) name += ' (enchantment)';
-		subhead(`${name}`, description);
+		subhead(code(name), description);
 		p('Level ' + level);
 		if (costs)
 			p('Cost: ' + costs.map(({slot, qty}) => qty + ' ' + SLOTS[slot].name).join(', '));
@@ -1493,7 +1508,6 @@ class Bompton {
 
 	static prepareIDE() {
 		$("#worldmap").innerHTML = this.generateMap();
-		$("#gamereference").innerHTML = this.generateDocumentation();
 
 		for (let call in CALLS) {
 			let { parameters, operation, description } = CALLS[call];
