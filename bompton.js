@@ -250,7 +250,7 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 
 const CALLS = {
 	startgame: { parameters: 'species',
-		description: 'Pick a species for your character and begin the game!' },
+		description: 'Pick a species for your character and begin the game.' },
 
 	train: { parameters: 'slot',
 		description: `Train to improve stats (StatStrength, and so on).
@@ -402,25 +402,37 @@ function generateDocumentation() {
 <style>
 * {
 	font-family: Verdana, Helvetica, sans-serif;
+	color: #203520;
 }
 h1 {
 	font-size: 40px;
 }
 body {
 	margin: 50px 100px;
+	background-color: #f8fff8;
 }
 h4 {
 	font-size: 18px;
 	margin: 16px 0 10px 0;
 }
+th {
+	text-align: left;
+}
+code {
+	color: #282;
+}
 #weaps {
 	display: grid;
-	grid-template-columns: 20px 150px 50px 20px;
-	gap: 0;
+	grid-template-columns: 30px 150px 70px 30px;
+	gap: 4px;
 }
 #weaps div {
 	padding: 0;
 	margin: 0;
+}
+div#terrains {
+	display: grid;
+	grid-template-columns: 30px 100px 100px 200px;
 }
 </style>
 </head><body>
@@ -452,31 +464,34 @@ h4 {
 	state vector access operator (<code>.</code>). For example
 	<code>.Level</code> is the player character's current level.`);
 
-	for (let { name, description } of SLOTS) {
-		subhead(code(name), description);
-	}
+	SLOTS.forEach((slot, i) => { if (slot) {
+		let { name, description } = slot;
+		subhead(code(`${name} (${i})`), description);
+	} });
 
 	head('Spells');
 
-	p(`Spell are cast using the \`cast\` function. Use the spell name, replacing
-		spaces with underscores. For example, \`cast(Heal_Yeah)\`. Each spell has
-		an energy cost and may consume physical reagents too. Spells may be learned
-		using the \`learn\` gameplay function.`);
+	p(`Spells are cast using the <code>cast</code> function (for example,
+	<code>cast(Heal_Yeah)</code>). Each spell has an energy cost and may
+	consume physical reagents too. Spells may be learned using the
+	<code>learn</code> gameplay function.`);
 
 	p(`Some spells are enchantments, meaning they remain active until the
 	caster loses concentration, either by casting another spell or resting.`);
 
-	for (let {name, enchantment, description, level, costs} of SPELLS.filter(x=>x)) {
-		if (enchantment) name += ' (enchantment)';
+	SPELLS.forEach((spell, i) => { if (spell) {
+		let {name, enchantment, description, level, costs} = spell;
+		name = moniker(name) + ' (' + i + ')';
+		if (enchantment) description = 'Enchantment. ' + description;
 		subhead(code(name), description);
 		p('Level ' + level);
 		if (costs)
 			p('Cost: ' + costs.map(({slot, qty}) => qty + ' ' + SLOTS[slot].name).join(', '));
-	}
+	} });
 
 	head('Weapons');
 	result += '<div class=listview id=weaps>';
-	div('n', 'class=header');
+	div('ID', 'class=header');
 	div('Weapon', 'class=header');
 	div('Type', 'class=header');
 	div('Power', 'class=header');
@@ -503,16 +518,24 @@ h4 {
 	}
 
 	head('Terrain types');
+
+	result += `<div id=terrains>`;
+	div('ID');
+	div('Terrain');
+	div('Move cost');
+	div('Forage');
 	TERRAIN_TYPES.forEach((t,i) => { if (t) {
-		subhead(t.name);
-		p('Move cost: ' + (t.moveCost ?? 1));
-		if (t.forage) p('Forage: ' + SLOTS[t.forage.item].name + ' ' + t.forage.rate);
+		div(i);
+		div(t.name);
+		div(t.moveCost ?? 1);
+		div(t.forage ? SLOTS[t.forage.item].name + ': ' + t.forage.rate : '');
 	} });
+	result += `</div>`;
 
 	head('Denizens');
 
 	DENIZENS.forEach((d,i) => { if (d) {
-		subhead(d.name);
+		subhead(i + '. ' + d.name);
 		if (d.description) p(d.description);
 		if (d.playable) p("Playable species.");
 		if (d.domain) p("Often found in " + TERRAIN_TYPES[d.domain].name + '.');
@@ -527,7 +550,7 @@ h4 {
 
 
 	MAP.forEach((tile,i) => { if (tile && !tile.ephemeral) {
-		subhead(`${tile.name} (#${i})`);
+		subhead(`${tile.name} #${i}`);
 		p(`Coordinates: ${latitude(i)}S x ${longitude(i)}E`);
 		p(`Terrain: ${TERRAIN_TYPES[tile.terrain].name}`);
 		p(`Mob level: ` + tile.level);
@@ -585,6 +608,7 @@ const SPELLS = [ null, {
 			{ slot: InventoryReagents, qty: 3 },
 			],
 		enchantment: [],  // handled in code: speed boost
+		description: `Let's put some wheels on that hoss! Increases travel speed.`,
 	}, {
 		name: 'Spectral Coinpurse',
 		level: 5,
@@ -657,7 +681,7 @@ const SPELLS = [ null, {
 		enchantment: [
 			{ slot: StatIntellect, increment: 4 },
 		],
-		description: `Become just that much stronger.`,
+		description: `Become just that much smarter.`,
 	}, {
 		name: 'Scrambled Eggs',
 		level: 9,
@@ -737,7 +761,7 @@ const WEAPON_DB = [null, {
 			'+4 Gunpowder Hammer',
 			'+5 Medusa Mace',
 			'+6 Vampyric Hammer',
-			'+7 Doomsday Warhammer'
+			'+7 Doomsday Warmaul'
 		],
 	}, {
 		name: 'Slash',
