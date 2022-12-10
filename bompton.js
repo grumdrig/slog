@@ -60,22 +60,22 @@ const SLOTS = [
 	  they tend to get all jumbled up and confused.` },
 
 
-	{ name: 'StatStrength',
+	{ name: 'Strength',
 	  description: `Ability to deal damage and lift heavy things.` },
 
-	{ name: 'StatAgility',
+	{ name: 'Agility',
 	  description: `Ability to move around, avoid death, etc.` },
 
-	{ name: 'StatEndurance',
+	{ name: 'Endurance',
 	  description: `Ability to absorb damage and retain energy.` },
 
-	{ name: 'StatIntellect',
+	{ name: 'Intellect',
 	  description: `Rating of cognitive ability and perception.` },
 
-	{ name: 'StatWisdom',
-	  description: `Knowlege and sagacity.` },
+	{ name: 'Wisdom',
+	  description: `Discernment, knowlege and sagacity.` },
 
-	{ name: 'StatCharisma',
+	{ name: 'Charisma',
 	  description: `Likeability and ability to read others.` },
 
 
@@ -93,59 +93,59 @@ const SLOTS = [
 	  description: `Spellbook spell number 4.` },
 
 
-	{ name: 'EquipmentWeapon',
+	{ name: 'Weapon',
 	  description: `The weapon is used for causing damage to one's foe.` },
 
-	{ name: 'EquipmentArmor',
+	{ name: 'Armor',
 	  description: `Armor is worn on the body to protect it from damage.` },
 
-	{ name: 'EquipmentShield',
+	{ name: 'Shield',
 	  description: `A shield may be held to deflect blows from one's oppenent's attacks.` },
 
-	{ name: 'EquipmentHeadgear',
+	{ name: 'Headgear',
 	  description: `Helments and other headgear help protect the head from physical trauma.` },
 
-	{ name: 'EquipmentFootwear',
+	{ name: 'Footwear',
 	  description: `The feet and lower legs may be protected with good footwear choices.` },
 
-	{ name: 'EquipmentMount',
+	{ name: 'Mount',
 	  description: `Adventurers use mounts to improve their travel speed and carrying capacity.` },
 
-	{ name: 'EquipmentRing',
+	{ name: 'Ring',
 	  description: `Rings can serve for decoration, and may also be imbued with magical powers.` },
 
-	{ name: 'EquipmentTotem',
+	{ name: 'Totem',
 	  description: `Totems are local to specific areas and may play a part in various quests.` },
 
 
-	{ name: 'InventoryGold',
+	{ name: 'Gold',
 	  description: `Gold coins are the common medium of value storage and exchange.` },
 
-	{ name: 'InventoryTrophies',
+	{ name: 'Trophies',
 	  description: `Skins, horns, teeth, etc. collected from slain enemies.` },
 
-	{ name: 'InventoryReagents',
+	{ name: 'Reagents',
 
 	  description: `` },
 
-	{ name: 'InventoryResources',
+	{ name: 'Resources',
 
 	  description: `` },
 
-	{ name: 'InventoryFood',
+	{ name: 'Food',
 	  description: `Adventures eat food every time they travel. If they're out
 	  of food, travelling takes longer due to extra time spent hunting and
 	  foraging and complaining about being hungry.` },
 
-	{ name: 'InventoryTreasures',
+	{ name: 'Treasures',
 
 	  description: `` },
 
-	{ name: 'InventoryPotions',
+	{ name: 'Potions',
 
 	  description: `` },
 
-	{ name: 'InventoryLifePotions',
+	{ name: 'LifePotions',
 
 	  description: `` },
 
@@ -230,10 +230,10 @@ function define(symbol, value) {
 // const Level = 1; for example
 SLOTS.forEach((slot, i) => define(slot.name, i));
 
-const STAT_0 = StatStrength;
+const STAT_0 = Strength;
 const SPELLBOOK_0 = Spellbook1;
-const EQUIPMENT_0 = EquipmentWeapon;
-const INVENTORY_0 = InventoryGold;
+const EQUIPMENT_0 = Weapon;
+const INVENTORY_0 = Gold;
 
 const STAT_COUNT = SPELLBOOK_0 - STAT_0;
 const SPELLBOOK_COUNT = EQUIPMENT_0 - SPELLBOOK_0;
@@ -253,7 +253,7 @@ const CALLS = {
 		description: 'Pick a species for your character and begin the game.' },
 
 	train: { parameters: 'slot',
-		description: `Train to improve stats (StatStrength, and so on).
+		description: `Train to improve stats (Strength, and so on).
 		Training speed can be affected by various environmental factors.` },
 
 	learn: { parameters: 'spellbook_slot,spell',
@@ -277,7 +277,7 @@ const CALLS = {
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item
-		(InventoryPotions, etc.) from the local shopkeeper, You can get a
+		(Potions, etc.) from the local shopkeeper, You can get a
 		price check by passing 0 as the quantitiy.
 
 		<p>Or, buy a piece of equipment (EQUIPMENT_*) of a certain quality. This
@@ -301,8 +301,8 @@ const CALLS = {
 		reagents and saps energy.` },
 
 	forage: { parameters: 'target_slot',
-		description: `Comb the local area for InventoryFood, or
-		InventoryResources, or whatever you might seek.` },
+		description: `Comb the local area for Food, or
+		Resources, or whatever you might seek.` },
 
 	loot: {
 		description: `Loot any nearby corpse for whatever goodies they may
@@ -335,7 +335,7 @@ const CALLS = {
 
 	deposit: { parameters: 'slot,quantity',
 		description: `When in Bompton Town, stop at the Bank of Bompton where
-		you can store InventoryGold and InventoryTreasures. There is a
+		you can store Gold and Treasures. There is a
 		one (1) gold charge for each transaction.` },
 
 	withdraw: { parameters: 'slot,quantity',
@@ -390,6 +390,11 @@ function generateInterface() {
 
 	interface.push('');
 
+	DENIZENS.forEach((denizen, index) =>
+		denizen && interface.push(`const ${moniker(denizen.name)} = ${index}`));
+
+	interface.push('');
+
 	return interface.join('\n');
 }
 
@@ -404,9 +409,9 @@ function generateDocumentation() {
 	font-family: Verdana, Helvetica, sans-serif;
 	color: #203520;
 }
-h1 {
-	font-size: 40px;
-}
+h1 { font-size: 36px; }
+h2 { font-size: 30px; }
+h3 { font-size: 24px; }
 body {
 	margin: 50px 100px;
 	background-color: #f8fff8;
@@ -439,7 +444,8 @@ div#terrains {
 <h1>Bompton Island Programmer's Reference</h1>
 	`;
 
-	function head(h) { result += `<h3>${h}</h3>`; }
+	function head(h) { result += `<h2>${h}</h2>`; }
+	function midhead(h) { result += `<h3>${h}</h3>`; }
 	function subhead(s, d) { result += `<h4>${s}</h4><p>${d ?? ''}`; }
 	function p(text) { result += '<p>' + text + '</p>' }
 	function div(text, and) { result += `<div ${and ?? ''}>${text}</div>` }
@@ -466,7 +472,29 @@ div#terrains {
 
 	SLOTS.forEach((slot, i) => { if (slot) {
 		let { name, description } = slot;
-		subhead(code(`${name} (${i})`), description);
+
+		if (i === EQUIPMENT_0) {
+			midhead('Equipment');
+			p('The character may equip no more than one of each equipment type.');
+		} else if (i === INVENTORY_0) {
+			midhead('Inventory Items');
+			p(`Inventory items. The value in these slot indicates the quantity
+			of each item held in the character's inventory.`);
+		} else if (i === STAT_0) {
+			midhead('Stats');
+			p(`Character stats are a general rating of their excellence in each area of development.`);
+		} else if (i === Location) {
+			midhead('&nbsp;');
+		}
+
+		subhead(code(`${name} (${i})`))
+		p(description);
+
+		if (isInventorySlot(i)) {
+			p(`Value: $` + DATABASE[i].value);
+			p(`Weight: ${DATABASE[i].weight}#`);
+		}
+
 	} });
 
 	head('Spells');
@@ -559,14 +587,6 @@ div#terrains {
 	} });
 
 
-	head('Inventory Items');
-
-	for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
-		subhead(SLOTS[i].name);
-		p(`Value: $` + DATABASE[i].value);
-		p(`Weight: ${DATABASE[i].weight}#`);
-	}
-
 	return result;
 }
 
@@ -578,11 +598,11 @@ const SPELLS = [ null, {
 		level: 1,
 		costs: [
 			{ slot: Energy, qty: 1 },
-			{ slot: InventoryReagents, qty: 1 },
+			{ slot: Reagents, qty: 1 },
 			],
 		effect: state => {
 			let healing = 1;
-			healing *= Math.pow(GR, state[StatWisdom]);
+			healing *= Math.pow(GR, state[Wisdom]);
 			healing = Math.round(healing);
 			healing = Math.min(healing, state[MaxHealth] - state[Health]);
 			state[Health] += healing;
@@ -595,9 +615,10 @@ const SPELLS = [ null, {
 		level: 2,
 		costs: [
 			{ slot: Energy, qty: 2 },
-			{ slot: InventoryReagents, qty: 2 },
+			{ slot: Reagents, qty: 2 },
 			],
 		effect: state => {
+			// TODO this doesn't work
 			return battle(true);
 		},
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
@@ -605,7 +626,7 @@ const SPELLS = [ null, {
 		name: 'Horsewheels',
 		level: 3,
 		costs: [
-			{ slot: InventoryReagents, qty: 3 },
+			{ slot: Reagents, qty: 3 },
 			],
 		enchantment: [],  // handled in code: speed boost
 		description: `Let's put some wheels on that hoss! Increases travel speed.`,
@@ -614,12 +635,12 @@ const SPELLS = [ null, {
 		level: 5,
 		costs: [
 			{ slot: Energy, qty: 5 },
-			{ slot: InventoryReagents, qty: 5 },
+			{ slot: Reagents, qty: 5 },
 			],
 		duration: 24,
 		effect: state => {
-			let winnings = Math.min(roomFor(InventoryGold, state), state[InventoryGold]);
-			return inc(InventoryGold, winnings);
+			let winnings = Math.min(roomFor(Gold, state), state[Gold]);
+			return inc(Gold, winnings);
 		},
 		description: `Double. Your. Money.... Overnight! <sup>*</sup>Terms and conditions apply. Doubling is limited by cargo capacity.`,
 	}, {
@@ -631,35 +652,50 @@ const SPELLS = [ null, {
 		level: 10,
 		costs: [
 			{ slot: Energy, qty: 10 },
-			{ slot: InventoryReagents, qty: 10 },
+			{ slot: Reagents, qty: 10 },
 			],
 		effect: state => {
 			return state[Years] = 0;
 		},
 		description: `Go back to when this crazy adventure all started. You get to keep your stuff though.`,
 	}, {
-		name: "Xform",
+		name: "Radical Sympathy",
 		level: 3,
 		costs: [
 			{ slot: Energy, qty: 3 },
-			{ slot: InventoryReagents, qty: 3 },
+			{ slot: Reagents, qty: 3 },
 			],
 		effect: state => {
 			if (!state[MobSpecies]) return -1;
-			// TODO: lose current species bonuses
-			return state[Species] = state[MobSpecies];
-			// TODO: this won't work yet
+
+			// Lose current species mods
+			for (let { slot, increment } of (DENIZENS[state[Species]].startState ?? [])) {
+				if (increment) {
+					state[slot] -= increment;
+				}
+			}
+
+			state[Species] = state[MobSpecies];
+
+			// Apply new species mods
+			for (let { slot, increment } of (DENIZENS[state[Species]].startState ?? [])) {
+				if (increment) {
+					state[slot] += increment;
+				}
+			}
+
+			return state[Species];
 		},
-		description: `Turn yourself in to one of those things. One of those things over there.`,
+		description: `Transform yourself into a member of the same species as the nearby creature.`,
 	}, {
 		name: 'Buff',
 		level: 4,
 		costs: [
 			{ slot: Energy, qty: 4 },
-			{ slot: InventoryReagents, qty: 4 },
+			{ slot: Reagents, qty: 4 },
 			],
 		enchantment: [
-			{ slot: StatStrength, increment: 4 },
+			{ slot: Strength, increment: 4 },
 		],
 		description: `Become just that much stronger.`,
 	}, {
@@ -667,7 +703,7 @@ const SPELLS = [ null, {
 		level: 6,
 		costs: [
 			{ slot: Energy, qty: 6 },
-			{ slot: InventoryReagents, qty: 6 },
+			{ slot: Reagents, qty: 6 },
 			],
 		enchantment: [],
 		description: `This doesn't do anything to help; it's just cool.`,
@@ -676,10 +712,10 @@ const SPELLS = [ null, {
 		level: 4,
 		costs: [
 			{ slot: Energy, qty: 4 },
-			{ slot: InventoryReagents, qty: 4 },
+			{ slot: Reagents, qty: 4 },
 			],
 		enchantment: [
-			{ slot: StatIntellect, increment: 4 },
+			{ slot: Intellect, increment: 4 },
 		],
 		description: `Become just that much smarter.`,
 	}, {
@@ -687,7 +723,7 @@ const SPELLS = [ null, {
 		level: 9,
 		costs: [
 			{ slot: Energy, qty: 9 },
-			{ slot: InventoryReagents, qty: 9 },
+			{ slot: Reagents, qty: 9 },
 			],
 		enchantment: [],
 		effect: (state, spellid) => {
@@ -696,11 +732,11 @@ const SPELLS = [ null, {
 		},
 		description: `Royally scramble the island.`,
 	}, {
-		name: 'Ghost Town',
+		name: 'Astral Edifice',
 		level: 5,
 		costs: [
 			{ slot: Energy, qty: 5 },
-			{ slot: InventoryReagents, qty: 5 },
+			{ slot: Reagents, qty: 5 },
 			],
 		enchantment: [],
 		effect: (state, spellid) => {
@@ -713,11 +749,11 @@ const SPELLS = [ null, {
 		level: 8,
 		costs: [
 			{ slot: Energy, qty: 30 },
-			{ slot: InventoryReagents, qty: 20 },
+			{ slot: Reagents, qty: 20 },
 			],
 		effect: state => {
-			state[Health] = Math.min(MAX_INT, state[Health] + state[InventoryGold]);
-			state[InventoryGold] = 0;
+			state[Health] = Math.min(MAX_INT, state[Health] + state[Gold]);
+			state[Gold] = 0;
 		},
 		description: `Money CAN buy you health, because magic.`,
 	}, {
@@ -725,7 +761,7 @@ const SPELLS = [ null, {
 		// TODO get rid of these monikers and just use the spell name
 		level: 15,
 		costs: [
-			{ slot: InventoryTreasures, qty: 49 },
+			{ slot: Treasures, qty: 49 },
 			],
 		effect: state => {
 			state[Years] = Math.min(state[Years], 14);
@@ -940,32 +976,32 @@ const MOUNT_NAMES = ['',
 
 
 const DATABASE = [];
-DATABASE[EquipmentWeapon] = {
+DATABASE[Weapon] = {
 	names: WEAPON_NAMES,
 	count: WEAPON_NAMES.length - 1,
 	basePrice: 15,
 };
-DATABASE[EquipmentHeadgear] = {
+DATABASE[Headgear] = {
 	names: HEADGEAR_NAMES,
 	count: HEADGEAR_NAMES.length - 1,
 	basePrice: 10,
 };
-DATABASE[EquipmentArmor] = {
+DATABASE[Armor] = {
 	names: ARMOR_NAMES,
 	count: ARMOR_NAMES.length - 1,
 	basePrice: 20,
 };
-DATABASE[EquipmentShield] = {
+DATABASE[Shield] = {
 	names: SHIELD_NAMES,
 	count: SHIELD_NAMES.length - 1,
 	basePrice: 10,
 };
-DATABASE[EquipmentFootwear] = {
+DATABASE[Footwear] = {
 	names: FOOTWEAR_NAMES,
 	count: FOOTWEAR_NAMES.length - 1,
 	basePrice: 10,
 };
-DATABASE[EquipmentMount] = {
+DATABASE[Mount] = {
 	names: MOUNT_NAMES,
 	count: MOUNT_NAMES.length - 1,
 	basePrice: 20,
@@ -996,16 +1032,16 @@ const TERRAIN_TYPES = [
 	}, {
 		name: 'Plains',
 		color: 'lightgreen',
-		forage: { item: InventoryFood, rate: 2 },
+		forage: { item: Food, rate: 2 },
 	}, {
 		name: 'Marsh',
 		color: 'olive',
 		moveCost: 2.5,
-		forage: { item: InventoryFood, rate: 0 },
+		forage: { item: Food, rate: 0 },
 	}, {
 		name: 'Desert',
 		color: 'yellow',
-		forage: { item: InventoryFood, rate: 0 },
+		forage: { item: Food, rate: 0 },
 	}];
 
 TERRAIN_TYPES.forEach((info, index) => {
@@ -1028,14 +1064,14 @@ const DENIZENS = [
 		proficiency: [SLASH],
 		badat: [POKE, SHOOT],
 		startState: [
-			{ slot: StatAgility, increment: +2 },
-			{ slot: StatCharisma, increment: +1 },
-			{ slot: StatStrength, increment: -1 },
-			{ slot: StatWisdom, increment: -2 },
+			{ slot: Agility, increment: +2 },
+			{ slot: Charisma, increment: +1 },
+			{ slot: Strength, increment: -1 },
+			{ slot: Wisdom, increment: -2 },
 
-			{ slot: EquipmentWeapon,   value: 2},
-			{ slot: EquipmentHeadgear, value: 1},
-			{ slot: InventoryFood,     value: 1 },
+			{ slot: Weapon,   value: 2},
+			{ slot: Headgear, value: 1},
+			{ slot: Food,     value: 1 },
 		],
 		description: "Likable, lithe creatures of small stature, often underestimated",
 		occurrence: 0.2,
@@ -1049,14 +1085,14 @@ const DENIZENS = [
 		proficiency: [SMASH],
 		badat: SLASH,
 		startState: [
-			{ slot: StatEndurance, increment: +2 },
-			{ slot: StatStrength, increment: +1 },
-			{ slot: StatAgility, increment: -1 },
-			{ slot: StatIntellect, increment: -2 },
+			{ slot: Endurance, increment: +2 },
+			{ slot: Strength, increment: +1 },
+			{ slot: Agility, increment: -1 },
+			{ slot: Intellect, increment: -2 },
 
-			{ slot: EquipmentWeapon, value: 1},
-			{ slot: EquipmentShield, value: 1},
-			{ slot: InventoryGold,   value: 1 },
+			{ slot: Weapon, value: 1},
+			{ slot: Shield, value: 1},
+			{ slot: Gold,   value: 1 },
 		],
 		description: "Sturdy sorts with a...direct approch to problems",
 		occurrence: 0.1,
@@ -1069,14 +1105,14 @@ const DENIZENS = [
 		proficiency: [POKE, SHOOT],
 		badat: SMASH,
 		startState: [
-			{ slot: StatIntellect, increment: +2 },
-			{ slot: StatWisdom, increment: +1 },
-			{ slot: StatEndurance, increment: -1 },
-			{ slot: StatCharisma, increment: -2 },
+			{ slot: Intellect, increment: +2 },
+			{ slot: Wisdom, increment: +1 },
+			{ slot: Endurance, increment: -1 },
+			{ slot: Charisma, increment: -2 },
 
-			{ slot: EquipmentWeapon,   value: 3},
-			{ slot: EquipmentFootwear, value: 1},
-			{ slot: InventoryReagents, value: 1 },
+			{ slot: Weapon,   value: 3},
+			{ slot: Footwear, value: 1},
+			{ slot: Reagents, value: 1 },
 		],
 		description: "Proud, sometimes haughty, intellectuals",
 		occurrence: 0.1,
@@ -1146,9 +1182,9 @@ const DENIZENS = [
 		domain: DESERT,
 		hitdice: 12,
 	}, {
-		name: "Main Boss",  // TODO: need a name
+		name: "Mox Klatryon",
 		domain: MOUNTAINS,
-		hitdice: 16,
+		hitdice: 14,
 		occurrence: 0,
 	}
 ];
@@ -1174,7 +1210,7 @@ const MAP = [null,
 		name: "Hohamp",
 		terrain: TOWN,
 		denizen: Hardwarf,
-		trainingBoost: StatEndurance,
+		trainingBoost: Endurance,
 		level: 0,
 	}, {
 		name: "Skiddo",
@@ -1189,7 +1225,7 @@ const MAP = [null,
 		name: "Yar",
 		terrain: TOWN,
 		denizen: Eelman,
-		trainingBoost: StatWisdom,
+		trainingBoost: Wisdom,
 		learningBoost: 1,
 		level: 0,
 	}, {
@@ -1237,7 +1273,7 @@ const MAP = [null,
 		name: "Bompton",
 		terrain: TOWN,
 		denizen: Dunkling,
-		trainingBoost: StatCharisma,
+		trainingBoost: Charisma,
 		level: 0,
 		hasBank: true,
 
@@ -1253,7 +1289,7 @@ const MAP = [null,
 		name: "Pillary",
 		terrain: TOWN,
 		denizen: Hardwarf,
-		trainingBoost: StatStrength,
+		trainingBoost: Strength,
 		level: 0,
 	}, {
 		name: "Grein Hills",
@@ -1288,7 +1324,7 @@ const MAP = [null,
 		name: "Delial",
 		terrain: TOWN,
 		denizen: Dunkling,
-		trainingBoost: StatAgility,
+		trainingBoost: Agility,
 		level: 0,
 	}, {
 		name: "Solla Desert",
@@ -1299,7 +1335,7 @@ const MAP = [null,
 		name: "Cholar",
 		terrain: TOWN,
 		denizen: Dunkling,
-		trainingBoost: StatIntellect,
+		trainingBoost: Intellect,
 		level: 0,
 	}, {
 		name: "Ritoli Marsh",
@@ -1337,9 +1373,10 @@ const MAP = [null,
 		offshore: true,
 
 	}, {
-		name: "Gus Town",
+		name: "*......",
 		terrain: TOWN,
 		denizen: Gust,
+		density: GR,
 		level: 8,
 		ephemeral: true,
 	}];
@@ -1368,7 +1405,7 @@ for (let slot = EQUIPMENT_0; slot < EQUIPMENT_0 + EQUIPMENT_COUNT; slot += 1) {
 		for (let item = 1; item <= db.count; ++item) {
 			let power = item;
 			let maxPower = db.count;
-			if (slot === EquipmentWeapon) {
+			if (slot === Weapon) {
 				power = weaponPower(item);
 				maxPower /= NUM_WEAPON_TYPES;
 			}
@@ -1395,7 +1432,7 @@ function mapInfo(location, state) {
 		let fixed = state[Enchantment] >> 8;
 		location = (((location + 36 - fixed) * 23) + fixed - 1) % 36 + 1;  // whew!
 	}
-	else if ((state[Enchantment] & 0xFF) === Ghost_Town &&
+	else if ((state[Enchantment] & 0xFF) === Astral_Edifice &&
 			 (state[Enchantment] >> 8) === location) {
 		location = 39;
 	}
@@ -1452,17 +1489,17 @@ function generateMap(scrambleFrom) {
 
 
 function carryCapacity(state) {
-	return state[StatStrength] + state[EquipmentMount];
+	return state[Strength] + state[Mount];
 }
 
-DATABASE[InventoryGold] =        { value: 1, weight: 1/256 };
-DATABASE[InventoryTrophies] =    { value: 1/10, weight: 1 };
-DATABASE[InventoryReagents] =    { value: 1, weight: 1 };
-DATABASE[InventoryResources] =   { value: 1/10, weight: 1 };
-DATABASE[InventoryFood] =        { value: 1, weight: 1 };
-DATABASE[InventoryTreasures] =   { value: 1000, weight: 3 };
-DATABASE[InventoryPotions] = 	 { value: 100, weight: 1 };
-DATABASE[InventoryLifePotions] = { value: 10000, weight: 1 };
+DATABASE[Gold] =        { value: 1, weight: 1/256 };
+DATABASE[Trophies] =    { value: 1/10, weight: 1 };
+DATABASE[Reagents] =    { value: 1, weight: 1 };
+DATABASE[Resources] =   { value: 1/10, weight: 1 };
+DATABASE[Food] =        { value: 1, weight: 1 };
+DATABASE[Treasures] =   { value: 1000, weight: 3 };
+DATABASE[Potions] = 	 { value: 100, weight: 1 };
+DATABASE[LifePotions] = { value: 10000, weight: 1 };
 
 
 function encumbrance(state) {
@@ -1479,10 +1516,10 @@ function roomFor(item, state) {
 }
 
 function armorClass(state) {
-	return state[EquipmentArmor] +
-			state[EquipmentShield] +
-			state[EquipmentHeadgear] +
-			state[EquipmentFootwear];
+	return state[Armor] +
+			state[Shield] +
+			state[Headgear] +
+			state[Footwear];
 }
 
 // Generalized hopefully well from
@@ -1579,7 +1616,7 @@ class Bompton {
 				state[GameOver] = 1;
 			}
 
-			if (state[InventoryTrophies] === 0)
+			if (state[Trophies] === 0)
 				state[TrophyMob] = 0;
 		}
 
@@ -1629,13 +1666,13 @@ class Bompton {
 		function doMobAttack() {
 			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return 0;
-			const defense = state[StatAgility] + state[ArmorClass];
+			const defense = state[Agility] + state[ArmorClass];
 			let damage = rollAttack(state[MobLevel], defense, state[MobLevel]);
 			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
-				if (state[InventoryLifePotions] > 0) {
-					dec(InventoryLifePotions, 1);
+				if (state[LifePotions] > 0) {
+					dec(LifePotions, 1);
 					state[Health] = 1;  // or max health?
 				} else {
 					state[GameOver] = 86;
@@ -1646,12 +1683,12 @@ class Bompton {
 			}
 		}
 
-		function doPlayerAttack() {
+		function doPlayerAttack(state) {
 			if (state[MobHealth] <= 0) return;
 			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return;
-			const offense = state[StatAgility] + weaponPower(state[EquipmentWeapon]);
-			const sharpness = state[StatStrength] + weaponPower(state[EquipmentWeapon]);
+			const offense = state[Agility] + weaponPower(state[Weapon]);
+			const sharpness = state[Strength] + weaponPower(state[Weapon]);
 			let damage = rollAttack(offense, state[MobLevel], sharpness);
 			dec(MobHealth, Math.min(state[MobHealth], damage));
 
@@ -1673,9 +1710,9 @@ class Bompton {
 				dec(state[info.esteemSlot], 1);
 
 
-			if (state[StatAgility] + d(6) >= state[MobLevel] + d(6)) {
+			if (state[Agility] + d(6) >= state[MobLevel] + d(6)) {
 				// Player attacks first
-				doPlayerAttack();
+				doPlayerAttack(state);
 				if (state[MobHealth] > 0) {
 					doMobAttack();
 				}
@@ -1683,7 +1720,7 @@ class Bompton {
 				// Mob attacks first
 				doMobAttack();
 				if (state[Health] > 0) {
-					doPlayerAttack();
+					doPlayerAttack(state);
 				}
 			}
 		}
@@ -1738,8 +1775,8 @@ class Bompton {
 
 				state[Level] = 1;
 				state[Location] = BOMPTON;
-				state[Health] = state[MaxHealth] = 6 + state[StatEndurance];
-				state[Energy] = state[MaxEnergy] = 6 + state[StatIntellect];
+				state[Health] = state[MaxHealth] = 6 + state[Endurance];
+				state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
 				state[TrainingPoints] = 10;
 				actUp();
 				passTime('Loading', 1);
@@ -1832,13 +1869,13 @@ class Bompton {
 				if (!remote) return -1;  // but shouldn't happen
 			}
 			let hours = 24;
-			let travelspeed = (state[StatEndurance] + state[EquipmentMount]) / 5;
+			let travelspeed = (state[Endurance] + state[Mount]) / 5;
 			if (state[Enchantment] === Horsewheels) travelspeed += 1;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
 			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
-			if (state[InventoryFood] >= 1)
-				dec(InventoryFood)
+			if (state[Food] >= 1)
+				dec(Food)
 			else
 				hours *= 2;
 			hours = Math.round(hours / travelspeed);
@@ -1856,7 +1893,7 @@ class Bompton {
 
 		} else if (operation === loot) {
 			if (!state[MobSpecies]) return -1;
-			if (state[MobHealth] > 0 && d(20) > state[StatAgility]) {
+			if (state[MobHealth] > 0 && d(20) > state[Agility]) {
 				doMobAttack();
 				if (state[Health] <= 0) return 0;
 				let info = DENIZENS[state[MobSpecies]];
@@ -1864,11 +1901,11 @@ class Bompton {
 					dec(state[info.esteemSlot], 1);
 			}
 
-			if (state[TrophyMob] == state[MobSpecies] || state[InventoryTrophies] == 0)
+			if (state[TrophyMob] == state[MobSpecies] || state[Trophies] == 0)
 				state[TrophyMob] = state[MobSpecies];
 			else
 				state[TrophyMob] = 0;
-			inc(InventoryTrophies);
+			inc(Trophies);
 			clearMob(state);
 
 		} else if (operation === buy) {
@@ -1903,10 +1940,10 @@ class Bompton {
 			}
 
 			price *= qty;
-			if (state[InventoryGold] < price) return -1;  // Can't afford it
+			if (state[Gold] < price) return -1;  // Can't afford it
 
 			// You may proceed with the purchase
-			inc(InventoryGold, -price);
+			inc(Gold, -price);
 			state[slot] = levelToBe;
 			passTime('Buying some ' + itemsName(slot), 3);
 			return qty;
@@ -1919,7 +1956,7 @@ class Bompton {
 				qty = Math.min(qty, 1);
 				unitValue = state[slot];
 				if (!unitValue) return -1;
-				if (slot === EquipmentWeapon) unitValue = weaponPower(unitValue);
+				if (slot === Weapon) unitValue = weaponPower(unitValue);
 				unitValue = Math.round(Math.pow(GR, unitValue));
 				newqty = 0;
 			} else if (isInventorySlot(slot)) {
@@ -1932,13 +1969,13 @@ class Bompton {
 			if (qty <= 0) return -1;
 			let price = qty * 0.5 * unitValue;
 			if (operation === sell) {
-				inc(InventoryGold, Math.floor(price));
+				inc(Gold, Math.floor(price));
 			}
 			if (operation === give &&
 					state[QuestObject] === slot &&
 					state[Location] === state[QuestOrigin] &&
 					[0,state[TrophyMob]].includes(state[QuestMob])) {
-				if (state[QuestObject] === EquipmentTotem) {
+				if (state[QuestObject] === Totem) {
 					if (state[QuestProgress] === 1)
 						state[QuestProgress] = 2;
 				} else {
@@ -1964,12 +2001,12 @@ class Bompton {
 			if (qty < 0) return -1;  // nice try hacker
 			if (state[Location].hasBank) return -1;  // you're not at the bank
 
-			if (state[InventoryGold] + state[BalanceGold] <= 0)
+			if (state[Gold] + state[BalanceGold] <= 0)
 				return -1;  // Can't afford it
 
 			let bankSlot;
-			if (slot == InventoryGold) bankSlot = BalanceGold;
-			else if (slot == InventoryTreasures) bankSlot = BalanceTreasures;
+			if (slot == Gold) bankSlot = BalanceGold;
+			else if (slot == Treasures) bankSlot = BalanceTreasures;
 			else return -1;  // Bank doesn't deal in this item
 
 			let fromSlot = isDeposit ? slot : bankSlot;
@@ -1983,9 +2020,9 @@ class Bompton {
 
 				// Charge a 1 gold commission per transaction
 				if (isDeposit) {
-					dec(state[InventoryGold] > 0 ? InventoryGold : BalanceGold);
+					dec(state[Gold] > 0 ? Gold : BalanceGold);
 				} else {
-					dec(state[BalanceGold] > 0 ? BalanceGold : InventoryGold);
+					dec(state[BalanceGold] > 0 ? BalanceGold : Gold);
 				}
 
 				passTime('Making a bank ' + isDeposit ? 'deposit' : 'withdrawal', 1);
@@ -1994,7 +2031,7 @@ class Bompton {
 			return qty;
 
 		} else if (operation === seekquest) {
-			let hours = 4 + Math.round(20 * Math.pow(GR, -state[StatCharisma]));
+			let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
 			passTime('Asking around about quests', hours);
 
 			clearQuest(state);
@@ -2004,7 +2041,7 @@ class Bompton {
 			if (state[Act] == 9) {
 				if (state[ActProgress] < 3) {
 					// Bring the totem from origin to location
-					state[QuestObject] = EquipmentTotem;
+					state[QuestObject] = Totem;
 					state[QuestOrigin] = d(36);
 					do { state[QuestLocation] = d(36);
 					} while (state[QuestLocation] == state[QuestOrigin]);
@@ -2016,7 +2053,7 @@ class Bompton {
 				} else {
 					// Exterminate the ___
 					state[QuestLocation] = EMKELL_PEAK;
-					state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
+					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma]);
 					state[QuestObject] = 0;
 					state[QuestQty] = 25 + d(4) - d(4);
 				}
@@ -2024,21 +2061,21 @@ class Bompton {
 				let questTypes = [_ => {
 					// Exterminate the ___
 					state[QuestLocation] = randomLocation();
-					state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
+					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma]);
 					state[QuestObject] = 0;
 					state[QuestQty] = 2 + 2 * state[Act] + d(2) - d(2);  // TODO use charisma here (instead?)
 				}, _ => {
 					// Bring me N trophies
 					state[QuestLocation] = randomLocation();
-					state[QuestObject] = InventoryTrophies;
-					state[QuestMob] = randomMobNearLevel(state[Act], state[StatCharisma]);
+					state[QuestObject] = Trophies;
+					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma]);
 					let qty = 1 + state[Act] + d(2) - d(2);
 					state[QuestQty] = qty;
 				}, _ => {
 					// Bring me N of SOMETHING generally
-					let value = state[Level] * 100 * Math.pow(GR, -state[StatCharisma]) * (0.5 * rand());
+					let value = state[Level] * 100 * Math.pow(GR, -state[Charisma]) * (0.5 * rand());
 					state[QuestLocation] = randomLocation();
-					state[QuestObject] = InventoryResources;  // something you can forage for
+					state[QuestObject] = Resources;  // something you can forage for
 					state[QuestMob] = 0;
 					let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
 					state[QuestQty] = qty;
@@ -2069,7 +2106,7 @@ class Bompton {
 			if (actUp()) {
 				passTime('Viewing a beautifully rendered in-game cinematic sequence', 2);
 				inc(TrainingPoints);
-				inc(InventoryTreasures);
+				inc(Treasures);
 			}
 
 		} else  if (operation === train) {
@@ -2080,7 +2117,7 @@ class Bompton {
 			if (state[slot] >= 99) return 0;
 			let hours = 24;
 			hours *= Math.pow(GR, state[slot]);
-			hours *= 10 / (10 + (state[StatWisdom] + (local.trainingBoost == slot ? 1 : 0)));
+			hours *= 10 / (10 + (state[Wisdom] + (local.trainingBoost == slot ? 1 : 0)));
 			hours = Math.min(1, Math.round(hours));
 			// TODO: special stat-learning bonuses (special as in species)
 			// TODO: DEX helps with STR and CON
@@ -2099,7 +2136,7 @@ class Bompton {
 			if (!isSpellSlot(slot)) return -1;
 			let hours = 24;
 			hours *= Math.pow(GR, spell.level);
-			hours *= 10 / (10 + (state[StatWisdom] + (local.learningBoost ?? 0)));
+			hours *= 10 / (10 + (state[Wisdom] + (local.learningBoost ?? 0)));
 			// TODO: town spell-learning bonuses?
 			// TODO: racial spell-learning bonuses?
 			passTime('Inscribing "' + spell.name + '" into my spell book', Math.round(hours));
@@ -2162,13 +2199,13 @@ class Bompton {
 			endEnchantment();
 
 			passTime('Resting up', 0, 1);
-			let hp = d(state[StatEndurance]);
+			let hp = d(state[Endurance]);
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rand() * rand());
 			hp = Math.min(hp, state[MaxHealth] - state[Health]);
 			inc(Health, hp);
 
-			let mp = d(state[StatWisdom]);
+			let mp = d(state[Wisdom]);
 			if (local.terrain !== TOWN)
 				mp = Math.round(mp * rand() * rand());
 			mp = Math.min(mp, state[MaxEnergy] - state[Energy]);
@@ -2179,11 +2216,11 @@ class Bompton {
 		} else if (operation === forage) {
 			let target = arg1;
 			let qty;
-			if (target === EquipmentTotem) {
+			if (target === Totem) {
 				passTime('Seeking the local totem', 6);
-				if (d(20) <= state[StatIntellect]) {
-					state[EquipmentTotem] = state[Location];
-					if (state[QuestObject] === EquipmentTotem &&
+				if (d(20) <= state[Intellect]) {
+					state[Totem] = state[Location];
+					if (state[QuestObject] === Totem &&
 							state[Location] === state[QuestLocation]) {
 						state[QuestProgress] = 1;
 					}
@@ -2215,8 +2252,8 @@ class Bompton {
 			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
 				return 0;
 			inc(Level);
-			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[StatEndurance]));
-			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[StatWisdom]));
+			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[Endurance]));
+			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[Wisdom]));
 			inc(TrainingPoints, 2);
 			passTime('Leveling up', 1);
 			return 1;
@@ -2657,9 +2694,9 @@ function updateGame(state) {
 		let v = state[slot];
 		if (!v)
 			set('e' + i, '');
-		else if (slot === EquipmentRing)
+		else if (slot === Ring)
 			set('e' + i, 'Ring of ' + SLOTS[v].name);
-		else if (slot === EquipmentTotem)
+		else if (slot === Totem)
 			set('e' + i, Bompton.MAP[v].name.split(' ')[0] + ' Totem');
 		else {
 			const names = (Bompton.DATABASE[slot] ?? {}).names;
@@ -2672,7 +2709,7 @@ function updateGame(state) {
 		set('i' + i, state[INVENTORY_0 + i]);
 	}
 	setProgress('encumbrance', state[Encumbrance], state[Capacity]);
-	$id('trophies').innerText = state[TrophyMob] && state[InventoryTrophies] ?
+	$id('trophies').innerText = state[TrophyMob] && state[Trophies] ?
 		DENIZENS[state[TrophyMob]].name + ' trophies' : 'Trophies';
 
 	/*
@@ -2718,25 +2755,25 @@ function updateGame(state) {
 	let original = Bompton.mapInfo(state[QuestOrigin], state);
 	original &&= original.name;
 	const friendlySlotNames = {
-		EquipmentTotem: 'totem',
-		InventoryGold: 'gold',
-		InventoryTrophies: 'trophies',
-		InventoryReagents: 'reagents',
-		InventoryResources: 'resources',
-		InventoryFood: 'food',
-		InventoryTreasures: 'treasures',
-		InventoryPotions: 'healing potions',
-		InventoryLifePotions: 'life potions',
+		Totem: 'totem',
+		Gold: 'gold',
+		Trophies: 'trophies',
+		Reagents: 'reagents',
+		Resources: 'resources',
+		Food: 'food',
+		Treasures: 'treasures',
+		Potions: 'healing potions',
+		LifePotions: 'life potions',
 	};
 	set('questgoal',
-		state[QuestObject] === EquipmentTotem ? 'Deliver the totem' :
-		state[QuestObject] == InventoryTrophies ? `Bring me ${state[QuestQty]} ${DENIZENS[state[QuestMob]].name.toLowerCase()} trophies` :
+		state[QuestObject] === Totem ? 'Deliver the totem' :
+		state[QuestObject] == Trophies ? `Bring me ${state[QuestQty]} ${DENIZENS[state[QuestMob]].name.toLowerCase()} trophies` :
 		state[QuestObject] ? `Bring me ${state[QuestQty]} ${friendlySlotNames[SLOTS[state[QuestObject]].name]}` :
 		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questdesc',
-		state[QuestObject] === EquipmentTotem ? `Collect the ${questal} Totem and deliver it to ${original}` :
-		state[QuestObject] == InventoryTrophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
+		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
+		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
 		state[QuestObject] ? `We of ${original} stand in need of ${friendlySlotNames[SLOTS[state[QuestObject]].name]}. They say there's no shortage of them in ${questal}.` :
 		state[QuestMob] ? 	 `It's time to put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
 		'<br>&nbsp;');

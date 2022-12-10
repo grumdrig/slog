@@ -13,12 +13,12 @@ macro initialize(stat, count) {
   }
 }
 
-initialize(StatStrength, 4)
-initialize(StatAgility, 1)
-initialize(StatEndurance, 1)
-initialize(StatIntellect, 2)
-initialize(StatWisdom, 1)
-initialize(StatCharisma, 1)
+initialize(Strength, 4)
+initialize(Agility, 1)
+initialize(Endurance, 1)
+initialize(Intellect, 2)
+initialize(Wisdom, 1)
+initialize(Charisma, 1)
 
 
 macro goto(dest) {
@@ -39,9 +39,9 @@ func goodHunting(forLevel) {
 
 // while !forage(EquipmentTotem) { }
 seekquest()
-learn(1, HEAL_YEAH)
+learn(1, Heal_Yeah)
 // learn(3, BUFF)
-// while .InventoryReagents < 4 { forage(InventoryReagents) }
+// while .Reagents < 4 { forage(Reagents) }
 // cast(BUFF)
 while .Level < 88 {
   goto(goodHunting(.Level))
@@ -55,17 +55,17 @@ while .Level < 88 {
     }
     if .Encumbrance < .Capacity and !.MobHealth { loot() }
     while .Health < .MaxHealth {
-      while !.InventoryReagents {
-        if forage(InventoryReagents) < 0 { break }
+      while !.Reagents {
+        if forage(Reagents) < 0 { break }
       }
-      if cast(HEAL_YEAH) <= 0 { break }
+      if cast(Heal_Yeah) <= 0 { break }
     }
-    //drop(InventoryTrophies, .InventoryTrophies)
+    //drop(Trophies, .Trophies)
   }
   goto(18)
   levelup()
   while .Health < .MaxHealth {
     rest()
   }
-  sell(InventoryTrophies, .InventoryTrophies)
+  sell(Trophies, .Trophies)
 }

@@ -13,12 +13,12 @@ func initialize(stat, count) {
 }
 
 
-initialize(StatStrength, 4)
-initialize(StatAgility, 1)
-initialize(StatEndurance, 1)
-initialize(StatIntellect, 1)
-initialize(StatWisdom, 1)
-initialize(StatCharisma, 2)
+initialize(Strength, 4)
+initialize(Agility, 1)
+initialize(Endurance, 1)
+initialize(Intellect, 1)
+initialize(Wisdom, 1)
+initialize(Charisma, 2)
 
 
 const BOMPTON = 18
@@ -41,7 +41,7 @@ while .QuestMob != .MobSpecies { hunt() }
 */
 
 
-drop(InventoryFood, .InventoryFood)
+drop(Food, .Food)
 
 while 1 {
   if !.QuestOrigin { seekquest() }
@@ -77,7 +77,7 @@ while 1 {
 
   completequest()
   viewcinematic()
-  sell(InventoryTreasures, .InventoryTreasures)
+  sell(Treasures, .Treasures)
   levelup()
   while .Health < .MaxHealth { rest() }
 }
