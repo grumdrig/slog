@@ -1,8 +1,7 @@
-Virtual Machine Manual
-======================
+Slog Virtual Machine
+====================
 
-
-The VM is a virtual machine which can be programmed to control autonomous
+The Slog VM is a virtual machine which can be programmed to control autonomous
 character behavior in a role-playing game or other environment.
 
 
@@ -10,24 +9,24 @@ Architecture
 ------------
 
 The machine has a simple instruction set with simple signed 16-bit machine
-architecture, which includes:
+architecture, including:
 
 	* A flat main memory area of signed 16-bit words ("Int16s"), of length
-	  less than 32k, probably much less, addressible with positive 16-bit
-	  values. It holds both code and data.
+	  (much) less than 32k, addressible by non-negative 16-bit values. It holds
+	  both code and data.
 
 	* Four registers, also Int16s, described below, which may be accessed
 	  using memory addresses -1 down to -4.
 
-	* A vector of state variables, fetchable within the machine using negative
-	  addresses -8 or less.
+	* A vector of state variables, fetchable in machine instuctions using
+	  negative addresses -5 or less.
 
 	* Stack-based operation, with a stack that grows downward, which shares
 	  the main memory area with the code and data.
 
-Every machine instruction shares the same addressing scheme, which packs an
+Every machine instruction shares the same encoding scheme, which packs an
 unsigned 5-bit opcode and a signed 11-bit operand into a single 16-bit
-instruction.
+instruction word.
 
 
 Registers
@@ -43,7 +42,7 @@ They are:
   machine proceeds by fetching the machine instruction at PC, incrementing
   PC, then processing the instruction.
 
-* SP, the stack pointer, at memory location -2. It holdd the address of the
+* SP, the stack pointer, at memory location -2. It holds the address of the
   top value on the stack. The stack grows downwards (i.e. the value of SP
   descends as the stack grows). At startup SP is initialized to point just
   past the end of main memory, and the stack is therefore empty.
@@ -55,17 +54,20 @@ They are:
 
 * AX, the auxilliary register, at memory location -4. While instructions that
   do have a result place that result on the stack, some instructions that
-  have a auxilliary result place that auxilliary value in the AX register.
+  have a auxilliary result place that value in the AX register.
 
 
 State Vector
 ------------
 
 The state memory is accessed in the same way as the main memory, but using
-negative addresses less than -7. It is readable but not writeable with the
+negative addresses less than -4. It is readable but not writeable with the
 operation of the machine such as the `store` instruction. Instead it is
 passed for modification to a handler outside the VM itself using the `ext`
 instruction.
+
+The embedding game or application within which the VM runs exposes some or all
+of the game state in the state vector.
 
 
 Instruction Format
@@ -87,12 +89,12 @@ instruction.
 
 If `immediate` is any (signed 11-bit) value other than -1024 or
 -1023, then `opcode` simply takes on the value of `immediate` and the
- instrction maybe be said to be processed in "immediate mode".
+ instrction may be be said to be processed in "immediate mode".
 
 In the case where the operand has value -1024 (hexadecimal -0x400, called
-`STACK_MODE_TAG`), before executing the instruction, the top value is popped
-from the stack and used as `operand`. The instruction may then be said to be
-processed in "stack mode".
+`STACK_MODE_TAG`), then before executing the instruction, the top value is
+popped from the stack and used as `operand`. The instruction may then be said
+to be processed in "stack mode". I.e.:
 
 	operand = MEMORY[SP++]
 
@@ -125,6 +127,27 @@ pop the value `x`:
 
 	MEMORY[--SP] = x
 
+"Fetching" a value refers to accessing a value in main memory, a register, or
+ in the state vector, per the following pseudocode:
+
+	define fetch(address) as:
+		if address >= 0:
+			return MEMORY[address]
+		else if address <= -5:
+			return STATE[5 - address]
+		else if address == -1:
+			return PC
+		else if address == -2:
+			return SP
+		else if address == -3:
+			return FP
+		else if address == -4:
+			return AX
+
+
+"Storing" is just the opposite of fetching -- a value in placed into main
+ memory or a register (but not the state vector).
+
 
 Control Flow Instructions
 -------------------------
@@ -140,13 +163,13 @@ the AX register.
 
 Unconditional branch.
 
-In both the stack-addressed form and the inline-addressed form, `PC` takes on
-the value of operand.
+In both the stack-mode form and the inline-mode form, `PC` takes on the value
+of `operand`.
 
 	PC = operand
 
-In the case of an immediate operand, the operand is an offset from the current
-value of `PC`:
+However, in the case of an immediate operand, the operand is an offset from
+the current value of `PC`:
 
 	PC += operand
 
@@ -179,7 +202,8 @@ whereas with immediate addressing, it is:
 
 ### $10 assert
 
-Assertion of expected equality.
+Assertion of expected equality. This is for sanity testing and catching
+errors.
 
 If the value on the top of the stack does not equal the operand, throw an
 exception.
@@ -188,8 +212,8 @@ exception.
 		throw
 	}
 
-Note that the value is not removed from the stack; SP is not adjusted
-(except as it may be in the stack-addressed form).
+Note that the value is not removed from the top of the stack; SP is not
+adjusted (except as it may be in the stack-addressed form).
 
 
 Stack and Memory Instructions
@@ -218,6 +242,7 @@ is shortened by `-operand` by adjusting the stack pointer register.
 
 	SP -= operand
 
+
 ### $C swap
 
 If operand is positive, exchage the top stack value with the value
@@ -228,19 +253,19 @@ operand-deep in the stack.
 	MEMORY[SP + operand] = tmp
 
 If operand is negative, exchange the top stack value with the register or
-state variable which has operand as its address.
+state variable which has operand as its (absolute) address.
 
 	tmp = MEMORY[SP]
-	MEMORY[SP] = MEMORY[operand]
-	MEMORY[operand] = tmp
-
+	MEMORY[SP] = fetch(operand)
+	fetch(operand) = tmp
 
 
 ### $E fetch
 
-Fetch a value at a memory location and push it onto the stack.
+Fetch a value at a memory location (or register or state vector element) and
+push it onto the stack.
 
-	MEMORY[--SP] = MEMORY[operand]
+	MEMORY[--SP] = fetch(operand)
 
 
 ### $F fetchlocal
@@ -248,22 +273,21 @@ Fetch a value at a memory location and push it onto the stack.
 Fetch a value from a memory location relative to the frame pointer register
 and push it onto the stack.
 
-	MEMORY[--SP] = MEMORY[FP + operand]
+	MEMORY[--SP] = fetch(FP + operand)
 
 
 ### $D peek
 
 Fetch a value from somewhere on the stack and push it onto the stack.
 
-	MEMORY[--SP] = MEMORY[SP + operand]
+	MEMORY[--SP] = fetch(SP + operand)
 
-For example `peek 0` duplicates the top of the stack.
-
+For example, `peek 0` duplicates the top of the stack.
 
 
 ### $5 store
 
-Pop a value from the stack and store it in memory.
+Pop a value from the stack and store it in memory (or a register).
 
 	MEMORY[operand] = MEMORY[SP++]
 
@@ -282,8 +306,8 @@ Pop a value from the stack and store it somewhere on the stack.
 	MEMORY[SP + operand] = MEMORY[SP++]
 
 
-Mathematical Instructions
--------------------------
+Mathematical Operations
+-----------------------
 
 ### $10 unary
 
@@ -303,7 +327,7 @@ the stack:
 | $6      | inv        | x = 32767 / x [^1]
 | $1      | not        | x = x ? 0 : 1
 | $B      | bool       | x = x ? 1 : 0
-| $A      | abs        | x = abs(x)
+| $A      | abs        | x = x < 0 ? -x : x
 | $9      | neg        | x = -x
 | $C      | complement | x = ~x
 
@@ -362,8 +386,8 @@ fractional part of the result scaled by MAX_INT, i.e. 32767.
 [^6]: Logical operations treat zero as "false" and non-zero as "true". Nonzero
 results are carried through, so, for example, for `or` we get:
 
-	top = top | operand       ; bitwise
-	AX = top ? top : operand  ; logical
+	top = top | operand       ; bitwise or
+	AX = top ? top : operand  ; logical or
 
 [^7]: The shifts are to the right if operand is positive, or to the left if
 operand is negative.
@@ -380,10 +404,11 @@ External Call
 
 The `ext` opcode passes control to the application in which the VM is
 embedded, or in any case a handler object provided to the constructor of the
-VM. The handler must expose a function called `handleInstruction`, which the VM passes control to when processing the `ext` instruction.
+VM. The handler must expose a function called `handleInstruction`, which the
+VM passes control to when processing the `ext` instruction.
 
 The operand consists of two parts. The low-order 7 bits gives is an opaque
-code passed to `handleInstruction` as the first parameters for it to
+code passed to `handleInstruction` as the first parameter for it to
 interpret, along with a handle to the state vector. The four high-order bits
 give the number of additional arguments to pass to `handleInstruction`. These
 are taken off the stack.

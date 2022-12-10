@@ -1,17 +1,17 @@
-CHASM Assembler Manual
-======================
+Slog Assembler Manual
+=====================
 
 
-The assembler turns barely human-friendly assembly source code into
-computer-friendly CHASM machine code.
+The Slog assembler turns barely human-friendly assembly source code into
+computer-friendly Slog VM machine code.
 
 
 Syntax
 ------
 
 Identifiers consist of one or more identifier characters, which are
-alphanumerals plus the underscore character. However the first character may
-not be a numeral.
+alphanumerals plus the underscore character and the dollar sign. However the
+first character may not be a numeral.
 
 Decimal numeric literals are an optional `+` or `-` sign, followed by one or
 more numerals.
@@ -33,33 +33,48 @@ ignored by the assembler.
 Instructions
 ------------
 
-All instructions may be given in either of two forms:
+All instructions may be given in either of three forms:
 
 	*opcode*
 
 or
 
-	*opcode* *parameter*
+	*opcode* #
+
+or
+
+	*opcode* *operand*
 
 
-The former is equivalent to the stack-addressed form
+The first is equivalent to the stack-mode form
 
-	*opcode* -$200
+	*opcode* -$400
 
-which in the machine architecture causes that the parameter is taken from the
+which in the machine architecture causes that the operand is taken from the
 stack rather than supplied as as immediate value within with the
 instruction.
 
-In either case each instruction in code generates a single machine
-instruction, a 16-bit number, using the bitwise calculation:
+The second, with `#` as the operand, is equivalent to
 
- 	opcode | (parameter << 6)
+	*opcode* -$3FF
 
-In description of the effects on the stack of the instructions below, it is
-assumed that if stack-addressing is used, the parameter has already been
-removed from the stack.
+with signals inline mode, where the word following the instruction is used as
+the operand.
 
-Descriptions of each instruction are given in the PQVM manual.
+In all other cases, the operand is a literal value, which is referred to as
+immediate mode.
+
+
+In all cases each assembly instruction generates a machine instruction, a
+16-bit number, using the bitwise calculation:
+
+ 	opcode | (parameter << 5)
+
+In the description of the effects on the stack of the instructions below, it
+is assumed that if stack mode or inline mode is used, the operand has
+already been take from the stack or main memory.
+
+Descriptions of each instruction are given in the Slog VM manual.
 
 
 Labels
@@ -69,15 +84,15 @@ An identifier followed by a `:` defines a label, which symbolically refers to
 an address. This can be used, for example, as the target of a `jump`
 instruction, or as a reference to stored data. For example:
 
-	jump MoreCode
+		jump MoreCode
 
 	SomeData:
-	.data 5
+		.data 5
 
 	MoreCode:
 
-	fetch SomeData
-	assert 5
+		fetch SomeData
+		assert 5
 
 As this example implies, labels may be used before (as well as after) they are
 defined.
@@ -98,18 +113,23 @@ The macro may then be used in code, much like an instruction.
 
 To give an example:
 
+	.macro min x
+		max x
+		swap AX
+	.end
+
 	.macro branch_if_greater Label
 		sub
 		min 0
 		branch Label
 	.end
 
-	push 5
-	push 4
-	branch_if_greater OfCourseItIs
-	halt  ; will not be reached
+		push 5
+		push 4
+		branch_if_greater OfCourseItIs
+		halt  ; will not be reached
 	OfCourseItIs:
-	; code contiues
+		; code contiues
 
 
 Constants
@@ -134,7 +154,9 @@ assembler.
 Directives
 ----------
 
-Assembler directives provide some small level of convenience to the coder. Case is not significant, so, for example, `.DATA` may be used in place of `.data`.
+Assembler directives provide some small level of convenience to the coder.
+Case is not significant, so, for example, `.DATA` may be used in place of
+`.data`.
 
 
 ### `.macro` *name* [*args*]
@@ -151,7 +173,8 @@ End a macro definition.
 ### `.data` [data]
 
 Values following the `.data` directive are emitted directly as machine code.
-The data can be numeric values or symbolic values defined elsewhere, or may be either of these with a repetition specifier of the form:
+The data can be numeric values or symbolic values defined elsewhere, or may
+be either of these with a repetition specifier of the form:
 
 	*value* `*` *repetitions*
 
@@ -165,7 +188,9 @@ the following are equivalent:
 
 ### `.stack` *data*
 
-Uses the `stack` instruction to pushes a number of values onto the stack, but supplies the correct value to the `stack` instruction in a less error-prone way.
+The `.stack` directive uses the `stack` instruction to push a number of values
+onto the stack, but supplies the correct value to the `stack` instruction in
+a less error-prone way.
 
 So for example the following are equivalent:
 
@@ -175,9 +200,24 @@ So for example the following are equivalent:
 	.data 10 20 30
 
 In the case that *data* is a single value, which in turn is representable as
-an immediate, or in other words, if possible, the directive is implemented as
+an immediate (in other words, if possible), the directive is implemented as
 a `push` instruction.
 
 
 ### .jump and .branch
+
+The `.jump` and `.branch` directives simplify using the `jmp` and `branch`
+instruction, which have different semantics depending on whether immediate
+mode is used. So
+
+	.jump *label*
+
+and
+
+	.branch *label*
+
+Generate `jmp` or `br` instructions in whichever mode is appropriate to the
+distance of the branch.
+
+
 
