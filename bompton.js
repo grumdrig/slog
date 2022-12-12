@@ -125,8 +125,7 @@ const SLOTS = [
 	  description: `Skins, horns, teeth, etc. collected from slain enemies.` },
 
 	{ name: 'Reagents',
-
-	  description: `` },
+	  description: `Various herbs and special items often needed for spellcasting.` },
 
 	{ name: 'Resources',
 
@@ -142,12 +141,11 @@ const SLOTS = [
 	  description: `` },
 
 	{ name: 'Potions',
+	  description: `Drinking this restores both energy and health to maximum.` },
 
-	  description: `` },
-
-	{ name: 'LifePotions',
-
-	  description: `` },
+	{ name: 'Sunsparks',
+	  description: `These restore life at the moment of death. Kind of
+	  expensive, but that is a pretty handy feature.` },
 
 
 	{ name: 'Location',
@@ -191,25 +189,22 @@ const SLOTS = [
 
 
 	{ name: 'Act', // (up to 9, 10 = win)
-
-	  description: `` },
+	  description: `The current act. The main plot of the game takes place in nine acts.` },
 
 	{ name: 'ActDuration', // # of something required
-
-	  description: `` },
+	  description: `The number of quests to be completed to complete the current act.` },
 
 	{ name: 'ActProgress', // as advanced by quests
-
-	  description: `` },
+	  description: `The number of quests which have been completed for the current act.` },
 
 
 	{ name: 'BalanceGold',      // bank of Bompton...
-
-	  description: `` },
+	  description: `Gold may be deposited into the Bank of Bompton. This is
+	  the amount of gold under deposit by the character.` },
 
 	{ name: 'BalanceTreasures', // ...balances
-
-	  description: `` },
+	  description: `The number of treasures under deposit by the character in
+	  the Bank of Bompton.` },
 
 	{ name: 'Seed',  // PRNG seed
 
@@ -262,13 +257,17 @@ const CALLS = {
 		four spells at a time, so choose wisely.
 
 		The spellbook_slot is a value from 1 to 4, and spell is one of
-		the predfined constants SPELL_*.` },
+		the predfined spell constants.` },
 
 	travel: { parameters: 'destination',
 		description: `Travel towards a given map location. If the destination
 		is reachable, this will get them one map location closer. The
 		character may not choose the most efficient route, so travel
 		step-by-step if more efficiency is desired.` },
+
+	use: { parameters: 'item',
+		description: `Use the item, specified by state slot index, for its
+		intended purpose. Maybe that's just Potion.` },
 
 	melee: {
 		description: `Battle the nearby mob. You'll do damage, they'll do
@@ -378,17 +377,17 @@ function generateInterface() {
 			interface.push(`macro ${call}() external(${operation})`);
 	}
 
-	interface.push('');
+	interface.push('\n// State vector slots');
 
 	SLOTS.forEach((slot, index) =>
 		interface.push(`const ${slot.name} = ${index}`));
 
-	interface.push('');
+	interface.push('\n// Spells');
 
 	SPELLS.forEach((spell, index) =>
 		spell && interface.push(`const ${moniker(spell.name)} = ${index}`));
 
-	interface.push('');
+	interface.push('\n// Mob Species');
 
 	DENIZENS.forEach((denizen, index) =>
 		denizen && interface.push(`const ${moniker(denizen.name)} = ${index}`));
@@ -428,12 +427,11 @@ code {
 }
 #weaps {
 	display: grid;
-	grid-template-columns: 30px 150px 70px 30px;
+	grid-template-columns: 50px repeat(${NUM_WEAPON_TYPES}, 175px);
 	gap: 4px;
 }
-#weaps div {
-	padding: 0;
-	margin: 0;
+#weaps .head {
+	font-weight: bold;
 }
 div#terrains {
 	display: grid;
@@ -518,24 +516,30 @@ div#terrains {
 	} });
 
 	head('Weapons');
-	result += '<div class=listview id=weaps>';
-	div('ID', 'class=header');
-	div('Weapon', 'class=header');
-	div('Type', 'class=header');
-	div('Power', 'class=header');
-	WEAPON_NAMES.forEach((w,i) => {
-		if (w) {
-			div(i);
-			div(w);
-			div(weaponTypeNames[weaponType(i)]);
+
+	p(`The base price of weapons is ${DATABASE[Weapon].basePrice}.`);
+
+	subhead('Weapon Types');
+
+	WEAPON_TYPES.forEach((w,i) => { if (w) {
+		p(i + '. ' + w.name + ': ' + w.description);
+	} });
+
+	result += '<div id=weaps><div class=head>Power</div>';
+	for (let w of weaponTypeNames)
+		if (w) div(w, 'class=head');
+	WEAPON_NAMES.forEach((w,i) => { if (w) {
+		if ((i - 1) % NUM_WEAPON_TYPES === 0) {
 			div(weaponPower(i));
 		}
-	});
+		div(i + '. ' + w);
+	} });
 
 	result += '</div>'
 
-	head('Equipment');
-	for (let t = EQUIPMENT_0; t < EQUIPMENT_0 + EQUIPMENT_COUNT; t += 1) {
+	head('Other Equipment');
+
+	for (let t = EQUIPMENT_0 + 1; t < EQUIPMENT_0 + EQUIPMENT_COUNT; t += 1) {
 		if (DATABASE[t]) {
 			subhead(SLOTS[t].name);
 			p('Base price: ' + DATABASE[t].basePrice);
@@ -780,9 +784,9 @@ SPELLS.forEach((spell, index) => spell && define(moniker(spell.name), index));
 /////////// Weapons
 
 const WEAPON_DB = [null, {
-	name: 'Smash',
+	name: 'Blunt',
 	list: [
-			'Piece of Firewood',
+			'Firewood Chunk',
 			'Claw Hammer',
 			'Club',
 			'Great Club',
@@ -800,7 +804,7 @@ const WEAPON_DB = [null, {
 			'+7 Doomsday Warmaul'
 		],
 	}, {
-		name: 'Slash',
+		name: 'Bladed',
 		list: [
 			'Steak knife',
 			'Dirk',
@@ -819,7 +823,7 @@ const WEAPON_DB = [null, {
 			'+6 Vorpal Sword',
 			'+7 Doom Sword'],
 	}, {
-		name: 'Shoot',
+		name: 'Ranged',
 		list:  [
 			'Bag of Rocks',
 			'Sling',
@@ -839,7 +843,7 @@ const WEAPON_DB = [null, {
 			'+7 Doomsayer Bow'
 			],
 	}, {
-		name: 'Chop',
+		name: 'Axes',
 		list: [
 			'Hatchet',
 			'Tomahawk',
@@ -859,7 +863,7 @@ const WEAPON_DB = [null, {
 			'+7 Galaxy Axe'
 			],
 	}, {
-		name: 'Poke',
+		name: 'Polearms',
 		list: [
 			'Sharpened stick',
 			'Eelspear',
@@ -893,18 +897,22 @@ function interleaveArrays(...as) {
 
 const WEAPON_NAMES = [''].concat(interleaveArrays(...WEAPON_DB.filter(x=>x).map(w => w.list)));
 // Weapon types
-const SMASH = 1;
-const SLASH = 2;
-const SHOOT = 3;
-const POKE = 4;
-const AXE = 5;
-const NUM_WEAPON_TYPES = 5;
+
+WEAPON_TYPES = [ null,
+	{ name: 'Blunt',    description: 'Truncheons and such for old fashioned clobbering purposes' },
+	{ name: 'Bladed',   description: `Swords, etc. You really can't go wrong with swords.` },
+	{ name: 'Ranged',   description: 'Bows and other projectile launchers.' },
+	{ name: 'Polearms', description: 'Spears and other long, pointy things.' },
+	{ name: 'Axes',     description: 'The clubbing power of blunt weapons combined with the slicing power of blades.' },
+];
+const NUM_WEAPON_TYPES = WEAPON_TYPES.length - 1;
+WEAPON_TYPES.forEach((w,i) => w && define(w.name, i));
 
 function weaponPower(n) {
 	return Math.floor((n + NUM_WEAPON_TYPES - 1) / NUM_WEAPON_TYPES);
 }
 
-function weaponType(n) { return 1 + (n - 1) % NUM_WEAPON_TYPES }
+function weaponType(n) { return n > 0 ? 1 + (n - 1) % NUM_WEAPON_TYPES : 0 }
 
 const weaponTypeNames = [];
 WEAPON_DB.forEach((t, i) => { if (t) weaponTypeNames[i] = t.name} );
@@ -1061,8 +1069,8 @@ const DENIZENS = [
 		playable: true,
 		esteems: 2,
 		waryof: 3,
-		proficiency: [SLASH],
-		badat: [POKE, SHOOT],
+		proficiency: [Bladed],
+		badat: [Polearms, Ranged],
 		startState: [
 			{ slot: Agility, increment: +2 },
 			{ slot: Charisma, increment: +1 },
@@ -1073,7 +1081,7 @@ const DENIZENS = [
 			{ slot: Headgear, value: 1},
 			{ slot: Food,     value: 1 },
 		],
-		description: "Likable, lithe creatures of small stature, often underestimated",
+		description: "Likable, lithe creatures of small stature, often underestimated.",
 		occurrence: 0.2,
 	},
 	{
@@ -1082,8 +1090,8 @@ const DENIZENS = [
 		playable: true,
 		esteems: 3,
 		waryof: 1,
-		proficiency: [SMASH],
-		badat: SLASH,
+		proficiency: [Blunt],
+		badat: Bladed,
 		startState: [
 			{ slot: Endurance, increment: +2 },
 			{ slot: Strength, increment: +1 },
@@ -1094,7 +1102,7 @@ const DENIZENS = [
 			{ slot: Shield, value: 1},
 			{ slot: Gold,   value: 1 },
 		],
-		description: "Sturdy sorts with a...direct approch to problems",
+		description: "Sturdy sorts with an unsubtle demeanor.",
 		occurrence: 0.1,
 	},
 	{
@@ -1102,8 +1110,8 @@ const DENIZENS = [
 		playable: true,
 		esteems: 1,
 		waryof: 2,
-		proficiency: [POKE, SHOOT],
-		badat: SMASH,
+		proficiency: [Polearms, Ranged],
+		badat: Blunt,
 		startState: [
 			{ slot: Intellect, increment: +2 },
 			{ slot: Wisdom, increment: +1 },
@@ -1114,12 +1122,8 @@ const DENIZENS = [
 			{ slot: Footwear, value: 1},
 			{ slot: Reagents, value: 1 },
 		],
-		description: "Proud, sometimes haughty, intellectuals",
+		description: "Proud, sometimes haughty, intellectuals.",
 		occurrence: 0.1,
-	}, {
-		name: "Gust",
-		hitdice: 10,
-		occurrence: 0.01,
 	}, {
 		name: "Parakeet",
 		badassname: "Triplikeet",
@@ -1131,6 +1135,7 @@ const DENIZENS = [
 		badassname: "Supersow",
 		domain: HILLS,
 		hitdice: 2,
+		drops: Food,
 	}, {
 		name: "Gegnome",
 		badassname: "Megegnome",
@@ -1171,6 +1176,12 @@ const DENIZENS = [
 		badassname: "Mokomordem",
 		domain: MOUNTAINS,
 		hitdice: 10,
+	}, {
+		name: "Gust",
+		hitdice: 10,
+		occurrence: 0.01,
+		domain: TOWN,
+		description: "Indistict forms, seemingly sentient.",
 	}, {
 		name: "Icehalt",
 		badassname: "Ikkadrosshalt",
@@ -1492,14 +1503,14 @@ function carryCapacity(state) {
 	return state[Strength] + state[Mount];
 }
 
-DATABASE[Gold] =        { value: 1, weight: 1/256 };
+DATABASE[Resources] =   { value: 1/100, weight: 1 };
 DATABASE[Trophies] =    { value: 1/10, weight: 1 };
-DATABASE[Reagents] =    { value: 1, weight: 1 };
-DATABASE[Resources] =   { value: 1/10, weight: 1 };
+DATABASE[Gold] =        { value: 1, weight: 1/100 };
 DATABASE[Food] =        { value: 1, weight: 1 };
+DATABASE[Reagents] =    { value: 10, weight: 1/10 };
+DATABASE[Potions] = 	{ value: 100, weight: 1 };
 DATABASE[Treasures] =   { value: 1000, weight: 3 };
-DATABASE[Potions] = 	 { value: 100, weight: 1 };
-DATABASE[LifePotions] = { value: 10000, weight: 1 };
+DATABASE[Sunsparks] = { value: 10000, weight: 1 };
 
 
 function encumbrance(state) {
@@ -1671,8 +1682,8 @@ class Bompton {
 			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
-				if (state[LifePotions] > 0) {
-					dec(LifePotions, 1);
+				if (state[Sunsparks] > 0) {
+					dec(Sunsparks, 1);
 					state[Health] = 1;  // or max health?
 				} else {
 					state[GameOver] = 86;
@@ -1792,7 +1803,7 @@ class Bompton {
 		let questal = mapInfo(state[QuestLocation], state);
 
 		function passTime(task, hours, days) {
-			TASK = task;  // TODO this is inelegant
+			TASK = task;  // this global is inelegant
 			if (TASK[TASK.length - 1] !== '.') TASK += '...';
 			if (days) hours += HOURS_PER_DAY * days;
 			inc(Hours, hours);
@@ -1845,7 +1856,6 @@ class Bompton {
 
 
 		if (operation === travel) {
-			if (state[Encumbrance] > state[Capacity] * 1.5) return -1; // vastly over-encumbered
 			let destination = arg1;
 			if (destination === state[Location]) return 0;
 			let remote = mapInfo(destination, state);
@@ -1868,23 +1878,46 @@ class Bompton {
 				remote = mapInfo(destination, state);
 				if (!remote) return -1;  // but shouldn't happen
 			}
-			let hours = 24;
+
 			let travelspeed = (state[Endurance] + state[Mount]) / 5;
 			if (state[Enchantment] === Horsewheels) travelspeed += 1;
+
+			let hours = 24 / travelspeed;
 			let terrain = TERRAIN_TYPES[remote.terrain];
 			hours *= terrain.moveCost || 1;
-			if (state[Encumbrance] > state[Capacity]) hours *= 2;  // over-encumbered
+
+			if (state[Encumbrance] > state[Capacity] * 1.5) hours *= 16; // vastly over-encumbered
+			else if (state[Encumbrance] > state[Capacity])  hours *= 2;  // over-encumbered
+
 			if (state[Food] >= 1)
 				dec(Food)
 			else
 				hours *= 2;
-			hours = Math.round(hours / travelspeed);
+
+			hours = Math.round(hours);
+
 			state[Location] = destination;
+
 			clearMob(state);
+
 			let plan = 'Travelling to ' + remote.name;
 			if (goal !== remote) plan += ' en route to ' + goal.name;
 			passTime(plan, hours);
+
 			return 1;
+
+		} else if (operation === use) {
+			let slot = arg1;
+			if (!state[slot]) return -1;
+			if (isInventorySlot(slot)) {
+				dec(slot);
+				if (slot === Potion || slot === LifePotion) {
+					state[Health] = state[MaxHealth];
+					state[Energy] = state[MaxEnergy];
+				}
+				return 1;
+			}
+			return -1;
 
 		} else if (operation === melee) {
 			if (!state[MobSpecies]) return -1;
@@ -1893,19 +1926,23 @@ class Bompton {
 
 		} else if (operation === loot) {
 			if (!state[MobSpecies]) return -1;
+			let info = DENIZENS[state[MobSpecies]];
 			if (state[MobHealth] > 0 && d(20) > state[Agility]) {
 				doMobAttack();
 				if (state[Health] <= 0) return 0;
-				let info = DENIZENS[state[MobSpecies]];
 				if (info.esteemSlot)
 					dec(state[info.esteemSlot], 1);
 			}
 
-			if (state[TrophyMob] == state[MobSpecies] || state[Trophies] == 0)
-				state[TrophyMob] = state[MobSpecies];
-			else
-				state[TrophyMob] = 0;
-			inc(Trophies);
+			if (info.drops) {
+				inc(info.drops);
+			} else {
+				if (state[TrophyMob] == state[MobSpecies] || state[Trophies] == 0)
+					state[TrophyMob] = state[MobSpecies];
+				else
+					state[TrophyMob] = 0;
+				inc(Trophies);
+			}
 			clearMob(state);
 
 		} else if (operation === buy) {
@@ -2763,7 +2800,7 @@ function updateGame(state) {
 		Food: 'food',
 		Treasures: 'treasures',
 		Potions: 'healing potions',
-		LifePotions: 'life potions',
+		Sunsparks: 'sunsparks',
 	};
 	set('questgoal',
 		state[QuestObject] === Totem ? 'Deliver the totem' :
