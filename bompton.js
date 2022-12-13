@@ -1061,6 +1061,12 @@ TERRAIN_TYPES.forEach((info, index) => {
 
 // TODO stat adjustments for mobs
 
+function amap(...init) {
+	let result = new Array();
+	for (let i = 0; i < init.length; i += 2) result[init[i]] = init[i+1];
+	return result;
+}
+
 const DENIZENS = [
 	null,
 	{
@@ -1069,8 +1075,10 @@ const DENIZENS = [
 		playable: true,
 		esteems: 2,
 		waryof: 3,
-		proficiency: [Bladed],
-		badat: [Polearms, Ranged],
+		proficiency: amap(
+			Bladed,   +1,
+			Polearms, -1,
+			Ranged,   -1),
 		startState: [
 			{ slot: Agility, increment: +2 },
 			{ slot: Charisma, increment: +1 },
@@ -1090,8 +1098,9 @@ const DENIZENS = [
 		playable: true,
 		esteems: 3,
 		waryof: 1,
-		proficiency: [Blunt],
-		badat: Bladed,
+		proficiency: amap(
+			Blunt,  +1,
+			Bladed, -1),
 		startState: [
 			{ slot: Endurance, increment: +2 },
 			{ slot: Strength, increment: +1 },
@@ -1110,8 +1119,10 @@ const DENIZENS = [
 		playable: true,
 		esteems: 1,
 		waryof: 2,
-		proficiency: [Polearms, Ranged],
-		badat: Blunt,
+		proficiency: amap(
+			Polearms, +1,
+			Ranged,   +1,
+			Blunt,    -1),
 		startState: [
 			{ slot: Intellect, increment: +2 },
 			{ slot: Wisdom, increment: +1 },
@@ -1698,8 +1709,10 @@ class Bompton {
 			if (state[MobHealth] <= 0) return;
 			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return;
-			const offense = state[Agility] + weaponPower(state[Weapon]);
-			const sharpness = state[Strength] + weaponPower(state[Weapon]);
+			let prof = DENIZENS[state[Species]].proficiency ?? 0;
+			if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
+			const offense = state[Agility] + weaponPower(state[Weapon]) + prof;
+			const sharpness = state[Strength] + weaponPower(state[Weapon]) + prof;
 			let damage = rollAttack(offense, state[MobLevel], sharpness);
 			dec(MobHealth, Math.min(state[MobHealth], damage));
 
