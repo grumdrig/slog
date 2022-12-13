@@ -119,32 +119,33 @@ const SLOTS = [
 
 
 	{ name: 'Gold',
-	  description: `Gold coins are the common medium of value storage and exchange.` },
+	  description: `Inventory item. Gold coins are the common medium of value
+	  storage and exchange.` },
 
 	{ name: 'Trophies',
-	  description: `Skins, horns, teeth, etc. collected from slain enemies.` },
+	  description: `Inventory item. Skins, horns, teeth, etc. collected from slain enemies.` },
 
 	{ name: 'Reagents',
-	  description: `Various herbs and special items often needed for spellcasting.` },
+	  description: `Inventory item. Various herbs and special items often needed for spellcasting.` },
 
 	{ name: 'Resources',
-
-	  description: `` },
+	  description: `Inventory item. Raw natural resources which may be gathered in nature.` },
 
 	{ name: 'Food',
-	  description: `Adventures eat food every time they travel. If they're out
-	  of food, travelling takes longer due to extra time spent hunting and
-	  foraging and complaining about being hungry.` },
+	  description: `Inventory item. Adventurers eat food every time they
+	  travel. If they're out of food, travelling takes longer due to extra
+	  time spent hunting and foraging and complaining about being hungry.
+	  Food may also be eaten to raise Energy by one.` },
 
 	{ name: 'Treasures',
-
-	  description: `` },
+	  description: `Inventory item. Exceptional items of high trade value.` },
 
 	{ name: 'Potions',
-	  description: `Drinking this restores both energy and health to maximum.` },
+	  description: `Inventory item. Consuming a potion restores both energy
+	  and health to maximum.` },
 
 	{ name: 'Sunsparks',
-	  description: `These restore life at the moment of death. Kind of
+	  description: `Inventory item. These restore life at the moment of death. Kind of
 	  expensive, but that is a pretty handy feature.` },
 
 
@@ -165,27 +166,22 @@ const SLOTS = [
 
 
 	{ name: 'QuestObject',
-	  description: `The item which is the target of the current quest, or 0 if none.` },
+	  description: `The item slot which is the target of the current quest, if any.` },
 
 	{ name: 'QuestMob', // monster (by id)
-
-	  description: `` },
+	  description: `The creature type associated with the current quest, if any.` },
 
 	{ name: 'QuestLocation', // location to perform the quest
-
-	  description: `` },
+	  description: `The location associated with the current quest, if any.` },
 
 	{ name: 'QuestQty', // qty # required
-
-	  description: `` },
+	  description: `The quantity needed to fulfill the current quest.` },
 
 	{ name: 'QuestProgress', // # completed
+	  description: `The portion of the QuestQty which has been completed.` },
 
-	  description: `` },
-
-	{ name: 'QuestOrigin', // town location
-
-	  description: `` },
+	{ name: 'QuestEnd', // town location
+	  description: `The location where the quest may be completed, which may be where it was assigned.` },
 
 
 	{ name: 'Act', // (up to 9, 10 = win)
@@ -207,8 +203,7 @@ const SLOTS = [
 	  the Bank of Bompton.` },
 
 	{ name: 'Seed',  // PRNG seed
-
-	  description: `` },
+	  description: `Pseudo-random number seed, used by the game engine.` },
 
 ];
 
@@ -900,10 +895,15 @@ const WEAPON_NAMES = [''].concat(interleaveArrays(...WEAPON_DB.filter(x=>x).map(
 
 WEAPON_TYPES = [ null,
 	{ name: 'Blunt',    description: 'Truncheons and such for old fashioned clobbering purposes' },
+	// to hit: str  dam: str  cost: less
 	{ name: 'Bladed',   description: `Swords, etc. You really can't go wrong with swords.` },
+	// to hit: agil  dam: str  cost: more  def: +1
 	{ name: 'Ranged',   description: 'Bows and other projectile launchers.' },
+	// to hit: agil  dam: wis  ammo?
 	{ name: 'Polearms', description: 'Spears and other long, pointy things.' },
+	// to hit: agil  dam: agil&str
 	{ name: 'Axes',     description: 'The clubbing power of blunt weapons combined with the slicing power of blades.' },
+	// to hit: agil & str  dam: str
 ];
 const NUM_WEAPON_TYPES = WEAPON_TYPES.length - 1;
 WEAPON_TYPES.forEach((w,i) => w && define(w.name, i));
@@ -1559,7 +1559,7 @@ function clearQuest(state) {
 	state[QuestObject] = 0;
 	state[QuestMob] = 0;
 	state[QuestLocation] = 0;
-	state[QuestOrigin] = 0;
+	state[QuestEnd] = 0;
 	state[QuestProgress] = 0;
 	state[QuestQty] = 0;
 }
@@ -1911,9 +1911,12 @@ class Bompton {
 			if (!state[slot]) return -1;
 			if (isInventorySlot(slot)) {
 				dec(slot);
-				if (slot === Potion || slot === LifePotion) {
-					state[Health] = state[MaxHealth];
-					state[Energy] = state[MaxEnergy];
+				if (slot === Potions) {
+					state[Health] = Math.max(state[Health], state[MaxHealth]);
+					state[Energy] = Math.max(state[Energy], state[MaxEnergy]);
+				} else if (slot === Food) {
+					if (state[Energy] < state[MaxEnergy])
+						inc(Energy);
 				}
 				return 1;
 			}
@@ -2010,7 +2013,7 @@ class Bompton {
 			}
 			if (operation === give &&
 					state[QuestObject] === slot &&
-					state[Location] === state[QuestOrigin] &&
+					state[Location] === state[QuestEnd] &&
 					[0,state[TrophyMob]].includes(state[QuestMob])) {
 				if (state[QuestObject] === Totem) {
 					if (state[QuestProgress] === 1)
@@ -2079,9 +2082,9 @@ class Bompton {
 				if (state[ActProgress] < 3) {
 					// Bring the totem from origin to location
 					state[QuestObject] = Totem;
-					state[QuestOrigin] = d(36);
+					state[QuestEnd] = d(36);
 					do { state[QuestLocation] = d(36);
-					} while (state[QuestLocation] == state[QuestOrigin]);
+					} while (state[QuestLocation] == state[QuestEnd]);
 					state[QuestQty] = 2; // pick up, drop off
 				} else if (state[ActProgress] == state[ActDuration] - 1) {
 					state[QuestMob] = Main_Boss;
@@ -2118,14 +2121,14 @@ class Bompton {
 					state[QuestQty] = qty;
 				}];
 				randomPick(questTypes)();
-				state[QuestOrigin] = state[Location];
+				state[QuestEnd] = state[Location];
 			}
 			state[QuestProgress] = 0;
 			return 1;
 
 		} else if (operation === completequest) {
 			if (!state[QuestObject] && !state[QuestMob]) return -1;
-			if (state[QuestOrigin] && (state[QuestOrigin] != state[Location])) return -1;
+			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			inc(Experience, 50 * state[Act]);
 			inc(ActProgress);
@@ -2789,7 +2792,7 @@ function updateGame(state) {
 
 	let questal = Bompton.mapInfo(state[QuestLocation], state);
 	questal &&= questal.name;
-	let original = Bompton.mapInfo(state[QuestOrigin], state);
+	let original = Bompton.mapInfo(state[QuestEnd], state);
 	original &&= original.name;
 	const friendlySlotNames = {
 		Totem: 'totem',
