@@ -500,3 +500,38 @@ Maybe you can buy reagents.
 Maybe you get treasures for completing quests?
 
 
+Decision Tree
+-------------
+
+In retrospect it kinda would have made more sense to do a decision tree rather
+than a VM. Here's an example strategy. The "if"s are implied
+
+.Terrain = Town
+	.Health < .MaxHealth
+		rest()
+	.Trophies > 0
+		sell(Trophies, .Trophies)
+	.QuestQty = 0
+		seekquest()
+	travel(Wilderness)
+.Health < .MaxHealth / 2
+	travel(Bompton)
+.QuestLocation and .QuestQty < .QuestDuration and .Location != .QuestLocation
+	travel(.QuestLocation)
+.MobType
+	melee()
+hunt()
+
+If course I could write a decision tree compiler implemented in the VM
+
+TODO: turn a fairly operational full strategy into a decision tree and see how
+it looks.
+
+
+Follow-on Ideas
+---------------
+
+- Treat Chinbreak as a module. Use the resulting state vector in the next one.
+
+- PvP or other multiplayer, wherein some game state is shared. Battle Royale, etc.
+

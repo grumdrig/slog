@@ -1530,13 +1530,45 @@ if (typeof exports !== 'undefined') {
 	exports.compile = compile;
 }
 
+function usage() {
+	console.log(`Usage: compiler.js [OPTIONS] FILENAME...
+
+Compiles the named Slog source file(s) into a packaged Slog strategy, or one
+of several output formats specified by OPTIONS flags. If no output options
+are specified, no output is generated, but syntax is checked. If "-" is used
+in place of any output file, output is piped to stdout.
+
+OPTIONS:
+	-p file, --package=file
+		Generate a Slog strategy package and write it to the named file
+	-s, --symbols
+		Include debugging symbols in the generated strategy package file
+	-i file, --interface=file
+		Read the game interface from the named game logic file
+	-b file, --binary=file
+		Write binary machine code suitable for the Slog VM to named file
+	-a file, --assembly=file
+		Write intermediate assemby language to named file
+	-d file, --disassembly=file
+		Generate binary output, then disassemble it to named file
+	--help
+		This, that you're reading
+
+EXAMPLE:
+	The most typical use case at this time would be:
+
+	$ ./compile.js -i chinbreak.js -p MYSTRAT.strat MYSTRAT.slog
+`);
+	process.exit()
+}
 
 if (typeof module !== 'undefined' && !module.parent) {
 	// Called with node as main module
 	const { parseArgs } = require('util');
 	const { readFileSync, writeFileSync } = require('fs');
 
-	const { values: { assembly, binary, disassembly, package, symbols, interface }, positionals } = parseArgs({
+	const { values: { assembly, binary, disassembly,
+					  package, symbols, interface, help }, positionals } = parseArgs({
 		options: {
 			assembly: {
 				type: "string",
@@ -1563,9 +1595,14 @@ if (typeof module !== 'undefined' && !module.parent) {
 				short: 'i',
 				multiple: true,
 			},
+			help: {
+				type: 'boolean',
+			},
 		},
 		allowPositionals: true,
 	});
+
+	if (help || positionals.length == 0) usage();
 
 	let interfaces = (interface || []).map(filename => require(filename).generateInterface());
 
