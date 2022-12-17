@@ -1,15 +1,3 @@
-Slog
-====
-
-Here's the idea. Run PQ-esque characters in an RPG world based on a very
-limited-length assembly code which guides their behavior. Have them start as
-bare characters, then they can, if they like, train up stats or whatever
-based on checking registers, running routines to see if there's monsters
-about, etc.
-
-In other words the character runs a virtual machine.
-
-
 
 Bompton Island / Chinbreak Island module
 ========================================
@@ -217,12 +205,6 @@ I just changed to XP styling. You have to
 	npm install xp.css
 
 
-Game Over
----------
-
-The first state variable is required to be GameOver. The game stops running
-once it's non-zero.
-
 
 Architecture Changes
 --------------------
@@ -246,6 +228,8 @@ Instead I went with the opaque thing of a negative external call code meaning
 the argument is a zero-terminated vector. However, setname should probably go.
 
 Check tag
+
+
 
 
 Tag
@@ -504,7 +488,7 @@ Decision Tree
 -------------
 
 In retrospect it kinda would have made more sense to do a decision tree rather
-than a VM. Here's an example strategy. The "if"s are implied
+than a VM. Here's an example strategy. The ifs and elses are implied.
 
 .Terrain = Town
 	.Health < .MaxHealth
@@ -527,6 +511,11 @@ If course I could write a decision tree compiler implemented in the VM
 TODO: turn a fairly operational full strategy into a decision tree and see how
 it looks.
 
+The advantage would be that hot-swapping strats is a no-brainer.
+
+The disadvantage is that that doesn't look quite as readable to me. Also it's
+not as flexible or at least not as easily flexible.
+
 
 Follow-on Ideas
 ---------------
@@ -535,3 +524,10 @@ Follow-on Ideas
 
 - PvP or other multiplayer, wherein some game state is shared. Battle Royale, etc.
 
+- Leaderboards
+
+
+Use
+---
+
+Move things like melee() and cast() into use() to reduce the api, essentially.
