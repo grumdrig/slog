@@ -43,16 +43,27 @@ const SLOTS = [
 	{ name: 'TrainingPoints',
 	  description: `Training points are required to be able to train up stats.` },
 
-	{ name: 'ArmorClass',
-	  description: `Defensive rating calculated based on equipment and bonuses.` },
+
+	{ name: 'Defense',
+	  description: `Ability to deflect or avoid an opponent's attack. Calculated based on equipment, stats and bonuses.` },
+
+	{ name: 'Offense',
+	  description: `Ability to penetrate an opponent's defenses in a melee attack. Calculated based on equipment, stats and bonuses.` },
+
+	{ name: 'Potency',
+	  description: `Degree of damage possible in successful melee attacks. Calculated based on equipment, stats and bonuses.` },
+
 
 	{ name: 'Encumbrance',
 	  description: `Total weight of carried items, not to exceed Capacity.` },
+
 	{ name: 'Capacity',
 	  description: `Maximum weight you could possibly carry.` },
 
+
 	{ name: 'Enchantment',
 	  description: `Active enchantment currently affecting you.` },
+
 
 	{ name: 'TrophyMob',
 	  description: `If all trophies were looted from the same mob type, that's
@@ -1510,9 +1521,6 @@ function generateMap(scrambleFrom) {
 ///////////////
 
 
-function carryCapacity(state) {
-	return state[Strength] + state[Mount];
-}
 
 DATABASE[Resources] =   { value: 1/100, weight: 1 };
 DATABASE[Trophies] =    { value: 1/10, weight: 1 };
@@ -1524,24 +1532,10 @@ DATABASE[Treasures] =   { value: 1000, weight: 3 };
 DATABASE[Sunsparks] = { value: 10000, weight: 1 };
 
 
-function encumbrance(state) {
-	let result = 0
-	for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
-		result += DATABASE[i].weight * state[i];
-	}
-	return Math.floor(result);
-}
 
 function roomFor(item, state) {
-	let available = carryCapacity(state) - encumbrance(state);
+	let available = state[Capacity] - state[Encumbrance];
 	return Math.floor(available / DATABASE[item].weight);
-}
-
-function armorClass(state) {
-	return state[Armor] +
-			state[Shield] +
-			state[Headgear] +
-			state[Footwear];
 }
 
 // Generalized hopefully well from
@@ -1626,9 +1620,27 @@ class Bompton {
 		let result = this._handleInstruction(state, operation, ...args);
 
 		if (state[Level] > 0) {
-			state[Capacity] = carryCapacity(state);
-			state[Encumbrance] = encumbrance(state);
-			state[ArmorClass] = armorClass(state);
+			// Various state values are calculable from other state values
+			// but we store them in the state vector for convenience and visibility
+
+			let encumbrance = 0
+			for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
+				encumbrance += DATABASE[i].weight * state[i];
+			}
+			state[Encumbrance] = Math.floor(encumbrance);
+			state[Capacity] = state[Strength] + state[Mount];
+
+			let prof = DENIZENS[state[Species]].proficiency ?? 0;
+			if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
+
+			state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
+			state[Potency] = state[Strength] + weaponPower(state[Weapon]) + prof;
+			state[Defense] =
+				state[Agility] +
+				state[Armor] +
+				state[Shield] +
+				state[Headgear] +
+				state[Footwear];
 
 			if (state[Health] <= 0) {
 				state[GameOver] = 86;
@@ -1670,13 +1682,13 @@ class Bompton {
 
 		function randomPick(a) { return a[irand(a.length)] }
 
-		function rollAttack(offsense, defense, sharpness) {
+		function rollAttack(offsense, defense, potency) {
 			let DIE = 10;
 			let attackRoll = d(DIE);
 			let defenseRoll = d(DIE);
 			if (attackRoll === 1) return 0;
 			if (attackRoll === DIE || attackRoll + offsense > defenseRoll + defense) {
-				let damage = d(Math.max(1, sharpness));
+				let damage = d(Math.max(1, potency));
 				if (defenseRoll == DIE && damage > 1) damage = 1;
 				if (defenseRoll == 1) damage >>= 1;
 				return damage;
@@ -1688,8 +1700,7 @@ class Bompton {
 		function doMobAttack() {
 			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return 0;
-			const defense = state[Agility] + state[ArmorClass];
-			let damage = rollAttack(state[MobLevel], defense, state[MobLevel]);
+			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);
 			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
@@ -1709,11 +1720,7 @@ class Bompton {
 			if (state[MobHealth] <= 0) return;
 			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return;
-			let prof = DENIZENS[state[Species]].proficiency ?? 0;
-			if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
-			const offense = state[Agility] + weaponPower(state[Weapon]) + prof;
-			const sharpness = state[Strength] + weaponPower(state[Weapon]) + prof;
-			let damage = rollAttack(offense, state[MobLevel], sharpness);
+			let damage = rollAttack(state[Offense], state[MobLevel], state[Potency]);
 			dec(MobHealth, Math.min(state[MobHealth], damage));
 
 			if (state[MobHealth] <= 0) {
@@ -1854,10 +1861,6 @@ class Bompton {
 			return type;
 		}
 
-
-		function inventoryCapacity() {
-			return Math.max(0, carryCapacity(state) - encumbrance(state));
-		}
 
 		function inc(slot, qty=1) {
 			const MIN_INT = -0x8000;
@@ -2176,7 +2179,7 @@ class Bompton {
 			// TODO: DEX helps with STR and CON
 			// TODO: INT helps with CHA and WIS
 
-			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), hours);
+			passTime('Training up ' + SLOTS[slot].name.toLowerCase(), hours);
 			inc(slot);
 			dec(TrainingPoints);
 			return state[slot];
@@ -2487,6 +2490,8 @@ div.header {
 			<div>Species</div><div id="species"></div>
 			<div>Level</div><div id="level"></div>
 			<div>Experience</div><div id="xp" class=prog data-warning='#CDFF2F'></div>
+			<div>Offense</div><div id="offense"></div>
+			<div>Defense</div><div id="defense"></div>
 			<div>Health</div><div id="health" class=prog></div>
 			<div>Energy</div><div id="energy" class=prog></div>
 			<div>Enchantment</div><div id="enchantment"></div>
@@ -2513,7 +2518,7 @@ div.header {
 
 	<div id=col2>
 		<div id=equipment class=listview>
-			<div class=header>Equipment	(Armor Class: <span id=armorClass></span>)</div>
+			<div class=header>Equipment</div>
 			<div>Weapon</div>   <div id=e0></div>
 			<div>Armor</div>    <div id=e1></div>
 			<div>Shield</div>   <div id=e2></div>
@@ -2756,7 +2761,8 @@ function updateGame(state) {
 			set('e' + i, names[v] || v);
 		}
 	}
-	set('armorClass', state[ArmorClass]);
+	set('offense', state[Offense]);
+	set('defense', state[Defense]);
 
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
 		set('i' + i, state[INVENTORY_0 + i]);
