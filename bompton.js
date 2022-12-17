@@ -2491,8 +2491,9 @@ div.header {
 			<div>Species</div><div id="species"></div>
 			<div>Level</div><div id="level"></div>
 			<div>Experience</div><div id="xp" class=prog data-warning='#CDFF2F'></div>
-			<div>Offense</div><div id="offense"></div>
 			<div>Defense</div><div id="defense"></div>
+			<div>Offense</div><div id="offense"></div>
+			<div>Potency</div><div id="potency"></div>
 			<div>Health</div><div id="health" class=prog></div>
 			<div>Energy</div><div id="energy" class=prog></div>
 			<div>Enchantment</div><div id="enchantment"></div>
@@ -2762,8 +2763,9 @@ function updateGame(state) {
 			set('e' + i, names[v] || v);
 		}
 	}
-	set('offense', state[Offense]);
 	set('defense', state[Defense]);
+	set('offense', state[Offense]);
+	set('potency', state[Potency]);
 
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
 		set('i' + i, state[INVENTORY_0 + i]);
