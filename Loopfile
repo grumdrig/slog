@@ -1,19 +1,19 @@
-# Grumdrig game
+# Grumdrig strat
 
 # compile
-node compiler.js -i ./bompton.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
+node compiler.js -i ./chinbreak.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
 
 # execute
-node bompton.js -v grumdrig.bin -- grumdrig.bin
+node chinbreak.js -v grumdrig.bin -- grumdrig.bin
 
 
-# Quester game
+# Quester strat
 
 # compile
-node compiler.js -i ./bompton.js -b @quester.bin quester.slog
+node compiler.js -i ./chinbreak.js -b @quester.bin quester.slog
 
 # execute
-node bompton.js -v quester.bin -- quester.bin
+node chinbreak.js -v quester.bin -- quester.bin
 
 
 # Snake
@@ -41,4 +41,4 @@ node test.js -- test.bin
 node_modules/marked/bin/marked.js -i vm.md -o @vm.html
 node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
 node_modules/marked/bin/marked.js -i compiler.md -o @compiler.html
-node bompton.js --generate-documentation > @bompton-doc.html
+node chinbreak.js --generate-documentation > @chinbreak-doc.html

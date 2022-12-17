@@ -1,6 +1,6 @@
-// Bompton Island: A Progress Quest Slot module
+// Chinbreak Island: A Progress Quest Slot module
 
-const Bompton = (_ => {
+const Chinbreak = (_ => {
 
 const GR = 0.5 + Math.sqrt(5) / 2;
 
@@ -164,7 +164,7 @@ const SLOTS = [
 
 
 	{ name: 'Location',
-	  description: `Current location. The localities of Bompton Island are numbered from one to thirty-eight.` },
+	  description: `Current location. The localities of Chinbreak Island are numbered from one to thirty-eight.` },
 
 	{ name: 'MobSpecies',
 	  description: `Species of the nearby creature.` },
@@ -391,6 +391,11 @@ function generateInterface() {
 	SLOTS.forEach((slot, index) =>
 		interface.push(`const ${slot.name} = ${index}`));
 
+	interface.push('\n// Map');
+
+	MAP.forEach((locale, index) =>
+		locale && interface.push(`const ${moniker(locale.name)} = ${index}`));
+
 	interface.push('\n// Spells');
 
 	SPELLS.forEach((spell, index) =>
@@ -410,7 +415,7 @@ function generateInterface() {
 function generateDocumentation() {
 
 	let result = `<!doctype html>
-<head><title>Bompton Island Reference</title>
+<head><title>Chinbreak Island Reference</title>
 
 <style>
 * {
@@ -448,7 +453,7 @@ div#terrains {
 }
 </style>
 </head><body>
-<h1>Bompton Island Programmer's Reference</h1>
+<h1>Chinbreak Island Programmer's Reference</h1>
 	`;
 
 	function head(h) { result += `<h2>${h}</h2>`; }
@@ -784,7 +789,7 @@ const SPELLS = [ null, {
 ];
 
 function moniker(s) {
-	return s.replace(' ', '_');
+	return s.replaceAll(' ', '_');
 }
 
 SPELLS.forEach((spell, index) => spell && define(moniker(spell.name), index));
@@ -1409,7 +1414,7 @@ const MAP = [null,
 		offshore: true,
 
 	}, {
-		name: "*......",
+		name: "_____",
 		terrain: TOWN,
 		denizen: Gust,
 		density: GR,
@@ -1426,7 +1431,7 @@ MAP.forEach((tile,index) => {
 			if (!tile.offshore)
 				MAINLAND_TOWNS.push(index);
 		}
-		define(tile.name.toUpperCase().replace(' ', '_'), index);
+		define(moniker(tile.name), index);
 	}
 });
 
@@ -1450,7 +1455,7 @@ for (let slot = EQUIPMENT_0; slot < EQUIPMENT_0 + EQUIPMENT_COUNT; slot += 1) {
 					sellAt(slot, item, MAINLAND_TOWNS[t]);
 				}
 			} else if (power == maxPower) {
-				sellAt(slot, item, SYGNON_TOWER);
+				sellAt(slot, item, Sygnon_Tower);
 			} else {
 				sellAt(slot, item, MAINLAND_TOWNS[nextTown]);
 				nextTown = (nextTown + 1) % MAINLAND_TOWNS.length;
@@ -1575,10 +1580,10 @@ function clearQuest(state) {
 
 let TASK = '';
 
-class Bompton {
-	static title = 'Progress Quest Slog: Bompton Island';
+class Chinbreak {
+	static title = 'Progress Quest Slog: Chinbreak Island';
 
-	static get windowContent() { return BOMPTON_WINDOW_CONTENT }
+	static get windowContent() { return CHINBREAK_WINDOW_CONTENT }
 
 	static create(code) {
 		let state = new Int16Array(SLOTS.length);
@@ -1808,7 +1813,7 @@ class Bompton {
 					state[slot] = value ?? (state[slot] + increment)
 
 				state[Level] = 1;
-				state[Location] = BOMPTON;
+				state[Location] = Bompton;
 				state[Health] = state[MaxHealth] = 6 + state[Endurance];
 				state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
 				state[TrainingPoints] = 10;
@@ -2339,7 +2344,7 @@ function additiveStatBonus(stat) {
 /////////////////// UI ///////////////////////////////
 
 
-const BOMPTON_WINDOW_CONTENT = `
+const CHINBREAK_WINDOW_CONTENT = `
 <style>	/* Styling for the character sheet */
 
 /*#game-window { width: 600px }*/
@@ -2718,11 +2723,11 @@ function updateGame(state) {
 		setBar(id, value, end, start);
 	}
 
-	set('species', Bompton.SPECIES_NAMES[state[Species]]);
+	set('species', Chinbreak.SPECIES_NAMES[state[Species]]);
 	set('level', state[Level]);
 	setProgress('xp', state[Experience],
-			Bompton.xpNeededForLevel(state[Level] + 1),
-			Bompton.xpNeededForLevel(state[Level]));
+			Chinbreak.xpNeededForLevel(state[Level] + 1),
+			Chinbreak.xpNeededForLevel(state[Level]));
 	setProgress('health', state[Health], state[MaxHealth]);
 	if (state[Health] == 0 && state[MaxHealth] > 0)
 		$id('health').classList.add('dead');
@@ -2757,9 +2762,9 @@ function updateGame(state) {
 		else if (slot === Ring)
 			set('e' + i, 'Ring of ' + SLOTS[v].name);
 		else if (slot === Totem)
-			set('e' + i, Bompton.MAP[v].name.split(' ')[0] + ' Totem');
+			set('e' + i, Chinbreak.MAP[v].name.split(' ')[0] + ' Totem');
 		else {
-			const names = (Bompton.DATABASE[slot] ?? {}).names;
+			const names = (Chinbreak.DATABASE[slot] ?? {}).names;
 			set('e' + i, names[v] || v);
 		}
 	}
@@ -2786,7 +2791,7 @@ function updateGame(state) {
 		$id('encumbrance').classList.remove('warning');
 	}*/
 
-	let local = Bompton.mapInfo(state[Location], state) || {};
+	let local = Chinbreak.mapInfo(state[Location], state) || {};
 
 	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
 	// set('elapsed', readableTime(state[Hours], state[Years]));
@@ -2802,9 +2807,9 @@ function updateGame(state) {
 	set('location', state[Location] ?
 		`#${state[Location]} &lt;${longitude(state[Location])}, ${latitude(state[Location])}&gt;` : '');
 	set('locale', local ? local.name + ' #' + state[Location] : '');
-	set('terrain', (Bompton.TERRAIN_TYPES[local.terrain] ?? {}).name);
+	set('terrain', (Chinbreak.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobSpecies] ?
-		`${Bompton.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
+		`${Chinbreak.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
 	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
 	if (state[MobHealth] == 0 && state[MobMaxHealth] > 0)
 		$id('mobHealth').classList.add('dead');
@@ -2812,9 +2817,9 @@ function updateGame(state) {
 		$id('mobHealth').classList.remove('dead');
 
 
-	let questal = Bompton.mapInfo(state[QuestLocation], state);
+	let questal = Chinbreak.mapInfo(state[QuestLocation], state);
 	questal &&= questal.name;
-	let original = Bompton.mapInfo(state[QuestEnd], state);
+	let original = Chinbreak.mapInfo(state[QuestEnd], state);
 	original &&= original.name;
 	const friendlySlotNames = {
 		Totem: 'totem',
@@ -2875,13 +2880,13 @@ function updateGame(state) {
 function gameplay(inst, arg1, arg2) {
 	arg1 = arg1 || eval($("#arg1").value);
 	arg2 = arg2 || eval($("#arg2").value);
-	let result = Bompton.handleInstruction(vm.state, inst, arg1, arg2);
+	let result = Chinbreak.handleInstruction(vm.state, inst, arg1, arg2);
 	$("#result").innerText = result;
 	updateDebuggerState(vm);
 	updateGame(vm.state);
 }
 
-Bompton.playmation = function(vm, butStop) {
+Chinbreak.playmation = function(vm, butStop) {
 	function age() { return vm.state[Years] * HOURS_PER_YEAR + vm.state[Hours] }
 	let before = age();
 	while (vm.alive() && age() == before) {
@@ -2903,9 +2908,9 @@ function animate() {
 	if (animate.progress >= animate.duration) {
 		if (typeof updateDebuggerState !== 'undefined') // TODO awkward as hell
 			updateDebuggerState(vm);
-		Bompton.updateUI(vm.state);
+		Chinbreak.updateUI(vm.state);
 		if (vm.alive())
-			window.gameplayTimer = setTimeout(_ => Bompton.playmation(vm), 1);
+			window.gameplayTimer = setTimeout(_ => Chinbreak.playmation(vm), 1);
 	} else {
 		window.gameplayTimer = setTimeout(animate, 10);
 	}
@@ -2927,16 +2932,16 @@ function setTaskBar() {
 
 
 
-return Bompton; })();
+return Chinbreak; })();
 
 
 if (typeof module !== 'undefined') {
-	module.exports = Bompton;
+	module.exports = Chinbreak;
 }
 
 
 function usage() {
-	console.log(`Usage: ./bompton.js [OPTS] [STRATEGY]
+	console.log(`Usage: ./chinbreak.js [OPTS] [STRATEGY]
 
 Run the game with the specified strategy, and/or generate supporting
 documentation and/or the game the interface header.
@@ -2991,17 +2996,17 @@ if (typeof module !== 'undefined' && !module.parent) {
 	}
 	if (flags['generate-documentation']) {
 		console.log(`<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">`);
-		console.log(Bompton.generateDocumentation());
+		console.log(Chinbreak.generateDocumentation());
 	}
 
 	if (positionals.length) {
 		let { readFileAsWords, VirtualMachine } = require('./vm.js');
 		let code = readFileAsWords(positionals[0]);
-		let vm = new VirtualMachine(code, Bompton);
+		let vm = new VirtualMachine(code, Chinbreak);
 		if (verbosity > 1) vm.trace = true;
 		vm.run();
 		if (verbosity > 0) {
-			Bompton.dumpState(vm.state);
+			Chinbreak.dumpState(vm.state);
 			vm.dumpState();
 		}
 	}

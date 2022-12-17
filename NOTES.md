@@ -1,8 +1,4 @@
 
-Bompton Island / Chinbreak Island module
-========================================
-
-
 ### Towns
 
 Different
