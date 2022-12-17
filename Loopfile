@@ -32,7 +32,6 @@ node compiler.js -a @test.asm test.slog
 node --trace-uncaught vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm
 
 # execute
-# node vm.js -l test.bin -r -- test.bin
 node test.js -- test.bin
 
 

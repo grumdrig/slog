@@ -4,6 +4,9 @@ const Bompton = (_ => {
 
 const GR = 0.5 + Math.sqrt(5) / 2;
 
+const MIN_INT = -0x8000;
+const MAX_INT =  0x7FFF;
+
 const SLOTS = [
 	{ name: 'GameOver',
 	  description: `The game sets this value when it comes to an end. If it
@@ -1863,8 +1866,6 @@ class Bompton {
 
 
 		function inc(slot, qty=1) {
-			const MIN_INT = -0x8000;
-			const MAX_INT =  0x7FFF;
 			return state[slot] = Math.min(MAX_INT, Math.max(MIN_INT, state[slot] + qty));
 		}
 
@@ -2932,6 +2933,21 @@ if (typeof module !== 'undefined') {
 }
 
 
+function usage() {
+	console.log(`Usage: ./bompton.js [OPTS] [STRATEGY]
+
+Run the game with the specified strategy, and/or generate supporting
+documentation and/or the game the interface header.
+
+OPTS:
+	--generate-interface      Output the game interface (as Slog code)
+	--generate-map            Output the game map as HTML
+	--generate-documentation  Output game documentation HTML
+	--help                    Show usage info
+`);
+	process.exit();
+}
+
 if (typeof module !== 'undefined' && !module.parent) {
 	// Called with node as main module
 	const { parseArgs } = require('util');
@@ -2953,10 +2969,15 @@ if (typeof module !== 'undefined' && !module.parent) {
 			'generate-documentation': {
 				type: 'boolean',
 			},
+			'help': {
+				type: 'boolean',
+			},
 		},
 		allowPositionals: true,
 	});
 	const flags = values;
+
+	if (flags.help || positionals.length > 1) usage();
 
 	const verbosity = (flags.verbose || []).length;
 

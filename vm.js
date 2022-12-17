@@ -788,6 +788,41 @@ if (typeof exports !== 'undefined') {
 }
 
 
+function usage() {
+	console.log(`Usage: vm.js OPTIONS
+
+Assemble and/or execute a strategy in a game environment
+
+OPTIONS:
+	-a file, --assembly=file
+		Read assembly language file, to be assmbled into binary form
+	-l file, --load=file
+		Read binary machine code from file
+	-o file, --output=file
+		Write binary machine code suitable for the Slog VM to named file
+	-d file, --disassembly=file
+		Disassemble binary machine code to named file
+	-r file, --run=file
+		Run assembled or loaded machine code in named game environment
+	-v, --verbose
+	-q, --quiet
+		Increase or decrease verbosity of output
+	--help
+		This, that you're reading
+
+EXAMPLE:
+	Assemble assembly source mystrat.asm into machine code in mystrat.bin:
+
+	$ ./vm.js -a mystrat.asm -o mystrat.bin
+
+	Assemble and execute strategy for the game chinbreak.js:
+
+	$ ./vm.js -a mystrat.asm -r chinbreak.js
+`);
+	process.exit()
+}
+
+
 if (typeof module !== 'undefined' && !module.parent) {
 	// Called with node as main module
 	const { parseArgs } = require('util');
@@ -811,9 +846,9 @@ if (typeof module !== 'undefined' && !module.parent) {
 				type: 'string',
 				short: 'l',
 			},
-			interface: {
+			run: {
 				type: 'string',
-				short: 'i',
+				short: 'r',
 			},
 			verbose: {
 				type: 'boolean',
@@ -825,13 +860,14 @@ if (typeof module !== 'undefined' && !module.parent) {
 				short: 'q',
 				multiple: true,
 			},
-			run: {
+			help: {
 				type: 'boolean',
-				short: 'r',
 			},
 		},
 	});
 	const flags = values;
+
+	if (flags.help) usage();
 
 	const verbosity = 1 + (flags.verbose || []).length - (flags.quiet || []).length;
 	let code;
@@ -866,17 +902,13 @@ if (typeof module !== 'undefined' && !module.parent) {
 	}
 
 	let Game;
-	if (flags.interface) {
-		Game = require(flags.interface).Game;
+	if (flags.run) {
+		Game = require(flags.run).Game;
 	}
 
 	if (flags.run) {
 		if (!code) {
 			console.error('To run the machine, specify assembly source with `-a FILENAME` or binary with `-l FILENAME`');
-			process.exit(-2);
-		}
-		if (!code) {
-			console.error('To run the machine, specify game with `-i PATH/FILENAME`');
 			process.exit(-2);
 		}
 		let vm = new VirtualMachine(code, Game);

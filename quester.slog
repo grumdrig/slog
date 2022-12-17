@@ -33,7 +33,7 @@ cheat(ActProgress, 2)
 seekquest()
 goto(.QuestLocation)
 while !forage(EquipmentTotem) {}
-goto (.QuestOrigin)
+goto (.QuestEnd)
 give(EquipmentTotem, 1)
 completequest()
 seekquest()
@@ -44,7 +44,7 @@ while .QuestMob != .MobSpecies { hunt() }
 drop(Food, .Food)
 
 while 1 {
-  if !.QuestOrigin { seekquest() }
+  if !.QuestEnd { seekquest() }
   goto(.QuestLocation)
   if .QuestMob and .QuestObject {
     // Trophy hunting
