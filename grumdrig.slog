@@ -51,7 +51,7 @@ while .Level < 88 {
       hunt()
     }
     while .MobHealth and .Health >= (.MaxHealth / 3) {
-      melee()
+      use(Weapon)
     }
     if .Encumbrance < .Capacity and !.MobHealth { loot() }
     while .Health < .MaxHealth {

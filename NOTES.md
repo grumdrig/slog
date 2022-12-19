@@ -527,3 +527,34 @@ Use
 ---
 
 Move things like melee() and cast() into use() to reduce the api, essentially.
+
+
+Lucas' Ideas
+------------
+
+Shiny spell
+
+Glass sword
+
+Butter knife
+
+Switch tomahawk? Dull rusty hatchet?
+
+0-level weapons Burnt toast etc butter knife Snowball Branch
+1 Wooden mallet
+
+Scary armor
+
+Trash can lid
+
+Shield with lion head on it
+
+Lava shark mount
+
+Werepig
+
+Geenome
+
+swap out Giant Flea and Trogor
+
+Marble Mage end boss

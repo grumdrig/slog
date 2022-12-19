@@ -50,7 +50,7 @@ while 1 {
       while .MobSpecies != .QuestMob or !.MobHealth {
         hunt()
       }
-      melee()
+      use(Weapon)
       if !.MobHealth { loot() }
     }
   } else if .QuestMob {
@@ -59,7 +59,7 @@ while 1 {
       while .MobSpecies != .QuestMob or !.MobHealth {
         hunt()
       }
-      melee()
+      use(Weapon)
     }
   } else if .QuestObject {
     // Foraging

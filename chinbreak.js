@@ -95,7 +95,8 @@ const SLOTS = [
 
 	{ name: 'Spellbook1',
 	  description: `Your spellbook has room for only four spells in its four
-	  chapters. This is the spell in the first chapter.` },
+	  chapters. This is the spell in the first chapter. Learn spells via
+	  learn() command and cast them with cast().` },
 
 	{ name: 'Spellbook2',
 	  description: `Spellbook spell number 2.` },
@@ -108,7 +109,8 @@ const SLOTS = [
 
 
 	{ name: 'Weapon',
-	  description: `The weapon is used for causing damage to one's foe.` },
+	  description: `The weapon is used for causing damage to one's foe. Use it
+	  with the "use" command to perform a melee attack.` },
 
 	{ name: 'Armor',
 	  description: `Armor is worn on the body to protect it from damage.` },
@@ -149,14 +151,14 @@ const SLOTS = [
 	  description: `Inventory item. Adventurers eat food every time they
 	  travel. If they're out of food, travelling takes longer due to extra
 	  time spent hunting and foraging and complaining about being hungry.
-	  Food may also be eaten to raise Energy by one.` },
+	  Food may also be eaten to raise Energy slightly, via the "use" command.` },
 
 	{ name: 'Treasures',
 	  description: `Inventory item. Exceptional items of high trade value.` },
 
 	{ name: 'Potions',
-	  description: `Inventory item. Consuming a potion restores both energy
-	  and health to maximum.` },
+	  description: `Inventory item. Consuming a potion via the "use" command
+	  restores both energy and health to maximum.` },
 
 	{ name: 'Sunsparks',
 	  description: `Inventory item. These restore life at the moment of death. Kind of
@@ -274,14 +276,9 @@ const CALLS = {
 		character may not choose the most efficient route, so travel
 		step-by-step if more efficiency is desired.` },
 
-	use: { parameters: 'item',
+	use: { parameters: 'slot',
 		description: `Use the item, specified by state slot index, for its
-		intended purpose. Maybe that's just Potion.` },
-
-	melee: {
-		description: `Battle the nearby mob. You'll do damage, they'll do
-		damage, everybody's happy. Look around the local area for mobs
-		first with hunt().`	},
+		intended purpose. Valid slots are Potion, Food, and Weapon.` },
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item
@@ -955,7 +952,7 @@ const ARMOR_NAMES = ['',
 	'Cloth Armor',
 	'Leather Suit',
 	'Chainmail',
-	'Split Mail',
+	'Splint Mail',
 	'Plate Mail',
 	'+1 Safety Mail',
 	'+2 Holy Mail',
@@ -1619,9 +1616,22 @@ class Chinbreak {
 
 
 	static dumpState(state) {
+		let nfo = [];
 		for (let i = 0; i < SLOTS.length; ++i)
 			if (state[i])
-				console.log(SLOTS[i].name + ': ' + state[i]);
+				nfo.push(SLOTS[i].name + ': ' + state[i]);
+		let m = 2 + Math.max(...nfo.map(l => l.length));
+		let cols = Math.max(Math.floor(79 / m), 1);
+		let rows = Math.ceil(nfo.length / cols);
+		for (let i = 0; i < rows; i += 1)  {
+			let row = '';
+			for (let c = 0; c < cols; c += 1) {
+				let n = i + c * rows;
+				if (n < nfo.length)
+					row += (nfo[n] + ' '.repeat(m)).substr(0, m);
+			}
+			console.log(row);
+		}
 	}
 
 	static handleInstruction(state, operation, ...args) {
@@ -1936,18 +1946,21 @@ class Chinbreak {
 				if (slot === Potions) {
 					state[Health] = Math.max(state[Health], state[MaxHealth]);
 					state[Energy] = Math.max(state[Energy], state[MaxEnergy]);
+					passTime('Quaffing an potion', 1);
 				} else if (slot === Food) {
 					if (state[Energy] < state[MaxEnergy])
 						inc(Energy);
+					passTime('Taking a moment to eat something', 1);
+				} else {
+					return -1;
 				}
 				return 1;
+			} else if (slot === Weapon) {
+				if (!state[MobSpecies]) return -1;
+				passTime('Engaging this ' + DENIZENS[state[MobSpecies]].name.toLowerCase() + ' in battle!', 1);
+				return battle();
 			}
 			return -1;
-
-		} else if (operation === melee) {
-			if (!state[MobSpecies]) return -1;
-			passTime('Engaging this ' + DENIZENS[state[MobSpecies]].name.toLowerCase() + ' in battle!', 1);
-			return battle();
 
 		} else if (operation === loot) {
 			if (!state[MobSpecies]) return -1;
