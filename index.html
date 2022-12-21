@@ -194,10 +194,16 @@ iframe {
 		</div>
 		<div class=nobo>
 			<button onclick="step()">Step</button>
-			<button onclick="bigstep()">Bigstep</button>
-			<button onclick="runimate()">Runimate</button>
 			<button onclick="run()">Run</button>
-			<button onclick="play()">Play</button>
+			<label for=speed>Speed:</label>
+			<select id=speed>
+				<option value=instant>Instant</option>
+				<option value=turbo>Turbo</option>
+				<option value=normal>Normal</option>
+				<option value=gamestep>Step Game</option>
+				<option value=animate>Animate Machine</option>
+				<option value=step>Step Machine</option>
+			</select>
 			<button onclick="reset()">Reset</button>
 		</div>
 		<div class="status-bar" id=debugbar>
@@ -349,11 +355,6 @@ prove!
 
 <script>
 
-
-
-
-// Where are these? I confuse
-//let asm, vm;
 let asm;
 
 function saveChanges() {
@@ -437,31 +438,47 @@ will probably need to get this into Chinbreak somehow:
 	}
 }
 
-function runimate() {
-	if (vm.alive()) {
-		let calledOut = vm.step();
-		updateDebuggerState(vm);
-		if (calledOut) Game.updateUI(vm.state);
-		window.gameplayTimer = setTimeout(runimate, 100);
-	}
-}
-
-function run() {
-	stopRunimation();
-	vm.running = true;
-	while (vm.alive()) {
-		vm.step();
-	}
-	updateDebuggerState(vm);
-	Game.updateUI(vm.state);
-}
+// Game speeds
+const SPEEDS = {
+	step = 1,
+	animate = 2,
+	gamestep = 3,
+	normal = 4,
+	turbo = 5,
+	instant = 6,
+};
 
 function play() {
 	stopRunimation();
 	bringToFront($id('game-window'));
 	vm.running = true;
-	Game.playmation(vm);
+	run();
 }
+
+function run() {
+	let speed = parseInt($('#speed').value);
+	let calledOut;
+	while (vm.alive()) {
+		let calledOut = vm.step();
+		if (speed < SPEEDS.instant && (calledOut || speed == SPEEDS.animate)) {
+			break;	
+		}
+	}
+
+	updateDebuggerState(vm);
+
+	if (calledOut) Game.updateUI(vm.state);
+
+	if (speed !== SPEEDS.instant && speed != SPEEDS.step)  {
+		window.gameplayTimer = setTimeout(animate, 100);
+	}
+}
+
+// function play() {
+// 	stopRunimation();
+// 	vm.running = true;
+// 	Game.playmation(vm);
+// }
 
 function reset() {
 	stopRunimation();
