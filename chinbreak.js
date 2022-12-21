@@ -714,7 +714,7 @@ const SPELLS = [ null, {
 		],
 		description: `Become just that much stronger.`,
 	}, {
-		name: 'Invisibility',
+		name: 'Shiny',
 		level: 6,
 		costs: [
 			{ slot: Energy, qty: 6 },
@@ -996,7 +996,8 @@ const MOUNT_NAMES = ['',
 	'+2 Pseudogoat',
 	'+3 Hammerhorse',
 	'+4 Firehorse',
-	'+5 Kelpie'];
+	'+5 Lava Shark',
+	'+6 Kelpie'];
 
 
 const DATABASE = [];
@@ -1164,13 +1165,13 @@ const DENIZENS = [
 		hitdice: 2,
 		drops: Food,
 	}, {
-		name: "Gegnome",
-		badassname: "Megegnome",
+		name: "Noteti",
+		badassname: "Innoteti",
 		domain: FOREST,
 		hitdice: 3,
 	}, {
-		name: "Giant Flea",
-		badassname: "Flealord",
+		name: "Polycorn",
+		badassname: "Epicorn",
 		domain: DESERT,
 		hitdice: 4,
 	}, {
@@ -1179,14 +1180,14 @@ const DENIZENS = [
 		domain: MOUNTAINS,
 		hitdice: 5,
 	}, {
-		name: "Trogor",
-		badassname: "Ortrogor",
-		domain: HILLS,
+		name: "Boglard",
+		badassname: "Bognivore",
+		domain: MARSH,
 		hitdice: 6,
 	}, {
 		name: "Baklakesh",
 		badassname: "Huntrakesh",
-		domain: MARSH,
+		domain: HILLS,
 		hitdice: 7
 	}, {
 		name: "Plasterbear",
@@ -2006,15 +2007,24 @@ class Chinbreak {
 			}
 
 			// TODO: consider local effect on price
-			// TODO: consider charisma
+
+			if (state[Charisma] < 1) {
+				price *= 2 - state[Charisma]; // 0 cha pays double, -1 pays triple, etc
+			} else {
+				// 1 cha pays 50% extra, 2 pays 33% extra, etc
+				price = price * (1 + 1 / (1 + state[Charisma]));
+			}
 
 			if (arg2 === 0) {
 				// It's a price check only
 				passTime('Checking prices', 1);
-				return price;
+				return Math.ceil(price);
 			}
 
 			price *= qty;
+
+			price = Math.ceil(price);
+
 			if (state[Gold] < price) return -1;  // Can't afford it
 
 			// You may proceed with the purchase
@@ -2038,13 +2048,20 @@ class Chinbreak {
 				qty = Math.min(qty, state[slot]);
 				newqty = state[slot] - qty;
 				unitValue = DATABASE[slot].value;
+				if (slot === Trophies && state[TrophyMob]) {
+					const d = DENIZENS[state[TrophyMob]];
+					if (d.hitdice)
+						unitValue *= d.hitdice;
+				}
 			} else {
 				return -1;
 			}
 			if (qty <= 0) return -1;
-			let price = qty * 0.5 * unitValue;
 			if (operation === sell) {
-				inc(Gold, Math.floor(price));
+				let price = qty * unitValue;
+				price /= (1 + 1 / Math.max(1, state[Charisma]));
+				price = Math.floor(price);
+				inc(Gold, price);
 			}
 			if (operation === give &&
 					state[QuestObject] === slot &&

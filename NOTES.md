@@ -18,47 +18,44 @@ Maybe just level 1, level 2, etc. But I've got here some scarier names to sub in
 Monster brainstorm with Andy, transformed:
 
 1 Owlcub / Olowala
-3 Bunisaur / Bountisaur
-5 Randroid / Exactoid
-4 Objectifist / Injectifist
-3 Wist-o-the-Hill / Wist-o-the-Willow
-5 Gelidode / Hardode
-6 Blood Pudding / Blood Meal
-4 Misplacer / Relocator
-7 Trall / Tange
-8 Munt / Moonit
-4 Knolling / Knollon
-4 Proboscan / Oberscan
-7 Clamerus / Clameron
-5 Pleshy / Pot Pleshy
-6 Boglard / Bognivore
-2 Quince / Squince
-6 Deddy / Grendeddy
-5 Komeek / Mokomeko
-3 Swan-at-Arms / Draken-at-Arms
-7 Timelisk / Metalisk
-8 Betagorgon / Alfagorgon
-3 Dust Monster / Void Monster
-2 Noteti / Innoteti
-4 Dwoks / Dwoken
-6 Psinon / Onpsinon
-7 Werewat / Huwerewat
-3 Chespian / Crosspian
-8 Kashasa / Kashasfas
+1 Bisquit / Cisquit
 1 Featherless / King Featherless
 1 Multibar / Macrobar
 2 Air Cucumber / Amphi Cucumber
-3 Landale / Amphidale
-2 Seamole / Mole Shark
-1 Bisquit / Cisquit
-8 Botherbear / Scissorbear
 2 Blinker / Strober
-3 Polycorn / Expicorn
-6 Umbertine / Sepitine
-7 Sadilla / Ohmlaut
+2 Quince / Squince
+2 Seamole / Mole Shark
+3 Swan-at-Arms / Draken-at-Arms
 3 Night Smurf / Midnight Smurf
+3 Bunisaur / Bountisaur
+3 Landale / Amphidale
+3 Chespian / Crosspian
+3 Wist-o-the-Hill / Wist-o-the-Willow
+4 Dust Monster / Void Monster
+4 Dwoks / Dwoken
+4 Objectifist / Injectifist
 4 Pecadinus / Rockadinus
+4 Misplacer / Relocator
+4 Knolling / Knollon
+4 Proboscan / Oberscan
+5 Randroid / Exactoid
+5 Komeek / Mokomeko
+5 Gelidode / Hardode
+5 Pleshy / Pot Pleshy
+6 Blood Pudding / Blood Meal
+6 Deddy / Grendeddy
+6 Umbertine / Sepitine
+6 Psinon / Onpsinon
 6 Fish Lich / Paradox Lich
+7 Trall / Tange
+7 Sadilla / Ohmlaut
+7 Timelisk / Metalisk
+7 Clamerus / Clameron
+7 Werewat / Huwerewat
+8 Kashasa / Kashasfas
+8 Munt / Moonit
+8 Botherbear / Scissorbear
+8 Betagorgon / Alfagorgon
 
 
 
@@ -449,24 +446,8 @@ boss.
 
 
 
-Stats
------
-
-Strength
-Agility
-Constitution -> Endurance
-Intelligence -> Intellect
-Wisdom -> Perception?
-Charisma
-
-
-Skins
------
-
-Spoils/drops becomes skins. (Could call them trophies but it sounds a little
-grand.) There's a SkinMob field. When you loot skins if SkinMob matches the mob
-then SkinMob is that beast, otherwise becomes 0 and the skins are generic. Then
-the skins can be quest items.
+Inventory tweak ideas
+---------------------
 
 In general inventory items can't be purchased and can only be gotten some
 other way.
@@ -523,18 +504,11 @@ Follow-on Ideas
 - Leaderboards
 
 
-Use
----
-
-Move things like melee() and cast() into use() to reduce the api, essentially.
-
 
 Lucas' Ideas
 ------------
 
-Shiny spell
-
-Glass sword
+Glass sword - super-powerful but breaks when you use it
 
 Butter knife
 
@@ -549,12 +523,27 @@ Trash can lid
 
 Shield with lion head on it
 
+
 Lava shark mount
 
 Werepig
 
 Geenome
 
-swap out Giant Flea and Trogor
 
 Marble Mage end boss
+
+
+Real Time
+---------
+
+Show elapsed real time (in progress-bar mode) in outputs
+
+
+Cinematics
+----------
+
+Should have to call watchcinematic() several times so that there can be
+transitional text.
+
+
