@@ -6,13 +6,113 @@
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="height: 512px; width: 512px;"><path d="M0 0h512v512H0z" fill="black" fill-opacity="1"></path><g class="" transform="translate(0,0)" style=""><path d="M19.75 14.438c59.538 112.29 142.51 202.35 232.28 292.718l3.626 3.75.063-.062c21.827 21.93 44.04 43.923 66.405 66.25-18.856 14.813-38.974 28.2-59.938 40.312l28.532 28.53 68.717-68.717c42.337 27.636 76.286 63.646 104.094 105.81l28.064-28.06c-42.47-27.493-79.74-60.206-106.03-103.876l68.936-68.938-28.53-28.53c-11.115 21.853-24.413 42.015-39.47 60.593-43.852-43.8-86.462-85.842-130.125-125.47-.224-.203-.432-.422-.656-.625C183.624 122.75 108.515 63.91 19.75 14.437zm471.875 0c-83.038 46.28-154.122 100.78-221.97 161.156l22.814 21.562 56.81-56.812 13.22 13.187-56.438 56.44 24.594 23.186c61.802-66.92 117.6-136.92 160.97-218.72zm-329.53 125.906l200.56 200.53c-4.36 4.443-8.84 8.793-13.405 13.032L148.875 153.53l13.22-13.186zm-76.69 113.28l-28.5 28.532 68.907 68.906c-26.29 43.673-63.53 76.414-106 103.907l28.063 28.06c27.807-42.164 61.758-78.174 104.094-105.81l68.718 68.717 28.53-28.53c-20.962-12.113-41.08-25.5-59.937-40.313 17.865-17.83 35.61-35.433 53.157-52.97l-24.843-25.655-55.47 55.467c-4.565-4.238-9.014-8.62-13.374-13.062l55.844-55.844-24.53-25.374c-18.28 17.856-36.602 36.06-55.158 54.594-15.068-18.587-28.38-38.758-39.5-60.625z" fill="white" fill-opacity="1"></path></g></svg>' />
 <link rel=stylesheet href="node_modules/xp.css/dist/XP.css">
 <link rel=stylesheet href="os.css">
-<link rel=stylesheet href="ide.css">
 <script src="vm.js"></script>
 <script src="os.js"></script>
-<script src="ide.js"></script>
 <script src="compiler.js"></script>
 <script src="chinbreak.js"></script>
 <script src="snake.js"></script>
+
+<style>
+
+#sources textarea { width: 100%; }
+
+
+#registers > pre {
+	border-bottom: dotted 1px silver;
+	margin-bottom: -1px;
+}
+
+#debugger {
+	margin: 10px 0;
+	display: grid;
+	grid-template-columns: 370px 180px;
+	width: auto;
+}
+
+#debugger hr { margin: 0 }
+
+#debugger button { width: 100%; }
+#debugger > div {
+	border: solid 1px silver;
+	padding: 4px;
+}
+#debugger > div.nobo {
+	border: none;
+}
+#stackmom {
+	display: flex;
+	flex-direction: column;
+}
+.smash {
+	flex-grow: 1;
+}
+#stack {
+	background-color: white;
+	width: 100%;
+}
+.brain {
+	overflow: auto;
+	max-height: 112px;
+}
+#debugbar p { font: 13px monospace }
+
+#sources textarea {
+	border: inset 1px silver;
+}
+
+.err {
+	color: red;
+}
+
+#automom { margin: 4px }
+
+article { min-height: 280px; }
+
+/* defeat some xp.css for the machine area */
+
+div#sources pre,
+div#debugger pre {
+	padding: 0;
+	font-size: 13px;
+	background-color: white;
+	color: black;
+	font-family: monospace;
+	margin: 0;
+}
+
+div#sources textarea,
+div#debugger textarea {
+	font-family: monospace;
+	font-size: 13px;
+}
+
+div#sources button,
+div#debugger button {
+	min-width: 0px;;
+	padding: 1px 6px;
+}
+
+#controls-window {
+	width: 500px;
+}
+
+iframe {
+	width: 800px;
+	height: 390px;
+	background-color: #fff;
+}
+
+#worldmap {
+	background-color: lightblue;
+	padding: 14px;
+	border: solid 1px blue;
+}
+
+.docmom {
+	overflow: auto;
+	height: 390px;
+}
+</style>
 
 </head>
 <body>
@@ -248,6 +348,223 @@ prove!
 </div>
 
 <script>
+
+
+
+
+// Where are these? I confuse
+//let asm, vm;
+let asm;
+
+function saveChanges() {
+	localStorage.source = $("#source").value;
+	localStorage.autorun = JSON.stringify($("#autorun").checked);
+	localStorage.autoplay = JSON.stringify($("#autoplay").checked);
+}
+
+
+function comp(initialLoad) {
+	if (!initialLoad)
+		saveChanges();
+	$("#errors").innerHTML = '&nbsp;';
+	$("#errors").classList.remove("err");
+	try {
+		let sources = [$("#source").value];
+		if ($('#importinterface').checked) sources.unshift(Game.generateInterface());
+		$("#asm").value = compile(...sources);
+		if (assemble()) {
+			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
+			if ($("#autorun").checked)
+				run();
+			else if ($("#autoplay").checked)
+				play();
+		}
+	} catch (e) {
+		let message;
+		if (e instanceof ParseError) {
+			message = 'Parse Error: ' + e.message;
+		} else if (e instanceof SemanticError) {
+			message = 'Semantic Error: ' + e.message;
+		} else {
+			message = 'Compilation Error: ' + e;
+		}
+		console.log(e);
+		$("#errors").classList.add("err");
+		$("#errors").innerText = message
+	}
+}
+
+
+function assemble() {
+	$("#errors").innerHTML = '&nbsp;';
+	$("#errors").classList.remove("err");
+	try {
+		asm = Assembler.assemble($("#asm").value);
+		$("#machine").value = asm.disassemble();
+		reset();
+		return true;
+	} catch (e) {
+		$("#errors").classList.add("err");
+		$("#errors").innerText = e.toString();
+	}
+
+}
+
+function step() {
+	stopRunimation();
+	vm.step();
+	updateDebuggerState(vm);
+	Game.updateUI(vm.state);
+}
+
+function bigstep() {
+	stopRunimation();
+	Game.playmation(vm, true);
+	updateDebuggerState(vm);
+	Game.updateUI(vm.state);
+}
+
+function stopRunimation() {
+	if (window.gameplayTimer) {
+		clearTimeout(window.gameplayTimer);
+		window.gameplayTimer = null;
+/*
+will probably need to get this into Chinbreak somehow:
+		$id('task').innerHTML = 'Paused';
+		animate.progress = 0;
+		setTaskBar();
+		*/
+	}
+}
+
+function runimate() {
+	if (vm.alive()) {
+		let calledOut = vm.step();
+		updateDebuggerState(vm);
+		if (calledOut) Game.updateUI(vm.state);
+		window.gameplayTimer = setTimeout(runimate, 100);
+	}
+}
+
+function run() {
+	stopRunimation();
+	vm.running = true;
+	while (vm.alive()) {
+		vm.step();
+	}
+	updateDebuggerState(vm);
+	Game.updateUI(vm.state);
+}
+
+function play() {
+	stopRunimation();
+	bringToFront($id('game-window'));
+	vm.running = true;
+	Game.playmation(vm);
+}
+
+function reset() {
+	stopRunimation();
+	vm = new VirtualMachine(asm.code, Game);
+	updateDebuggerState(vm);
+	Game.updateUI(vm.state);
+}
+
+function rand(m) { return Math.floor(Math.random() * m) }
+function crand(s) { return s * (Math.random() - Math.random()) }
+
+
+
+
+function prepIDE() {
+	window.addEventListener('unload', saveChanges);
+
+	$("#source").addEventListener('keypress', e => {
+		if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) comp();
+	});
+
+	$("#asm").addEventListener('keypress', e => {
+		if (e.keyCode === 13 && (e.shiftKey || e.ctrlKey || e.metaKey)) assemble();
+	});
+
+	prepOS();
+
+	$("#source").value = localStorage.source || "// hello, world!";
+	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
+	$("#autoplay").checked = JSON.parse(localStorage.autoplay || "false");
+}
+
+
+
+function updateDebuggerState(vm) {
+
+	function hexDec(v) {
+		return '$' + ('0000'+(v & 0xFFFF).toString(16)).substr(-4) + ' ' + ('     ' + v).substr(-6);
+	}
+
+	function regFmt(name, value) {
+		return `${(name + ' '.repeat(23)).substr(0,23)} ` + hexDec(value);
+	}
+
+	// Registers & State
+	let n = 0;
+	for (let i = 0; i < vm.registers.length; ++i, ++n) {
+		let address = -i - 1;
+		let d = $("#registers").children[n] ||
+						$("#registers").appendChild(document.createElement('pre'));
+		d.innerText = regFmt(REGISTER_NAMES[address] || i, vm.registers[i]);
+
+		let r = $("#r" + i);
+		if (r) r.innerText = d.innerText;
+	}
+	$("#clock").innerText = '⏳ ' + vm.clock;
+
+	if (!$("#registers").children[n])
+		$('#registers').appendChild(document.createElement('hr'));
+	n += 1;
+	for (let i = 0; i < vm.state.length; ++i, ++n) {
+		let d = $("#registers").children[n] ||
+						$("#registers").appendChild(document.createElement('pre'));
+		d.innerText = regFmt(Game.SLOTS[i] ? Game.SLOTS[i].name : i, vm.state[i]);
+	}
+
+	$("#codepoint").innerText = '';
+	if (asm)
+	for (let p = -3; p <= 3; ++p) {
+		let d = $("#codepoint").appendChild(document.createElement('pre'));
+		d.innerText = (vm.pc + p < 0 ? ' ' : asm.disassemble(vm.pc + p)) + '\n';
+		if (p === 0) d.style.backgroundColor="yellow";
+	}
+
+	$("#stackdepth").innerText = vm.memory.length - vm.sp;
+	$("#stack").innerText = '';
+	for (let i = vm.sp; i < vm.memory.length; ++i) {
+		let d = $("#stack").appendChild(document.createElement('pre'));
+		d.innerText = `${('000' + i).substr(-4)}: ` + hexDec(vm.memory[i]);
+		if (i === vm.sp) d.style.backgroundColor="yellow";
+		if (i === vm.fp) d.style.border='solid 1px black';
+	}
+
+	$("#memory").innerText = '';
+	for (let i = 0; i < vm.memory.length; ++i) {
+		let d = $("#memory").appendChild(document.createElement('pre'));
+		let zs = 0;
+		while (i > 0 && i < vm.memory.length - 1 &&
+				vm.memory[i - 1 + zs] === 0 && !asm.symbolTable[i - 1 + zs])
+			zs += 1;
+		if (zs >= 4) {
+			d.innerText = '...';
+			i += zs - 3;
+		} else {
+			let addr = (asm && asm.symbolTable[i]) ?
+				(asm.symbolTable[i] + '    ').substr(0,4) :
+				('000' + i).substr(-4);
+			d.innerText = addr + ': ' + hexDec(vm.memory[i]);
+		}
+	}
+}
+
+
 
 let Game;
 
