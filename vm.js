@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 const opcodes = [
 	{ opcode: 0x0, mnemonic: 'halt' },  // Halt execution
