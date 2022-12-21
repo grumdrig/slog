@@ -1,26 +1,16 @@
-# Grumdrig strat
+# Strategies
 
-# compile
-node compiler.js -i ./chinbreak.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
+# compile and produce all intermediate files
+# node compiler.js -i ./chinbreak.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
 
-# execute
-node chinbreak.js -v grumdrig.bin -- grumdrig.bin
-
-
-# Quester strat
-
-# compile
-node compiler.js -i ./chinbreak.js -b @quester.bin quester.slog
-
-# execute
-node chinbreak.js -v quester.bin -- quester.bin
+--for STRAT in grumdrig.slog quester.slog do node chinbreak.js -v -c $STRAT
 
 
 # Snake
 
-node compiler.js -i ./snake.js -a @steve.asm steve.slog
-node vm.js -a steve.asm -o @steve.bin -- steve.asm
-node snake.js steve.bin -- steve.bin
+#node compiler.js -i ./snake.js -a @steve.asm steve.slog
+#node vm.js -a steve.asm -o @steve.bin -- steve.asm
+#node snake.js steve.bin -- steve.bin
 
 
 # tests
