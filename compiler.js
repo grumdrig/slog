@@ -1634,22 +1634,22 @@ if (typeof module !== 'undefined' && !module.parent) {
 	if (binary || disassembly || package) {
 
 		let { Assembler } = require('./vm');
-		let assembler = Assembler.assemble(asm);
+		let assembled = Assembler.assemble(asm);
 
 		if (binary) {
-			writeFileSync(binary, assembler.code);
+			writeFileSync(binary, assembled.code);
 		}
 
 		if (disassembly) {
-			writeFileSync(disassembly, assembler.disassemble(), 'utf8');
+			writeFileSync(disassembly, assembled.disassemble(), 'utf8');
 		}
 
 		if (package) {
 			let pack = {};
 			for (let source of sources) parseDocumentation(pack, source);
-			pack.binary = Array.from(assembler.code);
+			pack.binary = Array.from(assembled.code);
 			if (symbols) {
-				pack.symbols = assembler.labels;
+				pack.symbols = assembled.labels;
 			}
 			writeFileSync(package, JSON.stringify(pack));
 		}

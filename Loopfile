@@ -1,20 +1,22 @@
-# Grumdrig game
+# Strategies
 
-# compile
-node compiler.js -i ./bompton.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
+# compile and produce all intermediate files
+# node compiler.js -i ./chinbreak.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
 
-# execute
-node bompton.js -v grumdrig.bin -- grumdrig.bin
+--for STRAT in grumdrig.slog quester.slog do node chinbreak.js -v -c $STRAT
 
+# tests
 
-# Quester game
+node compiler.js -a @test.asm test.slog
+node --trace-uncaught vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm
+node test.js -- test.bin
 
-# compile
-node compiler.js -i ./bompton.js -b @quester.bin quester.slog
+# Manuals
 
-# execute
-node bompton.js -v quester.bin -- quester.bin
-
+node_modules/marked/bin/marked.js -i vm.md -o @vm.html
+node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
+node_modules/marked/bin/marked.js -i compiler.md -o @compiler.html
+node chinbreak.js --generate-documentation > @chinbreak-doc.html
 
 # Snake
 
@@ -22,23 +24,3 @@ node compiler.js -i ./snake.js -a @steve.asm steve.slog
 node vm.js -a steve.asm -o @steve.bin -- steve.asm
 node snake.js steve.bin -- steve.bin
 
-
-# tests
-
-# compile
-node compiler.js -a @test.asm test.slog
-
-# assemble
-node --trace-uncaught vm.js -a test.asm -d @test.dasm -o @test.bin -- test.asm
-
-# execute
-node test.js -- test.bin
-
-
-
-# Manuals
-
-node_modules/marked/bin/marked.js -i vm.md -o @vm.html
-node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
-node_modules/marked/bin/marked.js -i compiler.md -o @compiler.html
-node bompton.js --generate-documentation > @bompton-doc.html

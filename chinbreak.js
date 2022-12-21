@@ -1,6 +1,6 @@
-// Bompton Island: A Progress Quest Slot module
+// Chinbreak Island: A Progress Quest Slot module
 
-const Bompton = (_ => {
+const Chinbreak = (_ => {
 
 const GR = 0.5 + Math.sqrt(5) / 2;
 
@@ -46,16 +46,27 @@ const SLOTS = [
 	{ name: 'TrainingPoints',
 	  description: `Training points are required to be able to train up stats.` },
 
-	{ name: 'ArmorClass',
-	  description: `Defensive rating calculated based on equipment and bonuses.` },
+
+	{ name: 'Defense',
+	  description: `Ability to deflect or avoid an opponent's attack. Calculated based on equipment, stats and bonuses.` },
+
+	{ name: 'Offense',
+	  description: `Ability to penetrate an opponent's defenses in a melee attack. Calculated based on equipment, stats and bonuses.` },
+
+	{ name: 'Potency',
+	  description: `Degree of damage possible in successful melee attacks. Calculated based on equipment, stats and bonuses.` },
+
 
 	{ name: 'Encumbrance',
 	  description: `Total weight of carried items, not to exceed Capacity.` },
+
 	{ name: 'Capacity',
 	  description: `Maximum weight you could possibly carry.` },
 
+
 	{ name: 'Enchantment',
 	  description: `Active enchantment currently affecting you.` },
+
 
 	{ name: 'TrophyMob',
 	  description: `If all trophies were looted from the same mob type, that's
@@ -84,7 +95,8 @@ const SLOTS = [
 
 	{ name: 'Spellbook1',
 	  description: `Your spellbook has room for only four spells in its four
-	  chapters. This is the spell in the first chapter.` },
+	  chapters. This is the spell in the first chapter. Learn spells via
+	  learn() command and cast them with cast().` },
 
 	{ name: 'Spellbook2',
 	  description: `Spellbook spell number 2.` },
@@ -97,7 +109,8 @@ const SLOTS = [
 
 
 	{ name: 'Weapon',
-	  description: `The weapon is used for causing damage to one's foe.` },
+	  description: `The weapon is used for causing damage to one's foe. Use it
+	  with the "use" command to perform a melee attack.` },
 
 	{ name: 'Armor',
 	  description: `Armor is worn on the body to protect it from damage.` },
@@ -138,14 +151,14 @@ const SLOTS = [
 	  description: `Inventory item. Adventurers eat food every time they
 	  travel. If they're out of food, travelling takes longer due to extra
 	  time spent hunting and foraging and complaining about being hungry.
-	  Food may also be eaten to raise Energy by one.` },
+	  Food may also be eaten to raise Energy slightly, via the "use" command.` },
 
 	{ name: 'Treasures',
 	  description: `Inventory item. Exceptional items of high trade value.` },
 
 	{ name: 'Potions',
-	  description: `Inventory item. Consuming a potion restores both energy
-	  and health to maximum.` },
+	  description: `Inventory item. Consuming a potion via the "use" command
+	  restores both energy and health to maximum.` },
 
 	{ name: 'Sunsparks',
 	  description: `Inventory item. These restore life at the moment of death. Kind of
@@ -153,7 +166,7 @@ const SLOTS = [
 
 
 	{ name: 'Location',
-	  description: `Current location. The localities of Bompton Island are numbered from one to thirty-eight.` },
+	  description: `Current location. The localities of Chinbreak Island are numbered from one to thirty-eight.` },
 
 	{ name: 'MobSpecies',
 	  description: `Species of the nearby creature.` },
@@ -263,14 +276,9 @@ const CALLS = {
 		character may not choose the most efficient route, so travel
 		step-by-step if more efficiency is desired.` },
 
-	use: { parameters: 'item',
+	use: { parameters: 'slot',
 		description: `Use the item, specified by state slot index, for its
-		intended purpose. Maybe that's just Potion.` },
-
-	melee: {
-		description: `Battle the nearby mob. You'll do damage, they'll do
-		damage, everybody's happy. Look around the local area for mobs
-		first with hunt().`	},
+		intended purpose. Valid slots are Potion, Food, and Weapon.` },
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item
@@ -380,6 +388,11 @@ function generateInterface() {
 	SLOTS.forEach((slot, index) =>
 		interface.push(`const ${slot.name} = ${index}`));
 
+	interface.push('\n// Map');
+
+	MAP.forEach((locale, index) =>
+		locale && interface.push(`const ${moniker(locale.name)} = ${index}`));
+
 	interface.push('\n// Spells');
 
 	SPELLS.forEach((spell, index) =>
@@ -399,7 +412,7 @@ function generateInterface() {
 function generateDocumentation() {
 
 	let result = `<!doctype html>
-<head><title>Bompton Island Reference</title>
+<head><title>Chinbreak Island Reference</title>
 
 <style>
 * {
@@ -437,7 +450,7 @@ div#terrains {
 }
 </style>
 </head><body>
-<h1>Bompton Island Programmer's Reference</h1>
+<h1>Chinbreak Island Programmer's Reference</h1>
 	`;
 
 	function head(h) { result += `<h2>${h}</h2>`; }
@@ -701,7 +714,7 @@ const SPELLS = [ null, {
 		],
 		description: `Become just that much stronger.`,
 	}, {
-		name: 'Invisibility',
+		name: 'Shiny',
 		level: 6,
 		costs: [
 			{ slot: Energy, qty: 6 },
@@ -773,7 +786,7 @@ const SPELLS = [ null, {
 ];
 
 function moniker(s) {
-	return s.replace(' ', '_');
+	return s.replaceAll(' ', '_');
 }
 
 SPELLS.forEach((spell, index) => spell && define(moniker(spell.name), index));
@@ -939,7 +952,7 @@ const ARMOR_NAMES = ['',
 	'Cloth Armor',
 	'Leather Suit',
 	'Chainmail',
-	'Split Mail',
+	'Splint Mail',
 	'Plate Mail',
 	'+1 Safety Mail',
 	'+2 Holy Mail',
@@ -983,7 +996,8 @@ const MOUNT_NAMES = ['',
 	'+2 Pseudogoat',
 	'+3 Hammerhorse',
 	'+4 Firehorse',
-	'+5 Kelpie'];
+	'+5 Lava Shark',
+	'+6 Kelpie'];
 
 
 const DATABASE = [];
@@ -1151,13 +1165,13 @@ const DENIZENS = [
 		hitdice: 2,
 		drops: Food,
 	}, {
-		name: "Gegnome",
-		badassname: "Megegnome",
+		name: "Noteti",
+		badassname: "Innoteti",
 		domain: FOREST,
 		hitdice: 3,
 	}, {
-		name: "Giant Flea",
-		badassname: "Flealord",
+		name: "Polycorn",
+		badassname: "Epicorn",
 		domain: DESERT,
 		hitdice: 4,
 	}, {
@@ -1166,14 +1180,14 @@ const DENIZENS = [
 		domain: MOUNTAINS,
 		hitdice: 5,
 	}, {
-		name: "Trogor",
-		badassname: "Ortrogor",
-		domain: HILLS,
+		name: "Boglard",
+		badassname: "Bognivore",
+		domain: MARSH,
 		hitdice: 6,
 	}, {
 		name: "Baklakesh",
 		badassname: "Huntrakesh",
-		domain: MARSH,
+		domain: HILLS,
 		hitdice: 7
 	}, {
 		name: "Plasterbear",
@@ -1398,7 +1412,7 @@ const MAP = [null,
 		offshore: true,
 
 	}, {
-		name: "*......",
+		name: "_____",
 		terrain: TOWN,
 		denizen: Gust,
 		density: GR,
@@ -1415,7 +1429,7 @@ MAP.forEach((tile,index) => {
 			if (!tile.offshore)
 				MAINLAND_TOWNS.push(index);
 		}
-		define(tile.name.toUpperCase().replace(' ', '_'), index);
+		define(moniker(tile.name), index);
 	}
 });
 
@@ -1439,7 +1453,7 @@ for (let slot = EQUIPMENT_0; slot < EQUIPMENT_0 + EQUIPMENT_COUNT; slot += 1) {
 					sellAt(slot, item, MAINLAND_TOWNS[t]);
 				}
 			} else if (power == maxPower) {
-				sellAt(slot, item, SYGNON_TOWER);
+				sellAt(slot, item, Sygnon_Tower);
 			} else {
 				sellAt(slot, item, MAINLAND_TOWNS[nextTown]);
 				nextTown = (nextTown + 1) % MAINLAND_TOWNS.length;
@@ -1513,9 +1527,6 @@ function generateMap(scrambleFrom) {
 ///////////////
 
 
-function carryCapacity(state) {
-	return state[Strength] + state[Mount];
-}
 
 DATABASE[Resources] =   { value: 1/100, weight: 1 };
 DATABASE[Trophies] =    { value: 1/10, weight: 1 };
@@ -1527,24 +1538,10 @@ DATABASE[Treasures] =   { value: 1000, weight: 3 };
 DATABASE[Sunsparks] = { value: 10000, weight: 1 };
 
 
-function encumbrance(state) {
-	let result = 0
-	for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
-		result += DATABASE[i].weight * state[i];
-	}
-	return Math.floor(result);
-}
 
 function roomFor(item, state) {
-	let available = carryCapacity(state) - encumbrance(state);
+	let available = state[Capacity] - state[Encumbrance];
 	return Math.floor(available / DATABASE[item].weight);
-}
-
-function armorClass(state) {
-	return state[Armor] +
-			state[Shield] +
-			state[Headgear] +
-			state[Footwear];
 }
 
 // Generalized hopefully well from
@@ -1581,10 +1578,10 @@ function clearQuest(state) {
 
 let TASK = '';
 
-class Bompton {
-	static title = 'Progress Quest Slog: Bompton Island';
+class Chinbreak {
+	static title = 'Progress Quest Slog: Chinbreak Island';
 
-	static get windowContent() { return BOMPTON_WINDOW_CONTENT }
+	static get windowContent() { return CHINBREAK_WINDOW_CONTENT }
 
 	static create(code) {
 		let state = new Int16Array(SLOTS.length);
@@ -1620,18 +1617,49 @@ class Bompton {
 
 
 	static dumpState(state) {
+		let nfo = [];
 		for (let i = 0; i < SLOTS.length; ++i)
 			if (state[i])
-				console.log(SLOTS[i].name + ': ' + state[i]);
+				nfo.push(SLOTS[i].name + ': ' + state[i]);
+		let m = 2 + Math.max(...nfo.map(l => l.length));
+		let cols = Math.max(Math.floor(79 / m), 1);
+		let rows = Math.ceil(nfo.length / cols);
+		for (let i = 0; i < rows; i += 1)  {
+			let row = '';
+			for (let c = 0; c < cols; c += 1) {
+				let n = i + c * rows;
+				if (n < nfo.length)
+					row += (nfo[n] + ' '.repeat(m)).substr(0, m);
+			}
+			console.log(row);
+		}
 	}
 
 	static handleInstruction(state, operation, ...args) {
 		let result = this._handleInstruction(state, operation, ...args);
 
 		if (state[Level] > 0) {
-			state[Capacity] = carryCapacity(state);
-			state[Encumbrance] = encumbrance(state);
-			state[ArmorClass] = armorClass(state);
+			// Various state values are calculable from other state values
+			// but we store them in the state vector for convenience and visibility
+
+			let encumbrance = 0
+			for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
+				encumbrance += DATABASE[i].weight * state[i];
+			}
+			state[Encumbrance] = Math.floor(encumbrance);
+			state[Capacity] = state[Strength] + state[Mount];
+
+			let prof = DENIZENS[state[Species]].proficiency ?? 0;
+			if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
+
+			state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
+			state[Potency] = state[Strength] + weaponPower(state[Weapon]) + prof;
+			state[Defense] =
+				state[Agility] +
+				state[Armor] +
+				state[Shield] +
+				state[Headgear] +
+				state[Footwear];
 
 			if (state[Health] <= 0) {
 				state[GameOver] = 86;
@@ -1673,13 +1701,13 @@ class Bompton {
 
 		function randomPick(a) { return a[irand(a.length)] }
 
-		function rollAttack(offsense, defense, sharpness) {
+		function rollAttack(offsense, defense, potency) {
 			let DIE = 10;
 			let attackRoll = d(DIE);
 			let defenseRoll = d(DIE);
 			if (attackRoll === 1) return 0;
 			if (attackRoll === DIE || attackRoll + offsense > defenseRoll + defense) {
-				let damage = d(Math.max(1, sharpness));
+				let damage = d(Math.max(1, potency));
 				if (defenseRoll == DIE && damage > 1) damage = 1;
 				if (defenseRoll == 1) damage >>= 1;
 				return damage;
@@ -1691,8 +1719,7 @@ class Bompton {
 		function doMobAttack() {
 			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return 0;
-			const defense = state[Agility] + state[ArmorClass];
-			let damage = rollAttack(state[MobLevel], defense, state[MobLevel]);
+			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);
 			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
@@ -1712,11 +1739,7 @@ class Bompton {
 			if (state[MobHealth] <= 0) return;
 			let info = DENIZENS[state[MobSpecies]];
 			if (!info) return;
-			let prof = DENIZENS[state[Species]].proficiency ?? 0;
-			if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
-			const offense = state[Agility] + weaponPower(state[Weapon]) + prof;
-			const sharpness = state[Strength] + weaponPower(state[Weapon]) + prof;
-			let damage = rollAttack(offense, state[MobLevel], sharpness);
+			let damage = rollAttack(state[Offense], state[MobLevel], state[Potency]);
 			dec(MobHealth, Math.min(state[MobHealth], damage));
 
 			if (state[MobHealth] <= 0) {
@@ -1801,7 +1824,7 @@ class Bompton {
 					state[slot] = value ?? (state[slot] + increment)
 
 				state[Level] = 1;
-				state[Location] = BOMPTON;
+				state[Location] = Bompton;
 				state[Health] = state[MaxHealth] = 6 + state[Endurance];
 				state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
 				state[TrainingPoints] = 10;
@@ -1857,10 +1880,6 @@ class Bompton {
 			return type;
 		}
 
-
-		function inventoryCapacity() {
-			return Math.max(0, carryCapacity(state) - encumbrance(state));
-		}
 
 		function inc(slot, qty=1) {
 			return state[slot] = Math.min(MAX_INT, Math.max(MIN_INT, state[slot] + qty));
@@ -1928,18 +1947,21 @@ class Bompton {
 				if (slot === Potions) {
 					state[Health] = Math.max(state[Health], state[MaxHealth]);
 					state[Energy] = Math.max(state[Energy], state[MaxEnergy]);
+					passTime('Quaffing an potion', 1);
 				} else if (slot === Food) {
 					if (state[Energy] < state[MaxEnergy])
 						inc(Energy);
+					passTime('Taking a moment to eat something', 1);
+				} else {
+					return -1;
 				}
 				return 1;
+			} else if (slot === Weapon) {
+				if (!state[MobSpecies]) return -1;
+				passTime('Engaging this ' + DENIZENS[state[MobSpecies]].name.toLowerCase() + ' in battle!', 1);
+				return battle();
 			}
 			return -1;
-
-		} else if (operation === melee) {
-			if (!state[MobSpecies]) return -1;
-			passTime('Engaging this ' + DENIZENS[state[MobSpecies]].name.toLowerCase() + ' in battle!', 1);
-			return battle();
 
 		} else if (operation === loot) {
 			if (!state[MobSpecies]) return -1;
@@ -1985,15 +2007,24 @@ class Bompton {
 			}
 
 			// TODO: consider local effect on price
-			// TODO: consider charisma
+
+			if (state[Charisma] < 1) {
+				price *= 2 - state[Charisma]; // 0 cha pays double, -1 pays triple, etc
+			} else {
+				// 1 cha pays 50% extra, 2 pays 33% extra, etc
+				price = price * (1 + 1 / (1 + state[Charisma]));
+			}
 
 			if (arg2 === 0) {
 				// It's a price check only
 				passTime('Checking prices', 1);
-				return price;
+				return Math.ceil(price);
 			}
 
 			price *= qty;
+
+			price = Math.ceil(price);
+
 			if (state[Gold] < price) return -1;  // Can't afford it
 
 			// You may proceed with the purchase
@@ -2017,13 +2048,20 @@ class Bompton {
 				qty = Math.min(qty, state[slot]);
 				newqty = state[slot] - qty;
 				unitValue = DATABASE[slot].value;
+				if (slot === Trophies && state[TrophyMob]) {
+					const d = DENIZENS[state[TrophyMob]];
+					if (d.hitdice)
+						unitValue *= d.hitdice;
+				}
 			} else {
 				return -1;
 			}
 			if (qty <= 0) return -1;
-			let price = qty * 0.5 * unitValue;
 			if (operation === sell) {
-				inc(Gold, Math.floor(price));
+				let price = qty * unitValue;
+				price /= (1 + 1 / Math.max(1, state[Charisma]));
+				price = Math.floor(price);
+				inc(Gold, price);
 			}
 			if (operation === give &&
 					state[QuestObject] === slot &&
@@ -2177,7 +2215,7 @@ class Bompton {
 			// TODO: DEX helps with STR and CON
 			// TODO: INT helps with CHA and WIS
 
-			passTime('Training up ' + SLOTS[slot].name.substr(4).toLowerCase(), hours);
+			passTime('Training up ' + SLOTS[slot].name.toLowerCase(), hours);
 			inc(slot);
 			dec(TrainingPoints);
 			return state[slot];
@@ -2336,7 +2374,7 @@ function additiveStatBonus(stat) {
 /////////////////// UI ///////////////////////////////
 
 
-const BOMPTON_WINDOW_CONTENT = `
+const CHINBREAK_WINDOW_CONTENT = `
 <style>	/* Styling for the character sheet */
 
 /*#game-window { width: 600px }*/
@@ -2488,6 +2526,9 @@ div.header {
 			<div>Species</div><div id="species"></div>
 			<div>Level</div><div id="level"></div>
 			<div>Experience</div><div id="xp" class=prog data-warning='#CDFF2F'></div>
+			<div>Defense</div><div id="defense"></div>
+			<div>Offense</div><div id="offense"></div>
+			<div>Potency</div><div id="potency"></div>
 			<div>Health</div><div id="health" class=prog></div>
 			<div>Energy</div><div id="energy" class=prog></div>
 			<div>Enchantment</div><div id="enchantment"></div>
@@ -2514,7 +2555,7 @@ div.header {
 
 	<div id=col2>
 		<div id=equipment class=listview>
-			<div class=header>Equipment	(Armor Class: <span id=armorClass></span>)</div>
+			<div class=header>Equipment</div>
 			<div>Weapon</div>   <div id=e0></div>
 			<div>Armor</div>    <div id=e1></div>
 			<div>Shield</div>   <div id=e2></div>
@@ -2712,11 +2753,11 @@ function updateGame(state) {
 		setBar(id, value, end, start);
 	}
 
-	set('species', Bompton.SPECIES_NAMES[state[Species]]);
+	set('species', Chinbreak.SPECIES_NAMES[state[Species]]);
 	set('level', state[Level]);
 	setProgress('xp', state[Experience],
-			Bompton.xpNeededForLevel(state[Level] + 1),
-			Bompton.xpNeededForLevel(state[Level]));
+			Chinbreak.xpNeededForLevel(state[Level] + 1),
+			Chinbreak.xpNeededForLevel(state[Level]));
 	setProgress('health', state[Health], state[MaxHealth]);
 	if (state[Health] == 0 && state[MaxHealth] > 0)
 		$id('health').classList.add('dead');
@@ -2751,13 +2792,15 @@ function updateGame(state) {
 		else if (slot === Ring)
 			set('e' + i, 'Ring of ' + SLOTS[v].name);
 		else if (slot === Totem)
-			set('e' + i, Bompton.MAP[v].name.split(' ')[0] + ' Totem');
+			set('e' + i, Chinbreak.MAP[v].name.split(' ')[0] + ' Totem');
 		else {
-			const names = (Bompton.DATABASE[slot] ?? {}).names;
+			const names = (Chinbreak.DATABASE[slot] ?? {}).names;
 			set('e' + i, names[v] || v);
 		}
 	}
-	set('armorClass', state[ArmorClass]);
+	set('defense', state[Defense]);
+	set('offense', state[Offense]);
+	set('potency', state[Potency]);
 
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
 		set('i' + i, state[INVENTORY_0 + i]);
@@ -2778,7 +2821,7 @@ function updateGame(state) {
 		$id('encumbrance').classList.remove('warning');
 	}*/
 
-	let local = Bompton.mapInfo(state[Location], state) || {};
+	let local = Chinbreak.mapInfo(state[Location], state) || {};
 
 	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
 	// set('elapsed', readableTime(state[Hours], state[Years]));
@@ -2794,9 +2837,9 @@ function updateGame(state) {
 	set('location', state[Location] ?
 		`#${state[Location]} &lt;${longitude(state[Location])}, ${latitude(state[Location])}&gt;` : '');
 	set('locale', local ? local.name + ' #' + state[Location] : '');
-	set('terrain', (Bompton.TERRAIN_TYPES[local.terrain] ?? {}).name);
+	set('terrain', (Chinbreak.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobSpecies] ?
-		`${Bompton.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
+		`${Chinbreak.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
 	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
 	if (state[MobHealth] == 0 && state[MobMaxHealth] > 0)
 		$id('mobHealth').classList.add('dead');
@@ -2804,9 +2847,9 @@ function updateGame(state) {
 		$id('mobHealth').classList.remove('dead');
 
 
-	let questal = Bompton.mapInfo(state[QuestLocation], state);
+	let questal = Chinbreak.mapInfo(state[QuestLocation], state);
 	questal &&= questal.name;
-	let original = Bompton.mapInfo(state[QuestEnd], state);
+	let original = Chinbreak.mapInfo(state[QuestEnd], state);
 	original &&= original.name;
 	const friendlySlotNames = {
 		Totem: 'totem',
@@ -2867,13 +2910,13 @@ function updateGame(state) {
 function gameplay(inst, arg1, arg2) {
 	arg1 = arg1 || eval($("#arg1").value);
 	arg2 = arg2 || eval($("#arg2").value);
-	let result = Bompton.handleInstruction(vm.state, inst, arg1, arg2);
+	let result = Chinbreak.handleInstruction(vm.state, inst, arg1, arg2);
 	$("#result").innerText = result;
 	updateDebuggerState(vm);
 	updateGame(vm.state);
 }
 
-Bompton.playmation = function(vm, butStop) {
+Chinbreak.playmation = function(vm, butStop) {
 	function age() { return vm.state[Years] * HOURS_PER_YEAR + vm.state[Hours] }
 	let before = age();
 	while (vm.alive() && age() == before) {
@@ -2895,9 +2938,9 @@ function animate() {
 	if (animate.progress >= animate.duration) {
 		if (typeof updateDebuggerState !== 'undefined') // TODO awkward as hell
 			updateDebuggerState(vm);
-		Bompton.updateUI(vm.state);
+		Chinbreak.updateUI(vm.state);
 		if (vm.alive())
-			window.gameplayTimer = setTimeout(_ => Bompton.playmation(vm), 1);
+			window.gameplayTimer = setTimeout(_ => Chinbreak.playmation(vm), 1);
 	} else {
 		window.gameplayTimer = setTimeout(animate, 10);
 	}
@@ -2919,21 +2962,33 @@ function setTaskBar() {
 
 
 
-return Bompton; })();
+return Chinbreak; })();
 
 
 if (typeof module !== 'undefined') {
-	module.exports = Bompton;
+	module.exports = Chinbreak;
 }
 
 
 function usage() {
-	console.log(`Usage: ./bompton.js [OPTS] [STRATEGY]
+	console.log(`Progress Quest Slog: Chinbreak Island
 
-Run the game with the specified strategy, and/or generate supporting
-documentation and/or the game the interface header.
+Usage:
+	./chinbreak.js [OPTS] STRATEGY
+	./chinbreak.js --generate-interface
+	./chinbreak.js --generate-map
+	./chinbreak.js --generate-documentation
+
+Run the game with the specified strategy (which is a strategy package file,
+unless the -c or -b flag is used), or generate the game interface header, or
+supporting documentation.
 
 OPTS:
+	-c, --compile     STRATEGY is slog source -- compile it first
+	-b, --binary      STRATEGY is a machine code binary
+	-v, --verbose     Increase verbosity of output
+
+SUPPORTING INFO GENERATION FLAGS:
 	--generate-interface      Output the game interface (as Slog code)
 	--generate-map            Output the game map as HTML
 	--generate-documentation  Output game documentation HTML
@@ -2949,11 +3004,20 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 	const { values, positionals } = parseArgs({
 		options: {
+			compile: {
+				type: 'boolean',
+				short: 'c',
+			},
+			binary: {
+				type: 'boolean',
+				short: 'b',
+			},
 			verbose: {
 				type: 'boolean',
 				short: 'v',
 				multiple: true,
 			},
+
 			'generate-interface': {
 				type: 'boolean',
 			},
@@ -2983,17 +3047,37 @@ if (typeof module !== 'undefined' && !module.parent) {
 	}
 	if (flags['generate-documentation']) {
 		console.log(`<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">`);
-		console.log(Bompton.generateDocumentation());
+		console.log(Chinbreak.generateDocumentation());
 	}
 
 	if (positionals.length) {
 		let { readFileAsWords, VirtualMachine } = require('./vm.js');
-		let code = readFileAsWords(positionals[0]);
-		let vm = new VirtualMachine(code, Bompton);
+		let code;
+		if (flags.binary) {
+			code = readFileAsWords(positionals[0]);
+		} else if (flags.compile) {
+			const { compile } = require('./compiler.js');
+			const { readFileSync } = require('fs');
+
+			let asm = compile(Chinbreak.generateInterface(), readFileSync(positionals[0], 'utf8'));
+
+			let { Assembler } = require('./vm');
+			let assembled = Assembler.assemble(asm);
+
+			code = assembled.code;
+		} else {
+			let strat = readFileSync(positionals[0]);
+			strat = JSON.parse(strat);
+			code = strat.binary;
+		}
+
+		let vm = new VirtualMachine(code, Chinbreak);
 		if (verbosity > 1) vm.trace = true;
+
 		vm.run();
+
 		if (verbosity > 0) {
-			Bompton.dumpState(vm.state);
+			Chinbreak.dumpState(vm.state);
 			vm.dumpState();
 		}
 	}

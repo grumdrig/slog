@@ -38,7 +38,7 @@ Alternatively, there are command line tools:
 
 - vm.js: Assemble Slog assembly, and/or run strategies in games
 
-- bompton.js: Run the Chinbreak Island game, or generate supporting files
+- chinbreak.js: Run the Chinbreak Island game, or generate supporting files
 
 Pass '--help' to any of these tools for usage information.
 

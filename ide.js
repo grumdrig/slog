@@ -77,7 +77,7 @@ function stopRunimation() {
 		clearTimeout(window.gameplayTimer);
 		window.gameplayTimer = null;
 /*
-will probably need to get this into Bompton somehow:
+will probably need to get this into Chinbreak somehow:
 		$id('task').innerHTML = 'Paused';
 		animate.progress = 0;
 		setTaskBar();
