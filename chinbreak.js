@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // Chinbreak Island: A Progress Quest Slot module
 
 const Chinbreak = (_ => {
@@ -179,6 +180,9 @@ const SLOTS = [
 
 	{ name: 'MobMaxHealth',
 	  description: `Maximum health of the nearby creature.` },
+
+	{ name: 'MobAggro',
+	  description: `Greater than zero if nearby creature is aggressive towards you, i.e. attacking.` },
 
 
 	{ name: 'QuestObject',
@@ -633,8 +637,16 @@ const SPELLS = [ null, {
 			{ slot: Reagents, qty: 2 },
 			],
 		effect: state => {
-			// TODO this doesn't work
-			return battle(true);
+			if (!state[MobHealth]) return 0;
+
+			let info = DENIZENS[state[MobSpecies]];
+
+			if (info.esteemSlot)
+				dec(state[info.esteemSlot], 1);
+
+			inc(MobAggro);
+
+			damageMob(state, rollAttack(state[Intellect]));
 		},
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
@@ -1558,12 +1570,25 @@ function itemsName(sloth) {
 	return SLOTS[sloth].name.substr(9).toLowerCase();
 }
 
+function damageMob(state, damage) {
+	if (state[MobHealth] <= 0) return;
+
+	state[MobHealth] = Math.max(0, state[MobHealth] - damage);
+
+	if (state[MobHealth] <= 0) {
+		let levelDisadvantage = state[MobLevel] - state[Level];
+		state[Experience] += Math.round(10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
+		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) 
+			state[QuestProgress] += 1;
+	}
+}
 
 function clearMob(state) {
 	state[MobSpecies] = 0;
 	state[MobLevel] = 0;
 	state[MobHealth] = 0;
 	state[MobMaxHealth] = 0;
+	state[MobAggro] = 0;
 }
 
 function clearQuest(state) {
@@ -1694,84 +1719,21 @@ class Chinbreak {
 		function irand(scale) {
 			seed = hash(seed, 0x147e9e7);
 			if (seed < 0) throw "Bad random algorithm";
+			if (scale <= 0) return 0;  // This should be avoided
 			return seed % scale;
 		}
 
 		function d(pips) { return irand(pips) + 1 }
 
+		function civRoll(att, def) { return irand(att + def) < att }
+
 		function randomPick(a) { return a[irand(a.length)] }
 
-		function rollAttack(offsense, defense, potency) {
-			let DIE = 10;
-			let attackRoll = d(DIE);
-			let defenseRoll = d(DIE);
-			if (attackRoll === 1) return 0;
-			if (attackRoll === DIE || attackRoll + offsense > defenseRoll + defense) {
-				let damage = d(Math.max(1, potency));
-				if (defenseRoll == DIE && damage > 1) damage = 1;
-				if (defenseRoll == 1) damage >>= 1;
-				return damage;
+		function rollAttack(offense, defense, potency) {
+			if (civRoll(offense, defense)) {
+				return d(Math.max(1, potency));
 			} else {
 				return 0;
-			}
-		}
-
-		function doMobAttack() {
-			let info = DENIZENS[state[MobSpecies]];
-			if (!info) return 0;
-			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);
-			dec(Health, Math.min(state[Health], damage));
-
-			if (state[Health] <= 0) {
-				if (state[Sunsparks] > 0) {
-					dec(Sunsparks, 1);
-					state[Health] = 1;  // or max health?
-				} else {
-					state[GameOver] = 86;
-				}
-				return 0;
-			} else {
-				return 1;
-			}
-		}
-
-		function doPlayerAttack(state) {
-			if (state[MobHealth] <= 0) return;
-			let info = DENIZENS[state[MobSpecies]];
-			if (!info) return;
-			let damage = rollAttack(state[Offense], state[MobLevel], state[Potency]);
-			dec(MobHealth, Math.min(state[MobHealth], damage));
-
-			if (state[MobHealth] <= 0) {
-				let levelDisadvantage = state[MobLevel] - state[Level];
-				inc(Experience, 10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
-				if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) inc(QuestProgress);
-			}
-		}
-
-		function battle(invulnerable=false) {
-			if (!state[MobSpecies]) return -1;
-			if (state[MobHealth] <= 0) return -1;
-
-			let info = DENIZENS[state[MobSpecies]];
-			if (!info) return -1;
-
-			if (info.esteemSlot)
-				dec(state[info.esteemSlot], 1);
-
-
-			if (state[Agility] + d(6) >= state[MobLevel] + d(6)) {
-				// Player attacks first
-				doPlayerAttack(state);
-				if (state[MobHealth] > 0) {
-					doMobAttack();
-				}
-			} else {
-				// Mob attacks first
-				doMobAttack();
-				if (state[Health] > 0) {
-					doPlayerAttack(state);
-				}
 			}
 		}
 
@@ -1798,7 +1760,7 @@ class Chinbreak {
 		}
 
 		if (operation === cheat) {
-			// Remove this some time
+			// TODO: Remove this some time
 			let [slot, value] = [arg1, arg2];
 			state[slot] = value;
 			return value;
@@ -1887,6 +1849,22 @@ class Chinbreak {
 
 		function dec(slot, qty=1) { return inc(slot, -qty) }
 
+		if (state[MobAggro]) {
+			// do mob attack before anything else happens
+			let info = DENIZENS[state[MobSpecies]];
+			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);
+			dec(Health, Math.min(state[Health], damage));
+
+			if (state[Health] <= 0) {
+				if (state[Sunsparks] > 0) {
+					dec(Sunsparks);
+					state[Health] = 1;  // ...or should it be max health?
+				} else {
+					state[GameOver] = 86;
+					return 0;
+				}
+			}
+		}
 
 		if (operation === travel) {
 			let destination = arg1;
@@ -1957,18 +1935,42 @@ class Chinbreak {
 				}
 				return 1;
 			} else if (slot === Weapon) {
+				// Melee weapon attack
 				if (!state[MobSpecies]) return -1;
-				passTime('Engaging this ' + DENIZENS[state[MobSpecies]].name.toLowerCase() + ' in battle!', 1);
-				return battle();
+				if (state[MobHealth] <= 0) return -1;
+
+				let info = DENIZENS[state[MobSpecies]];
+
+				passTime('Engaging this ' + info.name.toLowerCase() + ' in battle!', 1);
+
+				if (info.esteemSlot)
+					dec(state[info.esteemSlot], 1);
+
+				inc(MobAggro);
+
+				damageMob(state, rollAttack(state[Offense], state[MobLevel], state[Potency]));
+			} else if (slot === Footwear) {
+				if (!state[MobSpecies]) return -1;
+				if (state[MobHealth] <= 0) return -1;
+
+				let info = DENIZENS[state[MobSpecies]];
+
+				passTime('Kicking this ' + info.name.toLowerCase() + ' with disdain', 1);
+
+				if (info.esteemSlot)
+					dec(state[info.esteemSlot], 1);
+
+				inc(MobAggro);
+
+				damageMob(state, rollAttack(state[Footwear], state[MobLevel], 1));
 			}
 			return -1;
 
 		} else if (operation === loot) {
 			if (!state[MobSpecies]) return -1;
 			let info = DENIZENS[state[MobSpecies]];
-			if (state[MobHealth] > 0 && d(20) > state[Agility]) {
-				doMobAttack();
-				if (state[Health] <= 0) return 0;
+			if (state[MobHealth] > 0 && civRoll(state[MobLevel], state[Agility])) {
+				inc(MobAggro);
 				if (info.esteemSlot)
 					dec(state[info.esteemSlot], 1);
 			}
@@ -2285,6 +2287,7 @@ class Chinbreak {
 			state[MobSpecies] = type;
 			state[MobLevel] = level;
 			state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
+			state[MobAggro] = 0;
 			return state[MobSpecies] ? 1 : 0;
 
 		} else if (operation === rest) {
@@ -2419,6 +2422,10 @@ const CHINBREAK_WINDOW_CONTENT = `
 	display: inline-block;
 	width: 90px;
 	background-color: white;
+}
+
+#aggro {
+	color: red;
 }
 
 #questdesc {
@@ -2590,7 +2597,7 @@ div.header {
 		</div>
 		<div id=encounter class=listview>
 			<div class=header>Encounter</div>
-			<div>Creature</div><div id=mob></div>
+			<div>Creature</div><div><span id=mob></span> <span id=aggro></span></div>
 			<div>Health</div><div id=mobHealth class=prog></div>
 		</div>
 		<div id=quest class=listview>
@@ -2840,6 +2847,7 @@ function updateGame(state) {
 	set('terrain', (Chinbreak.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobSpecies] ?
 		`${Chinbreak.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
+	set('aggro', state[MobAggro] ? ' (aggro)' : '');
 	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
 	if (state[MobHealth] == 0 && state[MobMaxHealth] > 0)
 		$id('mobHealth').classList.add('dead');
@@ -2872,7 +2880,7 @@ function updateGame(state) {
 		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
 		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
 		state[QuestObject] ? `We of ${original} stand in need of ${friendlySlotNames[SLOTS[state[QuestObject]].name]}. They say there's no shortage of them in ${questal}.` :
-		state[QuestMob] ? 	 `It's time to put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
+		state[QuestMob] ? 	 `Put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
 		'<br>&nbsp;');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
 
