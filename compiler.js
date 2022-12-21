@@ -1544,7 +1544,8 @@ OPTIONS:
 	-s, --symbols
 		Include debugging symbols in the generated strategy package file
 	-i file, --interface=file
-		Read the game interface from the named game logic file
+		Read the game interface from the named game logic file. The filename
+		should include a path
 	-b file, --binary=file
 		Write binary machine code suitable for the Slog VM to named file
 	-a file, --assembly=file
@@ -1557,7 +1558,7 @@ OPTIONS:
 EXAMPLE:
 	The most typical use case at this time would be:
 
-	$ ./compile.js -i chinbreak.js -p MYSTRAT.strat MYSTRAT.slog
+	$ ./compile.js -i ./chinbreak.js -p MYSTRAT.strat MYSTRAT.slog
 `);
 	process.exit()
 }
