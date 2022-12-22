@@ -194,7 +194,7 @@ iframe {
 		</div>
 		<div class=nobo>
 			<button onclick="step()">Step</button>
-			<button onclick="run()">Run</button>
+			<button onclick="play()">Play</button>
 			<label for=speed>Speed:</label>
 			<select id=speed>
 				<option value=instant>Instant</option>
@@ -440,12 +440,12 @@ will probably need to get this into Chinbreak somehow:
 
 // Game speeds
 const SPEEDS = {
-	step = 1,
-	animate = 2,
-	gamestep = 3,
-	normal = 4,
-	turbo = 5,
-	instant = 6,
+	step: 1,
+	animate: 2,
+	gamestep: 3,
+	normal: 4,
+	turbo: 5,
+	instant: 6,
 };
 
 function play() {
@@ -456,21 +456,40 @@ function play() {
 }
 
 function run() {
-	let speed = parseInt($('#speed').value);
+	let speed = SPEEDS[$('#speed').value];
 	let calledOut;
-	while (vm.alive()) {
+
+	if (speed === SPEEDS.step || speed === SPEEDS.animate) {
 		let calledOut = vm.step();
-		if (speed < SPEEDS.instant && (calledOut || speed == SPEEDS.animate)) {
-			break;	
+		updateDebuggerState(vm);
+		if (calledOut)
+			Game.updateUI(vm.state);
+		if (speed === SPEEDS.animate && vm.running)
+			window.gameplayTimer = setTimeout(run, 100);
+
+	} else if (speed === SPEEDS.gamestep) {
+		while (vm.alive()) {
+			let calledOut = vm.step();
+			if (calledOut) break;
 		}
-	}
+		updateDebuggerState(vm);
+		Game.updateUI(vm.state);
 
-	updateDebuggerState(vm);
+	} else if (speed === SPEEDS.normal) {
+		Game.playmation(vm);
 
-	if (calledOut) Game.updateUI(vm.state);
+	} else if (speed === SPEEDS.turbo) {
+		Game.playmation(vm, true);
+		updateDebuggerState(vm);
+		Game.updateUI(vm.state);
+		window.gameplayTimer = setTimeout(run, 100);
 
-	if (speed !== SPEEDS.instant && speed != SPEEDS.step)  {
-		window.gameplayTimer = setTimeout(animate, 100);
+	} else if (speed === SPEEDS.instant) {
+		while (vm.running) {
+			vm.step();
+		}
+		updateDebuggerState(vm);
+		Game.updateUI(vm.state);
 	}
 }
 
