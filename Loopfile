@@ -15,7 +15,7 @@ node test.js -- test.bin
 
 node_modules/marked/bin/marked.js -i vm.md -o @vm.html
 node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
-node_modules/marked/bin/marked.js -i compiler.md -o @compiler.html
+node_modules/marked/bin/marked.js -i language.md -o @language.html
 node chinbreak.js --generate-documentation > @chinbreak-doc.html
 
 # Snake
