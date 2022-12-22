@@ -1566,8 +1566,17 @@ function hash(...keys) {
 	return x ;
 }
 
-function itemsName(sloth) {
-	return SLOTS[sloth].name.substr(9).toLowerCase();
+function indefiniteItems(slot, qty) {
+	let name = SLOTS[slot].name.toLowerCase();
+	const vowels = 'aeiouAEIOU';
+	if (qty === 1) {
+		if (vowels.includes(name[0]))
+			return 'an ' + name;
+		else
+			return 'a ' + name;
+	} else {
+		return 'some ' + name;
+	}
 }
 
 function damageMob(state, damage) {
@@ -2032,7 +2041,7 @@ class Chinbreak {
 			// You may proceed with the purchase
 			inc(Gold, -price);
 			state[slot] = levelToBe;
-			passTime('Buying some ' + itemsName(slot), 3);
+			passTime('Buying ' + indefiniteItems(slot, 2), 3);
 			return qty;
 
 		} else if (operation === sell || operation === give || operation === drop) {
@@ -2078,11 +2087,11 @@ class Chinbreak {
 			}
 			state[slot] = newqty;
 			if (operation === sell) {
-				passTime('Selling some ' + itemsName(slot), 3);
+				passTime('Selling ' + indefiniteItems(slot, qty), 3);
 			} else if (operation === give) {
-				passTime('Giving away some ' + itemsName(slot), 1);
+				passTime('Giving away ' + indefiniteItems(slot, qty), 1);
 			} else if (operation === drop) {
-				passTime('Cleaning out some extra ' + itemsName(slot) + ' from my backpack', 1);
+				passTime('Cleaning out ' + indefiniteItems(slot, qty) + ' from my backpack', 1);
 			}
 
 			return qty;
@@ -2130,7 +2139,7 @@ class Chinbreak {
 
 			clearQuest(state);
 
-			if (local.terrain !== TOWN) return -1;
+			if (local.terrain !== TOWN) return 0;
 
 			if (state[Act] == 9) {
 				if (state[ActProgress] < 3) {
@@ -2338,7 +2347,7 @@ class Chinbreak {
 			qty = rand() < chance ? 1 : 0;
 			inc(target, qty);
 
-			passTime('Foraging for ' + itemsName(target), 1);
+			passTime('Foraging for ' + indefiniteItems(target, 1), 1);
 			return qty;
 
 		} else if (operation === levelup) {

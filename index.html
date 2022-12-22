@@ -457,7 +457,6 @@ function play() {
 
 function run() {
 	let speed = SPEEDS[$('#speed').value];
-	let calledOut;
 
 	if (speed === SPEEDS.step || speed === SPEEDS.animate) {
 		let calledOut = vm.step();
