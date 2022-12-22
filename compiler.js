@@ -307,6 +307,8 @@ class Module {
 	}
 }
 
+// TODO: this will probably be gotten rid of. It makes more sense to tag the
+// target of a program in its external packaging.
 class TagDefinition {
 	tag1;
 	tag2;
