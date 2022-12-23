@@ -20,7 +20,6 @@ node chinbreak.js --generate-documentation > @chinbreak-doc.html
 
 # Snake
 
-node compiler.js -i ./snake.js -a @steve.asm steve.slog
-node vm.js -a steve.asm -o @steve.bin -- steve.asm
+node compiler.js -i ./snake.js -b @steve.bin steve.slog
 node snake.js steve.bin -- steve.bin
 

@@ -5,13 +5,6 @@ package.json
 
 *.bin
 
-grumdrig.asm
-grumdrig.dasm
-grumdrig.strat
-
-steve.asm
-steve.dasm
-
 test.asm
 test.dasm
 
@@ -19,5 +12,4 @@ map.html
 asm.html
 vm.html
 language.html
-
 chinbreak-doc.html
