@@ -148,7 +148,6 @@ iframe {
 				<textarea rows=16 cols=50 id=source></textarea><br/>
 				<button onclick="comp()">Compile</button>
 				<span style="margin-left: 10px">&nbsp;</span>
-				<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
 				<input type=checkbox id=autoplay><label for=autoplay>Autoplay</label></input>
 				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
 			</article>
@@ -193,17 +192,18 @@ iframe {
 			<div class=brain><div id='memory'></div></div>
 		</div>
 		<div class=nobo>
-			<button onclick="step()">Step</button>
+			<button onclick="step()">Step VM</button>
+			<button onclick="bigstep()">Step Game</button>
+			&middot;
 			<button onclick="play()">Play</button>
 			<label for=speed>Speed:</label>
 			<select id=speed>
 				<option value=instant>Instant</option>
 				<option value=turbo>Turbo</option>
-				<option value=normal>Normal</option>
-				<option value=gamestep>Step Game</option>
-				<option value=animate>Animate Machine</option>
-				<option value=step>Step Machine</option>
+				<option value=normal selected>Normal</option>
+				<option value=animate>Animate VM</option>
 			</select>
+			&middot;
 			<button onclick="reset()">Reset</button>
 		</div>
 		<div class="status-bar" id=debugbar>
@@ -359,7 +359,6 @@ let asm;
 
 function saveChanges() {
 	localStorage.source = $("#source").value;
-	localStorage.autorun = JSON.stringify($("#autorun").checked);
 	localStorage.autoplay = JSON.stringify($("#autoplay").checked);
 }
 
@@ -375,9 +374,7 @@ function comp(initialLoad) {
 		$("#asm").value = compile(...sources);
 		if (assemble()) {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
-			if ($("#autorun").checked)
-				run();
-			else if ($("#autoplay").checked)
+			if ($("#autoplay").checked)
 				play();
 		}
 	} catch (e) {
@@ -440,12 +437,10 @@ will probably need to get this into Chinbreak somehow:
 
 // Game speeds
 const SPEEDS = {
-	step: 1,
-	animate: 2,
-	gamestep: 3,
-	normal: 4,
-	turbo: 5,
-	instant: 6,
+	animate: 1,
+	normal: 2,
+	turbo: 3,
+	instant: 4,
 };
 
 function play() {
@@ -458,21 +453,13 @@ function play() {
 function run() {
 	let speed = SPEEDS[$('#speed').value];
 
-	if (speed === SPEEDS.step || speed === SPEEDS.animate) {
+	if (speed === SPEEDS.animate) {
 		let calledOut = vm.step();
 		updateDebuggerState(vm);
 		if (calledOut)
 			Game.updateUI(vm.state);
-		if (speed === SPEEDS.animate && vm.running)
+		if (vm.running)
 			window.gameplayTimer = setTimeout(run, 100);
-
-	} else if (speed === SPEEDS.gamestep) {
-		while (vm.alive()) {
-			let calledOut = vm.step();
-			if (calledOut) break;
-		}
-		updateDebuggerState(vm);
-		Game.updateUI(vm.state);
 
 	} else if (speed === SPEEDS.normal) {
 		Game.playmation(vm);
@@ -481,7 +468,8 @@ function run() {
 		Game.playmation(vm, true);
 		updateDebuggerState(vm);
 		//Game.updateUI(vm.state);
-		window.gameplayTimer = setTimeout(run, 1);
+		if (vm.running)
+			window.gameplayTimer = setTimeout(run, 1);
 
 	} else if (speed === SPEEDS.instant) {
 		while (vm.running) {
@@ -525,7 +513,6 @@ function prepIDE() {
 	prepOS();
 
 	$("#source").value = localStorage.source || "// hello, world!";
-	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
 	$("#autoplay").checked = JSON.parse(localStorage.autoplay || "false");
 }
 
