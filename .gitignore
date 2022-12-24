@@ -4,6 +4,7 @@ package-lock.json
 package.json
 
 *.bin
+*.strat
 
 test.asm
 test.dasm
