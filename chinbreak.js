@@ -374,6 +374,8 @@ const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
 function generateInterface() {
 	let interface = [];
 
+	interface.push('/// Target: Chinbreak Island v0.1\n');
+
 	for (let call in CALLS) {
 		let { operation, parameters, zeroTerminatedArray } = CALLS[call];
 		let arguments = parameters;
@@ -3057,7 +3059,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const verbosity = (flags.verbose || []).length;
 
 	if (flags['generate-interface']) {
-		console.log(generateInterface());
+		console.log(Chinbreak.generateInterface());
 	}
 	if (flags['generate-map']) {
 		console.log(generateMap());

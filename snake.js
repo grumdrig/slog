@@ -20,8 +20,7 @@ const Head = 5;
 const MaxLength = 1000;
 const D = 64;
 
-const INTERFACE = `
-tag('Sn', $102)
+const INTERFACE = `/// Target: Snake v1.0
 
 macro north() external(1)
 macro east()  external(2)

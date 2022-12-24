@@ -480,8 +480,8 @@ function run() {
 	} else if (speed === SPEEDS.turbo) {
 		Game.playmation(vm, true);
 		updateDebuggerState(vm);
-		Game.updateUI(vm.state);
-		window.gameplayTimer = setTimeout(run, 100);
+		//Game.updateUI(vm.state);
+		window.gameplayTimer = setTimeout(run, 1);
 
 	} else if (speed === SPEEDS.instant) {
 		while (vm.running) {

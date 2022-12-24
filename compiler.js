@@ -1569,49 +1569,60 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const { parseArgs } = require('util');
 	const { readFileSync, writeFileSync } = require('fs');
 
-	const { values: { assembly, binary, disassembly,
-					  package, symbols, interface, help }, positionals } = parseArgs({
-		options: {
-			assembly: {
-				type: "string",
-				short: "a",
+	let flags, sources;
+	try {
+		const { values, positionals } = parseArgs({
+			options: {
+				assembly: {
+					type: "string",
+					short: "a",
+				},
+				binary: {
+					type: "string",
+					short: "b",
+				},
+				disassembly: {
+					type: "string",
+					short: "d",
+				},
+				package: {
+					type: "string",
+					short: "p",
+				},
+				symbols: {
+					type: "boolean",
+					short: "s",
+				},
+				interface: {
+					type: 'string',
+					short: 'i',
+					multiple: true,
+				},
+				help: {
+					type: 'boolean',
+				},
 			},
-			binary: {
-				type: "string",
-				short: "b",
-			},
-			disassembly: {
-				type: "string",
-				short: "d",
-			},
-			package: {
-				type: "string",
-				short: "p",
-			},
-			symbols: {
-				type: "boolean",
-				short: "s",
-			},
-			interface: {
-				type: 'string',
-				short: 'i',
-				multiple: true,
-			},
-			help: {
-				type: 'boolean',
-			},
-		},
-		allowPositionals: true,
-	});
+			allowPositionals: true,
+		});
+		flags = values || {};
+		sources = positionals || [];
+	} catch (e) {
+		console.error(e);
+		usage();
+	}
+	const { assembly, binary, disassembly,
+	  package, symbols, interface, help } = flags || {};
 
-	if (help || positionals.length == 0) usage();
+	if (help) usage();
+	if (sources.length == 0) { console.error('Filename expected'); usage(); }
 
 	let interfaces = (interface || []).map(filename => require(filename).generateInterface());
 
-	let sources = positionals.map(filename => readFileSync(filename, 'utf8'));
+	sources = sources.map(filename => readFileSync(filename, 'utf8'));
+	sources = interfaces.concat(sources);
 
 	let asm;
-		asm = compile(...interfaces.concat(sources));
+		asm = compile(...sources);
 /*	try {
 		asm = compile(...interfaces.concat(sources));
 	} catch (e) {
@@ -1647,6 +1658,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 		if (package) {
 			let pack = {};
+
 			for (let source of sources) parseDocumentation(pack, source);
 			pack.binary = Array.from(assembled.code);
 			if (symbols) {

@@ -187,7 +187,7 @@ class VirtualMachine {
 		while (this.alive() && ((this.memory[this.pc] & 0x1F) != 0x3)) {
 			this.step();
 		}
-    this.step();
+    	this.step();
 	}
 
 	step() {
