@@ -184,7 +184,7 @@ class VirtualMachine {
 	}
 
 	bigstep() {
-		while (this.alive() && ((this.memory[this.pc] & 0x1F) != 0x3)) {
+		while (this.alive() && ((this.memory[this.pc] & 0x1F) != MNEMONICS.ext)) {
 			this.step();
 		}
     	this.step();

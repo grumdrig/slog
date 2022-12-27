@@ -184,7 +184,7 @@ class Snake {
 
 		if (vm.alive()) {
 			if (!butStop)
-				setTimeout(_ => this.playmation(vm), 10);//vm.state[Length] > 12 ? 1000 : 10);
+				window.gameplayTimer = setTimeout(_ => this.playmation(vm), 10);//vm.state[Length] > 12 ? 1000 : 10);
 		} else {
 			this.dumpState(vm.state);
 			vm.dumpState();

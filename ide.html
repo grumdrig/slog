@@ -360,6 +360,7 @@ let asm;
 function saveChanges() {
 	localStorage.source = $("#source").value;
 	localStorage.autoplay = JSON.stringify($("#autoplay").checked);
+	localStorage.speed = $("#speed").value || 'normal';
 }
 
 
@@ -466,10 +467,12 @@ function run() {
 
 	} else if (speed === SPEEDS.turbo) {
 		Game.playmation(vm, true);
-		updateDebuggerState(vm);
+		// updateDebuggerState(vm);
 		//Game.updateUI(vm.state);
 		if (vm.running)
 			window.gameplayTimer = setTimeout(run, 1);
+		else
+			updateDebuggerState(vm);
 
 	} else if (speed === SPEEDS.instant) {
 		while (vm.running) {
@@ -514,6 +517,7 @@ function prepIDE() {
 
 	$("#source").value = localStorage.source || "// hello, world!";
 	$("#autoplay").checked = JSON.parse(localStorage.autoplay || "false");
+	$("#speed").value = localStorage.speed;
 }
 
 
