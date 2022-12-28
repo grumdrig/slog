@@ -358,9 +358,12 @@ prove!
 let asm;
 
 function saveChanges() {
-	localStorage.source = $("#source").value;
-	localStorage.autoplay = JSON.stringify($("#autoplay").checked);
-	localStorage.speed = $("#speed").value || 'normal';
+	const ideState = {
+		source: $("#source").value,
+		autoplay: $("#autoplay").checked,
+		speed: $("#speed").value
+	};
+	localStorage.setItem('slog-ide-' + Game.title, JSON.stringify(ideState));
 }
 
 
@@ -515,9 +518,10 @@ function prepIDE() {
 
 	prepOS();
 
-	$("#source").value = localStorage.source || "// hello, world!";
-	$("#autoplay").checked = JSON.parse(localStorage.autoplay || "false");
-	$("#speed").value = localStorage.speed;
+	let ideState = JSON.parse(localStorage.getItem('slog-ide-' + Game.title) ?? '{}');
+	$("#source").value = ideState.source || "// hello, world!";
+	$("#autoplay").checked = ideState.autoplay || false;
+	$("#speed").value = ideState.speed || 'normal';
 }
 
 
@@ -595,9 +599,6 @@ function updateDebuggerState(vm) {
 let Game;
 
 window.addEventListener('load', e => {
-// window.addEventListener("DOMContentLoaded", _ => {
-	prepIDE();
-
 
 	if (window.location.search === '?snake') {
 		loadGame(Snake);
@@ -605,6 +606,8 @@ window.addEventListener('load', e => {
 		loadGame(Chinbreak);
 		$('#name').innerText = 'Test Pilot';
 	} // TODO some kind of picker for game
+
+	prepIDE();
 });
 
 
