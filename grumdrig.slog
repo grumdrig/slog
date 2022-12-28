@@ -53,6 +53,7 @@ while .Level < 88 {
       use(Weapon)
     }
     if .Encumbrance < .Capacity and !.MobHealth { loot() }
+    if .MobHealth { hunt() }  // run away
     while .Health < .MaxHealth {
       while !.Reagents {
         if forage(Reagents) < 0 { break }
