@@ -1591,6 +1591,7 @@ function damageMob(state, damage) {
 		state[Experience] += Math.round(10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
 		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) 
 			state[QuestProgress] += 1;
+		state[MobAggro] = 0;
 	}
 }
 
@@ -1866,7 +1867,7 @@ class Chinbreak {
 
 		function dec(slot, qty=1) { return inc(slot, -qty) }
 
-		if (state[MobAggro]) {
+		if (state[MobAggro] && state[MobHealth] > 0) {
 			// do mob attack before anything else happens
 			let info = DENIZENS[state[MobSpecies]];
 			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);

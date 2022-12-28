@@ -114,6 +114,7 @@ class VirtualMachine {
 	state;  // negative memory beyond registers
 	running = true;
 	clock = 0;  // elapsed cycles since start
+	turns = 0;  // ext calls since start
 	debugLimit = 10*1000*1000;
 
 	get pc() { return this.registers[-1-REGISTERS.PC] }
@@ -302,6 +303,8 @@ class VirtualMachine {
 			}
 			this.push(this.world.handleInstruction(this.state, operand & 0x7F, ...args));
 
+			this.turns += 1;
+
 		} else {
 			this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic ?? ''}`);
 		}
@@ -343,7 +346,7 @@ class VirtualMachine {
 	}
 
 	dumpState() {
-		console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  Clock: ${this.clock}`);
+		console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  Clock: ${this.clock} Turns: ${this.turns}`);
 	}
 }
 

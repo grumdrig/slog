@@ -205,6 +205,8 @@ iframe {
 			</select>
 			&middot;
 			<button onclick="reset()">Reset</button>
+			&middot;
+			Brk 🎲<input id=breakpoint style='width:6ex'></input>
 		</div>
 		<div class="status-bar" id=debugbar>
 			<p class="status-bar-field" id=r0>PC</p>
@@ -212,6 +214,7 @@ iframe {
 			<p class="status-bar-field" id=r2>FP</p>
 			<p class="status-bar-field" id=r3>AX</p>
 			<p class="status-bar-field" id=clock>CK</p>
+			<p class="status-bar-field" id=turns>TU</p>
 		</div>
 	</div>
 </div>
@@ -359,9 +362,10 @@ let asm;
 
 function saveChanges() {
 	const ideState = {
-		source: $("#source").value,
-		autoplay: $("#autoplay").checked,
-		speed: $("#speed").value
+		source: $('#source').value,
+		autoplay: $('#autoplay').checked,
+		speed: $('#speed').value,
+		breakponit: $('#breakpoint').value,
 	};
 	localStorage.setItem('slog-ide-' + Game.title, JSON.stringify(ideState));
 }
@@ -478,8 +482,10 @@ function run() {
 			updateDebuggerState(vm);
 
 	} else if (speed === SPEEDS.instant) {
+		let breakpoint = parseInt($('#breakpoint').value);
 		while (vm.alive()) {
 			vm.step();
+			if (vm.turns == breakpoint) break;
 		}
 		updateDebuggerState(vm);
 		Game.updateUI(vm.state);
@@ -522,6 +528,7 @@ function prepIDE() {
 	$("#source").value = ideState.source || "// hello, world!";
 	$("#autoplay").checked = ideState.autoplay || false;
 	$("#speed").value = ideState.speed || 'normal';
+	$("#breakpoint").value = ideState.breakpoint || '';
 }
 
 
@@ -548,6 +555,7 @@ function updateDebuggerState(vm) {
 		if (r) r.innerText = d.innerText;
 	}
 	$("#clock").innerText = '⏳ ' + vm.clock;
+	$("#turns").innerText = '🎲 ' + vm.turns;
 
 	if (!$("#registers").children[n])
 		$('#registers').appendChild(document.createElement('hr'));
