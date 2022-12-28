@@ -1613,6 +1613,7 @@ function clearQuest(state) {
 
 
 let TASK = '';
+let REALTIME;  // more global cheesiness
 
 class Chinbreak {
 	static title = 'Progress Quest Slog: Chinbreak Island';
@@ -1622,6 +1623,7 @@ class Chinbreak {
 	static create(code) {
 		let state = new Int16Array(SLOTS.length);
 		state[Seed] = hash(0x3FB9, ...code);
+		REALTIME = 0;
 		return state;
 	}
 
@@ -1672,7 +1674,11 @@ class Chinbreak {
 	}
 
 	static handleInstruction(state, operation, ...args) {
+		let before = age(state);
+
 		let result = this._handleInstruction(state, operation, ...args);
+
+		REALTIME += realTimeSeconds(age(state) - before);
 
 		if (state[Level] > 0) {
 			// Various state values are calculable from other state values
@@ -2842,7 +2848,7 @@ function updateGame(state) {
 	let local = Chinbreak.mapInfo(state[Location], state) || {};
 
 	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
-	// set('elapsed', readableTime(state[Hours], state[Years]));
+	set('elapsed', REALTIME);
 
 	let t = state[Hours];
 	let hour = t % HOURS_PER_DAY;
@@ -2935,13 +2941,18 @@ function gameplay(inst, arg1, arg2) {
 	updateGame(vm.state);
 }
 
+function realTimeSeconds(hours) {
+	return Math.round(Math.sqrt(2 * hours));
+}
+
+function age(state) { return state[Years] * HOURS_PER_YEAR + state[Hours] }
+
 Chinbreak.playmation = function(vm, butStop) {
-	function age() { return vm.state[Years] * HOURS_PER_YEAR + vm.state[Hours] }
-	let before = age();
-	while (vm.alive() && age() == before) {
+	let before = age(vm.state);
+	while (vm.alive() && age(vm.state) == before) {
 		vm.step();
 	}
-	animate.duration = 1000 * Math.round(Math.sqrt(2 * (age() - before)));
+	animate.duration = 1000 * realTimeSeconds(age(vm.state) - before);
 	animate.progress = 0;
 	$id('task').innerText = TASK;
 	setTaskBar();
