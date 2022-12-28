@@ -2442,8 +2442,8 @@ const CHINBREAK_WINDOW_CONTENT = `
 	background-color: white;
 }
 
-#aggro {
-	color: red;
+.aggro {
+	color: #b00;
 }
 
 #questdesc {
@@ -2615,7 +2615,7 @@ div.header {
 		</div>
 		<div id=encounter class=listview>
 			<div class=header>Encounter</div>
-			<div>Creature</div><div><span id=mob></span> <span id=aggro></span></div>
+			<div>Creature</div><div><span id=mob></span></div>
 			<div>Health</div><div id=mobHealth class=prog></div>
 		</div>
 		<div id=quest class=listview>
@@ -2865,7 +2865,10 @@ function updateGame(state) {
 	set('terrain', (Chinbreak.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobSpecies] ?
 		`${Chinbreak.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
-	set('aggro', state[MobAggro] ? ' (aggro)' : '');
+	if (state[MobAggro] > 0)
+		$('#mob').classList.add('aggro');
+	else
+		$('#mob').classList.remove('aggro');
 	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
 	if (state[MobHealth] == 0 && state[MobMaxHealth] > 0)
 		$id('mobHealth').classList.add('dead');
