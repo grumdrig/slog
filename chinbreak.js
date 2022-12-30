@@ -2728,6 +2728,26 @@ function readableTime(hours, years) {
 }
 
 
+function readableRealTime(sec) {
+	let t = sec;
+	let result = (t % 60) + 's';
+	t = (t / 60) >> 0;
+	if (!t) return result;
+	result = (t % 60) + 'm ' + result;
+	t = (t / 60) >> 0;
+	if (!t) return result;
+	result = (t % 24) + 'h ' + result;
+	t = (t / 24) >> 0;
+	if (!t) return result;
+	result = (t % 365) + 'd ' + result;
+	t = (t / 365) >> 0;
+	if (!t) return result;
+	return t + 'y ' + result;
+}
+
+
+
+
 const MONTHS = [
 	'Injender',
 	'Fimbrular',
@@ -2849,7 +2869,7 @@ function updateGame(state) {
 	let local = Chinbreak.mapInfo(state[Location], state) || {};
 
 	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
-	set('elapsed', REALTIME);
+	$id('elapsed').innerText = readableRealTime(REALTIME);
 
 	let t = state[Hours];
 	let hour = t % HOURS_PER_DAY;
