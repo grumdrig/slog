@@ -282,7 +282,8 @@ const CALLS = {
 
 	use: { parameters: 'slot',
 		description: `Use the item, specified by state slot index, for its
-		intended purpose. Valid slots are Potion, Food, and Weapon.` },
+		intended purpose. Valid slots are Spellbook slots, Potion, Food,
+		and Weapon.` },
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item
@@ -305,13 +306,10 @@ const CALLS = {
 		description: `Report back to the originator of the current quest to
 		gain sundry rewards for your efforts.` },
 
-	cast: { parameters: 'spell',
-		description: `Cast a spell you've learned; effects may vary. Consumes
-		reagents and saps energy.` },
-
-	forage: { parameters: 'target_slot',
-		description: `Comb the local area for Food, or
-		Resources, or whatever you might seek.` },
+	seek: { parameters: 'target_slot',
+		description: `Comb the local area for items such as Food, or
+		Resources, or to hunt creatures use MobSpecies, or look for the
+		local Totem.` },
 
 	loot: {
 		description: `Loot any nearby corpse for whatever goodies they may
@@ -321,9 +319,6 @@ const CALLS = {
 	rest: {
 		description: `Grab some downtime to reduce fatigue and damage. Resting
 		is much more effected in town than it is out in the wilderness.` },
-
-	hunt: {
-		description: `Search around for a mob to kill.`	},
 
 	levelup: {
 		description: `Level up! When you've accumulated enough experience, you
@@ -1938,7 +1933,38 @@ class Chinbreak {
 		} else if (operation === use) {
 			let slot = arg1;
 			if (!state[slot]) return -1;
-			if (isInventorySlot(slot)) {
+
+			if (isSpellSlot(slot)) {
+				let spellType = state[slot];
+				let spell = SPELLS[spellType];
+				if (!spell) return -1;
+
+				// TODO have int and or wis help
+
+				let level = spell.level;
+
+				for (let { slot, qty } of spell.costs)
+					if (state[slot] < qty) return -1;
+
+				passTime('Casting ' + spell.name, spell.duration ?? 10);
+
+				for (let { slot, qty } of spell.costs)
+					dec(slot, qty);
+
+				endEnchantment();
+
+				if (spell.enchantment) {
+					for (let { slot, increment } of spell.enchantment) {
+						inc(slot, increment);
+					}
+					state[Enchantment] = spellType;
+				}
+
+				if (spell.effect) return spell.effect(state, spellType);
+
+				return spellType;
+
+			} else if (isInventorySlot(slot)) {
 				dec(slot);
 				if (slot === Potions) {
 					state[Health] = Math.max(state[Health], state[MaxHealth]);
@@ -1952,6 +1978,7 @@ class Chinbreak {
 					return -1;
 				}
 				return 1;
+
 			} else if (slot === Weapon) {
 				// Melee weapon attack
 				if (!state[MobSpecies]) return -1;
@@ -1967,6 +1994,7 @@ class Chinbreak {
 				inc(MobAggro);
 
 				damageMob(state, rollAttack(state[Offense], state[MobLevel], state[Potency]));
+
 			} else if (slot === Footwear) {
 				if (!state[MobSpecies]) return -1;
 				if (state[MobHealth] <= 0) return -1;
@@ -2241,7 +2269,7 @@ class Chinbreak {
 			return state[slot];
 
 		} else  if (operation == learn) {
-			let [slot, spellType] = [arg1 - 1 + SPELLBOOK_0, arg2];
+			let [slot, spellType] = [arg1, arg2];
 			let spell = SPELLS[spellType];
 			if (!spell) return -1;
 			if (local.terrain !== TOWN) return -1;
@@ -2254,59 +2282,6 @@ class Chinbreak {
 			passTime('Inscribing "' + spell.name + '" into my spell book', Math.round(hours));
 			state[slot] = spellType;
 			return state[slot];
-
-		} else if (operation === cast) {
-			let spellType = arg1;
-			let spell = SPELLS[spellType];
-			if (!spell) return -1;
-
-			if (state.slice(SPELLBOOK_0, SPELLBOOK_0 + SPELLBOOK_COUNT)
-				.filter((spell, slot) => spell == spellType)
-				.length == 0) return -1;  // Don't know it
-
-			// TODO have int and or wis help
-
-			let level = spell.level;
-
-			for (let { slot, qty } of spell.costs)
-				if (state[slot] < qty) return -1;
-
-			passTime('Casting ' + spell.name, spell.duration ?? 10);
-
-			for (let { slot, qty } of spell.costs)
-				dec(slot, qty);
-
-			endEnchantment();
-
-			if (spell.enchantment) {
-				for (let { slot, increment } of spell.enchantment) {
-					inc(slot, increment);
-				}
-				state[Enchantment] = spellType;
-			}
-
-			if (spell.effect) return spell.effect(state, spellType);
-
-			return spellType;
-
-		} else if (operation === hunt) {
-			passTime('Hunting for a suitable local victim', 1);
-			clearMob(state);
-			let type;
-			if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
-				type = state[QuestMob];
-			} else if (local.denizen && (!local.density || d(100) <= local.density)) {
-				type = local.denizen;
-			} else {
-				type = randomMobNearLevel(local.level);
-			}
-			let level = DENIZENS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
-			level += d(2) - d(2);
-			state[MobSpecies] = type;
-			state[MobLevel] = level;
-			state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
-			state[MobAggro] = 0;
-			return state[MobSpecies] ? 1 : 0;
 
 		} else if (operation === rest) {
 			endEnchantment();
@@ -2326,7 +2301,8 @@ class Chinbreak {
 
 			return hp + mp;
 
-		} else if (operation === forage) {
+		} else if (operation === seek) {
+			// TODO int or perception helps
 			let target = arg1;
 			let qty;
 			if (target === Totem) {
@@ -2341,23 +2317,41 @@ class Chinbreak {
 				} else {
 					return 0;
 				}
+			} else if (target === MobSpecies) {
+				passTime('Hunting for a suitable local victim', 1);
+				clearMob(state);
+				let type;
+				if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
+					type = state[QuestMob];
+				} else if (local.denizen && (!local.density || d(100) <= local.density)) {
+					type = local.denizen;
+				} else {
+					type = randomMobNearLevel(local.level);
+				}
+				let level = DENIZENS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
+				level += d(2) - d(2);
+				state[MobSpecies] = type;
+				state[MobLevel] = level;
+				state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
+				state[MobAggro] = 0;
+				return state[MobSpecies] ? 1 : 0;
+
+			} else if (isInventorySlot(target)) {
+				let chance = 1/3;
+				if (state[Location] === state[QuestLocation] &&
+						target === state[QuestObject]) {
+					chance = 2/3;
+				}
+
+				qty = rand() < chance ? 1 : 0;
+				inc(target, qty);
+
+				passTime('Foraging for ' + indefiniteItems(target, 1), 1);
+				return qty;
+
+			} else {
+				return -1;
 			}
-
-			// TODO int or perception helps
-
-			if (!isInventorySlot(target)) return -1;
-
-			let chance = 1/3;
-			if (state[Location] === state[QuestLocation] &&
-					target === state[QuestObject]) {
-				chance = 2/3;
-			}
-
-			qty = rand() < chance ? 1 : 0;
-			inc(target, qty);
-
-			passTime('Foraging for ' + indefiniteItems(target, 1), 1);
-			return qty;
 
 		} else if (operation === levelup) {
 			if (local.terrain != TOWN) return -1;

@@ -29,12 +29,12 @@ cheat(Act, 9)
 cheat(ActProgress, 2)
 seekquest()
 goto(.QuestLocation)
-while !forage(EquipmentTotem) {}
+while !seek(Totem) {}
 goto (.QuestEnd)
-give(EquipmentTotem, 1)
+give(Totem, 1)
 completequest()
 seekquest()
-while .QuestMob != .MobSpecies { hunt() }
+while .QuestMob != .MobSpecies { seek(MobSpecies) }
 */
 
 
@@ -48,7 +48,7 @@ while 1 {
     while .Health > .MaxHealth / 2 and
           .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
       while .MobSpecies != .QuestMob or !.MobHealth {
-        hunt()
+        seek(MobSpecies)
       }
       use(Weapon)
       if !.MobHealth { loot() }
@@ -57,14 +57,14 @@ while 1 {
     // Killing
     while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
       while .MobSpecies != .QuestMob or !.MobHealth {
-        hunt()
+        seek(MobSpecies)
       }
       use(Weapon)
     }
   } else if .QuestObject {
     // Foraging
     while .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
-      forage(.QuestObject)
+      seek(.QuestObject)
     }
   }
 

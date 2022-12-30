@@ -547,3 +547,7 @@ Should have to call watchcinematic() several times so that there can be
 transitional text.
 
 
+Big Mobs
+--------
+
+Switch all mobs to the big versions with 1.5 HD as of act 4 or 5

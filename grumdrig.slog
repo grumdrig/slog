@@ -36,29 +36,29 @@ func goodHunting(forLevel) {
   }
 }
 
-// while !forage(EquipmentTotem) { }
+// while !seek(EquipmentTotem) { }
 seekquest()
-learn(1, Heal_Yeah)
+learn(Spellbook1, Heal_Yeah)
 // learn(3, BUFF)
-// while .Reagents < 4 { forage(Reagents) }
-// cast(BUFF)
+// while .Reagents < 4 { seek(Reagents) }
+// use(Spellbook1)
 while .Level < 88 {
   goto(goodHunting(.Level))
   raids += 1
   while .Health >= (2 * .MaxHealth / 3) { // and .Encumbrance < .Capacity {
     while !.MobHealth or .MobLevel > .Level {
-      hunt()
+      seek(MobSpecies)
     }
     while .MobHealth and .Health >= (.MaxHealth / 3) {
       use(Weapon)
     }
     if .Encumbrance < .Capacity and !.MobHealth { loot() }
-    if .MobHealth { hunt() }  // run away
+    if .MobHealth { seek(MobSpecies) }  // run away
     while .Health < .MaxHealth {
       while !.Reagents {
-        if forage(Reagents) < 0 { break }
+        if seek(Reagents) < 0 { break }
       }
-      if cast(Heal_Yeah) <= 0 { break }
+      if use(Spellbook1) <= 0 { break }
     }
     //drop(Trophies, .Trophies)
   }
