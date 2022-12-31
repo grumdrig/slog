@@ -301,7 +301,7 @@ const CALLS = {
 	seekquest: {
 		description: `While in town, ask around and listen to rumors in hopes
 		of discovering adventures that await and tasks to complete.
-		aThere's only one quest activate at any given time.` },
+		There's only one quest active at any given time.` },
 
 	completequest: {
 		description: `Report back to the originator of the current quest to
@@ -2284,7 +2284,7 @@ class Chinbreak {
 			state[slot] = spellType;
 			return state[slot];
 
-		} else if (operation === rest) {
+		} else if (operation === quest {
 			endEnchantment();
 
 			passTime('Resting up', 0, 1);

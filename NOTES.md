@@ -569,3 +569,19 @@ or one of
 
 at the top of a slog file to import the interface an define what the embedding
 is. Then just `compile -r quester.slog` can just run it.
+
+More API Minimization
+---------------------
+
+- loot: seek(Trophy)
+
+- rest: seek(Health) or seek(Energy) for a lighter rest
+
+- levelUp: seek(Level)
+
+- seekquest: seek(QuestObject)
+
+- completequest: seek(QuestEnd)
+
+Not so sure about any of this.
+
