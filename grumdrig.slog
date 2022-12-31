@@ -53,7 +53,7 @@ while .Level < 88 {
       use(Weapon)
     }
     if .Encumbrance < .Capacity and !.MobHealth { loot() }
-    if .MobHealth { seek(MobSpecies) }  // run away
+    if .MobHealth { seek(0) }  // run away
     while .Health < .MaxHealth {
       while !.Reagents {
         if seek(Reagents) < 0 { break }

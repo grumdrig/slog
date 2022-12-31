@@ -169,6 +169,7 @@ const SLOTS = [
 	{ name: 'Location',
 	  description: `Current location. The localities of Chinbreak Island are numbered from one to thirty-eight.` },
 
+
 	{ name: 'MobSpecies',
 	  description: `Species of the nearby creature.` },
 
@@ -308,8 +309,8 @@ const CALLS = {
 
 	seek: { parameters: 'target_slot',
 		description: `Comb the local area for items such as Food, or
-		Resources, or to hunt creatures use MobSpecies, or look for the
-		local Totem.` },
+		Resources, or to hunt creatures use MobSpecies, or to find a place
+		without mobs use 0, or look for the local Totem.` },
 
 	loot: {
 		description: `Loot any nearby corpse for whatever goodies they may
@@ -2305,7 +2306,12 @@ class Chinbreak {
 			// TODO int or perception helps
 			let target = arg1;
 			let qty;
-			if (target === Totem) {
+			if (target === 0) {
+				passTime('Finding some alone time', 1);
+				clearMob(state);
+				return 1;
+
+			} else if (target === Totem) {
 				passTime('Seeking the local totem', 6);
 				if (d(20) <= state[Intellect]) {
 					state[Totem] = state[Location];
@@ -2317,6 +2323,7 @@ class Chinbreak {
 				} else {
 					return 0;
 				}
+
 			} else if (target === MobSpecies) {
 				passTime('Hunting for a suitable local victim', 1);
 				clearMob(state);
