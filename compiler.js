@@ -12,7 +12,7 @@ class ParseError {
 
 class Source {
 	lexemes = [];
-	// Lexemes are { line_no, text, TYPE } plus maybe a numeric value
+	// Lexemes are { line_no, text, TYPE } plus maybe a numeric `value`
 
 	constructor(...texts) {
 		for (let text of texts)
@@ -38,6 +38,12 @@ class Source {
 			while (true) {
 				line = line.trim();
 				if (line.length === 0) break;
+
+				let m;
+				if (m = line.match(/^target\s+"(.+?)"$/)) {
+					const filename = m[1];
+					this.process(require(filename).generateInterface());
+				}
 
 				let lexeme = { line_no };
 
@@ -240,7 +246,8 @@ class SemanticError {
 }
 
 class Module {
-	tag;
+	tag;  // TODO get rid of this feature I think
+	target;
 	constants = [];
 	variables = [];
 	macros = [];
@@ -251,7 +258,10 @@ class Module {
 		let result = new Module();
 		while (!source.empty()) {
 			let item;
-			if (item = ConstantDefinition.tryParse(source)) {
+			if (source.tryConsume('target')) {
+				if (!source.isString()) source.error("String filename expected");
+				result.target = source.next().text;//.slice(1, -1);
+			} else if (item = ConstantDefinition.tryParse(source)) {
 				result.constants.push(item);
 			} else if (item = VariableDeclaration.tryParse(source)) {
 				result.variables.push(item);
@@ -272,6 +282,8 @@ class Module {
 
 	generate() {
 		let context = new CompilationContext();
+
+		if (this.target) context.emit('.target ' + this.target);
 
 		context.emit('.jump @main');
 		context.emit('');
@@ -1514,9 +1526,6 @@ function compile(...texts) {
 
 
 function parseDocumentation(destination, text) {
-	let m = text.match(/^\/\/\/ Target:\s+(.+?)\s*$/m);
-	if (m) destination.target = m[1];
-
 	m = text.match(/^\/\/\/ Title:\s+(.+?)\s*$/m);
 	if (m) destination.title = m[1];
 
@@ -1553,6 +1562,8 @@ OPTIONS:
 		Write intermediate assemby language to named file
 	-d file, --disassembly=file
 		Generate binary output, then disassemble it to named file
+	-r, --run
+		Run the compiled strategy in it's embedded application
 	--help
 		This, that you're reading
 
@@ -1593,9 +1604,17 @@ if (typeof module !== 'undefined' && !module.parent) {
 					type: "boolean",
 					short: "s",
 				},
-				interface: {
+				target: {
 					type: 'string',
-					short: 'i',
+					short: 't',
+				},
+				run: {
+					type: 'boolean',
+					short: 'r',
+				},
+				verbose: {
+					type: 'boolean',
+					short: 'v',
 					multiple: true,
 				},
 				help: {
@@ -1611,15 +1630,19 @@ if (typeof module !== 'undefined' && !module.parent) {
 		usage();
 	}
 	const { assembly, binary, disassembly,
-	  package, symbols, interface, help } = flags || {};
+	  package, symbols, run, help } = flags || {};
+	const verbosity = (flags.verbose || []).length;
 
 	if (help) usage();
 	if (sources.length == 0) { console.error('Filename expected'); usage(); }
 
-	let interfaces = (interface || []).map(filename => require(filename).generateInterface());
-
 	sources = sources.map(filename => readFileSync(filename, 'utf8'));
-	sources = interfaces.concat(sources);
+
+	if (flags.target) {
+		console.log(flags.target);
+		let interface = require(flags.target).generateInterface();
+		sources.unshift(interface);
+	}
 
 	let asm;
 		asm = compile(...sources);
@@ -1643,7 +1666,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 			writeFileSync(assembly, asm, 'utf8');
 	}
 
-	if (binary || disassembly || package) {
+	if (binary || disassembly || package || run) {
 
 		let { Assembler } = require('./vm');
 		let assembled = Assembler.assemble(asm);
@@ -1656,15 +1679,41 @@ if (typeof module !== 'undefined' && !module.parent) {
 			writeFileSync(disassembly, assembled.disassemble(), 'utf8');
 		}
 
-		if (package) {
-			let pack = {};
+		let pack = {};
 
-			for (let source of sources) parseDocumentation(pack, source);
-			pack.binary = Array.from(assembled.code);
-			if (symbols) {
-				pack.symbols = assembled.labels;
-			}
+		if (assembled.target) pack.target = assembled.target;
+		for (let source of sources) parseDocumentation(pack, source);
+		pack.binary = Array.from(assembled.code);
+		if (symbols) pack.symbols = assembled.labels;
+		if (package) {
 			writeFileSync(package, JSON.stringify(pack));
+		}
+
+		if (run) {
+			if (flags.target && pack.target) {
+				// TODO this test is never reached due to duplicate defn caused by double parse
+				console.error('Target may not be specified in both source file and on command line');
+				process.exit(1);
+			}
+			let target = flags.target || pack.target;
+			if (!target) {
+				console.error('Target required either in source file or on command line');
+				process.exit(1);
+			}
+
+			let { VirtualMachine } = require('./vm.js');
+
+			let Game = require(target);
+
+			let vm = new VirtualMachine(assembled.code, Game);
+			if (verbosity > 1) vm.trace = true;
+
+			vm.run();
+
+			if (verbosity > 0) {
+				Game.dumpState(vm.state);
+				vm.dumpState();
+			}
 		}
 	}
 }

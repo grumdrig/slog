@@ -2284,7 +2284,7 @@ class Chinbreak {
 			state[slot] = spellType;
 			return state[slot];
 
-		} else if (operation === quest {
+		} else if (operation === rest) {
 			endEnchantment();
 
 			passTime('Resting up', 0, 1);

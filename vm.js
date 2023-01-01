@@ -397,6 +397,7 @@ class Assembler {
 	macroInProgress;
 	pc = 0;
 	line_no_adjustment = 1;
+	target;
 
 	error(message) {
 		throw this.line + `\nASSEMBLY ERROR AT LINE ${this.line_no + this.line_no_adjustment}: ${message}`;
@@ -573,6 +574,10 @@ class Assembler {
 					// TODO: immediate mode
 					this.emit(MNEMONICS.br, INLINE_MODE_TAG);
 					this.data(operand);
+
+				} else if (inst === toLowerCase('.target')) {
+					this.assert(tokens.length >= 2, 'embedding target expected following .target');
+					this.target = String.fromCharCode(...tokens.slice(1));
 
 				} else if (this.macros[inst]) {
 
