@@ -345,7 +345,23 @@ class VirtualMachine {
 		throw message;
 	}
 
-	dumpState() {
+	dumpState(includingStateVector) {
+		if (includingStateVector) {
+			const nfo = [];
+			this.state.forEach((v,i) => v && nfo.push(`${i}: ${v}`));
+			const m = 2 + Math.max(...nfo.map(l => l.length));
+			const cols = Math.max(Math.floor(79 / m), 1);
+			const rows = Math.ceil(nfo.length / cols);
+			for (let i = 0; i < rows; i += 1)  {
+				let row = '';
+				for (let c = 0; c < cols; c += 1) {
+					let n = i + c * rows;
+					if (n < nfo.length)
+						row += (nfo[n] + ' '.repeat(m)).substr(0, m);
+				}
+				console.log(row);
+			}
+		}
 		console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  Clock: ${this.clock} Turns: ${this.turns}`);
 	}
 }
@@ -924,9 +940,12 @@ if (typeof module !== 'undefined' && !module.parent) {
 		if (verbosity > 1) vm.trace = true;
 		vm.run();
 		if (verbosity > 0) {
-			if (Game)
+			if (Game && Game.dumpState) {
 				Game.dumpState(vm.state);
-			vm.dumpState();
+				vm.dumpState();
+			} else {
+				vm.dumpState(true);
+			}
 		}
 	}
 }

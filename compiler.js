@@ -42,7 +42,9 @@ class Source {
 				let m;
 				if (m = line.match(/^target\s+"(.+?)"$/)) {
 					const filename = m[1];
-					this.process(require(filename).generateInterface());
+					let { generateInterface } = require(filename);
+					if (generateInterface)
+						this.process(generateInterface());
 				}
 
 				let lexeme = { line_no };
@@ -1711,8 +1713,12 @@ if (typeof module !== 'undefined' && !module.parent) {
 			vm.run();
 
 			if (verbosity > 0) {
-				Game.dumpState(vm.state);
-				vm.dumpState();
+				if (Game.dumpState) {
+					Game.dumpState(vm.state);
+					vm.dumpState();
+				} else {
+					vm.dumpState(true);
+				}
 			}
 		}
 	}

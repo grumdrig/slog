@@ -2,6 +2,8 @@
 /// Author: Grumdrig
 /// Description: Greedily slay beasts to level up at all costs.
 
+target "./chinbreak.js"
+
 startgame(Hardwarf)
 
 macro initialize(stat, count) {
