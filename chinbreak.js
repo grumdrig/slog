@@ -169,6 +169,7 @@ const SLOTS = [
 	{ name: 'Location',
 	  description: `Current location. The localities of Chinbreak Island are numbered from one to thirty-eight.` },
 
+
 	{ name: 'MobSpecies',
 	  description: `Species of the nearby creature.` },
 
@@ -282,7 +283,8 @@ const CALLS = {
 
 	use: { parameters: 'slot',
 		description: `Use the item, specified by state slot index, for its
-		intended purpose. Valid slots are Potion, Food, and Weapon.` },
+		intended purpose. Valid slots are Spellbook slots, Potion, Food,
+		and Weapon.` },
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item
@@ -299,19 +301,16 @@ const CALLS = {
 	seekquest: {
 		description: `While in town, ask around and listen to rumors in hopes
 		of discovering adventures that await and tasks to complete.
-		aThere's only one quest activate at any given time.` },
+		There's only one quest active at any given time.` },
 
 	completequest: {
 		description: `Report back to the originator of the current quest to
 		gain sundry rewards for your efforts.` },
 
-	cast: { parameters: 'spell',
-		description: `Cast a spell you've learned; effects may vary. Consumes
-		reagents and saps energy.` },
-
-	forage: { parameters: 'target_slot',
-		description: `Comb the local area for Food, or
-		Resources, or whatever you might seek.` },
+	seek: { parameters: 'target_slot',
+		description: `Comb the local area for items such as Food, or
+		Resources, or to hunt creatures use MobSpecies, or to find a place
+		without mobs use 0, or look for the local Totem.` },
 
 	loot: {
 		description: `Loot any nearby corpse for whatever goodies they may
@@ -321,9 +320,6 @@ const CALLS = {
 	rest: {
 		description: `Grab some downtime to reduce fatigue and damage. Resting
 		is much more effected in town than it is out in the wilderness.` },
-
-	hunt: {
-		description: `Search around for a mob to kill.`	},
 
 	levelup: {
 		description: `Level up! When you've accumulated enough experience, you
@@ -373,6 +369,8 @@ const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
 
 function generateInterface() {
 	let interface = [];
+
+	interface.push('/// Target: Chinbreak Island v0.1\n');
 
 	for (let call in CALLS) {
 		let { operation, parameters, zeroTerminatedArray } = CALLS[call];
@@ -1566,8 +1564,17 @@ function hash(...keys) {
 	return x ;
 }
 
-function itemsName(sloth) {
-	return SLOTS[sloth].name.substr(9).toLowerCase();
+function indefiniteItems(slot, qty) {
+	let name = SLOTS[slot].name.toLowerCase();
+	const vowels = 'aeiouAEIOU';
+	if (qty === 1) {
+		if (vowels.includes(name[0]))
+			return 'an ' + name;
+		else
+			return 'a ' + name;
+	} else {
+		return 'some ' + name;
+	}
 }
 
 function damageMob(state, damage) {
@@ -1580,6 +1587,7 @@ function damageMob(state, damage) {
 		state[Experience] += Math.round(10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
 		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) 
 			state[QuestProgress] += 1;
+		state[MobAggro] = 0;
 	}
 }
 
@@ -1602,6 +1610,7 @@ function clearQuest(state) {
 
 
 let TASK = '';
+let REALTIME;  // more global cheesiness
 
 class Chinbreak {
 	static title = 'Progress Quest Slog: Chinbreak Island';
@@ -1611,6 +1620,7 @@ class Chinbreak {
 	static create(code) {
 		let state = new Int16Array(SLOTS.length);
 		state[Seed] = hash(0x3FB9, ...code);
+		REALTIME = 0;
 		return state;
 	}
 
@@ -1661,7 +1671,11 @@ class Chinbreak {
 	}
 
 	static handleInstruction(state, operation, ...args) {
+		let before = age(state);
+
 		let result = this._handleInstruction(state, operation, ...args);
+
+		REALTIME += realTimeSeconds(age(state) - before);
 
 		if (state[Level] > 0) {
 			// Various state values are calculable from other state values
@@ -1849,7 +1863,7 @@ class Chinbreak {
 
 		function dec(slot, qty=1) { return inc(slot, -qty) }
 
-		if (state[MobAggro]) {
+		if (state[MobAggro] && state[MobHealth] > 0) {
 			// do mob attack before anything else happens
 			let info = DENIZENS[state[MobSpecies]];
 			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);
@@ -1920,7 +1934,38 @@ class Chinbreak {
 		} else if (operation === use) {
 			let slot = arg1;
 			if (!state[slot]) return -1;
-			if (isInventorySlot(slot)) {
+
+			if (isSpellSlot(slot)) {
+				let spellType = state[slot];
+				let spell = SPELLS[spellType];
+				if (!spell) return -1;
+
+				// TODO have int and or wis help
+
+				let level = spell.level;
+
+				for (let { slot, qty } of spell.costs)
+					if (state[slot] < qty) return -1;
+
+				passTime('Casting ' + spell.name, spell.duration ?? 10);
+
+				for (let { slot, qty } of spell.costs)
+					dec(slot, qty);
+
+				endEnchantment();
+
+				if (spell.enchantment) {
+					for (let { slot, increment } of spell.enchantment) {
+						inc(slot, increment);
+					}
+					state[Enchantment] = spellType;
+				}
+
+				if (spell.effect) return spell.effect(state, spellType);
+
+				return spellType;
+
+			} else if (isInventorySlot(slot)) {
 				dec(slot);
 				if (slot === Potions) {
 					state[Health] = Math.max(state[Health], state[MaxHealth]);
@@ -1934,6 +1979,7 @@ class Chinbreak {
 					return -1;
 				}
 				return 1;
+
 			} else if (slot === Weapon) {
 				// Melee weapon attack
 				if (!state[MobSpecies]) return -1;
@@ -1949,6 +1995,7 @@ class Chinbreak {
 				inc(MobAggro);
 
 				damageMob(state, rollAttack(state[Offense], state[MobLevel], state[Potency]));
+
 			} else if (slot === Footwear) {
 				if (!state[MobSpecies]) return -1;
 				if (state[MobHealth] <= 0) return -1;
@@ -2032,7 +2079,7 @@ class Chinbreak {
 			// You may proceed with the purchase
 			inc(Gold, -price);
 			state[slot] = levelToBe;
-			passTime('Buying some ' + itemsName(slot), 3);
+			passTime('Buying ' + indefiniteItems(slot, 2), 3);
 			return qty;
 
 		} else if (operation === sell || operation === give || operation === drop) {
@@ -2078,11 +2125,11 @@ class Chinbreak {
 			}
 			state[slot] = newqty;
 			if (operation === sell) {
-				passTime('Selling some ' + itemsName(slot), 3);
+				passTime('Selling ' + indefiniteItems(slot, qty), 3);
 			} else if (operation === give) {
-				passTime('Giving away some ' + itemsName(slot), 1);
+				passTime('Giving away ' + indefiniteItems(slot, qty), 1);
 			} else if (operation === drop) {
-				passTime('Cleaning out some extra ' + itemsName(slot) + ' from my backpack', 1);
+				passTime('Cleaning out ' + indefiniteItems(slot, qty) + ' from my backpack', 1);
 			}
 
 			return qty;
@@ -2130,7 +2177,7 @@ class Chinbreak {
 
 			clearQuest(state);
 
-			if (local.terrain !== TOWN) return -1;
+			if (local.terrain !== TOWN) return 0;
 
 			if (state[Act] == 9) {
 				if (state[ActProgress] < 3) {
@@ -2223,7 +2270,7 @@ class Chinbreak {
 			return state[slot];
 
 		} else  if (operation == learn) {
-			let [slot, spellType] = [arg1 - 1 + SPELLBOOK_0, arg2];
+			let [slot, spellType] = [arg1, arg2];
 			let spell = SPELLS[spellType];
 			if (!spell) return -1;
 			if (local.terrain !== TOWN) return -1;
@@ -2236,59 +2283,6 @@ class Chinbreak {
 			passTime('Inscribing "' + spell.name + '" into my spell book', Math.round(hours));
 			state[slot] = spellType;
 			return state[slot];
-
-		} else if (operation === cast) {
-			let spellType = arg1;
-			let spell = SPELLS[spellType];
-			if (!spell) return -1;
-
-			if (state.slice(SPELLBOOK_0, SPELLBOOK_0 + SPELLBOOK_COUNT)
-				.filter((spell, slot) => spell == spellType)
-				.length == 0) return -1;  // Don't know it
-
-			// TODO have int and or wis help
-
-			let level = spell.level;
-
-			for (let { slot, qty } of spell.costs)
-				if (state[slot] < qty) return -1;
-
-			passTime('Casting ' + spell.name, spell.duration ?? 10);
-
-			for (let { slot, qty } of spell.costs)
-				dec(slot, qty);
-
-			endEnchantment();
-
-			if (spell.enchantment) {
-				for (let { slot, increment } of spell.enchantment) {
-					inc(slot, increment);
-				}
-				state[Enchantment] = spellType;
-			}
-
-			if (spell.effect) return spell.effect(state, spellType);
-
-			return spellType;
-
-		} else if (operation === hunt) {
-			passTime('Hunting for a suitable local victim', 1);
-			clearMob(state);
-			let type;
-			if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
-				type = state[QuestMob];
-			} else if (local.denizen && (!local.density || d(100) <= local.density)) {
-				type = local.denizen;
-			} else {
-				type = randomMobNearLevel(local.level);
-			}
-			let level = DENIZENS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
-			level += d(2) - d(2);
-			state[MobSpecies] = type;
-			state[MobLevel] = level;
-			state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
-			state[MobAggro] = 0;
-			return state[MobSpecies] ? 1 : 0;
 
 		} else if (operation === rest) {
 			endEnchantment();
@@ -2308,10 +2302,16 @@ class Chinbreak {
 
 			return hp + mp;
 
-		} else if (operation === forage) {
+		} else if (operation === seek) {
+			// TODO int or perception helps
 			let target = arg1;
 			let qty;
-			if (target === Totem) {
+			if (target === 0) {
+				passTime('Finding some alone time', 1);
+				clearMob(state);
+				return 1;
+
+			} else if (target === Totem) {
 				passTime('Seeking the local totem', 6);
 				if (d(20) <= state[Intellect]) {
 					state[Totem] = state[Location];
@@ -2323,23 +2323,42 @@ class Chinbreak {
 				} else {
 					return 0;
 				}
+
+			} else if (target === MobSpecies) {
+				passTime('Hunting for a suitable local victim', 1);
+				clearMob(state);
+				let type;
+				if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
+					type = state[QuestMob];
+				} else if (local.denizen && (!local.density || d(100) <= local.density)) {
+					type = local.denizen;
+				} else {
+					type = randomMobNearLevel(local.level);
+				}
+				let level = DENIZENS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
+				level += d(2) - d(2);
+				state[MobSpecies] = type;
+				state[MobLevel] = level;
+				state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
+				state[MobAggro] = 0;
+				return state[MobSpecies] ? 1 : 0;
+
+			} else if (isInventorySlot(target)) {
+				let chance = 1/3;
+				if (state[Location] === state[QuestLocation] &&
+						target === state[QuestObject]) {
+					chance = 2/3;
+				}
+
+				qty = rand() < chance ? 1 : 0;
+				inc(target, qty);
+
+				passTime('Foraging for ' + indefiniteItems(target, 1), 1);
+				return qty;
+
+			} else {
+				return -1;
 			}
-
-			// TODO int or perception helps
-
-			if (!isInventorySlot(target)) return -1;
-
-			let chance = 1/3;
-			if (state[Location] === state[QuestLocation] &&
-					target === state[QuestObject]) {
-				chance = 2/3;
-			}
-
-			qty = rand() < chance ? 1 : 0;
-			inc(target, qty);
-
-			passTime('Foraging for ' + itemsName(target), 1);
-			return qty;
 
 		} else if (operation === levelup) {
 			if (local.terrain != TOWN) return -1;
@@ -2424,8 +2443,8 @@ const CHINBREAK_WINDOW_CONTENT = `
 	background-color: white;
 }
 
-#aggro {
-	color: red;
+.aggro {
+	color: #b00;
 }
 
 #questdesc {
@@ -2597,7 +2616,7 @@ div.header {
 		</div>
 		<div id=encounter class=listview>
 			<div class=header>Encounter</div>
-			<div>Creature</div><div><span id=mob></span> <span id=aggro></span></div>
+			<div>Creature</div><div><span id=mob></span></div>
 			<div>Health</div><div id=mobHealth class=prog></div>
 		</div>
 		<div id=quest class=listview>
@@ -2708,6 +2727,26 @@ function readableTime(hours, years) {
 	}
 	return calendar;
 }
+
+
+function readableRealTime(sec) {
+	let t = sec;
+	let result = (t % 60) + 's';
+	t = (t / 60) >> 0;
+	if (!t) return result;
+	result = (t % 60) + 'm ' + result;
+	t = (t / 60) >> 0;
+	if (!t) return result;
+	result = (t % 24) + 'h ' + result;
+	t = (t / 24) >> 0;
+	if (!t) return result;
+	result = (t % 365) + 'd ' + result;
+	t = (t / 365) >> 0;
+	if (!t) return result;
+	return t + 'y ' + result;
+}
+
+
 
 
 const MONTHS = [
@@ -2831,7 +2870,7 @@ function updateGame(state) {
 	let local = Chinbreak.mapInfo(state[Location], state) || {};
 
 	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
-	// set('elapsed', readableTime(state[Hours], state[Years]));
+	$id('elapsed').innerText = readableRealTime(REALTIME);
 
 	let t = state[Hours];
 	let hour = t % HOURS_PER_DAY;
@@ -2847,7 +2886,10 @@ function updateGame(state) {
 	set('terrain', (Chinbreak.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobSpecies] ?
 		`${Chinbreak.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
-	set('aggro', state[MobAggro] ? ' (aggro)' : '');
+	if (state[MobAggro] > 0)
+		$('#mob').classList.add('aggro');
+	else
+		$('#mob').classList.remove('aggro');
 	setProgress('mobHealth', state[MobHealth], state[MobMaxHealth]);
 	if (state[MobHealth] == 0 && state[MobMaxHealth] > 0)
 		$id('mobHealth').classList.add('dead');
@@ -2924,13 +2966,18 @@ function gameplay(inst, arg1, arg2) {
 	updateGame(vm.state);
 }
 
+function realTimeSeconds(hours) {
+	return Math.round(Math.sqrt(2 * hours));
+}
+
+function age(state) { return state[Years] * HOURS_PER_YEAR + state[Hours] }
+
 Chinbreak.playmation = function(vm, butStop) {
-	function age() { return vm.state[Years] * HOURS_PER_YEAR + vm.state[Hours] }
-	let before = age();
-	while (vm.alive() && age() == before) {
+	let before = age(vm.state);
+	while (vm.alive() && age(vm.state) == before) {
 		vm.step();
 	}
-	animate.duration = 1000 * Math.round(Math.sqrt(2 * (age() - before)));
+	animate.duration = 1000 * realTimeSeconds(age(vm.state) - before);
 	animate.progress = 0;
 	$id('task').innerText = TASK;
 	setTaskBar();
@@ -3048,7 +3095,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const verbosity = (flags.verbose || []).length;
 
 	if (flags['generate-interface']) {
-		console.log(generateInterface());
+		console.log(Chinbreak.generateInterface());
 	}
 	if (flags['generate-map']) {
 		console.log(generateMap());

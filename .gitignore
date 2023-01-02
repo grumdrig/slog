@@ -4,13 +4,7 @@ package-lock.json
 package.json
 
 *.bin
-
-grumdrig.asm
-grumdrig.dasm
-grumdrig.strat
-
-steve.asm
-steve.dasm
+*.strat
 
 test.asm
 test.dasm
@@ -18,6 +12,5 @@ test.dasm
 map.html
 asm.html
 vm.html
-compiler.html
-
+language.html
 chinbreak-doc.html

@@ -20,8 +20,7 @@ const Head = 5;
 const MaxLength = 1000;
 const D = 64;
 
-const INTERFACE = `
-tag('Sn', $102)
+const INTERFACE = `/// Target: Snake v1.0
 
 macro north() external(1)
 macro east()  external(2)
@@ -67,7 +66,7 @@ function plantFood(state) {
 			return;
 		}
 	}
-	Snake.dumpState(state);
+	vm.dumpState(true);
 	throw "Couldn't find a place for food";
 }
 
@@ -171,12 +170,6 @@ class Snake {
 
 	static generateInterface() { return INTERFACE; }
 
-	static dumpState(state) {
-		state.forEach((v,i) => {
-			if (v) console.log(`${i}: ${v}`);
-		});
-	}
-
 	// This is awkward. Unify with the other one better
 	static playmation(vm, butStop) {
 		vm.bigstep();
@@ -185,10 +178,9 @@ class Snake {
 
 		if (vm.alive()) {
 			if (!butStop)
-				setTimeout(_ => this.playmation(vm), 10);//vm.state[Length] > 12 ? 1000 : 10);
+				window.gameplayTimer = setTimeout(_ => this.playmation(vm), 10);//vm.state[Length] > 12 ? 1000 : 10);
 		} else {
-			this.dumpState(vm.state);
-			vm.dumpState();
+			vm.dumpState(true);
 			// for (let i = 0; i < vm.memory.length; i += 1)
 			// 	if (vm.memory[i])
 			// 		console.log(i, vm.memory[i]);
@@ -235,8 +227,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		vm.run();
 		console.log('Score: ', Snake.score(vm.state));
 		if (verbosity > 0) {
-			Snake.dumpState(vm.state);
-			vm.dumpState();
+			vm.dumpState(true);
 		}
 	}
 }

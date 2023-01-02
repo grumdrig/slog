@@ -2,6 +2,8 @@
 // Test suite for compiler //
 /////////////////////////////
 
+target "./test.js"
+
 macro checksp() { assert *(-2) == 4096 }
 
 checksp()

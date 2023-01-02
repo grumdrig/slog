@@ -148,7 +148,6 @@ iframe {
 				<textarea rows=16 cols=50 id=source></textarea><br/>
 				<button onclick="comp()">Compile</button>
 				<span style="margin-left: 10px">&nbsp;</span>
-				<input type=checkbox id=autorun><label for=autorun>Autorun</label></input>
 				<input type=checkbox id=autoplay><label for=autoplay>Autoplay</label></input>
 				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
 			</article>
@@ -193,18 +192,21 @@ iframe {
 			<div class=brain><div id='memory'></div></div>
 		</div>
 		<div class=nobo>
-			<button onclick="step()">Step</button>
-			<button onclick="run()">Run</button>
+			<button onclick="step()">Step VM</button>
+			<button onclick="bigstep()">Step Game</button>
+			&middot;
+			<button onclick="play()">Play</button>
 			<label for=speed>Speed:</label>
 			<select id=speed>
 				<option value=instant>Instant</option>
 				<option value=turbo>Turbo</option>
-				<option value=normal>Normal</option>
-				<option value=gamestep>Step Game</option>
-				<option value=animate>Animate Machine</option>
-				<option value=step>Step Machine</option>
+				<option value=normal selected>Normal</option>
+				<option value=animate>Animate VM</option>
 			</select>
+			&middot;
 			<button onclick="reset()">Reset</button>
+			&middot;
+			Brk 🎲<input id=breakpoint style='width:6ex'></input>
 		</div>
 		<div class="status-bar" id=debugbar>
 			<p class="status-bar-field" id=r0>PC</p>
@@ -212,6 +214,7 @@ iframe {
 			<p class="status-bar-field" id=r2>FP</p>
 			<p class="status-bar-field" id=r3>AX</p>
 			<p class="status-bar-field" id=clock>CK</p>
+			<p class="status-bar-field" id=turns>TU</p>
 		</div>
 	</div>
 </div>
@@ -265,7 +268,7 @@ iframe {
 				<button role="tab" aria-controls="tab-backstory">Backstory</button>
 				<button role="tab" aria-controls="tab-game-reference">Game Reference</button>
 				<button role="tab" aria-controls="tab-map">Map</button>
-				<button role="tab" aria-controls="tab-compiler">Compiler Reference</button>
+				<button role="tab" aria-controls="tab-language">Language Reference</button>
 				<button role="tab" aria-controls="tab-assembler">Assembler Reference</button>
 				<button role="tab" aria-controls="tab-vm">Virtual Machine Reference</button>
 			</menu>
@@ -306,9 +309,9 @@ prove!
 			<article role="tabpanel" hidden id="tab-map">
 				<div id='worldmap'></div>
 			</article>
-			<article role="tabpanel" hidden id="tab-compiler">
-				<iframe src="compiler.html"></iframe>
-				<p><a href=compiler.html target=_blank>External link</a>
+			<article role="tabpanel" hidden id="tab-language">
+				<iframe src="language.html"></iframe>
+				<p><a href=language.html target=_blank>External link</a>
 			</article>
 			<article role="tabpanel" hidden id="tab-assembler">
 				<iframe src="asm.html"></iframe>
@@ -358,9 +361,13 @@ prove!
 let asm;
 
 function saveChanges() {
-	localStorage.source = $("#source").value;
-	localStorage.autorun = JSON.stringify($("#autorun").checked);
-	localStorage.autoplay = JSON.stringify($("#autoplay").checked);
+	const ideState = {
+		source: $('#source').value,
+		autoplay: $('#autoplay').checked,
+		speed: $('#speed').value,
+		breakponit: $('#breakpoint').value,
+	};
+	localStorage.setItem('slog-ide-' + Game.title, JSON.stringify(ideState));
 }
 
 
@@ -375,9 +382,7 @@ function comp(initialLoad) {
 		$("#asm").value = compile(...sources);
 		if (assemble()) {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
-			if ($("#autorun").checked)
-				run();
-			else if ($("#autoplay").checked)
+			if ($("#autoplay").checked)
 				play();
 		}
 	} catch (e) {
@@ -440,12 +445,10 @@ will probably need to get this into Chinbreak somehow:
 
 // Game speeds
 const SPEEDS = {
-	step = 1,
-	animate = 2,
-	gamestep = 3,
-	normal = 4,
-	turbo = 5,
-	instant = 6,
+	animate: 1,
+	normal: 2,
+	turbo: 3,
+	instant: 4,
 };
 
 function play() {
@@ -456,21 +459,36 @@ function play() {
 }
 
 function run() {
-	let speed = parseInt($('#speed').value);
-	let calledOut;
-	while (vm.alive()) {
+	let speed = SPEEDS[$('#speed').value];
+
+	if (speed === SPEEDS.animate) {
 		let calledOut = vm.step();
-		if (speed < SPEEDS.instant && (calledOut || speed == SPEEDS.animate)) {
-			break;	
+		updateDebuggerState(vm);
+		if (calledOut)
+			Game.updateUI(vm.state);
+		if (vm.alive())
+			window.gameplayTimer = setTimeout(run, 100);
+
+	} else if (speed === SPEEDS.normal) {
+		Game.playmation(vm);
+
+	} else if (speed === SPEEDS.turbo) {
+		Game.playmation(vm, true);
+		// updateDebuggerState(vm);
+		//Game.updateUI(vm.state);
+		if (vm.alive())
+			window.gameplayTimer = setTimeout(run, 1);
+		else
+			updateDebuggerState(vm);
+
+	} else if (speed === SPEEDS.instant) {
+		let breakpoint = parseInt($('#breakpoint').value);
+		while (vm.alive()) {
+			vm.step();
+			if (vm.turns == breakpoint) break;
 		}
-	}
-
-	updateDebuggerState(vm);
-
-	if (calledOut) Game.updateUI(vm.state);
-
-	if (speed !== SPEEDS.instant && speed != SPEEDS.step)  {
-		window.gameplayTimer = setTimeout(animate, 100);
+		updateDebuggerState(vm);
+		Game.updateUI(vm.state);
 	}
 }
 
@@ -506,9 +524,11 @@ function prepIDE() {
 
 	prepOS();
 
-	$("#source").value = localStorage.source || "// hello, world!";
-	$("#autorun").checked = JSON.parse(localStorage.autorun || "false");
-	$("#autoplay").checked = JSON.parse(localStorage.autoplay || "false");
+	let ideState = JSON.parse(localStorage.getItem('slog-ide-' + Game.title) ?? '{}');
+	$("#source").value = ideState.source || "// hello, world!";
+	$("#autoplay").checked = ideState.autoplay || false;
+	$("#speed").value = ideState.speed || 'normal';
+	$("#breakpoint").value = ideState.breakpoint || '';
 }
 
 
@@ -535,6 +555,7 @@ function updateDebuggerState(vm) {
 		if (r) r.innerText = d.innerText;
 	}
 	$("#clock").innerText = '⏳ ' + vm.clock;
+	$("#turns").innerText = '🎲 ' + vm.turns;
 
 	if (!$("#registers").children[n])
 		$('#registers').appendChild(document.createElement('hr'));
@@ -586,9 +607,6 @@ function updateDebuggerState(vm) {
 let Game;
 
 window.addEventListener('load', e => {
-// window.addEventListener("DOMContentLoaded", _ => {
-	prepIDE();
-
 
 	if (window.location.search === '?snake') {
 		loadGame(Snake);
@@ -596,6 +614,8 @@ window.addEventListener('load', e => {
 		loadGame(Chinbreak);
 		$('#name').innerText = 'Test Pilot';
 	} // TODO some kind of picker for game
+
+	prepIDE();
 });
 
 

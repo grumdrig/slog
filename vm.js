@@ -114,6 +114,7 @@ class VirtualMachine {
 	state;  // negative memory beyond registers
 	running = true;
 	clock = 0;  // elapsed cycles since start
+	turns = 0;  // ext calls since start
 	debugLimit = 10*1000*1000;
 
 	get pc() { return this.registers[-1-REGISTERS.PC] }
@@ -184,10 +185,10 @@ class VirtualMachine {
 	}
 
 	bigstep() {
-		while (this.alive() && ((this.memory[this.pc] & 0x1F) != 0x3)) {
+		while (this.alive() && ((this.memory[this.pc] & 0x1F) != MNEMONICS.ext)) {
 			this.step();
 		}
-    this.step();
+    	this.step();
 	}
 
 	step() {
@@ -302,6 +303,8 @@ class VirtualMachine {
 			}
 			this.push(this.world.handleInstruction(this.state, operand & 0x7F, ...args));
 
+			this.turns += 1;
+
 		} else {
 			this.error(`${this.pc}: invalid opcode ${opcode} ${mnemonic ?? ''}`);
 		}
@@ -342,8 +345,24 @@ class VirtualMachine {
 		throw message;
 	}
 
-	dumpState() {
-		console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  Clock: ${this.clock}`);
+	dumpState(includingStateVector) {
+		if (includingStateVector) {
+			const nfo = [];
+			this.state.forEach((v,i) => v && nfo.push(`${i}: ${v}`));
+			const m = 2 + Math.max(...nfo.map(l => l.length));
+			const cols = Math.max(Math.floor(79 / m), 1);
+			const rows = Math.ceil(nfo.length / cols);
+			for (let i = 0; i < rows; i += 1)  {
+				let row = '';
+				for (let c = 0; c < cols; c += 1) {
+					let n = i + c * rows;
+					if (n < nfo.length)
+						row += (nfo[n] + ' '.repeat(m)).substr(0, m);
+				}
+				console.log(row);
+			}
+		}
+		console.log(`PC: ${this.pc}  SP: ${this.sp}  FP: ${this.fp}  AX: ${this.ax}  Clock: ${this.clock} Turns: ${this.turns}`);
 	}
 }
 
@@ -394,6 +413,7 @@ class Assembler {
 	macroInProgress;
 	pc = 0;
 	line_no_adjustment = 1;
+	target;
 
 	error(message) {
 		throw this.line + `\nASSEMBLY ERROR AT LINE ${this.line_no + this.line_no_adjustment}: ${message}`;
@@ -570,6 +590,10 @@ class Assembler {
 					// TODO: immediate mode
 					this.emit(MNEMONICS.br, INLINE_MODE_TAG);
 					this.data(operand);
+
+				} else if (inst === toLowerCase('.target')) {
+					this.assert(tokens.length >= 2, 'embedding target expected following .target');
+					this.target = String.fromCharCode(...tokens.slice(1));
 
 				} else if (this.macros[inst]) {
 
@@ -916,9 +940,12 @@ if (typeof module !== 'undefined' && !module.parent) {
 		if (verbosity > 1) vm.trace = true;
 		vm.run();
 		if (verbosity > 0) {
-			if (Game)
+			if (Game && Game.dumpState) {
 				Game.dumpState(vm.state);
-			vm.dumpState();
+				vm.dumpState();
+			} else {
+				vm.dumpState(true);
+			}
 		}
 	}
 }

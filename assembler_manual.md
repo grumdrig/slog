@@ -2,7 +2,7 @@ Slog Assembler Manual
 =====================
 
 
-The Slog assembler turns barely human-friendly assembly source code into
+The Slog assembler turns barely human-friendly assembly source code into very
 computer-friendly Slog VM machine code.
 
 
@@ -54,12 +54,12 @@ which in the machine architecture causes that the operand is taken from the
 stack rather than supplied as as immediate value within with the
 instruction.
 
-The second, with `#` as the operand, is equivalent to
+The second, with the symbol `#` following the opcode, is equivalent to
 
 	*opcode* -$3FF
 
-with signals inline mode, where the word following the instruction is used as
-the operand.
+which signals inline mode, wherein the word following the instruction is used
+as the operand.
 
 In all other cases, the operand is a literal value, which is referred to as
 immediate mode.
@@ -71,8 +71,8 @@ In all cases each assembly instruction generates a machine instruction, a
  	opcode | (parameter << 5)
 
 In the description of the effects on the stack of the instructions below, it
-is assumed that if stack mode or inline mode is used, the operand has
-already been take from the stack or main memory.
+is assumed that if stack mode or inline mode is used, the operand has already
+been read from the stack or main memory.
 
 Descriptions of each instruction are given in the Slog VM manual.
 
@@ -106,8 +106,8 @@ elsewhere in the assembler source. Arguments may be provided to change how
 the code is expanded. Macros must be defined before they are used.
 
 Macros are defined by the `.macro` directive, with optional parameters,
-followed by arbitrary code (perhaps including other macro expansions), until
-a `.end` directive is reached.
+followed by arbitrary assembly code (perhaps including other macro
+expansions), until a `.end` directive is reached.
 
 The macro may then be used in code, much like an instruction.
 
@@ -176,10 +176,10 @@ Values following the `.data` directive are emitted directly as machine code.
 The data can be numeric values or symbolic values defined elsewhere, or may
 be either of these with a repetition specifier of the form:
 
-	*value* `*` *repetitions*
+	*value* `*` *repetition*
 
-which is equivalent *value* repeated *repetition* number of times. For example
-the following are equivalent:
+which is equivalent to *value* repeated *repetition* number of times. For
+example the following are equivalent:
 
 	.data 20*3
 
@@ -189,8 +189,7 @@ the following are equivalent:
 ### `.stack` *data*
 
 The `.stack` directive uses the `stack` instruction to push a number of values
-onto the stack, but supplies the correct value to the `stack` instruction in
-a less error-prone way.
+onto the stack, supplying the correct value to the `stack` instruction.
 
 So for example the following are equivalent:
 
@@ -199,9 +198,9 @@ So for example the following are equivalent:
 	stack 3
 	.data 10 20 30
 
-In the case that *data* is a single value, which in turn is representable as
-an immediate (in other words, if possible), the directive is implemented as
-a `push` instruction.
+Where possible (i.e. in the case that *data* is a single value, which in turn
+is within the range of values representable as an immediate), the directive
+is implemented as a `push` instruction.
 
 
 ### .jump and .branch
