@@ -40,9 +40,9 @@ class Source {
 				if (line.length === 0) break;
 
 				let m;
-				if (m = line.match(/^target\s+"(.+?)"$/)) {
+				if (m = line.match(/^target\s+([a-zA-Z_]\w*)$/)) {
 					const filename = m[1];
-					let { generateInterface } = require(filename);
+					let { generateInterface } = require(`./${filename}.js`);
 					if (generateInterface)
 						this.process(generateInterface());
 				}
@@ -261,8 +261,8 @@ class Module {
 		while (!source.empty()) {
 			let item;
 			if (source.tryConsume('target')) {
-				if (!source.isString()) source.error("String filename expected");
-				result.target = source.next().text;//.slice(1, -1);
+				if (!source.isIdentifier()) source.error("Identifier expected");
+				result.target = source.next().text;
 			} else if (item = ConstantDefinition.tryParse(source)) {
 				result.constants.push(item);
 			} else if (item = VariableDeclaration.tryParse(source)) {
@@ -1642,7 +1642,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 	if (flags.target) {
 		console.log(flags.target);
-		let interface = require(flags.target).generateInterface();
+		let interface = require(`./${flags.target}.js`).generateInterface();
 		sources.unshift(interface);
 	}
 
@@ -1705,7 +1705,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 			let { VirtualMachine } = require('./vm.js');
 
-			let Game = require(target);
+			let Game = require(`./${target}.js`);
 
 			let vm = new VirtualMachine(assembled.code, Game);
 			if (verbosity > 1) vm.trace = true;

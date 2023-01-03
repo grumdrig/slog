@@ -592,8 +592,8 @@ class Assembler {
 					this.data(operand);
 
 				} else if (inst === toLowerCase('.target')) {
-					this.assert(tokens.length >= 2, 'embedding target expected following .target');
-					this.target = String.fromCharCode(...tokens.slice(1));
+					this.assert(tokens.length == 2, 'embedding target expected following .target');
+					this.target = operand;
 
 				} else if (this.macros[inst]) {
 
