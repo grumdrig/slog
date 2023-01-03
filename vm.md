@@ -8,24 +8,21 @@ character behavior in a role-playing game or other environment.
 Architecture
 ------------
 
-The machine has a simple instruction set with simple signed 16-bit machine
-architecture, including:
+The machine operation is entirely built on signed 16-bit words ("Int16"s). It
+has a small instruction set of mainly stack-based operations, and a single
+address space consisting of three areas:
 
-	* A flat main memory area of signed 16-bit words ("Int16s"), of length
-	  (much) less than 32k, addressible by non-negative 16-bit values. It holds
-	  both code and data.
+	* A flat main memory area, addressible by non-negative addresses. It holds
+	  both code and data. It also holds the stack, which grows downwards.
 
-	* Four registers, also Int16s, described below, which may be accessed
-	  using memory addresses -1 down to -4.
+	* Four registers, which besides being manipulated in various ways by the
+	  instructions, may be addressed using memory addresses -1 down to -4.
 
-	* A vector of state variables, fetchable in machine instuctions using
-	  negative addresses -5 or less.
-
-	* Stack-based operation, with a stack that grows downward, which shares
-	  the main memory area with the code and data.
+	* A vector of read-only state variables, addressible using negative
+	  addresses -5 and below.
 
 Every machine instruction shares the same encoding scheme, which packs an
-unsigned 5-bit opcode and a signed 11-bit operand into a single 16-bit
+unsigned 5-bit opcode and a signed 11-bit parameter into a single 16-bit
 instruction word.
 
 
@@ -44,7 +41,7 @@ They are:
 
 * SP, the stack pointer, at memory location -2. It holds the address of the
   top value on the stack. The stack grows downwards (i.e. the value of SP
-  descends as the stack grows). At startup SP is initialized to point just
+  descends as the stack grows). At startup, SP is initialized to point just
   past the end of main memory, and the stack is therefore empty.
 
 * FP, the frame pointer register, at memory location -3. A small number of
@@ -54,17 +51,16 @@ They are:
 
 * AX, the auxilliary register, at memory location -4. While instructions that
   do have a result place that result on the stack, some instructions that
-  have a auxilliary result place that value in the AX register.
+  have a secondary result place that value in the AX register.
 
 
 State Vector
 ------------
 
 The state memory is accessed in the same way as the main memory, but using
-negative addresses less than -4. It is readable but not writeable with the
-operation of the machine such as the `store` instruction. Instead it is
-passed for modification to a handler outside the VM itself using the `ext`
-instruction.
+negative addresses less than -4. It is readable, but not writeable within the
+operation of the machine. Instead it is passed for modification to a handler
+outside the VM itself using the `ext` instruction.
 
 The embedding game or application within which the VM runs exposes some or all
 of the game state in the state vector.
@@ -81,28 +77,27 @@ consists of two parts:
 
 The two are encoded in a 16 bit integer instruction by the bitwise operation:
 
-	(immediate << 5) | opcode
+	instruction = (immediate << 5) | opcode
 
 The `immediate` value is used to compute the value of an `operand`, and the
 `opcode` and `operand` together determine how the machine processes that
-instruction.
+instruction. There are three cases:
 
-If `immediate` is any (signed 11-bit) value other than -1024 or
--1023, then `opcode` simply takes on the value of `immediate` and the
- instrction may be be said to be processed in "immediate mode".
-
-In the case where the operand has value -1024 (hexadecimal -0x400, called
-`STACK_MODE_TAG`), then before executing the instruction, the top value is
-popped from the stack and used as `operand`. The instruction may then be said
-to be processed in "stack mode". I.e.:
+* Stack mode: In the case where the operand has value -1024
+  (hexadecimal -$400), then before executing the instruction, the top value
+  is popped from the stack and used as `operand`. I.e.:
 
 	operand = MEMORY[SP++]
 
-And finally, if the operand has value -1023 (hexadecimal -0x3FF, called
-`INLINE_MODE_TAG`), the program counter is advanced by one, and the value
-skipped over is used as the operand.
+* Inline mode: If the operand has value -1023 (hexadecimal -$3FF), the program
+  counter is advanced by one, and the value skipped over is used as the
+  operand. I.e.:
 
 	operand = MEMORY[PC++]
+
+* Immediate mode. In all other cases, `opcode` simply takes on the value of
+  `immediate`.
+
 
 Valid instructions and their operations are described in the following
 sections.
@@ -173,31 +168,29 @@ the current value of `PC`:
 
 	PC += operand
 
-Note that since PC has already been incremented before the instruction is
+(Note that since PC has already been incremented before the instruction is
 executed, the increment to PC is relative to the instruction following the
-`jmp`.
+`jmp`.)
 
 
 ### $1 branch
 
-Branch if popped value is nonzero. That is to say, if the value removed from
-the top of the stack is not equial to zero, move program execution to the
-address supplied by the operand, in the manner of `jmp`.
+Branch if popped value is nonzero. I.e., if the value removed from the top of
+the stack is not equial to zero, move program execution to the address
+supplied by the operand, in the manner of `jmp`.
 
 As with `jmp`, semantics differ between the immediate and stack-addressed
 forms.
 
 When stack addressing is used, the pseudocode is:
 
-	if MEMORY[SP++] != 0 {
+	if MEMORY[SP++] != 0:
 		PC = operand
-	}
 
 whereas with immediate addressing, it is:
 
-	if MEMORY[SP++] != 0 {
+	if MEMORY[SP++] != 0:
 		PC += operand
-	}
 
 
 ### $10 assert
@@ -208,12 +201,11 @@ errors.
 If the value on the top of the stack does not equal the operand, throw an
 exception.
 
-	if MEMORY[SP] != operand {
+	if MEMORY[SP] != operand:
 		throw
-	}
 
 Note that the value is not removed from the top of the stack; SP is not
-adjusted (except as it may be in the stack-addressed form).
+adjusted (except as it may be in the stack-mode form).
 
 
 Stack and Memory Instructions
@@ -233,9 +225,10 @@ Push the ensuing data onto the stack. The operand is the number of ensuing
 code points that will be interpreted as data and pushed onto the stack. Of
 course the program counter will be advanced beyond these memory locations.
 
-	repeat `operand` times {
+If `operand` is non-negative:
+
+	repeat operand times:
 		MEMORY[--SP] = MEMORY[PC++]
-	}
 
 If the operand is negative, no data is pushed to the stack; instead the stack
 is shortened by `-operand` by adjusting the stack pointer register.
@@ -253,7 +246,8 @@ operand-deep in the stack.
 	MEMORY[SP + operand] = tmp
 
 If operand is negative, exchange the top stack value with the register or
-state variable which has operand as its (absolute) address.
+state variable which has operand as its (absolute, not relative to SP)
+address.
 
 	tmp = MEMORY[SP]
 	MEMORY[SP] = fetch(operand)
@@ -262,10 +256,9 @@ state variable which has operand as its (absolute) address.
 
 ### $E fetch
 
-Fetch a value at a memory location (or register or state vector element) and
-push it onto the stack.
+Fetch a value with address `operand` and push it onto the stack.
 
-	MEMORY[--SP] = fetch(operand)
+	MEMORY[--SP] = MEMORY[operand]
 
 
 ### $F fetchlocal
@@ -273,14 +266,14 @@ push it onto the stack.
 Fetch a value from a memory location relative to the frame pointer register
 and push it onto the stack.
 
-	MEMORY[--SP] = fetch(FP + operand)
+	MEMORY[--SP] = MEMORY[FP + operand]
 
 
 ### $D peek
 
 Fetch a value from somewhere on the stack and push it onto the stack.
 
-	MEMORY[--SP] = fetch(SP + operand)
+	MEMORY[--SP] = MEMORY[SP + operand]
 
 For example, `peek 0` duplicates the top of the stack.
 
@@ -312,24 +305,24 @@ Mathematical Operations
 ### $10 unary
 
 Apply a unary operation, in place, to the value at the top of the stack. The
-operation is determined by the value of operand.
+operation is determined by the value of `operand`.
 
-These are the valid unary operations. Here `x` represents the value on top of
-the stack:
+These are the valid unary operations. Here `top` represents the value on the
+top of the stack:
 
 | Operand | Mnemonic   | Calculation
-|---------|------------|--------------------
-| $5      | sin        | x = sine(x) [^1]
-| $4      | cos        | x = cosine(x)  [^1]
-| $3      | tan        | x = tangent(x) [^1]
-| $7      | log        | x = ln(x) [^1]
-| $E      | exp        | x = e^x [^1]
-| $6      | inv        | x = 32767 / x [^1]
-| $1      | not        | x = x ? 0 : 1
-| $B      | bool       | x = x ? 1 : 0
-| $A      | abs        | x = x < 0 ? -x : x
-| $9      | neg        | x = -x
-| $C      | complement | x = ~x
+|---------|------------|----------------------------
+| $5      | sin        | top = sine(top) [^1]
+| $4      | cos        | top = cosine(top)  [^1]
+| $3      | tan        | top = tangent(top) [^1]
+| $7      | log        | top = ln(top) [^1]
+| $E      | exp        | top = e^top [^1]
+| $6      | inv        | top = 32767 / top [^1]
+| $1      | not        | top = top ? 0 : 1
+| $B      | bool       | top = top ? 1 : 0
+| $A      | abs        | top = top < 0 ? -top : top
+| $9      | neg        | top = -top
+| $C      | complement | top = ~top
 
 For operations with inherently integer results:
 
@@ -339,23 +332,22 @@ For operations with inherently integer results:
 greatest integer less than the result is stored on the top of the stack, and
 the fractional part is stored in AX, scaled by MAX_INT = 32767.
 
-	MEMORY[SP] = floor(unaryOp(MEMORY[SP], operand))
-	AX = frac(unaryOp(MEMORY[SP], operand)) * MAX_INT
+	MEMORY[SP] = floor(unaryOp(MEMORY[SP]))
+	AX = frac(unaryOp(MEMORY[SP])) * MAX_INT
 
 The other unary operations leave the AX register undisturbed.
 
 
 ### Binary operations
 
-All other math instructions are binary operations. All use a value at the top
-of the stack as their first argument, and `operand` as their second argument.
-The result is returned to the top of the stack.
-
-All binary operations have a side effect that alters the AX register. Refer to
-the list of binary operations for details.
+All other math instructions are binary operations. All use the value at the
+top of the stack as their first argument, and `operand` as their second
+argument. The result is returned to the top of the stack. Each operation has
+a side effect that alters the AX register, as listed in the table below.
 
 	MEMORY[SP] = binaryOp(MEMORY[SP], operand)
 	AX = auxilliary_result_of_operation
+
 
 | Opcode | Mnemonic | Primary effect                 | Auxilliary effect          |
 |--------|----------|--------------------------------|----------------------------|
@@ -371,16 +363,15 @@ the list of binary operations for details.
 | $1D    | shift    | top = bitwise shift r/l [^7]   | AX = shifted-out bits [^8] |
 
 [^2]: Overflow is the arithmetic result minus what can be stored in an Int16
-(or 0 if no overflow). In the case of mul, this value may not fit in an
-Int16.
+(or 0 if no overflow). In the case of mul, the mathematically correct value
+may not fit in AX.
 
 [^3]: I.e. `top % operand`.
 
-[^4]: The value returned is expressed in degrees. The stack gets the integral
-part of that, so actually `floor(arctan(top/operand))`. The result is in the
-range[-180, 180).
+[^4]: The result is expressed in degrees in the range[-180, 180). The stack
+gets the integral part of that, so actually `floor(arctan(top/operand))`.
 
-[^5]: As with unary operations with non-integer results, this is the
+[^5]: Similar to unary operations with non-integer results, this is the
 fractional part of the result scaled by MAX_INT, i.e. 32767.
 
 [^6]: Logical operations treat zero as "false" and non-zero as "true". Nonzero
