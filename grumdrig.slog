@@ -1,8 +1,9 @@
+target ChinbreakIsland_v1
+
 /// Title: Let's Go Hunting
 /// Author: Grumdrig
 /// Description: Greedily slay beasts to level up at all costs.
 
-target ChinbreakIsland_v1
 
 startgame(Hardwarf)
 
