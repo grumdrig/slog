@@ -1,7 +1,7 @@
 /// Title: Let's Get Questing
 /// Author: Grumdrig
 /// Description: Complete quests until you can't no more.
-target chinbreak
+target ChinbreakIsland_v1
 
 startgame(1)
 

@@ -158,6 +158,12 @@ Assembler directives provide some small level of convenience to the coder.
 Case is not significant, so, for example, `.DATA` may be used in place of
 `.data`.
 
+### `.target` *name*
+
+Name the target in which the assembled strategy is meant to execute. This
+information may be used by other tools to run the strategy in it's target
+embedding.
+
 
 ### `.macro` *name* [*args*]
 

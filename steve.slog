@@ -1,4 +1,4 @@
-target snake
+target Snake_v1
 
 macro x(i) i % D
 macro y(i) i / D
@@ -35,14 +35,5 @@ macro go2(x, y) go(x + y * D)
 
 
 while 1 {
-	while go(.Food) {}
-	/* The following attempts to last longer by stretching out around the edges
-	   but it isn't really effective
-	var goal = y(.Head)
-	while go2(0,   goal) {}
-	while go2(0,   0) {}
-	while go2(D-1, 0) {}
-	while go2(D-1, D-1) {}
-	while go2(0,   D-1) {}
-	*/
+	go(.Food)
 }

@@ -38,9 +38,7 @@ Alternatively, there are command line tools:
 
 - vm.js: Assemble Slog assembly, and/or run strategies in games
 
-- chinbreak.js: Run the Chinbreak Island game, or generate supporting files
-
-Pass '--help' to any of these tools for usage information.
+Pass '--help' to these tools for usage information.
 
 
 Supporting files, and tests, are generated with the build tool Loopy. Install

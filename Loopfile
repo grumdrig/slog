@@ -1,7 +1,7 @@
 # Strategies
 
 # compile and produce all intermediate files
-# node compiler.js -i ./chinbreak.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
+# node compiler.js -a @grumdrig.asm -d @grumdrig.dasm -b @grumdrig.bin -s -p @grumdrig.strat grumdrig.slog
 
 --for STRAT in *.slog do node compiler.js -v -r $STRAT
 
@@ -16,7 +16,7 @@
 node_modules/marked/bin/marked.js -i vm.md -o @vm.html
 node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
 node_modules/marked/bin/marked.js -i language.md -o @language.html
-node chinbreak.js --generate-documentation > @chinbreak-doc.html
+node ChinbreakIsland_v1.js --generate-documentation > @chinbreak-doc.html
 
 # Snake
 

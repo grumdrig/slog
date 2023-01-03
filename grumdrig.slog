@@ -2,7 +2,7 @@
 /// Author: Grumdrig
 /// Description: Greedily slay beasts to level up at all costs.
 
-target chinbreak
+target ChinbreakIsland_v1
 
 startgame(Hardwarf)
 

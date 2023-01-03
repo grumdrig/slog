@@ -3026,28 +3026,15 @@ if (typeof module !== 'undefined') {
 
 
 function usage() {
+	const prog = process.argv[1];
 	console.log(`Progress Quest Slog: Chinbreak Island
 
+Generate the game interface header or supporting documentation.
+
 Usage:
-	./chinbreak.js [OPTS] STRATEGY
-	./chinbreak.js --generate-interface
-	./chinbreak.js --generate-map
-	./chinbreak.js --generate-documentation
-
-Run the game with the specified strategy (which is a strategy package file,
-unless the -c or -b flag is used), or generate the game interface header, or
-supporting documentation.
-
-OPTS:
-	-c, --compile     STRATEGY is slog source -- compile it first
-	-b, --binary      STRATEGY is a machine code binary
-	-v, --verbose     Increase verbosity of output
-
-SUPPORTING INFO GENERATION FLAGS:
-	--generate-interface      Output the game interface (as Slog code)
-	--generate-map            Output the game map as HTML
-	--generate-documentation  Output game documentation HTML
-	--help                    Show usage info
+	./${prog} --generate-interface		Output the game interface (as Slog code)
+	./${prog} --generate-map			Output the game map as HTML
+	./${prog} --generate-documentation	Output game documentation HTML
 `);
 	process.exit();
 }
@@ -3059,20 +3046,6 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 	const { values, positionals } = parseArgs({
 		options: {
-			compile: {
-				type: 'boolean',
-				short: 'c',
-			},
-			binary: {
-				type: 'boolean',
-				short: 'b',
-			},
-			verbose: {
-				type: 'boolean',
-				short: 'v',
-				multiple: true,
-			},
-
 			'generate-interface': {
 				type: 'boolean',
 			},
@@ -3082,17 +3055,9 @@ if (typeof module !== 'undefined' && !module.parent) {
 			'generate-documentation': {
 				type: 'boolean',
 			},
-			'help': {
-				type: 'boolean',
-			},
 		},
-		allowPositionals: true,
 	});
 	const flags = values;
-
-	if (flags.help || positionals.length > 1) usage();
-
-	const verbosity = (flags.verbose || []).length;
 
 	if (flags['generate-interface']) {
 		console.log(Chinbreak.generateInterface());
@@ -3103,37 +3068,5 @@ if (typeof module !== 'undefined' && !module.parent) {
 	if (flags['generate-documentation']) {
 		console.log(`<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">`);
 		console.log(Chinbreak.generateDocumentation());
-	}
-
-	if (positionals.length) {
-		let { readFileAsWords, VirtualMachine } = require('./vm.js');
-		let code;
-		if (flags.binary) {
-			code = readFileAsWords(positionals[0]);
-		} else if (flags.compile) {
-			const { compile } = require('./compiler.js');
-			const { readFileSync } = require('fs');
-
-			let asm = compile(Chinbreak.generateInterface(), readFileSync(positionals[0], 'utf8'));
-
-			let { Assembler } = require('./vm');
-			let assembled = Assembler.assemble(asm);
-
-			code = assembled.code;
-		} else {
-			let strat = readFileSync(positionals[0]);
-			strat = JSON.parse(strat);
-			code = strat.binary;
-		}
-
-		let vm = new VirtualMachine(code, Chinbreak);
-		if (verbosity > 1) vm.trace = true;
-
-		vm.run();
-
-		if (verbosity > 0) {
-			Chinbreak.dumpState(vm.state);
-			vm.dumpState();
-		}
 	}
 }

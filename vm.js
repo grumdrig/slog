@@ -827,22 +827,23 @@ OPTIONS:
 		Write binary machine code suitable for the Slog VM to named file
 	-d file, --disassembly=file
 		Disassemble binary machine code to named file
-	-r file, --run=file
-		Run assembled or loaded machine code in named game environment
+	-r, --run
+		Run assembled or loaded machine code in targe environment
 	-v, --verbose
 	-q, --quiet
 		Increase or decrease verbosity of output
 	--help
 		This, that you're reading
 
-EXAMPLE:
-	Assemble assembly source mystrat.asm into machine code in mystrat.bin:
+EXAMPLES:
+
+Assemble assembly source mystrat.asm into machine code in mystrat.bin:
 
 	$ ./vm.js -a mystrat.asm -o mystrat.bin
 
-	Assemble and execute strategy for the game chinbreak.js:
+Assemble and execute strategy in its target environment:
 
-	$ ./vm.js -a mystrat.asm -r chinbreak.js
+	$ ./vm.js -a mystrat.asm -r
 `);
 	process.exit()
 }
@@ -872,7 +873,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 				short: 'l',
 			},
 			run: {
-				type: 'string',
+				type: 'boolean',
 				short: 'r',
 			},
 			verbose: {
@@ -928,7 +929,11 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 	let Game;
 	if (flags.run) {
-		Game = require(flags.run).Game;
+		if (!asm.target) {
+			console.error('Target specification required in source file');
+			process.exit(-3);
+		}
+		Game = require(`./${asm.target}.js`).Game;
 	}
 
 	if (flags.run) {

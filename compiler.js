@@ -1570,10 +1570,15 @@ OPTIONS:
 	--help
 		This, that you're reading
 
-EXAMPLE:
-	The most typical use case at this time would be:
+EXAMPLES:
 
-	$ ./compile.js -i ./chinbreak.js -p MYSTRAT.strat MYSTRAT.slog
+To compile slog language strategy into a strategy package:
+
+	$ ./compile.js -p MYSTRAT.strat MYSTRAT.slog
+
+To run a slog strategy and print final state:
+
+	$ ./compile.js -v -r MYSTRAT.slog
 `);
 	process.exit()
 }

@@ -2,7 +2,7 @@
 // Test suite for compiler //
 /////////////////////////////
 
-target test
+target Test
 
 macro checksp() { assert *(-2) == 4096 }
 
