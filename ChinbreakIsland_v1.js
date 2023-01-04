@@ -145,7 +145,7 @@ const SLOTS = [
 	{ name: 'Reagents',
 	  description: `Inventory item. Various herbs and special items often needed for spellcasting.` },
 
-	{ name: 'Ammo',
+	{ name: 'Ammunition',
 	  description: `Inventory item. Arrows and other projectiles which may be
 	  fashioned from natural resources gathered in nature.` },
 
@@ -310,7 +310,7 @@ const CALLS = {
 
 	seek: { parameters: 'target_slot',
 		description: `Comb the local area for items such as Food, or
-		Ammo, or to hunt creatures use MobSpecies, or to find a place
+		Ammunition, or to hunt creatures use MobSpecies, or to find a place
 		without mobs use 0, or look for the local Totem.` },
 
 	loot: {
@@ -1539,7 +1539,7 @@ function generateMap(scrambleFrom) {
 
 
 
-DATABASE[Ammo] =        { value: 1/100, weight: 1/10 };
+DATABASE[Ammunition] =        { value: 1/100, weight: 1/10 };
 DATABASE[Trophies] =    { value: 1/10, weight: 1 };
 DATABASE[Gold] =        { value: 1, weight: 1/100 };
 DATABASE[Food] =        { value: 1, weight: 1 };
@@ -1998,8 +1998,8 @@ class Chinbreak {
 				let offense = state[Offense];
 
 				if (weaponType(state[Weapon]) == Ranged) {
-					if (state[Ammo] > 0) {
-						dec(Ammo);
+					if (state[Ammunition] > 0) {
+						dec(Ammunition);
 					} else {
 						offense = 1;  // bludgeoning with the weapon is not very effective
 					}
@@ -2227,7 +2227,7 @@ class Chinbreak {
 					// Bring me N of SOMETHING generally
 					let value = state[Level] * 100 * Math.pow(GR, -state[Charisma]) * (0.5 * rand());
 					state[QuestLocation] = randomLocation();
-					state[QuestObject] = rand(2) ? Ammo : Food;  // something you can forage for
+					state[QuestObject] = rand(2) ? Ammunition : Food;  // something you can forage for
 					state[QuestMob] = 0;
 					let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
 					state[QuestQty] = qty;
@@ -2607,7 +2607,7 @@ div.header {
 			<div>Gold</div><div id=i0></div>
 			<div id=trophies>Trophies</div><div id=i1></div>
 			<div>Reagents</div><div id=i2></div>
-			<div>Ammo</div><div id=i3></div>
+			<div>Ammunition</div><div id=i3></div>
 			<div>Rations</div><div id=i4></div>
 			<div>Treasures</div><div id=i5></div>
 			<div>Healing Potions</div><div id=i6></div>
@@ -2912,27 +2912,16 @@ function updateGame(state) {
 	questal &&= questal.name;
 	let original = Chinbreak.mapInfo(state[QuestEnd], state);
 	original &&= original.name;
-	const friendlySlotNames = {
-		Totem: 'totem',
-		Gold: 'gold',
-		Trophies: 'trophies',
-		Reagents: 'reagents',
-		Ammo: 'ammo',
-		Food: 'food',
-		Treasures: 'treasures',
-		Potions: 'healing potions',
-		Sunsparks: 'sunsparks',
-	};
 	set('questgoal',
 		state[QuestObject] === Totem ? 'Deliver the totem' :
 		state[QuestObject] == Trophies ? `Bring me ${state[QuestQty]} ${DENIZENS[state[QuestMob]].name.toLowerCase()} trophies` :
-		state[QuestObject] ? `Bring me ${state[QuestQty]} ${friendlySlotNames[SLOTS[state[QuestObject]].name]}` :
+		state[QuestObject] ? `Bring me ${state[QuestQty]} ${SLOTS[state[QuestObject]].name.toLowerCase()}` :
 		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questdesc',
 		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
 		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
-		state[QuestObject] ? `We of ${original} stand in need of ${friendlySlotNames[SLOTS[state[QuestObject]].name]}. They say there's no shortage of them in ${questal}.` :
+		state[QuestObject] ? `We of ${original} stand in need of ${SLOTS[state[QuestObject]].name.toLowerCase()}. They say there's no shortage of them in ${questal}.` :
 		state[QuestMob] ? 	 `Put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
 		'<br>&nbsp;');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
