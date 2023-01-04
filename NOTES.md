@@ -552,23 +552,6 @@ Big Mobs
 
 Switch all mobs to the big versions with 1.5 HD as of act 4 or 5
 
-Embedding
----------
-
-put a line like
-
-	embedding "chinbreak.js"
-
-or one of
-
-	interface "chinbreak.js"
-	module "chinbreak.js"
-	import "chinbreak.js"
-	game "chinbreak.js"
-	app "chinbreak.js"
-
-at the top of a slog file to import the interface an define what the embedding
-is. Then just `compile -r quester.slog` can just run it.
 
 More API Minimization
 ---------------------
@@ -585,3 +568,7 @@ More API Minimization
 
 Not so sure about any of this.
 
+DASM
+----
+
+Make the disassembly assemblable as a check.

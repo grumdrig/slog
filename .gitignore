@@ -3,11 +3,10 @@ node_modules/
 package-lock.json
 package.json
 
+*.asm
+*.dasm
 *.bin
 *.strat
-
-test.asm
-test.dasm
 
 map.html
 asm.html
