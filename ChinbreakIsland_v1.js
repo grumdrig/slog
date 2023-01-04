@@ -145,8 +145,9 @@ const SLOTS = [
 	{ name: 'Reagents',
 	  description: `Inventory item. Various herbs and special items often needed for spellcasting.` },
 
-	{ name: 'Resources',
-	  description: `Inventory item. Raw natural resources which may be gathered in nature.` },
+	{ name: 'Ammo',
+	  description: `Inventory item. Arrows and other projectiles which may be
+	  fashioned from natural resources gathered in nature.` },
 
 	{ name: 'Food',
 	  description: `Inventory item. Adventurers eat food every time they
@@ -309,7 +310,7 @@ const CALLS = {
 
 	seek: { parameters: 'target_slot',
 		description: `Comb the local area for items such as Food, or
-		Resources, or to hunt creatures use MobSpecies, or to find a place
+		Ammo, or to hunt creatures use MobSpecies, or to find a place
 		without mobs use 0, or look for the local Totem.` },
 
 	loot: {
@@ -1538,7 +1539,7 @@ function generateMap(scrambleFrom) {
 
 
 
-DATABASE[Resources] =   { value: 1/100, weight: 1 };
+DATABASE[Ammo] =        { value: 1/100, weight: 1/10 };
 DATABASE[Trophies] =    { value: 1/10, weight: 1 };
 DATABASE[Gold] =        { value: 1, weight: 1/100 };
 DATABASE[Food] =        { value: 1, weight: 1 };
@@ -1994,6 +1995,16 @@ class Chinbreak {
 
 				inc(MobAggro);
 
+				let offense = state[Offense];
+
+				if (weaponType(state[Weapon]) == Ranged) {
+					if (state[Ammo] > 0) {
+						dec(Ammo);
+					} else {
+						offense = 1;  // bludgeoning with the weapon is not very effective
+					}
+				}
+
 				damageMob(state, rollAttack(state[Offense], state[MobLevel], state[Potency]));
 
 			} else if (slot === Footwear) {
@@ -2216,7 +2227,7 @@ class Chinbreak {
 					// Bring me N of SOMETHING generally
 					let value = state[Level] * 100 * Math.pow(GR, -state[Charisma]) * (0.5 * rand());
 					state[QuestLocation] = randomLocation();
-					state[QuestObject] = Resources;  // something you can forage for
+					state[QuestObject] = rand(2) ? Ammo : Food;  // something you can forage for
 					state[QuestMob] = 0;
 					let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
 					state[QuestQty] = qty;
@@ -2596,7 +2607,7 @@ div.header {
 			<div>Gold</div><div id=i0></div>
 			<div id=trophies>Trophies</div><div id=i1></div>
 			<div>Reagents</div><div id=i2></div>
-			<div>Resources</div><div id=i3></div>
+			<div>Ammo</div><div id=i3></div>
 			<div>Rations</div><div id=i4></div>
 			<div>Treasures</div><div id=i5></div>
 			<div>Healing Potions</div><div id=i6></div>
@@ -2906,7 +2917,7 @@ function updateGame(state) {
 		Gold: 'gold',
 		Trophies: 'trophies',
 		Reagents: 'reagents',
-		Resources: 'resources',
+		Ammo: 'ammo',
 		Food: 'food',
 		Treasures: 'treasures',
 		Potions: 'healing potions',
