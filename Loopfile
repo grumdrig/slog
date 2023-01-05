@@ -2,10 +2,16 @@
 
 # Run strategies
 
---for STRAT in *.slog do node compiler.js -v -r $STRAT
+# --for STRAT in *.slog do node compiler.js -v -r $STRAT
 
 # If I could get this to work it would look for changes to the target for the strategy too:
 # --for STRAT in *.slog do -w `awk '$1 == "target" { print $2 }' < $STRAT` node compiler.js -v -r $STRAT 
+
+# Instead I'll do them manually for now at least
+./compiler.js -v -r steve.slog -- Snake_v1.js
+./compiler.js -v -r test.slog -- Test.js
+./compiler.js -v -r quester.slog -- ChinbreakIsland_v1.js
+./compiler.js -v -r leveler.slog -- ChinbreakIsland_v1.js
 
 
 # Manuals

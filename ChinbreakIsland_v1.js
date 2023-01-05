@@ -1539,14 +1539,14 @@ function generateMap(scrambleFrom) {
 
 
 
-DATABASE[Ammunition] =        { value: 1/100, weight: 1/10 };
-DATABASE[Trophies] =    { value: 1/10, weight: 1 };
-DATABASE[Gold] =        { value: 1, weight: 1/100 };
-DATABASE[Food] =        { value: 1, weight: 1 };
-DATABASE[Reagents] =    { value: 10, weight: 1/10 };
-DATABASE[Potions] = 	{ value: 100, weight: 1 };
-DATABASE[Treasures] =   { value: 1000, weight: 3 };
-DATABASE[Sunsparks] = { value: 10000, weight: 1 };
+DATABASE[Ammunition] =  { value: 1/100, weight: 1/10,  scarcity: 10,       };
+DATABASE[Trophies] =    { value: 1/10,  weight: 1,     scarcity: 50,       };
+DATABASE[Gold] =        { value: 1,     weight: 1/100, scarcity: 10000,    };
+DATABASE[Food] =        { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
+DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
+DATABASE[Potions] = 	{ value: 100,   weight: 1,     scarcity: 100000,   };
+DATABASE[Treasures] =   { value: 1000,  weight: 3,     scarcity: 1000000,  };
+DATABASE[Sunsparks] =   { value: 10000, weight: 1,     scarcity: 10000000, };
 
 
 
@@ -2355,13 +2355,15 @@ class Chinbreak {
 				return state[MobSpecies] ? 1 : 0;
 
 			} else if (isInventorySlot(target)) {
-				let chance = 1/3;
+				let resistance = DATABASE[target].scarcity ?? Number.NaN;
 				if (state[Location] === state[QuestLocation] &&
 						target === state[QuestObject]) {
-					chance = 2/3;
+					resistance >>= 1;
 				}
 
-				qty = rand() < chance ? 1 : 0;
+				let ability = state[DATABASE[target].forageStat ?? Intellect];
+
+				let qty = civRoll(ability, resistance) ? 1 : 0;
 				inc(target, qty);
 
 				passTime('Foraging for ' + indefiniteItems(target, 1), 1);
