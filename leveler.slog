@@ -5,8 +5,6 @@ target ChinbreakIsland_v1
 /// Description: Greedily slay beasts to level up at all costs.
 
 
-startgame(Hardwarf)
-
 macro initialize(stat, count) {
   var count = count
   while count {

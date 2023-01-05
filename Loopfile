@@ -10,8 +10,8 @@
 # Instead I'll do them manually for now at least
 ./compiler.js -v -r steve.slog -- Snake_v1.js
 ./compiler.js -v -r test.slog -- Test.js
-./compiler.js -v -r quester.slog -- ChinbreakIsland_v1.js
-./compiler.js -v -r leveler.slog -- ChinbreakIsland_v1.js
+./compiler.js -v -r quester.slog 1 -- ChinbreakIsland_v1.js
+./compiler.js -v -r leveler.slog 2 -- ChinbreakIsland_v1.js
 
 
 # Manuals

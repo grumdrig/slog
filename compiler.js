@@ -1544,7 +1544,7 @@ if (typeof exports !== 'undefined') {
 }
 
 function usage() {
-	console.log(`Usage: compiler.js [OPTIONS] FILENAME...
+	console.log(`Usage: compiler.js [OPTIONS] FILENAME [PARAMETERS...]
 
 Compiles the named Slog source file(s) into a packaged Slog strategy, or one
 of several output formats specified by OPTIONS flags. If no output options
@@ -1566,7 +1566,10 @@ OPTIONS:
 	-d file, --disassembly=file
 		Generate binary output, then disassemble it to named file
 	-r, --run
-		Run the compiled strategy in it's embedded application
+		Run the compiled strategy in it's embedded application. If there are
+		PARAMETERS on the command line, they are passed to the virtual
+		machine initializer, which passes them to the embedded application
+		initialization.
 	--help
 		This, that you're reading
 
@@ -1588,7 +1591,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const { parseArgs } = require('util');
 	const { readFileSync, writeFileSync } = require('fs');
 
-	let flags, sources;
+	let flags, args;
 	try {
 		const { values, positionals } = parseArgs({
 			options: {
@@ -1632,19 +1635,18 @@ if (typeof module !== 'undefined' && !module.parent) {
 			allowPositionals: true,
 		});
 		flags = values || {};
-		sources = positionals || [];
+		args = positionals;
 	} catch (e) {
 		console.error(e);
 		usage();
 	}
-	const { assembly, binary, disassembly,
-	  package, symbols, run, help } = flags || {};
+	const { assembly, binary, disassembly, package, symbols, run, help } = flags || {};
 	const verbosity = (flags.verbose || []).length;
 
 	if (help) usage();
-	if (sources.length == 0) { console.error('Filename expected'); usage(); }
+	if (!args) { console.error('Filename expected'); usage(); }
 
-	sources = sources.map(filename => readFileSync(filename, 'utf8'));
+	let sources = [readFileSync(args.shift(), 'utf8')];
 
 	if (flags.target) {
 		console.log(flags.target);
@@ -1713,7 +1715,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 			let Game = require(`./${target}.js`);
 
-			let vm = new VirtualMachine(assembled.code, Game);
+			let vm = new VirtualMachine(assembled.code, Game, ...args);
 			if (verbosity > 1) vm.trace = true;
 
 			vm.run();

@@ -261,9 +261,6 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 // TODO bell() commmand? CHA makes it more accurate
 
 const CALLS = {
-	startgame: { parameters: 'species',
-		description: 'Pick a species for your character and begin the game.' },
-
 	train: { parameters: 'slot',
 		description: `Train to improve stats (Strength, and so on).
 		Training speed can be affected by various environmental factors.` },
@@ -1618,10 +1615,14 @@ class Chinbreak {
 
 	static get windowContent() { return CHINBREAK_WINDOW_CONTENT }
 
-	static create(code) {
+	static create(code, ...args) {
 		let state = new Int16Array(SLOTS.length);
 		state[Seed] = hash(0x3FB9, ...code);
 		REALTIME = 0;
+
+		const species = args[0] ?? 1;
+		this.handleInstruction(state, 0, species);  // start the game
+
 		return state;
 	}
 
@@ -1678,40 +1679,38 @@ class Chinbreak {
 
 		REALTIME += realTimeSeconds(age(state) - before);
 
-		if (state[Level] > 0) {
-			// Various state values are calculable from other state values
-			// but we store them in the state vector for convenience and visibility
+		// Various state values are calculable from other state values
+		// but we store them in the state vector for convenience and visibility
 
-			let encumbrance = 0
-			for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
-				encumbrance += DATABASE[i].weight * state[i];
-			}
-			state[Encumbrance] = Math.floor(encumbrance);
-			state[Capacity] = state[Strength] + state[Mount];
-
-			let prof = DENIZENS[state[Species]].proficiency ?? 0;
-			if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
-
-			state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
-			state[Potency] = state[Strength] + weaponPower(state[Weapon]) + prof;
-			state[Defense] =
-				state[Agility] +
-				state[Armor] +
-				state[Shield] +
-				state[Headgear] +
-				state[Footwear];
-
-			if (state[Health] <= 0) {
-				state[GameOver] = 86;
-			} else if (state[Years] >= 100) {
-				state[GameOver] = 100;
-			} else if (state[Act] > 9) {
-				state[GameOver] = 1;
-			}
-
-			if (state[Trophies] === 0)
-				state[TrophyMob] = 0;
+		let encumbrance = 0
+		for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
+			encumbrance += DATABASE[i].weight * state[i];
 		}
+		state[Encumbrance] = Math.floor(encumbrance);
+		state[Capacity] = state[Strength] + state[Mount];
+
+		let prof = DENIZENS[state[Species]].proficiency ?? 0;
+		if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
+
+		state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
+		state[Potency] = state[Strength] + weaponPower(state[Weapon]) + prof;
+		state[Defense] =
+			state[Agility] +
+			state[Armor] +
+			state[Shield] +
+			state[Headgear] +
+			state[Footwear];
+
+		if (state[Health] <= 0) {
+			state[GameOver] = 86;
+		} else if (state[Years] >= 100) {
+			state[GameOver] = 100;
+		} else if (state[Act] > 9) {
+			state[GameOver] = 1;
+		}
+
+		if (state[Trophies] === 0)
+			state[TrophyMob] = 0;
 
 		return result;
 	}
@@ -1782,20 +1781,17 @@ class Chinbreak {
 		}
 
 		if (state[Level] === 0) {
-			// game hasn't begun
-			if (operation === startgame) {
+			if (operation === 0) {
+				// gGme hasn't begun. This gets called once to initialize it
 				let species = arg1;
 				let speciesinfo = DENIZENS[species];
-				if (!speciesinfo) return -1;
+				if (!speciesinfo || !speciesinfo.playable) return -1;
 
 				state[Species] = species;
 
-				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) > 10) return -1;
-				// All good. Start the game.
-
 				// Have to add two to keep from going negative
 				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
-					inc(stat, 2);
+					state[stat] = 2;
 
 				for (let { slot, increment, value } of speciesinfo.startState ?? [])
 					state[slot] = value ?? (state[slot] + increment)
