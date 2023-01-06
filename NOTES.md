@@ -458,6 +458,9 @@ Cinematics
 Should have to call watchcinematic() several times so that there can be
 transitional text.
 
+For that to work, would need a quest for the cinematic to keep track of its
+progress.
+
 
 Big Mobs
 --------
