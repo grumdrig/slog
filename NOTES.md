@@ -220,31 +220,6 @@ I think I need or it would be best to have splat syntax for at least macros
 Instead I went with the opaque thing of a negative external call code meaning
 the argument is a zero-terminated vector. However, setname should probably go.
 
-Check tag
-
-
-
-
-Tag
----
-
-Append a tag to the binary, to identify the binary, to help watch for
-endianness issues and to provide an identifier for what game the program is
-for:
-
-	{
-		'Np': Int16
-		version: Int16 // 0xMMmm = MAJOR minor
-	}
-
-That requires a compiler statement like
-
-	header('Np', $0101)
-
-No i guess in ASM it could just be
-
-	.data 'Np' 0x0101
-
 
 Local declarations
 ------------------
@@ -329,25 +304,6 @@ Here's the variable allocation situations:
 
 	but code gets initialization
 
-
-Symbol table members
---------------------
-
-- Alias
-
-{ alias: true, value: Expr }
-
-- Static allocation
-
-{ static: true }
-
-- Local allocation
-
-{ local: true, offset: distance from FP }
-
-- Function
-
-{ function: FunctionDefinition }
 
 
 LLVM

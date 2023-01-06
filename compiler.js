@@ -257,7 +257,6 @@ class SemanticError {
 }
 
 class Module {
-	tag;  // TODO get rid of this feature I think
 	target;
 	constants = [];
 	variables = [];
@@ -281,9 +280,6 @@ class Module {
 				result.macros.push(item);
 			} else if (item = FunctionDefinition.tryParse(source)) {
 				result.functions.push(item);
-			} else if (item = TagDefinition.tryParse(source)) {
-				if (result.tag) source.error("Tag already defined");
-				result.tag = item;
 			} else {
 				result.statements.push(Statement.parse(source));
 			}
@@ -324,51 +320,7 @@ class Module {
 
 		for (let d of this.functions) d.generate(context);
 
-		if (this.tag) this.tag.generate(context);
-
 		return context;
-	}
-}
-
-// TODO: this will probably be gotten rid of. It makes more sense to tag the
-// target of a program in its external packaging.
-class TagDefinition {
-	tag1;
-	tag2;
-
-	static tryParse(source) {
-		if (!source.tryConsume('tag')) return false;
-		let result = new TagDefinition();
-		source.consume('(');
-		result.tag1 = Expression.parse(source);
-		source.consume(',');
-		result.tag2 = Expression.parse(source);
-		source.consume(')');
-		return result;
-	}
-
-	generate(context) {
-		let tag1 = this.tag1.simplify(context);
-		let tag2 = this.tag2.simplify(context);
-		if (!tag1.isLiteral || !tag2.isLiteral)
-			context.error('Constant value expressions required for tag definition');
-		context.emit('');
-		context.emit('halt 0');
-		function asCharIfPossible(v) {
-			let lsb = v & 0xFF;
-			if (32 < lsb && lsb < 127) {
-				lsb = String.fromCharCode(lsb);
-				let msb = v >> 8;
-				if (32 < msb && msb < 127)
-					return "'" + String.fromCharCode(msb) + lsb;
-				else if (msb === 0)
-					return "'" + lsb;
-			}
-		}
-		context.emit('.data ' +
-			(asCharIfPossible(tag1.value) ??
-				'$' + tag1.value.toString(16)) +
-			   ' $' + tag2.value.toString(16) + '  ; tag');
 	}
 }
 
