@@ -1536,8 +1536,8 @@ function generateMap(scrambleFrom) {
 
 
 
-DATABASE[Ammunition] =  { value: 1/100, weight: 1/10,  scarcity: 10,       };
-DATABASE[Trophies] =    { value: 1/10,  weight: 1,     scarcity: 50,       };
+DATABASE[Ammunition] =  { value: 1/10,  weight: 1/10,  scarcity: 10,       };
+DATABASE[Trophies] =    { value: 1,     weight: 1,     scarcity: 50,       };
 DATABASE[Gold] =        { value: 1,     weight: 1/100, scarcity: 10000,    };
 DATABASE[Food] =        { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
 DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
@@ -1571,7 +1571,7 @@ function indefiniteItems(slot, qty) {
 		else
 			return 'a ' + name;
 	} else {
-		return 'some ' + name;
+		return qty + ' ' + name;
 	}
 }
 
@@ -1693,7 +1693,7 @@ class Chinbreak {
 		if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
 
 		state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
-		state[Potency] = state[Strength] + weaponPower(state[Weapon]) + prof;
+		state[Potency] = Math.round(Math.pow(state[Strength], 1/GR)) + weaponPower(state[Weapon]) + prof;
 		state[Defense] =
 			state[Agility] +
 			state[Armor] +
@@ -2021,24 +2021,23 @@ class Chinbreak {
 			return -1;
 
 		} else if (operation === loot) {
-			if (!state[MobSpecies]) return -1;
+			if (!state[MobSpecies] || state[MobHealth] > 0) return -1;
 			let info = DENIZENS[state[MobSpecies]];
-			if (state[MobHealth] > 0 && civRoll(state[MobLevel], state[Agility])) {
-				inc(MobAggro);
-				if (info.esteemSlot)
-					dec(state[info.esteemSlot], 1);
-			}
 
-			if (info.drops) {
-				inc(info.drops);
-			} else {
+			passTime('Looting the corpse of this ' + info.name.toLowerCase(), 1);
+
+			let drop = info.drops ?? Trophies;
+			if (drop === Trophies) {
 				if (state[TrophyMob] == state[MobSpecies] || state[Trophies] == 0)
 					state[TrophyMob] = state[MobSpecies];
 				else
 					state[TrophyMob] = 0;
-				inc(Trophies);
 			}
+			inc(drop);
 			clearMob(state);
+
+			return 
+
 
 		} else if (operation === buy) {
 			let slot = arg1;
@@ -2116,8 +2115,10 @@ class Chinbreak {
 			if (operation === sell) {
 				let price = qty * unitValue;
 				price /= (1 + 1 / Math.max(1, state[Charisma]));
-				price = Math.floor(price);
-				inc(Gold, price);
+				let intprice = Math.floor(price);
+				let frac = price - intprice;
+				if (rand() < frac) intprice += 1;  // fractional values reflected in probabilities
+				inc(Gold, intprice);
 			}
 			if (operation === give &&
 					state[QuestObject] === slot &&
@@ -2346,7 +2347,7 @@ class Chinbreak {
 				level += d(2) - d(2);
 				state[MobSpecies] = type;
 				state[MobLevel] = level;
-				state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
+				state[MobHealth] = state[MobMaxHealth] = 2 + level * 4;
 				state[MobAggro] = 0;
 				return state[MobSpecies] ? 1 : 0;
 
