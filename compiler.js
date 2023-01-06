@@ -42,9 +42,17 @@ class Source {
 				let m;
 				if (m = line.match(/^target\s+([a-zA-Z_]\w*)$/)) {
 					const filename = m[1];
-					let { generateInterface } = require(`./${filename}.js`);
-					if (generateInterface)
-						this.process(generateInterface());
+					if (typeof require === 'function') {
+						// nodejs environment
+						let { generateInterface } = require(`./${filename}.js`);
+						if (generateInterface)
+							this.process(generateInterface());
+					} else {
+						// HTML IDE situation
+						// Interface is already loaded throught other means but
+						// TODO it should use this target spec
+					}
+
 				}
 
 				let lexeme = { line_no };
@@ -206,29 +214,30 @@ class CompilationContext {
 
 	lookup(id) { return this.symbols[id] || (this.parent && this.parent.lookup(id)) }
 
-	_define(identifier, record) {
+	#define(identifier, record) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
 		this.symbols[identifier] = record;
 	}
 
 	defineConstant(identifier, value) {
-		this._define(identifier, { constant: true, value });
+		this.#define(identifier, { constant: true, value });
 	}
 
 	defineAlias(identifier, value) {
-		this._define(identifier, { alias: true, value });
+		this.#define(identifier, { alias: true, value /* Expr */ });
 	}
 
 	declareStaticVariable(identifier, offset) {
-		this._define(identifier,	{ static: true });
+		this.#define(identifier, { static: true });
 	}
 
 	declareLocalVariable(identifier, offset) {
-		this._define(identifier, { local: true, offset });
+		this.#define(identifier, { local: true, offset /* distance from FP */ });
 	}
 
 	declareFunction(declaration) {
-		this._define(declaration.name, { function: declaration });
+		/* declaration is instance of FunctionDefinition or MacroDefinition */
+		this.#define(declaration.name, { function: declaration });
 	}
 
 	literalValue(expr) {

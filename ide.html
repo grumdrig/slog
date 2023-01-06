@@ -147,9 +147,6 @@ iframe {
 			<article role="tabpanel" id="tab-A">
 				<textarea rows=16 cols=50 id=source></textarea><br/>
 				<button onclick="comp()">Compile</button>
-				<span style="margin-left: 10px">&nbsp;</span>
-				<input type=checkbox id=autoplay><label for=autoplay>Autoplay</label></input>
-				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
 			</article>
 			<article role="tabpanel" hidden id="tab-B">
 				<textarea rows=16 cols=50 id=asm></textarea>
@@ -205,8 +202,15 @@ iframe {
 			</select>
 			&middot;
 			<button onclick="reset()">Reset</button>
+		</div>
+		<div style='margin:2px'>
+			<label for="params">Parameters</label><input type=text id=params></input>
 			&middot;
-			Brk 🎲<input id=breakpoint style='width:6ex'></input>
+			<input type=checkbox id=autoplay>
+				<label for=autoplay>Autoplay on compile</label></input>
+			<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
+			&middot;
+			Breakpoint 🎲 <input id=breakpoint style='width:6ex'></input>
 		</div>
 		<div class="status-bar" id=debugbar>
 			<p class="status-bar-field" id=r0>PC</p>
@@ -363,6 +367,7 @@ let asm;
 function saveChanges() {
 	const ideState = {
 		source: $('#source').value,
+		params: $('#params').value,
 		autoplay: $('#autoplay').checked,
 		speed: $('#speed').value,
 		breakponit: $('#breakpoint').value,
@@ -500,7 +505,7 @@ function run() {
 
 function reset() {
 	stopRunimation();
-	vm = new VirtualMachine(asm.code, Game);
+	vm = new VirtualMachine(asm.code, Game, ...$('#params').value.split(/\W+/));
 	updateDebuggerState(vm);
 	Game.updateUI(vm.state);
 }
@@ -527,6 +532,7 @@ function prepIDE() {
 	let ideState = JSON.parse(localStorage.getItem('slog-ide-' + Game.title) ?? '{}');
 	$("#source").value = ideState.source || "// hello, world!";
 	$("#autoplay").checked = ideState.autoplay || false;
+	$("#params").value = ideState.params || '';
 	$("#speed").value = ideState.speed || 'normal';
 	$("#breakpoint").value = ideState.breakpoint || '';
 }
@@ -611,7 +617,7 @@ window.addEventListener('load', e => {
 	if (window.location.search === '?snake') {
 		loadGame(Snake);
 	} else { // if (window.location.search === '?chinbreak') {
-		loadGame(Chinbreak);
+		loadGame(ChinbreakIsland_v1);
 		$('#name').innerText = 'Test Pilot';
 	} // TODO some kind of picker for game
 

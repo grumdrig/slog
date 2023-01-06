@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Chinbreak Island: A Progress Quest Slot module
 
-const Chinbreak = (_ => {
+const ChinbreakIsland_v1 = (_ => {
 
 const GR = 0.5 + Math.sqrt(5) / 2;
 
@@ -368,7 +368,7 @@ const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
 function generateInterface() {
 	let interface = [];
 
-	interface.push('/// Target: Chinbreak Island v0.1\n');
+	interface.push('// Chinbreak Island v1\n');
 
 	for (let call in CALLS) {
 		let { operation, parameters, zeroTerminatedArray } = CALLS[call];
@@ -1781,32 +1781,32 @@ class Chinbreak {
 		}
 
 		if (state[Level] === 0) {
-			if (operation === 0) {
-				// gGme hasn't begun. This gets called once to initialize it
-				let species = arg1;
-				let speciesinfo = DENIZENS[species];
-				if (!speciesinfo || !speciesinfo.playable) return -1;
-
-				state[Species] = species;
-
-				// Have to add two to keep from going negative
-				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
-					state[stat] = 2;
-
-				for (let { slot, increment, value } of speciesinfo.startState ?? [])
-					state[slot] = value ?? (state[slot] + increment)
-
-				state[Level] = 1;
-				state[Location] = Bompton;
-				state[Health] = state[MaxHealth] = 6 + state[Endurance];
-				state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
-				state[TrainingPoints] = 10;
-				actUp();
-				passTime('Loading', 1);
-
-				return 1;
+			// Game hasn't begun. This gets called once in the constructor to initialize it
+			let species = arg1;
+			let speciesinfo = DENIZENS[species];
+			if (!speciesinfo || !speciesinfo.playable) {
+				species = Dunkling;
+				speciesinfo = DENIZENS[species];
 			}
-			return -1;
+
+			state[Species] = species;
+
+			// Have to add two to keep from going negative
+			for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
+				state[stat] = 2;
+
+			for (let { slot, increment, value } of speciesinfo.startState ?? [])
+				state[slot] = value ?? (state[slot] + increment)
+
+			state[Level] = 1;
+			state[Location] = Bompton;
+			state[Health] = state[MaxHealth] = 6 + state[Endurance];
+			state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
+			state[TrainingPoints] = 10;
+			actUp();
+			passTime('Loading', 1);
+
+			return;
 		}
 
 		// Game is in process
@@ -2918,7 +2918,7 @@ function updateGame(state) {
 		'&nbsp;');
 	set('questdesc',
 		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
-		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
+		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are too much. Bring proof of death back to me here in ${original}.` :
 		state[QuestObject] ? `We of ${original} stand in need of ${SLOTS[state[QuestObject]].name.toLowerCase()}. They say there's no shortage of them in ${questal}.` :
 		state[QuestMob] ? 	 `Put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
 		'<br>&nbsp;');
@@ -3019,7 +3019,7 @@ return Chinbreak; })();
 
 
 if (typeof module !== 'undefined') {
-	module.exports = Chinbreak;
+	module.exports = ChinbreakIsland_v1;
 }
 
 
@@ -3058,13 +3058,13 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const flags = values;
 
 	if (flags['generate-interface']) {
-		console.log(Chinbreak.generateInterface());
+		console.log(ChinbreakIsland_v1.generateInterface());
 	}
 	if (flags['generate-map']) {
 		console.log(generateMap());
 	}
 	if (flags['generate-documentation']) {
 		console.log(`<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">`);
-		console.log(Chinbreak.generateDocumentation());
+		console.log(ChinbreakIsland_v1.generateDocumentation());
 	}
 }
