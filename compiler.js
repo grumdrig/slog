@@ -41,16 +41,20 @@ class Source {
 
 				let m;
 				if (m = line.match(/^target\s+([a-zA-Z_]\w*)$/)) {
-					const filename = m[1];
+					const target = m[1];
 					if (typeof require === 'function') {
 						// nodejs environment
-						let { generateInterface } = require(`./${filename}.js`);
+						let { generateInterface } = require(`./${target}.js`);
 						if (generateInterface)
 							this.process(generateInterface());
 					} else {
 						// HTML IDE situation
 						// Interface is already loaded throught other means but
 						// TODO it should use this target spec
+						eval(`loadGame(${target})`);
+						let generateInterface = Game.generateInterface;
+						if (generateInterface)
+							this.process(generateInterface());
 					}
 
 				}
@@ -1675,15 +1679,16 @@ if (typeof module !== 'undefined' && !module.parent) {
 			let { VirtualMachine } = require('./vm.js');
 
 			let Game = require(`./${target}.js`);
+			let game = new Game(assembled.code, ...args);
 
-			let vm = new VirtualMachine(assembled.code, Game, ...args);
+			let vm = new VirtualMachine(assembled.code, game);
 			if (verbosity > 1) vm.trace = true;
 
 			vm.run();
 
 			if (verbosity > 0) {
-				if (Game.dumpState) {
-					Game.dumpState(vm.state);
+				if (game.dumpState) {
+					game.dumpState(vm.state);
 					vm.dumpState();
 				} else {
 					vm.dumpState(true);

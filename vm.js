@@ -158,7 +158,7 @@ class VirtualMachine {
 			} else if (a - this.registers.length < this.state.length) {
 				return this.state[a - this.registers.length];
 			} else {
-				this.error("Access violation fetching address ", -a - 1);
+				this.error(`Access violation fetching address ${-a - 1}`);
 			}
 		} else if (a < this.memory.length) {
 			return this.memory[a];
@@ -170,14 +170,14 @@ class VirtualMachine {
 	pop() { this.sp += 1; return this.memory[this.sp - 1] }
 	push(v) { this.memory[this.sp -= 1] = v }
 
-	constructor(program, world, ...args) {
+	constructor(program, world) {
 		this.world = world;
 		this.programLength = program.length;
 		for (let i = 0; i < program.length; ++i) {
 			this.memory[i] = program[i];
 		}
 		this.sp = this.memory.length;  // stack size is 0
-		this.state = (world ? world.create(program, ...args) : new Int16Array(1));
+		this.state = world && world.state || new Int16Array(1);
 	}
 
 	static createFromFile(filename, world) {

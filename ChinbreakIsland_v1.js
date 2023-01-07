@@ -1611,19 +1611,19 @@ let TASK = '';
 let REALTIME;  // more global cheesiness
 
 class Chinbreak {
+	state;
+
 	static title = 'Progress Quest Slog: Chinbreak Island';
 
 	static get windowContent() { return CHINBREAK_WINDOW_CONTENT }
 
-	static create(code, ...args) {
-		let state = new Int16Array(SLOTS.length);
-		state[Seed] = hash(0x3FB9, ...code);
+	constructor(code, ...args) {
+		this.state = new Int16Array(SLOTS.length);
+		this.state[Seed] = hash(0x3FB9, ...code);
 		REALTIME = 0;
 
 		const species = args[0] ?? 1;
-		this.handleInstruction(state, 0, species);  // start the game
-
-		return state;
+		this.handleInstruction(this.state, 0, species);  // start the game
 	}
 
 	static prepareIDE() {
@@ -1638,7 +1638,7 @@ class Chinbreak {
 		}
 	}
 
-	static updateUI(state) { updateGame(state) }
+	updateUI() { updateGame(this.state) }
 
 	static generateInterface = generateInterface;
 	static generateMap = generateMap;
@@ -1653,7 +1653,7 @@ class Chinbreak {
 	static SLOTS = SLOTS;
 
 
-	static dumpState(state) {
+	dumpState(state) {
 		let nfo = [];
 		for (let i = 0; i < SLOTS.length; ++i)
 			if (state[i])
@@ -1672,7 +1672,7 @@ class Chinbreak {
 		}
 	}
 
-	static handleInstruction(state, operation, ...args) {
+	handleInstruction(state, operation, ...args) {
 		let before = age(state);
 
 		let result = this._handleInstruction(state, operation, ...args);
@@ -1715,7 +1715,7 @@ class Chinbreak {
 		return result;
 	}
 
-	static _handleInstruction(state, operation, ...args) {
+	_handleInstruction(state, operation, ...args) {
 		let arg1 = args[0];
 		let arg2 = args[1];
 
@@ -1838,7 +1838,7 @@ class Chinbreak {
 			}
 		}
 
-		function randomMobNearLevel(goal, repeats=4) {
+		function randomMobNearLevel(goal, repeats=10) {
 			let type = randomMob();
 			let level = DENIZENS[type].hitdice;
 			for (let i = 0; i < repeats; ++i) {
@@ -2373,7 +2373,7 @@ class Chinbreak {
 		} else if (operation === levelup) {
 			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 99) return 0;
-			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
+			if (state[Experience] < Chinbreak.xpNeededForLevel(state[Level] + 1))
 				return 0;
 			inc(Level);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[Endurance]));
@@ -2992,7 +2992,7 @@ function animate() {
 	if (animate.progress >= animate.duration) {
 		if (typeof updateDebuggerState !== 'undefined') // TODO awkward as hell
 			updateDebuggerState(vm);
-		Chinbreak.updateUI(vm.state);
+		game.updateUI();
 		if (vm.alive())
 			window.gameplayTimer = setTimeout(_ => Chinbreak.playmation(vm), 1);
 	} else {

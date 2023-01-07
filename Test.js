@@ -1,8 +1,11 @@
 class TestApp {
+	state;
 
-	static create(program) { return new Int16Array(10) }
+	constructor(program) {
+		this.state = new Int16Array(10);
+	}
 
-	static handleInstruction(state, code, ...args) {
+	handleInstruction(state, code, ...args) {
 		console.log("Test sees", code, ...args);
 
 		if (0 <= code && code < 10) {
