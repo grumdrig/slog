@@ -208,7 +208,6 @@ iframe {
 			&middot;
 			<input type=checkbox id=autoplay>
 				<label for=autoplay>Autoplay on compile</label></input>
-			<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
 			&middot;
 			Breakpoint 🎲 <input id=breakpoint style='width:6ex'></input>
 		</div>
@@ -372,7 +371,7 @@ function saveChanges() {
 		speed: $('#speed').value,
 		breakponit: $('#breakpoint').value,
 	};
-	localStorage.setItem('slog-ide-' /* + Game.title*/, JSON.stringify(ideState));
+	localStorage.setItem('slog-ide', JSON.stringify(ideState));
 }
 
 
@@ -383,7 +382,6 @@ function comp(initialLoad) {
 	$("#errors").classList.remove("err");
 	try {
 		let sources = [$("#source").value];
-		// if ($('#importinterface').checked) sources.unshift(Game.generateInterface());
 		$("#asm").value = compile(...sources);
 		if (assemble()) {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
@@ -505,10 +503,12 @@ function run() {
 
 function reset() {
 	stopRunimation();
-	game = new Game(asm.code, ...$('#params').value.split(/\W+/));
+	if (Game)
+		game = new Game(asm.code, ...$('#params').value.split(/\W+/));
 	vm = new VirtualMachine(asm.code, game);
 	updateDebuggerState(vm);
-	game.updateUI();
+	if (game)
+		game.updateUI();
 }
 
 function rand(m) { return Math.floor(Math.random() * m) }
@@ -530,7 +530,7 @@ function prepIDE() {
 
 	prepOS();
 
-	let ideState = JSON.parse(localStorage.getItem('slog-ide-' /*+ Game.title*/) ?? '{}');
+	let ideState = JSON.parse(localStorage.getItem('slog-ide') ?? '{}');
 	$("#source").value = ideState.source || "// hello, world!";
 	$("#autoplay").checked = ideState.autoplay || false;
 	$("#params").value = ideState.params || '';
@@ -570,7 +570,7 @@ function updateDebuggerState(vm) {
 	for (let i = 0; i < vm.state.length; ++i, ++n) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
-		d.innerText = regFmt((Game.SLOTS && Game.SLOTS[i]) ? Game.SLOTS[i].name : i, vm.state[i]);
+		d.innerText = regFmt((Game && Game.SLOTS && Game.SLOTS[i]) ? Game.SLOTS[i].name : i, vm.state[i]);
 	}
 
 	$("#codepoint").innerText = '';
@@ -614,15 +614,6 @@ function updateDebuggerState(vm) {
 let Game, game;
 
 window.addEventListener('load', e => {
-	/*
-	if (window.location.search === '?snake') {
-		loadGame(Snake);
-	} else { // if (window.location.search === '?chinbreak') {
-		loadGame(ChinbreakIsland_v1);
-		$('#name').innerText = 'Test Pilot';
-	} // TODO some kind of picker for game
-	*/
-
 	prepIDE();
 	setTimeout(_ => comp(true), 1);
 });

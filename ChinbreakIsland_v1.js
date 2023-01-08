@@ -1612,6 +1612,7 @@ let REALTIME;  // more global cheesiness
 
 class Chinbreak {
 	state;
+	characterName;
 
 	static title = 'Progress Quest Slog: Chinbreak Island';
 
@@ -1621,6 +1622,8 @@ class Chinbreak {
 		this.state = new Int16Array(SLOTS.length);
 		this.state[Seed] = hash(0x3FB9, ...code);
 		REALTIME = 0;
+
+		this.characterName = args[1] ?? 'Test Pilot';
 
 		const species = args[0] ?? 1;
 		this.handleInstruction(this.state, 0, species);  // start the game
@@ -1638,7 +1641,10 @@ class Chinbreak {
 		}
 	}
 
-	updateUI() { updateGame(this.state) }
+	updateUI() {
+		$('#name').innerText = this.characterName;
+		updateGame(this.state)
+	}
 
 	static generateInterface = generateInterface;
 	static generateMap = generateMap;
