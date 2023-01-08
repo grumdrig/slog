@@ -546,6 +546,8 @@ Cinematics
 Should have to call watchcinematic() several times so that there can be
 transitional text.
 
+Also have that text.
+
 
 Big Mobs
 --------
