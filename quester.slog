@@ -3,8 +3,6 @@
 /// Description: Complete quests until you can't no more.
 target ChinbreakIsland_v1
 
-startgame(1)
-
 func initialize(stat, count) {
   while count {
     train(stat)

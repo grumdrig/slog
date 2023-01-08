@@ -5,8 +5,6 @@ target ChinbreakIsland_v1
 /// Description: Greedily slay beasts to level up at all costs.
 
 
-startgame(Hardwarf)
-
 macro initialize(stat, count) {
   var count = count
   while count {
@@ -39,12 +37,7 @@ func goodHunting(forLevel) {
   }
 }
 
-// while !seek(EquipmentTotem) { }
-seekquest()
 learn(Spellbook1, Heal_Yeah)
-// learn(3, BUFF)
-// while .Reagents < 4 { seek(Reagents) }
-// use(Spellbook1)
 while .Level < 88 {
   goto(goodHunting(.Level))
   raids += 1
@@ -57,13 +50,9 @@ while .Level < 88 {
     }
     if .Encumbrance < .Capacity and !.MobHealth { loot() }
     if .MobHealth { seek(0) }  // run away
-    while .Health < .MaxHealth {
-      while !.Reagents {
-        if seek(Reagents) < 0 { break }
-      }
+    while .Health < .MaxHealth and .Reagents > 0 {
       if use(Spellbook1) <= 0 { break }
     }
-    //drop(Trophies, .Trophies)
   }
   goto(18)
   levelup()
@@ -71,4 +60,5 @@ while .Level < 88 {
     rest()
   }
   sell(Trophies, .Trophies)
+  while .Encumbrance < .Capacity - 1 and buy(Reagents, 1) > 0 { }
 }

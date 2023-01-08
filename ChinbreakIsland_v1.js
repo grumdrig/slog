@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Chinbreak Island: A Progress Quest Slot module
 
-const Chinbreak = (_ => {
+const ChinbreakIsland_v1 = (_ => {
 
 const GR = 0.5 + Math.sqrt(5) / 2;
 
@@ -261,9 +261,6 @@ function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_
 // TODO bell() commmand? CHA makes it more accurate
 
 const CALLS = {
-	startgame: { parameters: 'species',
-		description: 'Pick a species for your character and begin the game.' },
-
 	train: { parameters: 'slot',
 		description: `Train to improve stats (Strength, and so on).
 		Training speed can be affected by various environmental factors.` },
@@ -371,7 +368,7 @@ const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
 function generateInterface() {
 	let interface = [];
 
-	interface.push('/// Target: Chinbreak Island v0.1\n');
+	interface.push('// Chinbreak Island v1\n');
 
 	for (let call in CALLS) {
 		let { operation, parameters, zeroTerminatedArray } = CALLS[call];
@@ -1539,8 +1536,8 @@ function generateMap(scrambleFrom) {
 
 
 
-DATABASE[Ammunition] =  { value: 1/100, weight: 1/10,  scarcity: 10,       };
-DATABASE[Trophies] =    { value: 1/10,  weight: 1,     scarcity: 50,       };
+DATABASE[Ammunition] =  { value: 1/10,  weight: 1/10,  scarcity: 10,       };
+DATABASE[Trophies] =    { value: 1,     weight: 1,     scarcity: 50,       };
 DATABASE[Gold] =        { value: 1,     weight: 1/100, scarcity: 10000,    };
 DATABASE[Food] =        { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
 DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
@@ -1574,7 +1571,7 @@ function indefiniteItems(slot, qty) {
 		else
 			return 'a ' + name;
 	} else {
-		return 'some ' + name;
+		return qty + ' ' + name;
 	}
 }
 
@@ -1614,15 +1611,19 @@ let TASK = '';
 let REALTIME;  // more global cheesiness
 
 class Chinbreak {
+	state;
+
 	static title = 'Progress Quest Slog: Chinbreak Island';
 
 	static get windowContent() { return CHINBREAK_WINDOW_CONTENT }
 
-	static create(code) {
-		let state = new Int16Array(SLOTS.length);
-		state[Seed] = hash(0x3FB9, ...code);
+	constructor(code, ...args) {
+		this.state = new Int16Array(SLOTS.length);
+		this.state[Seed] = hash(0x3FB9, ...code);
 		REALTIME = 0;
-		return state;
+
+		const species = args[0] ?? 1;
+		this.handleInstruction(this.state, 0, species);  // start the game
 	}
 
 	static prepareIDE() {
@@ -1637,7 +1638,7 @@ class Chinbreak {
 		}
 	}
 
-	static updateUI(state) { updateGame(state) }
+	updateUI() { updateGame(this.state) }
 
 	static generateInterface = generateInterface;
 	static generateMap = generateMap;
@@ -1652,7 +1653,7 @@ class Chinbreak {
 	static SLOTS = SLOTS;
 
 
-	static dumpState(state) {
+	dumpState(state) {
 		let nfo = [];
 		for (let i = 0; i < SLOTS.length; ++i)
 			if (state[i])
@@ -1671,52 +1672,50 @@ class Chinbreak {
 		}
 	}
 
-	static handleInstruction(state, operation, ...args) {
+	handleInstruction(state, operation, ...args) {
 		let before = age(state);
 
 		let result = this._handleInstruction(state, operation, ...args);
 
 		REALTIME += realTimeSeconds(age(state) - before);
 
-		if (state[Level] > 0) {
-			// Various state values are calculable from other state values
-			// but we store them in the state vector for convenience and visibility
+		// Various state values are calculable from other state values
+		// but we store them in the state vector for convenience and visibility
 
-			let encumbrance = 0
-			for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
-				encumbrance += DATABASE[i].weight * state[i];
-			}
-			state[Encumbrance] = Math.floor(encumbrance);
-			state[Capacity] = state[Strength] + state[Mount];
-
-			let prof = DENIZENS[state[Species]].proficiency ?? 0;
-			if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
-
-			state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
-			state[Potency] = state[Strength] + weaponPower(state[Weapon]) + prof;
-			state[Defense] =
-				state[Agility] +
-				state[Armor] +
-				state[Shield] +
-				state[Headgear] +
-				state[Footwear];
-
-			if (state[Health] <= 0) {
-				state[GameOver] = 86;
-			} else if (state[Years] >= 100) {
-				state[GameOver] = 100;
-			} else if (state[Act] > 9) {
-				state[GameOver] = 1;
-			}
-
-			if (state[Trophies] === 0)
-				state[TrophyMob] = 0;
+		let encumbrance = 0
+		for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
+			encumbrance += DATABASE[i].weight * state[i];
 		}
+		state[Encumbrance] = Math.floor(encumbrance);
+		state[Capacity] = state[Strength] + state[Mount];
+
+		let prof = DENIZENS[state[Species]].proficiency ?? 0;
+		if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
+
+		state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
+		state[Potency] = Math.round(Math.pow(state[Strength], 1/GR)) + weaponPower(state[Weapon]) + prof;
+		state[Defense] =
+			state[Agility] +
+			state[Armor] +
+			state[Shield] +
+			state[Headgear] +
+			state[Footwear];
+
+		if (state[Health] <= 0) {
+			state[GameOver] = 86;
+		} else if (state[Years] >= 100) {
+			state[GameOver] = 100;
+		} else if (state[Act] > 9) {
+			state[GameOver] = 1;
+		}
+
+		if (state[Trophies] === 0)
+			state[TrophyMob] = 0;
 
 		return result;
 	}
 
-	static _handleInstruction(state, operation, ...args) {
+	_handleInstruction(state, operation, ...args) {
 		let arg1 = args[0];
 		let arg2 = args[1];
 
@@ -1782,35 +1781,32 @@ class Chinbreak {
 		}
 
 		if (state[Level] === 0) {
-			// game hasn't begun
-			if (operation === startgame) {
-				let species = arg1;
-				let speciesinfo = DENIZENS[species];
-				if (!speciesinfo) return -1;
-
-				state[Species] = species;
-
-				if (state.slice(STAT_0, STAT_0 + STAT_COUNT).reduce((a,b) => a+b) > 10) return -1;
-				// All good. Start the game.
-
-				// Have to add two to keep from going negative
-				for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
-					inc(stat, 2);
-
-				for (let { slot, increment, value } of speciesinfo.startState ?? [])
-					state[slot] = value ?? (state[slot] + increment)
-
-				state[Level] = 1;
-				state[Location] = Bompton;
-				state[Health] = state[MaxHealth] = 6 + state[Endurance];
-				state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
-				state[TrainingPoints] = 10;
-				actUp();
-				passTime('Loading', 1);
-
-				return 1;
+			// Game hasn't begun. This gets called once in the constructor to initialize it
+			let species = arg1;
+			let speciesinfo = DENIZENS[species];
+			if (!speciesinfo || !speciesinfo.playable) {
+				species = Dunkling;
+				speciesinfo = DENIZENS[species];
 			}
-			return -1;
+
+			state[Species] = species;
+
+			// Have to add two to keep from going negative
+			for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
+				state[stat] = 2;
+
+			for (let { slot, increment, value } of speciesinfo.startState ?? [])
+				state[slot] = value ?? (state[slot] + increment)
+
+			state[Level] = 1;
+			state[Location] = Bompton;
+			state[Health] = state[MaxHealth] = 6 + state[Endurance];
+			state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
+			state[TrainingPoints] = 10;
+			actUp();
+			passTime('Loading', 1);
+
+			return;
 		}
 
 		// Game is in process
@@ -1842,7 +1838,7 @@ class Chinbreak {
 			}
 		}
 
-		function randomMobNearLevel(goal, repeats=4) {
+		function randomMobNearLevel(goal, repeats=10) {
 			let type = randomMob();
 			let level = DENIZENS[type].hitdice;
 			for (let i = 0; i < repeats; ++i) {
@@ -2025,24 +2021,23 @@ class Chinbreak {
 			return -1;
 
 		} else if (operation === loot) {
-			if (!state[MobSpecies]) return -1;
+			if (!state[MobSpecies] || state[MobHealth] > 0) return -1;
 			let info = DENIZENS[state[MobSpecies]];
-			if (state[MobHealth] > 0 && civRoll(state[MobLevel], state[Agility])) {
-				inc(MobAggro);
-				if (info.esteemSlot)
-					dec(state[info.esteemSlot], 1);
-			}
 
-			if (info.drops) {
-				inc(info.drops);
-			} else {
+			passTime('Looting the corpse of this ' + info.name.toLowerCase(), 1);
+
+			let drop = info.drops ?? Trophies;
+			if (drop === Trophies) {
 				if (state[TrophyMob] == state[MobSpecies] || state[Trophies] == 0)
 					state[TrophyMob] = state[MobSpecies];
 				else
 					state[TrophyMob] = 0;
-				inc(Trophies);
 			}
+			inc(drop);
 			clearMob(state);
+
+			return 
+
 
 		} else if (operation === buy) {
 			let slot = arg1;
@@ -2120,8 +2115,10 @@ class Chinbreak {
 			if (operation === sell) {
 				let price = qty * unitValue;
 				price /= (1 + 1 / Math.max(1, state[Charisma]));
-				price = Math.floor(price);
-				inc(Gold, price);
+				let intprice = Math.floor(price);
+				let frac = price - intprice;
+				if (rand() < frac) intprice += 1;  // fractional values reflected in probabilities
+				inc(Gold, intprice);
 			}
 			if (operation === give &&
 					state[QuestObject] === slot &&
@@ -2151,7 +2148,7 @@ class Chinbreak {
 			const isDeposit = (operation === deposit);
 
 			if (qty < 0) return -1;  // nice try hacker
-			if (state[Location].hasBank) return -1;  // you're not at the bank
+			if (!state[Location].hasBank) return -1;  // you're not at the bank
 
 			if (state[Gold] + state[BalanceGold] <= 0)
 				return -1;  // Can't afford it
@@ -2336,7 +2333,7 @@ class Chinbreak {
 				}
 
 			} else if (target === MobSpecies) {
-				passTime('Hunting for a suitable local victim', 1);
+				passTime('Hunting for a suitable local victim', 2);
 				clearMob(state);
 				let type;
 				if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
@@ -2350,7 +2347,7 @@ class Chinbreak {
 				level += d(2) - d(2);
 				state[MobSpecies] = type;
 				state[MobLevel] = level;
-				state[MobHealth] = state[MobMaxHealth] = 2 + level * 2;
+				state[MobHealth] = state[MobMaxHealth] = 2 + level * 4;
 				state[MobAggro] = 0;
 				return state[MobSpecies] ? 1 : 0;
 
@@ -2376,7 +2373,7 @@ class Chinbreak {
 		} else if (operation === levelup) {
 			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 99) return 0;
-			if (state[Experience] < this.xpNeededForLevel(state[Level] + 1))
+			if (state[Experience] < Chinbreak.xpNeededForLevel(state[Level] + 1))
 				return 0;
 			inc(Level);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[Endurance]));
@@ -2922,7 +2919,7 @@ function updateGame(state) {
 		'&nbsp;');
 	set('questdesc',
 		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
-		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are getting out of line. Bring proof of death back to me here in ${original}.` :
+		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are too much. Bring proof of death back to me here in ${original}.` :
 		state[QuestObject] ? `We of ${original} stand in need of ${SLOTS[state[QuestObject]].name.toLowerCase()}. They say there's no shortage of them in ${questal}.` :
 		state[QuestMob] ? 	 `Put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
 		'<br>&nbsp;');
@@ -2995,7 +2992,7 @@ function animate() {
 	if (animate.progress >= animate.duration) {
 		if (typeof updateDebuggerState !== 'undefined') // TODO awkward as hell
 			updateDebuggerState(vm);
-		Chinbreak.updateUI(vm.state);
+		game.updateUI();
 		if (vm.alive())
 			window.gameplayTimer = setTimeout(_ => Chinbreak.playmation(vm), 1);
 	} else {
@@ -3023,7 +3020,7 @@ return Chinbreak; })();
 
 
 if (typeof module !== 'undefined') {
-	module.exports = Chinbreak;
+	module.exports = ChinbreakIsland_v1;
 }
 
 
@@ -3062,13 +3059,13 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const flags = values;
 
 	if (flags['generate-interface']) {
-		console.log(Chinbreak.generateInterface());
+		console.log(ChinbreakIsland_v1.generateInterface());
 	}
 	if (flags['generate-map']) {
 		console.log(generateMap());
 	}
 	if (flags['generate-documentation']) {
 		console.log(`<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">`);
-		console.log(Chinbreak.generateDocumentation());
+		console.log(ChinbreakIsland_v1.generateDocumentation());
 	}
 }

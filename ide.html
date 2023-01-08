@@ -147,9 +147,6 @@ iframe {
 			<article role="tabpanel" id="tab-A">
 				<textarea rows=16 cols=50 id=source></textarea><br/>
 				<button onclick="comp()">Compile</button>
-				<span style="margin-left: 10px">&nbsp;</span>
-				<input type=checkbox id=autoplay><label for=autoplay>Autoplay</label></input>
-				<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
 			</article>
 			<article role="tabpanel" hidden id="tab-B">
 				<textarea rows=16 cols=50 id=asm></textarea>
@@ -205,8 +202,15 @@ iframe {
 			</select>
 			&middot;
 			<button onclick="reset()">Reset</button>
+		</div>
+		<div style='margin:2px'>
+			<label for="params">Parameters</label><input type=text id=params></input>
 			&middot;
-			Brk 🎲<input id=breakpoint style='width:6ex'></input>
+			<input type=checkbox id=autoplay>
+				<label for=autoplay>Autoplay on compile</label></input>
+			<input type=checkbox id=importinterface checked><label for=importinterface>Import interface</label></input>
+			&middot;
+			Breakpoint 🎲 <input id=breakpoint style='width:6ex'></input>
 		</div>
 		<div class="status-bar" id=debugbar>
 			<p class="status-bar-field" id=r0>PC</p>
@@ -363,11 +367,12 @@ let asm;
 function saveChanges() {
 	const ideState = {
 		source: $('#source').value,
+		params: $('#params').value,
 		autoplay: $('#autoplay').checked,
 		speed: $('#speed').value,
 		breakponit: $('#breakpoint').value,
 	};
-	localStorage.setItem('slog-ide-' + Game.title, JSON.stringify(ideState));
+	localStorage.setItem('slog-ide-' /* + Game.title*/, JSON.stringify(ideState));
 }
 
 
@@ -378,7 +383,7 @@ function comp(initialLoad) {
 	$("#errors").classList.remove("err");
 	try {
 		let sources = [$("#source").value];
-		if ($('#importinterface').checked) sources.unshift(Game.generateInterface());
+		// if ($('#importinterface').checked) sources.unshift(Game.generateInterface());
 		$("#asm").value = compile(...sources);
 		if (assemble()) {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
@@ -420,14 +425,14 @@ function step() {
 	stopRunimation();
 	vm.step();
 	updateDebuggerState(vm);
-	Game.updateUI(vm.state);
+	game.updateUI();
 }
 
 function bigstep() {
 	stopRunimation();
 	Game.playmation(vm, true);
 	updateDebuggerState(vm);
-	Game.updateUI(vm.state);
+	game.updateUI();
 }
 
 function stopRunimation() {
@@ -465,7 +470,7 @@ function run() {
 		let calledOut = vm.step();
 		updateDebuggerState(vm);
 		if (calledOut)
-			Game.updateUI(vm.state);
+			game.updateUI();
 		if (vm.alive())
 			window.gameplayTimer = setTimeout(run, 100);
 
@@ -475,7 +480,7 @@ function run() {
 	} else if (speed === SPEEDS.turbo) {
 		Game.playmation(vm, true);
 		// updateDebuggerState(vm);
-		//Game.updateUI(vm.state);
+		game.updateUI();
 		if (vm.alive())
 			window.gameplayTimer = setTimeout(run, 1);
 		else
@@ -488,7 +493,7 @@ function run() {
 			if (vm.turns == breakpoint) break;
 		}
 		updateDebuggerState(vm);
-		Game.updateUI(vm.state);
+		game.updateUI();
 	}
 }
 
@@ -500,9 +505,10 @@ function run() {
 
 function reset() {
 	stopRunimation();
-	vm = new VirtualMachine(asm.code, Game);
+	game = new Game(asm.code, ...$('#params').value.split(/\W+/));
+	vm = new VirtualMachine(asm.code, game);
 	updateDebuggerState(vm);
-	Game.updateUI(vm.state);
+	game.updateUI();
 }
 
 function rand(m) { return Math.floor(Math.random() * m) }
@@ -524,9 +530,10 @@ function prepIDE() {
 
 	prepOS();
 
-	let ideState = JSON.parse(localStorage.getItem('slog-ide-' + Game.title) ?? '{}');
+	let ideState = JSON.parse(localStorage.getItem('slog-ide-' /*+ Game.title*/) ?? '{}');
 	$("#source").value = ideState.source || "// hello, world!";
 	$("#autoplay").checked = ideState.autoplay || false;
+	$("#params").value = ideState.params || '';
 	$("#speed").value = ideState.speed || 'normal';
 	$("#breakpoint").value = ideState.breakpoint || '';
 }
@@ -563,7 +570,7 @@ function updateDebuggerState(vm) {
 	for (let i = 0; i < vm.state.length; ++i, ++n) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
-		d.innerText = regFmt(Game.SLOTS[i] ? Game.SLOTS[i].name : i, vm.state[i]);
+		d.innerText = regFmt((Game.SLOTS && Game.SLOTS[i]) ? Game.SLOTS[i].name : i, vm.state[i]);
 	}
 
 	$("#codepoint").innerText = '';
@@ -604,30 +611,36 @@ function updateDebuggerState(vm) {
 
 
 
-let Game;
+let Game, game;
 
 window.addEventListener('load', e => {
-
+	/*
 	if (window.location.search === '?snake') {
 		loadGame(Snake);
 	} else { // if (window.location.search === '?chinbreak') {
-		loadGame(Chinbreak);
+		loadGame(ChinbreakIsland_v1);
 		$('#name').innerText = 'Test Pilot';
 	} // TODO some kind of picker for game
+	*/
 
 	prepIDE();
+	setTimeout(_ => comp(true), 1);
 });
 
 
-function loadGame(game) {
-	Game = game;
-	$("#game-window .title-bar-text").innerHTML = game.title;
-	$("#game-window .window-body").innerHTML = game.windowContent;
-	if (game.prepareIDE) game.prepareIDE();  // TODO hacky
+function loadGame(target) {
+	Game = target;
+	// game = new Game();
+	$("#game-window .title-bar-text").innerHTML = Game.title;
+	$("#game-window .window-body").innerHTML = Game.windowContent;
+	if (Game.prepareIDE) Game.prepareIDE();  // TODO hacky
 
-	$("#interface").value = game.generateInterface();
+	if (Game.generateInterface) {
+		$("#interface").value = Game.generateInterface();
+	} else {
+		$("#interface").value = '';
+	}
 
-	setTimeout(_ => comp(true), 1);
 }
 
 

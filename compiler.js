@@ -41,10 +41,20 @@ class Source {
 
 				let m;
 				if (m = line.match(/^target\s+([a-zA-Z_]\w*)$/)) {
-					const filename = m[1];
-					let { generateInterface } = require(`./${filename}.js`);
-					if (generateInterface)
-						this.process(generateInterface());
+					const target = m[1];
+					if (typeof require === 'function') {
+						// nodejs environment
+						let { generateInterface } = require(`./${target}.js`);
+						if (generateInterface)
+							this.process(generateInterface());
+					} else {
+						// HTML IDE situation
+						eval(`loadGame(${target})`);
+						let generateInterface = Game.generateInterface;
+						if (generateInterface)
+							this.process(generateInterface());
+					}
+
 				}
 
 				let lexeme = { line_no };
@@ -206,29 +216,30 @@ class CompilationContext {
 
 	lookup(id) { return this.symbols[id] || (this.parent && this.parent.lookup(id)) }
 
-	_define(identifier, record) {
+	#define(identifier, record) {
 		if (this.symbols[identifier]) this.error('duplicate definition of ' + identifier);
 		this.symbols[identifier] = record;
 	}
 
 	defineConstant(identifier, value) {
-		this._define(identifier, { constant: true, value });
+		this.#define(identifier, { constant: true, value });
 	}
 
 	defineAlias(identifier, value) {
-		this._define(identifier, { alias: true, value });
+		this.#define(identifier, { alias: true, value /* Expr */ });
 	}
 
 	declareStaticVariable(identifier, offset) {
-		this._define(identifier,	{ static: true });
+		this.#define(identifier, { static: true });
 	}
 
 	declareLocalVariable(identifier, offset) {
-		this._define(identifier, { local: true, offset });
+		this.#define(identifier, { local: true, offset /* distance from FP */ });
 	}
 
 	declareFunction(declaration) {
-		this._define(declaration.name, { function: declaration });
+		/* declaration is instance of FunctionDefinition or MacroDefinition */
+		this.#define(declaration.name, { function: declaration });
 	}
 
 	literalValue(expr) {
@@ -248,7 +259,6 @@ class SemanticError {
 }
 
 class Module {
-	tag;  // TODO get rid of this feature I think
 	target;
 	constants = [];
 	variables = [];
@@ -272,9 +282,6 @@ class Module {
 				result.macros.push(item);
 			} else if (item = FunctionDefinition.tryParse(source)) {
 				result.functions.push(item);
-			} else if (item = TagDefinition.tryParse(source)) {
-				if (result.tag) source.error("Tag already defined");
-				result.tag = item;
 			} else {
 				result.statements.push(Statement.parse(source));
 			}
@@ -315,51 +322,7 @@ class Module {
 
 		for (let d of this.functions) d.generate(context);
 
-		if (this.tag) this.tag.generate(context);
-
 		return context;
-	}
-}
-
-// TODO: this will probably be gotten rid of. It makes more sense to tag the
-// target of a program in its external packaging.
-class TagDefinition {
-	tag1;
-	tag2;
-
-	static tryParse(source) {
-		if (!source.tryConsume('tag')) return false;
-		let result = new TagDefinition();
-		source.consume('(');
-		result.tag1 = Expression.parse(source);
-		source.consume(',');
-		result.tag2 = Expression.parse(source);
-		source.consume(')');
-		return result;
-	}
-
-	generate(context) {
-		let tag1 = this.tag1.simplify(context);
-		let tag2 = this.tag2.simplify(context);
-		if (!tag1.isLiteral || !tag2.isLiteral)
-			context.error('Constant value expressions required for tag definition');
-		context.emit('');
-		context.emit('halt 0');
-		function asCharIfPossible(v) {
-			let lsb = v & 0xFF;
-			if (32 < lsb && lsb < 127) {
-				lsb = String.fromCharCode(lsb);
-				let msb = v >> 8;
-				if (32 < msb && msb < 127)
-					return "'" + String.fromCharCode(msb) + lsb;
-				else if (msb === 0)
-					return "'" + lsb;
-			}
-		}
-		context.emit('.data ' +
-			(asCharIfPossible(tag1.value) ??
-				'$' + tag1.value.toString(16)) +
-			   ' $' + tag2.value.toString(16) + '  ; tag');
 	}
 }
 
@@ -1544,7 +1507,7 @@ if (typeof exports !== 'undefined') {
 }
 
 function usage() {
-	console.log(`Usage: compiler.js [OPTIONS] FILENAME...
+	console.log(`Usage: compiler.js [OPTIONS] FILENAME [PARAMETERS...]
 
 Compiles the named Slog source file(s) into a packaged Slog strategy, or one
 of several output formats specified by OPTIONS flags. If no output options
@@ -1566,7 +1529,10 @@ OPTIONS:
 	-d file, --disassembly=file
 		Generate binary output, then disassemble it to named file
 	-r, --run
-		Run the compiled strategy in it's embedded application
+		Run the compiled strategy in it's embedded application. If there are
+		PARAMETERS on the command line, they are passed to the virtual
+		machine initializer, which passes them to the embedded application
+		initialization.
 	--help
 		This, that you're reading
 
@@ -1588,7 +1554,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 	const { parseArgs } = require('util');
 	const { readFileSync, writeFileSync } = require('fs');
 
-	let flags, sources;
+	let flags, args;
 	try {
 		const { values, positionals } = parseArgs({
 			options: {
@@ -1632,19 +1598,18 @@ if (typeof module !== 'undefined' && !module.parent) {
 			allowPositionals: true,
 		});
 		flags = values || {};
-		sources = positionals || [];
+		args = positionals;
 	} catch (e) {
 		console.error(e);
 		usage();
 	}
-	const { assembly, binary, disassembly,
-	  package, symbols, run, help } = flags || {};
+	const { assembly, binary, disassembly, package, symbols, run, help } = flags || {};
 	const verbosity = (flags.verbose || []).length;
 
 	if (help) usage();
-	if (sources.length == 0) { console.error('Filename expected'); usage(); }
+	if (!args) { console.error('Filename expected'); usage(); }
 
-	sources = sources.map(filename => readFileSync(filename, 'utf8'));
+	let sources = [readFileSync(args.shift(), 'utf8')];
 
 	if (flags.target) {
 		console.log(flags.target);
@@ -1712,15 +1677,16 @@ if (typeof module !== 'undefined' && !module.parent) {
 			let { VirtualMachine } = require('./vm.js');
 
 			let Game = require(`./${target}.js`);
+			let game = new Game(assembled.code, ...args);
 
-			let vm = new VirtualMachine(assembled.code, Game);
+			let vm = new VirtualMachine(assembled.code, game);
 			if (verbosity > 1) vm.trace = true;
 
 			vm.run();
 
 			if (verbosity > 0) {
-				if (Game.dumpState) {
-					Game.dumpState(vm.state);
+				if (game.dumpState) {
+					game.dumpState(vm.state);
 					vm.dumpState();
 				} else {
 					vm.dumpState(true);

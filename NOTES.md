@@ -220,31 +220,6 @@ I think I need or it would be best to have splat syntax for at least macros
 Instead I went with the opaque thing of a negative external call code meaning
 the argument is a zero-terminated vector. However, setname should probably go.
 
-Check tag
-
-
-
-
-Tag
----
-
-Append a tag to the binary, to identify the binary, to help watch for
-endianness issues and to provide an identifier for what game the program is
-for:
-
-	{
-		'Np': Int16
-		version: Int16 // 0xMMmm = MAJOR minor
-	}
-
-That requires a compiler statement like
-
-	header('Np', $0101)
-
-No i guess in ASM it could just be
-
-	.data 'Np' 0x0101
-
 
 Local declarations
 ------------------
@@ -330,25 +305,6 @@ Here's the variable allocation situations:
 	but code gets initialization
 
 
-Symbol table members
---------------------
-
-- Alias
-
-{ alias: true, value: Expr }
-
-- Static allocation
-
-{ static: true }
-
-- Local allocation
-
-{ local: true, offset: distance from FP }
-
-- Function
-
-{ function: FunctionDefinition }
-
 
 LLVM
 ----
@@ -357,35 +313,6 @@ Right?
 
 https://llvm.org/docs/WritingAnLLVMBackend.html
 
-
-Drops
------
-
-Need 3 or 4 levels of drops with value scaling up.
-
-1 Skins
-10 Reagents
-100 ?
-1000 Treasures
-
-Drops and resources serve kind of the same purpose, or at least have the same
-value. Call them scrap? junk? chaff? forage? fodder? Not have them?
-
-Merge forage and food? Seems like food should be more valuable if kept
-
-Reagents should be hard to scavenge, or harder than resources.
-
-Use food as you travel? Would need to be scavengeable. Or take twice as long
-without food. Starving is no fun.
-
-| item  | value | wt | where and what
-|-------|-------|----|----------
-| Drops | 1/10  |  1 | From mobs. Not useful
-| Skins | 1     |  1 | From mobs. Not useful
-| Food  | 10    |  1 | From mobs, stores, forage
-| Reagt | 100   |  1 | Maybe from mobs, stores forage
-| Treas | 1000  |  3 | From mobs
-| Resou | 1/10  |  1 | Forage, not useful
 
 
 Players Guide
@@ -434,7 +361,7 @@ location, so this statement would move towards or into Iperko Forest:
 
 Likewise, to sell five potions:
 
-	sell(InventoryPotions, 5)
+	sell(Potions, 5)
 
 Each such action takes some amount of time, and it would behoove the player
 not to waste any, as time available to save Bompton Island is limited.
@@ -444,21 +371,6 @@ the final act, the quests, as they are completed, will cause the character to
 be transported to Sygnon Isle, to encounter and hopefully defeat the final
 boss.
 
-
-
-Inventory tweak ideas
----------------------
-
-In general inventory items can't be purchased and can only be gotten some
-other way.
-
-Resources or something: foraging. Or call it forage.
-
-Not sure about other items.
-
-Maybe you can buy reagents.
-
-Maybe you get treasures for completing quests?
 
 
 Decision Tree
@@ -547,6 +459,9 @@ Should have to call watchcinematic() several times so that there can be
 transitional text.
 
 Also have that text.
+
+For that to work, would need a quest for the cinematic to keep track of its
+progress.
 
 
 Big Mobs

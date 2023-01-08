@@ -1,4 +1,4 @@
-const Snake = (_ => {
+const Snake_v1 = (_ => {
 
 const SLOTS = [
 	{ name: 'GameOver' },
@@ -72,15 +72,16 @@ function plantFood(state) {
 
 
 class Snake {
+	state;
 
-	static create(code) {
+	constructor(code) {
 		let state = new Int16Array(Head + MaxLength);
 		state[Seed] = hash(0x54ec, ...code);
 		state[Length] = 1;
 		state[Head] = Math.floor(D/2) * (1 + D);
 
 		plantFood(state);
-		return state;
+		this.state = state;
 	}
 
 	static title = "Snake";
@@ -92,41 +93,41 @@ class Snake {
 			<div>Score: <span id=score>0</span></div>
 			<div id=gameover></div>`;
 
-	static updateUI(state) {
+	updateUI() {
 		let can = $('#snakepit');
 		let ctx = can.getContext('2d');
 
 		ctx.fillStyle = 'black';
 		ctx.fillRect(0, 0, can.width, can.height);
-		for (let s = -1; s < state[Length]; s += 1) {
+		for (let s = -1; s < this.state[Length]; s += 1) {
 			if (s === 0) {
 				ctx.fillStyle = 'white';
 			} else if (s < 0) {
 				ctx.fillStyle = 'red';
 			} else {
-				let c = 255 - Math.floor(128 * s/state[Length]);
+				let c = 255 - Math.floor(128 * s/this.state[Length]);
 				ctx.fillStyle = 'rgb(0,'+c+',0)';
 			}
-			let i = state[Head + s];
+			let i = this.state[Head + s];
 			let x = i % D;
 			let y = Math.floor(i / D);
 			ctx.fillRect(x * can.width / D, y * can.height / D, can.width / D, can.height / D);
 		}
 
-		$("#score").innerText = this.score(vm.state);
+		$("#score").innerText = this.score(this.state);
 
 		$('#gameover').innerText =
-			vm.state[GameOver] == 0 ? '' :
-			vm.state[GameOver] == 1 ? 'Game Over. Victory!' :
-			vm.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
-			vm.state[GameOver] == 3 ? 'Game Over. Time is up.' :
-			vm.state[GameOver] == 4 ? 'Game Over. Crashed into wall.' :
-			'Game Over: ' + vm.state[GameOver];
+			this.state[GameOver] == 0 ? '' :
+			this.state[GameOver] == 1 ? 'Game Over. Victory!' :
+			this.state[GameOver] == 2 ? 'Game Over. Crashed into self.' :
+			this.state[GameOver] == 3 ? 'Game Over. Time is up.' :
+			this.state[GameOver] == 4 ? 'Game Over. Crashed into wall.' :
+			'Game Over: ' + this.state[GameOver];
 	}
 
-	static score(state) { return state[Length] - 1 }
+	score(state) { return state[Length] - 1 }
 
-	static handleInstruction(state, operation, ...args) {
+	handleInstruction(state, operation, ...args) {
 		if (state[GameOver]) return 0;
 
 		let next_x = state[Head] % D;
@@ -174,7 +175,7 @@ class Snake {
 	static playmation(vm, butStop) {
 		vm.bigstep();
 
-		this.updateUI(vm.state);
+		game.updateUI(vm.state);
 
 		if (vm.alive()) {
 			if (!butStop)
@@ -196,7 +197,7 @@ return Snake; })();
 
 
 if (typeof module !== 'undefined') {
-	module.exports = Snake;
+	module.exports = Snake_v1;
 }
 
 
