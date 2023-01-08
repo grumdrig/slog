@@ -202,7 +202,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
 `;
 
 window.addEventListener('load', e => {
-	let game = Chinbreak;
+	let game = ChinbreakIsland_v1;
 	$("#game-window .title-bar-text").innerHTML = game.title;
 	$("#game-window .window-body").innerHTML = game.windowContent;
 
@@ -240,7 +240,7 @@ function sold() {
 	// });
 
 	$('#name').innerText = $('#namein').value;
-	vm = new VirtualMachine(PACKAGE.binary, Chinbreak);
+	vm = new VirtualMachine(PACKAGE.binary, ChinbreakIsland_v1);
 	play();
 
 }
@@ -250,7 +250,7 @@ function play() {
 	show($id('game-window'));
 	bringToFront($id('game-window'));
 	// vm.running = true;
-	Chinbreak.playmation(vm);
+	ChinbreakIsland_v1.playmation(vm);
 }
 
 
