@@ -49,8 +49,6 @@ class Source {
 							this.process(generateInterface());
 					} else {
 						// HTML IDE situation
-						// Interface is already loaded throught other means but
-						// TODO it should use this target spec
 						eval(`loadGame(${target})`);
 						let generateInterface = Game.generateInterface;
 						if (generateInterface)

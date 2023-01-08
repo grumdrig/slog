@@ -570,7 +570,7 @@ function updateDebuggerState(vm) {
 	for (let i = 0; i < vm.state.length; ++i, ++n) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
-		d.innerText = regFmt(Game.SLOTS[i] ? Game.SLOTS[i].name : i, vm.state[i]);
+		d.innerText = regFmt((Game.SLOTS && Game.SLOTS[i]) ? Game.SLOTS[i].name : i, vm.state[i]);
 	}
 
 	$("#codepoint").innerText = '';
@@ -635,7 +635,11 @@ function loadGame(target) {
 	$("#game-window .window-body").innerHTML = Game.windowContent;
 	if (Game.prepareIDE) Game.prepareIDE();  // TODO hacky
 
-	$("#interface").value = Game.generateInterface();
+	if (Game.generateInterface) {
+		$("#interface").value = Game.generateInterface();
+	} else {
+		$("#interface").value = '';
+	}
 
 }
 

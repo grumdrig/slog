@@ -1,4 +1,4 @@
-class TestApp {
+class Test {
 	state;
 
 	constructor(program) {
@@ -16,8 +16,10 @@ class TestApp {
 
 		return -1;
 	}
+
+	updateUI() {}
 }
 
 if (typeof module !== 'undefined') {
-	module.exports = TestApp;
+	module.exports = Test;
 }
