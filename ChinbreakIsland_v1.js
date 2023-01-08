@@ -2148,7 +2148,7 @@ class Chinbreak {
 			const isDeposit = (operation === deposit);
 
 			if (qty < 0) return -1;  // nice try hacker
-			if (state[Location].hasBank) return -1;  // you're not at the bank
+			if (!state[Location].hasBank) return -1;  // you're not at the bank
 
 			if (state[Gold] + state[BalanceGold] <= 0)
 				return -1;  // Can't afford it
@@ -2333,7 +2333,7 @@ class Chinbreak {
 				}
 
 			} else if (target === MobSpecies) {
-				passTime('Hunting for a suitable local victim', 1);
+				passTime('Hunting for a suitable local victim', 2);
 				clearMob(state);
 				let type;
 				if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
