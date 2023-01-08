@@ -231,6 +231,8 @@ function upload(e) {
 	});
 }
 
+let game;
+
 function sold() {
 	hide('#newgame-window');
 
@@ -239,14 +241,17 @@ function sold() {
 	// 	play();
 	// });
 
-	$('#name').innerText = $('#namein').value;
-	vm = new VirtualMachine(PACKAGE.binary, ChinbreakIsland_v1);
+	// $('#name').innerText = $('#namein').value;
+
+	game = new ChinbreakIsland_v1(PACKAGE.binary, Dunkling /* TODO */, $('#namein').value);
+
+	vm = new VirtualMachine(PACKAGE.binary, game);
 	play();
 
 }
 
-
 function play() {
+
 	show($id('game-window'));
 	bringToFront($id('game-window'));
 	// vm.running = true;
