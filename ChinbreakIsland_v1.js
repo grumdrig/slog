@@ -400,7 +400,7 @@ function generateInterface() {
 
 	interface.push('\n// Mob Species');
 
-	DENIZENS.forEach((denizen, index) =>
+	MOBS.forEach((denizen, index) =>
 		denizen && interface.push(`const ${moniker(denizen.name)} = ${index}`));
 
 	interface.push('');
@@ -577,7 +577,7 @@ div#terrains {
 
 	head('Denizens');
 
-	DENIZENS.forEach((d,i) => { if (d) {
+	MOBS.forEach((d,i) => { if (d) {
 		subhead(i + '. ' + d.name);
 		if (d.description) p(d.description);
 		if (d.playable) p("Playable species.");
@@ -598,7 +598,7 @@ div#terrains {
 		p(`Terrain: ${TERRAIN_TYPES[tile.terrain].name}`);
 		p(`Mob level: ` + tile.level);
 		if (tile.denizen)
-			p(`Principal occupant: ` + DENIZENS[tile.denizen].name);
+			p(`Principal occupant: ` + MOBS[tile.denizen].name);
 	} });
 
 
@@ -635,7 +635,7 @@ const SPELLS = [ null, {
 		effect: state => {
 			if (!state[MobHealth]) return 0;
 
-			let info = DENIZENS[state[MobSpecies]];
+			let info = MOBS[state[MobSpecies]];
 
 			if (info.esteemSlot)
 				dec(state[info.esteemSlot], 1);
@@ -692,7 +692,7 @@ const SPELLS = [ null, {
 			if (!state[MobSpecies]) return -1;
 
 			// Lose current species mods
-			for (let { slot, increment } of (DENIZENS[state[Species]].startState ?? [])) {
+			for (let { slot, increment } of (MOBS[state[Species]].startState ?? [])) {
 				if (increment) {
 					state[slot] -= increment;
 				}
@@ -701,7 +701,7 @@ const SPELLS = [ null, {
 			state[Species] = state[MobSpecies];
 
 			// Apply new species mods
-			for (let { slot, increment } of (DENIZENS[state[Species]].startState ?? [])) {
+			for (let { slot, increment } of (MOBS[state[Species]].startState ?? [])) {
 				if (increment) {
 					state[slot] += increment;
 				}
@@ -1092,7 +1092,7 @@ function amap(...init) {
 	return result;
 }
 
-const DENIZENS = [
+const MOBS = [
 	null,
 	{
 		name: "Dunkling",
@@ -1236,7 +1236,7 @@ const DENIZENS = [
 	}
 ];
 
-DENIZENS.forEach((d, index) => {
+MOBS.forEach((d, index) => {
 	if (d) define(d.name.replace(' ', '_'), index);
 });
 
@@ -1650,9 +1650,9 @@ class Chinbreak {
 	static generateMap = generateMap;
 	static generateDocumentation = generateDocumentation;
 
-	static SPECIES_NAMES = DENIZENS.map(r => (r && r.name) || '');
+	static SPECIES_NAMES = MOBS.map(r => (r && r.name) || '');
 	static TERRAIN_TYPES = TERRAIN_TYPES;
-	static DENIZENS = DENIZENS;
+	static MOBS = MOBS;
 	static MAP = MAP;
 	static mapInfo = mapInfo;
 	static DATABASE = DATABASE;
@@ -1695,7 +1695,7 @@ class Chinbreak {
 		state[Encumbrance] = Math.floor(encumbrance);
 		state[Capacity] = state[Strength] + state[Mount];
 
-		let prof = DENIZENS[state[Species]].proficiency ?? 0;
+		let prof = MOBS[state[Species]].proficiency ?? 0;
 		if (prof) prof = prof[weaponType(state[Weapon])] ?? 0;
 
 		state[Offense] = state[Agility] + weaponPower(state[Weapon]) + prof;
@@ -1789,10 +1789,10 @@ class Chinbreak {
 		if (state[Level] === 0) {
 			// Game hasn't begun. This gets called once in the constructor to initialize it
 			let species = arg1;
-			let speciesinfo = DENIZENS[species];
+			let speciesinfo = MOBS[species];
 			if (!speciesinfo || !speciesinfo.playable) {
 				species = Dunkling;
-				speciesinfo = DENIZENS[species];
+				speciesinfo = MOBS[species];
 			}
 
 			state[Species] = species;
@@ -1839,17 +1839,17 @@ class Chinbreak {
 
 		function randomMob() {
 			while (true) {
-				let mob = d(DENIZENS.length - 1);
-				if (rand() < (DENIZENS[mob].occurrence ?? 1)) return mob;
+				let mob = d(MOBS.length - 1);
+				if (rand() < (MOBS[mob].occurrence ?? 1)) return mob;
 			}
 		}
 
 		function randomMobNearLevel(goal, repeats=10) {
 			let type = randomMob();
-			let level = DENIZENS[type].hitdice;
+			let level = MOBS[type].hitdice;
 			for (let i = 0; i < repeats; ++i) {
 				let t = randomMob();
-				let l = DENIZENS[t].hitdice;
+				let l = MOBS[t].hitdice;
 
 				if (Math.abs(l - goal) < Math.abs(level - goal)) {
 					type = t;
@@ -1868,7 +1868,7 @@ class Chinbreak {
 
 		if (state[MobAggro] && state[MobHealth] > 0) {
 			// do mob attack before anything else happens
-			let info = DENIZENS[state[MobSpecies]];
+			let info = MOBS[state[MobSpecies]];
 			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);
 			dec(Health, Math.min(state[Health], damage));
 
@@ -1988,7 +1988,7 @@ class Chinbreak {
 				if (!state[MobSpecies]) return -1;
 				if (state[MobHealth] <= 0) return -1;
 
-				let info = DENIZENS[state[MobSpecies]];
+				let info = MOBS[state[MobSpecies]];
 
 				passTime('Engaging this ' + info.name.toLowerCase() + ' in battle!', 1);
 
@@ -2013,7 +2013,7 @@ class Chinbreak {
 				if (!state[MobSpecies]) return -1;
 				if (state[MobHealth] <= 0) return -1;
 
-				let info = DENIZENS[state[MobSpecies]];
+				let info = MOBS[state[MobSpecies]];
 
 				passTime('Kicking this ' + info.name.toLowerCase() + ' with disdain', 1);
 
@@ -2028,7 +2028,7 @@ class Chinbreak {
 
 		} else if (operation === loot) {
 			if (!state[MobSpecies] || state[MobHealth] > 0) return -1;
-			let info = DENIZENS[state[MobSpecies]];
+			let info = MOBS[state[MobSpecies]];
 
 			passTime('Looting the corpse of this ' + info.name.toLowerCase(), 1);
 
@@ -2110,7 +2110,7 @@ class Chinbreak {
 				newqty = state[slot] - qty;
 				unitValue = DATABASE[slot].value;
 				if (slot === Trophies && state[TrophyMob]) {
-					const d = DENIZENS[state[TrophyMob]];
+					const d = MOBS[state[TrophyMob]];
 					if (d.hitdice)
 						unitValue *= d.hitdice;
 				}
@@ -2349,7 +2349,7 @@ class Chinbreak {
 				} else {
 					type = randomMobNearLevel(local.level);
 				}
-				let level = DENIZENS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
+				let level = MOBS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
 				level += d(2) - d(2);
 				state[MobSpecies] = type;
 				state[MobLevel] = level;
@@ -2869,7 +2869,7 @@ function updateGame(state) {
 	}
 	setProgress('encumbrance', state[Encumbrance], state[Capacity]);
 	$id('trophies').innerText = state[TrophyMob] && state[Trophies] ?
-		DENIZENS[state[TrophyMob]].name + ' trophies' : 'Trophies';
+		MOBS[state[TrophyMob]].name + ' trophies' : 'Trophies';
 
 	/*
 	if (state[Encumbrance] <= state[Capacity]) {
@@ -2901,7 +2901,7 @@ function updateGame(state) {
 	set('locale', local ? local.name + ' #' + state[Location] : '');
 	set('terrain', (Chinbreak.TERRAIN_TYPES[local.terrain] ?? {}).name);
 	set('mob', state[MobSpecies] ?
-		`${Chinbreak.DENIZENS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
+		`${Chinbreak.MOBS[state[MobSpecies]].name} (level ${state[MobLevel]})` : '');
 	if (state[MobAggro] > 0)
 		$('#mob').classList.add('aggro');
 	else
@@ -2919,15 +2919,15 @@ function updateGame(state) {
 	original &&= original.name;
 	set('questgoal',
 		state[QuestObject] === Totem ? 'Deliver the totem' :
-		state[QuestObject] == Trophies ? `Bring me ${state[QuestQty]} ${DENIZENS[state[QuestMob]].name.toLowerCase()} trophies` :
+		state[QuestObject] == Trophies ? `Bring me ${state[QuestQty]} ${MOBS[state[QuestMob]].name.toLowerCase()} trophies` :
 		state[QuestObject] ? `Bring me ${state[QuestQty]} ${SLOTS[state[QuestObject]].name.toLowerCase()}` :
-		state[QuestMob] ? 	 `Exterminate the ` + plural(DENIZENS[state[QuestMob]].name) :
+		state[QuestMob] ? 	 `Exterminate the ` + plural(MOBS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questdesc',
 		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
-		state[QuestObject] == Trophies ? `The ${plural(DENIZENS[state[QuestMob]].name.toLowerCase())} in ${questal} are too much. Bring proof of death back to me here in ${original}.` :
+		state[QuestObject] == Trophies ? `The ${plural(MOBS[state[QuestMob]].name.toLowerCase())} in ${questal} are too much. Bring proof of death back to me here in ${original}.` :
 		state[QuestObject] ? `We of ${original} stand in need of ${SLOTS[state[QuestObject]].name.toLowerCase()}. They say there's no shortage of them in ${questal}.` :
-		state[QuestMob] ? 	 `Put an end to these ${plural(DENIZENS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
+		state[QuestMob] ? 	 `Put an end to these ${plural(MOBS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
 		'<br>&nbsp;');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
 
