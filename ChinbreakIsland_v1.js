@@ -1233,6 +1233,7 @@ const MOBS = [
 		domain: MOUNTAINS,
 		hitdice: 14,
 		occurrence: 0,
+		drops: Treasures,
 	}
 ];
 
@@ -1562,6 +1563,37 @@ function hash(...keys) {
 	return x ;
 }
 
+class Prng {
+	seed;
+
+	// keys are integers on [0, 0x7fffffff]
+	constructor(...keys) {
+		this.seed = hash(...keys);
+	}
+
+	#eat(key = 0xea7f00d) {
+		this.seed = hash(this.seed, key);
+		if (this.seed < 0 || this.seed > 0x7fffffff) throw "Bad random algorithm";
+		return this.seed;
+	}
+
+	// result is real on [0, 1)
+	rand(...keys) {
+		return this.#eat(0xf70a75) / 0x7fffffff;
+	}
+
+	// random integer given keys on [0, ..., scale-1]
+	irand(scale) {
+		return this.#eat(0x147e9e7) % scale;
+	}
+
+	d(pips) { return this.irand(pips) + 1 }
+
+	civRoll(att, def) { return this.irand(att + def) < att }
+
+	pick(a) { return a[this.irand(a.length)] }
+}
+
 function indefiniteItems(slot, qty) {
 	let name = SLOTS[slot].name.toLowerCase();
 	const vowels = 'aeiouAEIOU';
@@ -1725,33 +1757,13 @@ class Chinbreak {
 		let arg1 = args[0];
 		let arg2 = args[1];
 
-		let seed = hash(state[Seed], 0x5EED, state[Years], state[Hours], operation, ...args);
+		let rng = new Prng(state[Seed], 0x5EED, state[Years], state[Hours], operation, ...args);
 
-		// seed and key are integers on [0, 0x7fffffff]
-		// result is real on [0, 1)
-		function rand(...keys) {
-			seed = hash(seed, 0xf70a75);
-			if (seed < 0) throw "Bad random algorithm";
-			return seed / 0x7fffffff;
-		}
-
-		// random integer given keys on [0, ..., scale-1]
-		function irand(scale) {
-			seed = hash(seed, 0x147e9e7);
-			if (seed < 0) throw "Bad random algorithm";
-			if (scale <= 0) return 0;  // This should be avoided
-			return seed % scale;
-		}
-
-		function d(pips) { return irand(pips) + 1 }
-
-		function civRoll(att, def) { return irand(att + def) < att }
-
-		function randomPick(a) { return a[irand(a.length)] }
+		function d(n) { return rng.d(n) }
 
 		function rollAttack(offense, defense, potency) {
-			if (civRoll(offense, defense)) {
-				return d(Math.max(1, potency));
+			if (rng.civRoll(offense, defense)) {
+				return rng.d(Math.max(1, potency));
 			} else {
 				return 0;
 			}
@@ -1831,24 +1843,18 @@ class Chinbreak {
 			}
 		}
 
-		function randomLocation() {
-			// A random location on the main island
-			// TODO consider current locality
-			return d(36);
-		}
-
-		function randomMob() {
+		function randomMob(rng) {
 			while (true) {
-				let mob = d(MOBS.length - 1);
-				if (rand() < (MOBS[mob].occurrence ?? 1)) return mob;
+				let mob = rng.d(MOBS.length - 1);
+				if (rng.rand() < (MOBS[mob].occurrence ?? 1)) return mob;
 			}
 		}
 
-		function randomMobNearLevel(goal, repeats=10) {
-			let type = randomMob();
+		function randomMobNearLevel(goal, repeats, rng) {
+			let type = randomMob(rng);
 			let level = MOBS[type].hitdice;
 			for (let i = 0; i < repeats; ++i) {
-				let t = randomMob();
+				let t = randomMob(rng);
 				let l = MOBS[t].hitdice;
 
 				if (Math.abs(l - goal) < Math.abs(level - goal)) {
@@ -2123,7 +2129,7 @@ class Chinbreak {
 				price /= (1 + 1 / Math.max(1, state[Charisma]));
 				let intprice = Math.floor(price);
 				let frac = price - intprice;
-				if (rand() < frac) intprice += 1;  // fractional values reflected in probabilities
+				if (rng.rand() < frac) intprice += 1;  // fractional values reflected in probabilities
 				inc(Gold, intprice);
 			}
 			if (operation === give &&
@@ -2186,6 +2192,7 @@ class Chinbreak {
 			return qty;
 
 		} else if (operation === seekquest) {
+			let qrng = new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location]);
 			let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
 			passTime('Asking around about quests', hours);
 
@@ -2197,45 +2204,63 @@ class Chinbreak {
 				if (state[ActProgress] < 3) {
 					// Bring the totem from origin to location
 					state[QuestObject] = Totem;
-					state[QuestEnd] = d(36);
-					do { state[QuestLocation] = d(36);
+					state[QuestEnd] = qrng.d(36);
+					do { state[QuestLocation] = qrng.d(36);
 					} while (state[QuestLocation] == state[QuestEnd]);
 					state[QuestQty] = 2; // pick up, drop off
 				} else if (state[ActProgress] == state[ActDuration] - 1) {
 					state[QuestMob] = Main_Boss;
 					state[QuestQty] = 1;
-					state[QuestLocation] = EMKELL_PEAK;
+					state[QuestLocation] = Emkell_Peak;
 				} else {
 					// Exterminate the ___
-					state[QuestLocation] = EMKELL_PEAK;
-					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma]);
+					state[QuestLocation] = Emkell_Peak;
+					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma], qrng);
 					state[QuestObject] = 0;
-					state[QuestQty] = 25 + d(4) - d(4);
+					state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
 				}
 			} else {
+				let qloc = state[Location];
+				if (local.offshore) {
+					qloc = Emkell_Peak;
+				} else for (let dist = state[Act] + qrng.irand(2); dist > 0; dist -= 1) {
+					// Random walk to find the quest location
+					let x = longitude(qloc);
+					let y = latitude(qloc);
+					let d = 2 * qrng.irand(2) - 1;
+					let dloc;
+					if (qrng.irand(2)) {
+						if (x + d < 0 || x + d >= 6) d *= -1;
+						dloc = 1 + 6 * y + (x + d);
+					} else {
+						if (y + d < 0 || y + d >= 6) d *= -1;
+						dloc = 1 + 6 * (y + d) + x;
+					}
+					if (dloc != state[Location]) qloc = dloc;
+				}
 				let questTypes = [_ => {
 					// Exterminate the ___
-					state[QuestLocation] = randomLocation();
-					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma]);
+					state[QuestLocation] = qloc;
+					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma], qrng);
 					state[QuestObject] = 0;
-					state[QuestQty] = 2 + 2 * state[Act] + d(2) - d(2);  // TODO use charisma here (instead?)
+					state[QuestQty] = 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2);  // TODO use charisma here (instead?)
 				}, _ => {
 					// Bring me N trophies
-					state[QuestLocation] = randomLocation();
+					state[QuestLocation] = qloc;
 					state[QuestObject] = Trophies;
-					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma]);
-					let qty = 1 + state[Act] + d(2) - d(2);
+					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma], qrng);
+					let qty = 1 + state[Act] + qrng.d(2) - qrng.d(2);
 					state[QuestQty] = qty;
 				}, _ => {
 					// Bring me N of SOMETHING generally
-					let value = state[Level] * 100 * Math.pow(GR, -state[Charisma]) * (0.5 * rand());
-					state[QuestLocation] = randomLocation();
-					state[QuestObject] = rand(2) ? Ammunition : Food;  // something you can forage for
+					let value = state[Level] * 100 * Math.pow(GR, -state[Charisma]) * (0.5 * qrng.rand());
+					state[QuestLocation] = qloc;
+					state[QuestObject] = qrng.rand(2) ? Ammunition : Food;  // something you can forage for
 					state[QuestMob] = 0;
 					let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
 					state[QuestQty] = qty;
 				}];
-				randomPick(questTypes)();
+				qrng.pick(questTypes)();
 				state[QuestEnd] = state[Location];
 			}
 			state[QuestProgress] = 0;
@@ -2342,12 +2367,12 @@ class Chinbreak {
 				passTime('Hunting for a suitable local victim', 2);
 				clearMob(state);
 				let type;
-				if (state[QuestMob] && state[QuestLocation] === state[Location] && irand(4) == 0) {
+				if (state[QuestMob] && state[QuestLocation] === state[Location] && rng.irand(4) == 0) {
 					type = state[QuestMob];
 				} else if (local.denizen && (!local.density || d(100) <= local.density)) {
 					type = local.denizen;
 				} else {
-					type = randomMobNearLevel(local.level);
+					type = randomMobNearLevel(local.level, 10, rng);
 				}
 				let level = MOBS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
 				level += d(2) - d(2);
@@ -2366,7 +2391,7 @@ class Chinbreak {
 
 				let ability = state[DATABASE[target].forageStat ?? Intellect];
 
-				let qty = civRoll(ability, resistance) ? 1 : 0;
+				let qty = rng.civRoll(ability, resistance) ? 1 : 0;
 				inc(target, qty);
 
 				passTime('Foraging for ' + indefiniteItems(target, 1), 1);
