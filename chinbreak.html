@@ -76,7 +76,25 @@ div.icon > div {
 	</div>
 	<div class=window-body>
 		<div id=newstuff>
-			<label for=namein>Name</label><input type=text id=namein></input>
+			<label for=namein>Name</label><input type=text id=namein value=Artaud></input>
+			<fieldset>
+				<legend>Species</legend>
+				<div class="field-row">
+				  <input id="Dunkling" type="radio" name=species value=1 checked>
+				  <label for="Dunkling">Dunkling</label>
+				</div>
+
+				<div class="field-row">
+				  <input id="Hardwarf" type="radio" name=species value=2>
+				  <label for="Hardwarf">Hardwarf</label>
+				</div>
+
+				<div class="field-row">
+				  <input id="Eelman" type="radio" name=species value=3>
+				  <label for="Eelman">Eelman</label>
+				</div>
+			</fieldset>
+
 			<fieldset style="margin-top:10px">
 				<legend>Strategy</legend>
 				<div style="display:grid;grid-template-columns:50px 1fr;gap:4px">
@@ -215,11 +233,17 @@ window.addEventListener('load', e => {
 
 	$("input[type=file]").addEventListener('change', upload);
 
-	$('#namein').addEventListener('input', e => $('#sold button').disabled = $('#namein').value.trim().length == 0);
+	$('#namein').addEventListener('input', sellable);
 	$('#namein').focus();
+	sellable();
 });
 
 let PACKAGE;
+
+function sellable() {
+	$('#sold button').disabled = !PACKAGE || $('#namein').value.trim().length == 0;
+	console.log($('[name=species]:checked').value);
+}
 
 function upload(e) {
 	let f = e.target.files[0];
@@ -228,6 +252,7 @@ function upload(e) {
 		$("#strat-title").innerText = package.title || '(untitled)';
 		$("#strat-author").innerText = package.author || '(anonymous)';
 		$("#strat-desc").innerText = package.description || '(no description)';
+		sellable();
 	});
 }
 
@@ -241,9 +266,11 @@ function sold() {
 	// 	play();
 	// });
 
-	// $('#name').innerText = $('#namein').value;
+	console.log();
 
-	game = new ChinbreakIsland_v1(PACKAGE.binary, Dunkling /* TODO */, $('#namein').value);
+	game = new ChinbreakIsland_v1(PACKAGE.binary,
+		$('[name=species]:checked').value,
+		$('#namein').value);
 
 	vm = new VirtualMachine(PACKAGE.binary, game);
 	play();
