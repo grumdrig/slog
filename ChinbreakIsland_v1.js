@@ -2112,7 +2112,7 @@ class Chinbreak {
 				if (slot === Trophies && state[TrophyMob]) {
 					const d = MOBS[state[TrophyMob]];
 					if (d.hitdice)
-						unitValue *= d.hitdice;
+						unitValue *= Math.pow(GR, d.hitdice);
 				}
 			} else {
 				return -1;
