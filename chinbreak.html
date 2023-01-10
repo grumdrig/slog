@@ -22,8 +22,10 @@
 	grid-column: 1/3;
 	background-color: transparent;
 }
-#strat-author, #strat-title {
-	background: white;
+#strat-author, #strat-title, #strat-length, #s-d-m {
+	background: #efefef;
+}
+#strat-author, #strat-title, #strat-length {
 	padding: 2px;
 	border: solid 1px rgb(208,208,191);
 	border-radius: 4px;
@@ -50,8 +52,10 @@ div.icon > div {
 	text-shadow: 0 0 2px white, 0 0 3px white;
 }
 #fetchStrat {
-	width: 30px;
-	height: 12px;
+	padding: 0;
+	min-height: 19px;
+	min-width: 60px;
+	height: 19px;
 }
 
 </style>
@@ -120,7 +124,7 @@ div.icon > div {
 				<div>
 				  <input type="radio" name=strat value=orurl id=orurl>
 				  <label for="orurl">URL:&nbsp;
-					  <input type="url" name=straturl></input>
+					  <input type="url" id=straturl></input>&nbsp;
 					  <button id=fetchStrat>Fetch</button>
 				  </label></input>
 				</div>
@@ -133,8 +137,9 @@ div.icon > div {
 				<div class=field-row style="display:grid;grid-template-columns:1fr 4fr;">
 					<label for=strat-title>Title</label><div id=strat-title>&nbsp;</div>
 					<label for=strat-author style=margin-left:0>Author</label><div id=strat-author>&nbsp;</div>
+					<label for=strat-length style=margin-left:0>Length</label><div id=strat-length>&nbsp;</div>
 				</div>
-				<fieldset class=field-row style="grid-column:1/3">
+				<fieldset class=field-row style="grid-column:1/3" id=s-d-m>
 						<legend>Description</legend>
 						<div class=field-row id=strat-desc>&nbsp;</div>
 				</fieldset>
@@ -262,7 +267,8 @@ window.addEventListener('load', e => {
 	STRATEGIES.leveler = leveler;
 	changeStrat();
 
-	$('#fetchStrat').addEventListener('onclick', fetchUrlStrat);
+	$('#straturl').addEventListener('select', e => { $('#orurl').checked = true });
+	$('#fetchStrat').addEventListener('click', fetchUrlStrat);
 
 	$('#namein').addEventListener('input', sellable);
 	$('#namein').focus();
@@ -296,15 +302,17 @@ function setStrategy(package) {
 		$("#strat-title").innerText = package.title || '(untitled)';
 		$("#strat-author").innerText = package.author || '(anonymous)';
 		$("#strat-desc").innerText = package.description || '(no description)';
+		$("#strat-length").innerText = (package.binary || []).length + ' bytes';
 	} else {
 		$("#strat-title").innerHTML = '&nbsp;';
 		$("#strat-author").innerHTML = '&nbsp;';
 		$("#strat-desc").innerHTML = '&nbsp;';
+		$("#strat-length").innerHTML = '&nbsp;';
 	}
 }
 
 function fetchUrlStrat() {
-	fetch($('#url'))
+	fetch($('#straturl').value)
 		.then(response => {
 				return response.json();
 			})
@@ -312,6 +320,7 @@ function fetchUrlStrat() {
 				STRATEGIES.orurl = data;
 				setStrategy(STRATEGIES.orurl);
 				$('#orurl').checked = true;
+				sellable();
 			})
 		.catch(err => {
 				console.error('err', err);
