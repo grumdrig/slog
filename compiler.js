@@ -1574,6 +1574,10 @@ if (typeof module !== 'undefined' && !module.parent) {
 					type: "string",
 					short: "p",
 				},
+				javascript: {
+					type: 'string',
+					short: 'j',
+				},
 				symbols: {
 					type: "boolean",
 					short: "s",
@@ -1603,7 +1607,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		console.error(e);
 		usage();
 	}
-	const { assembly, binary, disassembly, package, symbols, run, help } = flags || {};
+	const { assembly, binary, disassembly, package, javascript, symbols, run, help } = flags || {};
 	const verbosity = (flags.verbose || []).length;
 
 	if (help) usage();
@@ -1639,7 +1643,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 			writeFileSync(assembly, asm, 'utf8');
 	}
 
-	if (binary || disassembly || package || run) {
+	if (binary || disassembly || package || javascript || run) {
 
 		let { Assembler } = require('./vm');
 		let assembled = Assembler.assemble(asm);
@@ -1658,8 +1662,15 @@ if (typeof module !== 'undefined' && !module.parent) {
 		for (let source of sources) parseDocumentation(pack, source);
 		pack.binary = Array.from(assembled.code);
 		if (symbols) pack.symbols = assembled.labels;
+
 		if (package) {
 			writeFileSync(package, JSON.stringify(pack));
+		}
+
+		if (javascript) {
+			let varname = javascript.split('/').slice(-1)[0].split('.')[0];
+			writeFileSync(javascript, 'const ' + varname + ' = ' +
+				JSON.stringify(pack, undefined, '\t') + ';');
 		}
 
 		if (run) {
