@@ -22,6 +22,14 @@ Documentation
 TODO
 
 
+Install
+-------
+
+We use XP.css styling. You need to:
+
+	npm install xp.css
+
+
 IDE
 ---
 

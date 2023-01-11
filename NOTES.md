@@ -61,21 +61,7 @@ Monster brainstorm with Andy, transformed:
 
 ### Spells
 
-	* fireball: kill a monster sans damage
-	* Heal Yeah: heal, just like it says
-	* haste: walk faster
-	* buff: make stronger or whatever temporarily
-	* invisibility: it's just cool
-	* luck: increase drops for a while
-
-Spells should maybe be crazy, like turn gold into HP. Hard to think of crazy
-stuff within this universe
-
-
-Maybe have spells use a tech ladder, so you gotta learn A and B to be able to
-learn C, which replaces them.
-
-Also, maybe an equipment slot for a scroll. You can either read the scroll
+Maybe an equipment slot for a scroll. You can either read the scroll
 (cast(equip_scroll)) or study it to learn the spell. Spells might be
 available in some places or something. Exchange a treasure with some guy?
 Stick NPC's in each tile?
@@ -112,41 +98,6 @@ Maybe should have human too, even though no such home town. Or make Bompton huma
 Maybe should allow monster races too, though it will be hard on the player.
 
 
-### Character class
-
-Might affect weapon options, some stat-learning bias, etc
-
-
-### Proficiency
-
-Weapon types:
-0. Clubs
-1. Blades
-2. Bows
-
-Choose? Or determined by race? The latter I guess.
-
-
-### Endgame
-
-Once player reaches Act IX, the only quests he will be given is to
-1. Go obtain some particular jewelry item by some means
-2. Place the item on some altar or something in some spot on the map
-(Or maybe three of these things.)
-
-When the item(s) are there, they are transported an island way down on row 8:
-
-	+----------+----------+
-	| Sygnon   | Emkell   |
-	|  town    | mountain |
-	| ghosts   |          |
-	|   0      |   9      |
-	+----------+----------+
-
-where they can get quests to fight some adversaries (minions of the final
-boss), and finally fight the boss. Resources in the final island are limited and/or expensive, and there's no returning.
-
-
 ### Equipment
 
 RING
@@ -159,15 +110,6 @@ Or else have them be spells. Maybe it lets you cast them, or else gives the
 effect permanently.
 
 Maybe just get rid of these for v1.
-
-
-TOTEM
-
-One per map tile.
-
-Just for quests I guess
-
-Could be they boost something too though.
 
 
 ### Combat
@@ -184,21 +126,6 @@ Spell attack = INT + spell level
 TODO have bows depend on dex not str
 
 
-### Predictablility
-
-We use a predictable PRNG with a seed based on code checksum, so the game is
-always exactly the same with the same binary.
-
-
-Styling
--------
-
-I just changed to XP styling. You have to
-
-	npm install xp.css
-
-
-
 Architecture Changes
 --------------------
 
@@ -211,99 +138,12 @@ from last to first? Or am I thinking about this wrong right now? I guess it's
 the opposite of how binary operators work. I'm doing external function calls
 that way in any case.
 
-Have a name for the char. Maybe even a class.
-
 I think I need or it would be best to have splat syntax for at least macros
 
 	macro setName(letters*) external(66, *letters)
 
 Instead I went with the opaque thing of a negative external call code meaning
 the argument is a zero-terminated vector. However, setname should probably go.
-
-
-Local declarations
-------------------
-
-I think I've got to think about namespaces separately from scope. Scope is
-only at the global (or static) level and the function level. And I'm not
-nesting functions here.
-
-Namespace is within a code block.
-
-Globals/statics have to (reasonably) be emitted before, or after, any and all
-of the code is. (Before, they're easier to see in the debugger. After would
-avoid the JMP.)
-
-In any case it seems like we need two passes. Then there needs to be records of storage needs at the module and function scopes, and a symbol table within any scope.
-
-Here's the variable allocation situations:
-
-- in the global context
-
-	var x = 5
-
-	context.symbols gets name: { static, label=x }
-
-	context.allocations gets label=x : { count, initializer }
-
-- inside of a code block outside any function
-
-	while (true) { var x = 5 ... }
-
-	global_context.allocation gets: unique(x): { count, initializer }
-
-	local_context.symbols gets x { static, label=unique(x) }
-
-	code gets x = 5 at the top of the loop
-
-- as a function parameter
-
-	func x(a) { ... }
-
-	local_context.symbols get x: { local, offset }
-
-- top-level in a function
-
-	func ... {
-		var x = 5
-
-	code makes room at FP with a .stack 5
-
-	local_context.symbols gets x: { local, offset }
-
-- inside a block inside a function
-
-	func ... { while ... { var x = 5 ... } }
-
-	code makes room at FP with dec SP
-
-	local_context.symbols gets x: { local, offset }
-
-- static inside a function (not implemented yet)
-
-	func ... { static x = 5 }
-
-	local symbols get x: { static, label }
-
-	global allocations gets unique(x): { count initializer }
-
-- as a macro parameter
-
-	local gets alias to expr
-
-- top level in a macro
-
-	global allocation gets unique(x): { count, identifier }
-
-	local symbols gets name: { static, unique(x)
-
-
-- inside a block inside a macro
-
-	same as top level in macro
-
-	but code gets initialization
-
 
 
 LLVM
@@ -472,8 +312,6 @@ Switch all mobs to the big versions with 1.5 HD as of act 4 or 5
 
 More API Minimization
 ---------------------
-
-- loot: seek(Trophy)
 
 - rest: seek(Health) or seek(Energy) for a lighter rest
 

@@ -667,8 +667,9 @@ const SPELLS = [ null, {
 		},
 		description: `Double. Your. Money.... Overnight! <sup>*</sup>Terms and conditions apply. Doubling is limited by cargo capacity.`,
 	}, {
-		name: 'Delta P',
-		description: `Release a massive pressure discontinuity.`
+		name: 'Good Luck With That',
+		description: `Increases luck.`,
+		enchantment: [],
 		// TODO an effect
 	}, {
 		name: 'History Lessen',
@@ -2078,6 +2079,7 @@ class Chinbreak {
 			}
 
 			// TODO: consider local effect on price
+			// TODO: in particular prices should be high in Sygnon
 
 			if (state[Charisma] < 1) {
 				price *= 2 - state[Charisma]; // 0 cha pays double, -1 pays triple, etc
