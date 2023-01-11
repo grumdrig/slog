@@ -687,11 +687,11 @@ class Assembler {
 		this.code[pc] = value;
 	}
 
-	disassemble(address) {
-		return Assembler.disassemble(this.code, address);
+	disassemble(address, opsOnly=false) {
+		return Assembler.disassemble(this.code, address, opsOnly);
 	}
 
-	static disassemble(code, address) {
+	static disassemble(code, address, opsOnly=false) {
 		if (typeof address === 'number') {
 			let inst = code[address] || 0;
 			let disa;
@@ -706,11 +706,16 @@ class Assembler {
 					immediate = REGISTER_NAMES[immediate] || immediate;
 				if (opcode === 'unary' && UNARY_OPERATORS[immediate])
 					immediate = UNARY_OPERATORS[immediate].mnemonic;
-				disa = ('$' + ('00' + (inst & 0x1f).toString(16)).substr(-2)
-					+ ' $' + ('00' + (0x7ff & (inst >> 5)).toString(16)).substr(-3)
-					+ ' ' + opcode
-					+ ' ' + immediate);
+				disa = ' ' + opcode
+					 + ' ' + immediate;
+				if (!opsOnly) {
+					disa = ('$' + ('00' + (inst & 0x1f).toString(16)).substr(-2)
+						+ ' $' + ('00' + (0x7ff & (inst >> 5)).toString(16)).substr(-3)
+						+ disa);
+				}
 			}
+
+			if (opsOnly) return disa;
 
 			return (
 				('000' + address).substr(-4)
@@ -721,7 +726,7 @@ class Assembler {
 					);
 		} else {
 			let result = removeTrailingZeros(Array.from(code)).map((inst, num) =>
-				this.disassemble(code, num));
+				this.disassemble(code, num, opsOnly));
 			return result.join('\n');
 		}
 	}
@@ -827,6 +832,9 @@ OPTIONS:
 		Write binary machine code suitable for the Slog VM to named file
 	-d file, --disassembly=file
 		Disassemble binary machine code to named file
+	-L, --legal
+		Disassembly produced includes only legal assembly, not file
+		offsets or varying numeric representations
 	-r, --run
 		Run assembled or loaded machine code in targe environment
 	-v, --verbose
@@ -867,6 +875,10 @@ if (typeof module !== 'undefined' && !module.parent) {
 			disassemble: {
 				type: 'string',
 				short: 'd',
+			},
+			legal: {
+				type: 'boolean',
+				short: 'L',
 			},
 			load: {
 				type: 'string',
@@ -914,8 +926,10 @@ if (typeof module !== 'undefined' && !module.parent) {
 			}
 		}
 
-		if (flags.disassemble) {
-			writeFileSync(flags.disassemble, asm.disassemble(), 'utf8');
+		if (flags.disassemble === '-') {
+			console.log(asm.disassemble(null, flags.legal));
+		} else if (flags.disassemble) {
+			writeFileSync(flags.disassemble, asm.disassemble(null, flags.legal), 'utf8');
 		}
 
 		if (flags.output) {
