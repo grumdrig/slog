@@ -1819,8 +1819,8 @@ class Chinbreak {
 
 			state[Level] = 1;
 			state[Location] = Bompton;
-			state[Health] = state[MaxHealth] = 6 + state[Endurance];
-			state[Energy] = state[MaxEnergy] = 6 + state[Intellect];
+			state[Health] = state[MaxHealth] = 2 + state[Endurance];
+			state[Energy] = state[MaxEnergy] = 0 + state[Intellect];
 			state[TrainingPoints] = 10;
 			actUp();
 			passTime('Loading', 1);
