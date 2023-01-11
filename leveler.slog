@@ -48,7 +48,7 @@ while .Level < 88 {
     while .MobHealth and .Health >= (.MaxHealth / 3) {
       use(Weapon)
     }
-    if .Encumbrance < .Capacity and !.MobHealth { loot() }
+    if .Encumbrance < .Capacity and !.MobHealth { loot(Trophies) }
     if .MobHealth { seek(0) }  // run away
     while .Health < .MaxHealth and .Reagents > 0 {
       if use(Spellbook1) <= 0 { break }

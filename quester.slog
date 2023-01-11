@@ -50,7 +50,7 @@ while 1 {
         seek(MobSpecies)
       }
       use(Weapon)
-      if !.MobHealth { loot() }
+      if !.MobHealth { loot(Trophies) }
     }
   } else if .QuestMob {
     // Killing

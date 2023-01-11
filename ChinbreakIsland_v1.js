@@ -310,10 +310,10 @@ const CALLS = {
 		Ammunition, or to hunt creatures use MobSpecies, or to find a place
 		without mobs use 0, or look for the local Totem.` },
 
-	loot: {
+	loot: { parameters: 'slot',
 		description: `Loot any nearby corpse for whatever goodies they may
-		hold. Now, if they aren't a corpse, then this is an attempt to
-		pickpocket.` },
+		hold. The parameter is the loot you're after. All mobs can be
+		looted for Trophies, and some may have other items present.` },
 
 	rest: {
 		description: `Grab some downtime to reduce fatigue and damage. Resting
@@ -2036,16 +2036,20 @@ class Chinbreak {
 			if (!state[MobSpecies] || state[MobHealth] > 0) return -1;
 			let info = MOBS[state[MobSpecies]];
 
+			let slot = arg1;
+
 			passTime('Looting the corpse of this ' + info.name.toLowerCase(), 1);
 
-			let drop = info.drops ?? Trophies;
-			if (drop === Trophies) {
-				if (state[TrophyMob] == state[MobSpecies] || state[Trophies] == 0)
-					state[TrophyMob] = state[MobSpecies];
-				else
-					state[TrophyMob] = 0;
+			if (slot === Trophies || (info.drops && slot === info.drops)) {
+				if (slot === Trophies) {
+					if (state[TrophyMob] == state[MobSpecies] || state[Trophies] == 0)
+						state[TrophyMob] = state[MobSpecies];
+					else
+						state[TrophyMob] = 0;
+				}
+				inc(slot);
 			}
-			inc(drop);
+
 			clearMob(state);
 
 			return 
