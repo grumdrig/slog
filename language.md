@@ -158,6 +158,21 @@ definitions, and executable statements. A module consists of a number of
 declarations and statements.
 
 
+Target
+======
+
+The target declaration specifies the game or app environment in which the code
+expects to be embedded. It has the effect of causing definitions particular
+to that environment to be imported for use by the subsequent code. It also
+serves to indicate that that environment be loaded when the code is
+executed.
+
+The target declaration is the keyword `target` followed by an identifier. For
+example:
+
+	target ChinbreakIsland_v1
+
+
 Variables
 =========
 
@@ -429,9 +444,7 @@ be close.)
 
 	variable-declaration := 'var' identifier ('[' expr ']')? ('=' expr)
 
-	function-definition := 'func' function-def-tail
-
-	function-def-tail := identifier '(' function-parameter-list? ')' function-body
+	function-definition := 'func' identifier '(' function-parameter-list? ')' function-body
 
 	function-body := '{' code-block '}' | expr
 
@@ -439,7 +452,7 @@ be close.)
 
 	code-block := (constant-definition | variable-declaration | statement)*
 
-	macro-definition := 'macro' function-def-tail
+	macro-definition := 'macro' identifier '(' function-parameter-list? ')' function-body
 
 	statement := while-statement | if-statement | expression-statement | return-statement | break-statement | halt-statement | assertion-statement
 
