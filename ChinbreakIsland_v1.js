@@ -611,10 +611,6 @@ div#terrains {
 const SPELLS = [ null, {
 		name: 'Heal Yeah',
 		level: 1,
-		costs: [
-			{ slot: Energy, qty: 1 },
-			{ slot: Reagents, qty: 1 },
-			],
 		effect: state => {
 			let healing = 1;
 			healing *= Math.pow(GR, state[Wisdom]);
@@ -628,10 +624,6 @@ const SPELLS = [ null, {
 	}, {
 		name: 'Pyroclastic Orb',
 		level: 2,
-		costs: [
-			{ slot: Energy, qty: 2 },
-			{ slot: Reagents, qty: 2 },
-			],
 		effect: state => {
 			if (!state[MobHealth]) return 0;
 
@@ -648,18 +640,11 @@ const SPELLS = [ null, {
 	}, {
 		name: 'Horsewheels',
 		level: 3,
-		costs: [
-			{ slot: Reagents, qty: 3 },
-			],
 		enchantment: [],  // handled in code: speed boost
 		description: `Let's put some wheels on that hoss! Increases travel speed.`,
 	}, {
 		name: 'Spectral Coinpurse',
 		level: 5,
-		costs: [
-			{ slot: Energy, qty: 5 },
-			{ slot: Reagents, qty: 5 },
-			],
 		duration: 24,
 		effect: state => {
 			let winnings = Math.min(roomFor(Gold, state), state[Gold]);
@@ -668,27 +653,20 @@ const SPELLS = [ null, {
 		description: `Double. Your. Money.... Overnight! <sup>*</sup>Terms and conditions apply. Doubling is limited by cargo capacity.`,
 	}, {
 		name: 'Good Luck With That',
+		level: 4,
 		description: `Increases luck.`,
 		enchantment: [],
 		// TODO an effect
 	}, {
 		name: 'History Lessen',
 		level: 10,
-		costs: [
-			{ slot: Energy, qty: 10 },
-			{ slot: Reagents, qty: 10 },
-			],
 		effect: state => {
 			return state[Years] = 0;
 		},
 		description: `Go back to when this crazy adventure all started. You get to keep your stuff though.`,
 	}, {
 		name: "Radical Sympathy",
-		level: 3,
-		costs: [
-			{ slot: Energy, qty: 3 },
-			{ slot: Reagents, qty: 3 },
-			],
+		level: 7,
 		effect: state => {
 			if (!state[MobSpecies]) return -1;
 
@@ -714,10 +692,6 @@ const SPELLS = [ null, {
 	}, {
 		name: 'Buff',
 		level: 4,
-		costs: [
-			{ slot: Energy, qty: 4 },
-			{ slot: Reagents, qty: 4 },
-			],
 		enchantment: [
 			{ slot: Strength, increment: 4 },
 		],
@@ -725,19 +699,11 @@ const SPELLS = [ null, {
 	}, {
 		name: 'Shiny',
 		level: 6,
-		costs: [
-			{ slot: Energy, qty: 6 },
-			{ slot: Reagents, qty: 6 },
-			],
 		enchantment: [],
 		description: `This doesn't do anything to help; it's just cool.`,
 	}, {
 		name: 'Smort',
 		level: 4,
-		costs: [
-			{ slot: Energy, qty: 4 },
-			{ slot: Reagents, qty: 4 },
-			],
 		enchantment: [
 			{ slot: Intellect, increment: 4 },
 		],
@@ -745,10 +711,6 @@ const SPELLS = [ null, {
 	}, {
 		name: 'Scrambled Eggs',
 		level: 9,
-		costs: [
-			{ slot: Energy, qty: 9 },
-			{ slot: Reagents, qty: 9 },
-			],
 		enchantment: [],
 		effect: (state, spellid) => {
 			if (state[Location] > 36) return -1;
@@ -758,10 +720,6 @@ const SPELLS = [ null, {
 	}, {
 		name: 'Astral Edifice',
 		level: 5,
-		costs: [
-			{ slot: Energy, qty: 5 },
-			{ slot: Reagents, qty: 5 },
-			],
 		enchantment: [],
 		effect: (state, spellid) => {
 			if (state[Location] > 36) return -1;
@@ -770,11 +728,7 @@ const SPELLS = [ null, {
 		description: `Bring a ghost town into existence where you now stand.`,
 	}, {
 		name: 'Health Plan',
-		level: 8,
-		costs: [
-			{ slot: Energy, qty: 30 },
-			{ slot: Reagents, qty: 20 },
-			],
+		level: 20,
 		effect: state => {
 			state[Health] = Math.min(MAX_INT, state[Health] + state[Gold]);
 			state[Gold] = 0;
@@ -782,7 +736,6 @@ const SPELLS = [ null, {
 		description: `Money CAN buy you health, because magic.`,
 	}, {
 		name: 'Macrobian',
-		// TODO get rid of these monikers and just use the spell name
 		level: 15,
 		costs: [
 			{ slot: Treasures, qty: 49 },
@@ -1953,13 +1906,17 @@ class Chinbreak {
 				// TODO have int and or wis help
 
 				let level = spell.level;
+				let costs = spell.costs ?? [
+                       { slot: Energy, qty: level },
+                       { slot: Reagents, qty: level },
+                   ];
 
-				for (let { slot, qty } of spell.costs)
+				for (let { slot, qty } of costs)
 					if (state[slot] < qty) return -1;
 
 				passTime('Casting ' + spell.name, spell.duration ?? 10);
 
-				for (let { slot, qty } of spell.costs)
+				for (let { slot, qty } of costs)
 					dec(slot, qty);
 
 				endEnchantment();

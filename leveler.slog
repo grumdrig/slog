@@ -38,6 +38,7 @@ func goodHunting(forLevel) {
 }
 
 learn(Spellbook1, Heal_Yeah)
+
 while .Level < 88 {
   goto(goodHunting(.Level))
   raids += 1
