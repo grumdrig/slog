@@ -1905,10 +1905,9 @@ class Chinbreak {
 
 				// TODO have int and or wis help
 
-				let level = spell.level;
 				let costs = spell.costs ?? [
-                       { slot: Energy, qty: level },
-                       { slot: Reagents, qty: level },
+                       { slot: Energy, qty: spell.level },
+                       { slot: Reagents, qty: spell.level },
                    ];
 
 				for (let { slot, qty } of costs)
@@ -2277,13 +2276,27 @@ class Chinbreak {
 			if (!spell) return -1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot)) return -1;
+
+			// Must be nth level to use nth level spell
+			// Not sure if this is good
+			if (spell.level > state[Level])
+				return -1;
+
+			if (spell.level > state[Energy])
+				return -1;
+
 			let hours = 24;
 			hours *= Math.pow(GR, spell.level);
 			hours *= 10 / (10 + (state[Wisdom] + (local.learningBoost ?? 0)));
 			// TODO: town spell-learning bonuses?
 			// TODO: racial spell-learning bonuses?
+
 			passTime('Inscribing "' + spell.name + '" into my spell book', Math.round(hours));
+
+			dec(Energy, spell.level);
+
 			state[slot] = spellType;
+
 			return state[slot];
 
 		} else if (operation === rest) {
