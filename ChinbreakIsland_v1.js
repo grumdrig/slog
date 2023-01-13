@@ -2227,7 +2227,8 @@ class Chinbreak {
 				}, _ => {
 					// Bring me N of some item
 					state[QuestLocation] = qloc;
-					state[QuestObject] = qrng.pick([Ammunition, Gold, Trophies]);
+					state[QuestObject] = qrng.pick([Ammunition, Trophies]);
+					// TODO add Gold and Rations to this list, which will need smarter AI
 					state[QuestMob] = 0;
 					let qty = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));
 					state[QuestQty] = qty;
@@ -2247,7 +2248,7 @@ class Chinbreak {
 			clearQuest(state);
 			if (state[Act] === 9 && state[ActProgress] === 3) {
 				passTime('Being magically transported to Sygnon Isle!', 3);
-				state[Location] = SYGNON_TOWER;
+				state[Location] = Sygnon_Tower;
 			} else {
 				passTime('Taking care of paperwork; this quest is done!', 3);
 			}
@@ -2315,13 +2316,13 @@ class Chinbreak {
 			passTime('Resting up', 0, 1);
 			let hp = d(state[Endurance]);
 			if (local.terrain !== TOWN)
-				hp = Math.round(hp * rand() * rand());
+				hp = Math.round(hp * rng.rand() * rng.rand());
 			hp = Math.min(hp, state[MaxHealth] - state[Health]);
 			inc(Health, hp);
 
 			let mp = d(state[Wisdom]);
 			if (local.terrain !== TOWN)
-				mp = Math.round(mp * rand() * rand());
+				mp = Math.round(mp * rng.rand() * rng.rand());
 			mp = Math.min(mp, state[MaxEnergy] - state[Energy]);
 			inc(Energy, mp);
 

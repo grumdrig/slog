@@ -3,24 +3,8 @@
 /// Description: Complete quests until you can't no more.
 target ChinbreakIsland_v1
 
-func initialize(stat, count) {
-  while count {
-    train(stat)
-    count -= 1
-  }
-}
-
-
-initialize(Strength, 4)
-initialize(Agility, 1)
-initialize(Endurance, 1)
-initialize(Intellect, 1)
-initialize(Wisdom, 1)
-initialize(Charisma, 2)
-
-
 macro goto(dest) {
-  while travel(dest) > 0 { }
+	while travel(dest) > 0 { }
 }
 
 /* Cheat to the end
@@ -36,43 +20,58 @@ seekquest()
 while .QuestMob != .MobSpecies { seek(MobSpecies) }
 */
 
+macro minStat() .Strength <? .Agility <? .Endurance <? .Wisdom <? .Intellect <? .Charisma
+
 
 while 1 {
-  if !.QuestEnd { seekquest() }
-  goto(.QuestLocation)
-  if .QuestMob and .QuestObject {
-    // Trophy hunting
-    while .Health > (.MaxHealth / 2 >? 4)  and
-          .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
-      while .MobSpecies != .QuestMob or !.MobHealth {
-        seek(MobSpecies)
-      }
-      use(Weapon)
-      if !.MobHealth { loot(Trophies) }
-    }
-  } else if .QuestMob {
-    // Killing
-    while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
-      while .MobSpecies != .QuestMob or !.MobHealth {
-        seek(MobSpecies)
-      }
-      use(Weapon)
-    }
-  } else if .QuestObject {
-    // Foraging
-    while .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
-      seek(.QuestObject)
-    }
-  }
+	while .TrainingPoints > 0 {
+		const ms = minStat()
+		if ms == .Strength       { train(Strength) }
+		else if ms == .Agility   { train(Agility) }
+		else if ms == .Endurance { train(Endurance) }
+		else if ms == .Wisdom    { train(Wisdom) }
+		else if ms == .Intellect { train(Intellect) }
+		else                     { train(Charisma) }
+	}
 
-  goto(Bompton)
+	if !.QuestEnd { seekquest() }
+	goto(.QuestLocation)
+	if .QuestMob and .QuestObject {
+		// Trophy hunting
+		while .Health > (.MaxHealth / 2 >? 4)  and
+					.Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
+			while .MobSpecies != .QuestMob or !.MobHealth {
+				seek(MobSpecies)
+			}
+			use(Weapon)
+			if !.MobHealth { loot(Trophies) }
+		}
+	} else if .QuestMob {
+		// Killing
+		while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
+			while .MobSpecies != .QuestMob or !.MobHealth {
+				seek(MobSpecies)
+			}
+			use(Weapon)
+		}
+	} else if .QuestObject {
+		// Foraging
+		while .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
+			seek(.QuestObject)
+			if .QuestObject <= Totem and ..QuestObject { break }  // can only carry 1
+		}
+	}
 
-  if .QuestObject { give(.QuestObject, ..QuestObject) }
+	if .QuestEnd { goto(.QuestEnd) }
+	else if .Location <= 36 { goto(Bompton) }
+	else { goto(Sygnon_Tower) }
 
-  completequest()
-  viewcinematic()
-  sell(Treasures, .Treasures)
-  levelup()
-  while .Health < .MaxHealth { rest() }
-  if .Encumbrance > .Capacity / 2 { deposit(Gold, .Gold) }
+	if .QuestObject { give(.QuestObject, ..QuestObject) }
+
+	completequest()
+	viewcinematic()
+	sell(Treasures, .Treasures)
+	levelup()
+	while .Health < .MaxHealth { rest() }
+	if .Encumbrance > .Capacity / 2 { deposit(Gold, .Gold) }
 }
