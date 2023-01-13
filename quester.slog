@@ -37,8 +37,6 @@ while .QuestMob != .MobSpecies { seek(MobSpecies) }
 */
 
 
-drop(Food, .Food)
-
 while 1 {
   if !.QuestEnd { seekquest() }
   goto(.QuestLocation)
@@ -76,4 +74,5 @@ while 1 {
   sell(Treasures, .Treasures)
   levelup()
   while .Health < .MaxHealth { rest() }
+  if .Encumbrance > .Capacity / 2 { deposit(Gold, .Gold) }
 }

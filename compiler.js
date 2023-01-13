@@ -1425,7 +1425,7 @@ class FunctionCallExpression {
 			func = context.lookup(func.identifier) ?? context.error('unknown identifier ' + this.lhs.identifier);
 		}
 		func = func.function ?? context.error('attempt to call non-function');
-		context.assert(func.parameters.length === this.args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${this.args.length}`);
+		context.assert(func.parameters.length === this.args.length, `mismatch in number of arguments; expected ${func.parameters.length}, got ${this.args.length} calling ${this.lhs.identifier}`);
 
 		func.generateCall(context, this.args);
 	}

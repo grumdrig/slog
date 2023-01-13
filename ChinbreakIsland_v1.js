@@ -149,11 +149,11 @@ const SLOTS = [
 	  description: `Inventory item. Arrows and other projectiles which may be
 	  fashioned from natural resources gathered in nature.` },
 
-	{ name: 'Food',
-	  description: `Inventory item. Adventurers eat food every time they
-	  travel. If they're out of food, travelling takes longer due to extra
+	{ name: 'Rations',
+	  description: `Inventory item. Adventurers eat rations every time they
+	  travel. If they're out of rations, travelling takes longer due to extra
 	  time spent hunting and foraging and complaining about being hungry.
-	  Food may also be eaten to raise Energy slightly, via the "use" command.` },
+	  Rations may also be eaten to raise Energy slightly, via the "use" command.` },
 
 	{ name: 'Treasures',
 	  description: `Inventory item. Exceptional items of high trade value.` },
@@ -281,7 +281,7 @@ const CALLS = {
 
 	use: { parameters: 'slot',
 		description: `Use the item, specified by state slot index, for its
-		intended purpose. Valid slots are Spellbook slots, Potion, Food,
+		intended purpose. Valid slots are Spellbook slots, Potion, Rations,
 		and Weapon.` },
 
 	buy: { parameters: 'slot,qualanty',
@@ -306,7 +306,7 @@ const CALLS = {
 		gain sundry rewards for your efforts.` },
 
 	seek: { parameters: 'target_slot',
-		description: `Comb the local area for items such as Food, or
+		description: `Comb the local area for items such as Rations, or
 		Ammunition, or to hunt creatures use MobSpecies, or to find a place
 		without mobs use 0, or look for the local Totem.` },
 
@@ -1019,16 +1019,16 @@ const TERRAIN_TYPES = [
 	}, {
 		name: 'Plains',
 		color: 'lightgreen',
-		forage: { item: Food, rate: 2 },
+		forage: { item: Rations, rate: 2 },
 	}, {
 		name: 'Marsh',
 		color: 'olive',
 		moveCost: 2.5,
-		forage: { item: Food, rate: 0 },
+		forage: { item: Rations, rate: 0 },
 	}, {
 		name: 'Desert',
 		color: 'yellow',
-		forage: { item: Food, rate: 0 },
+		forage: { item: Rations, rate: 0 },
 	}];
 
 TERRAIN_TYPES.forEach((info, index) => {
@@ -1066,7 +1066,7 @@ const MOBS = [
 
 			{ slot: Weapon,   value: 2},
 			{ slot: Headgear, value: 1},
-			{ slot: Food,     value: 1 },
+			{ slot: Rations,     value: 1 },
 		],
 		description: "Likable, lithe creatures of small stature, often underestimated.",
 		occurrence: 0.2,
@@ -1125,7 +1125,7 @@ const MOBS = [
 		badassname: "Supersow",
 		domain: HILLS,
 		hitdice: 2,
-		drops: Food,
+		drops: Rations,
 	}, {
 		name: "Noteti",
 		badassname: "Innoteti",
@@ -1494,7 +1494,7 @@ function generateMap(scrambleFrom) {
 DATABASE[Ammunition] =  { value: 1/10,  weight: 1/10,  scarcity: 10,       };
 DATABASE[Trophies] =    { value: 1,     weight: 1,     scarcity: 50,       };
 DATABASE[Gold] =        { value: 1,     weight: 1/100, scarcity: 10000,    };
-DATABASE[Food] =        { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
+DATABASE[Rations] =        { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
 DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
 DATABASE[Potions] = 	{ value: 100,   weight: 1,     scarcity: 100000,   };
 DATABASE[Treasures] =   { value: 1000,  weight: 3,     scarcity: 1000000,  };
@@ -1877,8 +1877,8 @@ class Chinbreak {
 			if (state[Encumbrance] > state[Capacity] * 1.5) hours *= 16; // vastly over-encumbered
 			else if (state[Encumbrance] > state[Capacity])  hours *= 2;  // over-encumbered
 
-			if (state[Food] >= 1)
-				dec(Food)
+			if (state[Rations] >= 1)
+				dec(Rations)
 			else
 				hours *= 2;
 
@@ -1937,7 +1937,7 @@ class Chinbreak {
 					state[Health] = Math.max(state[Health], state[MaxHealth]);
 					state[Energy] = Math.max(state[Energy], state[MaxEnergy]);
 					passTime('Quaffing an potion', 1);
-				} else if (slot === Food) {
+				} else if (slot === Rations) {
 					if (state[Energy] < state[MaxEnergy])
 						inc(Energy);
 					passTime('Taking a moment to eat something', 1);
@@ -2122,7 +2122,7 @@ class Chinbreak {
 			const isDeposit = (operation === deposit);
 
 			if (qty < 0) return -1;  // nice try hacker
-			if (!state[Location].hasBank) return -1;  // you're not at the bank
+			if (!local.hasBank) return -1;  // you're not at the bank
 
 			if (state[Gold] + state[BalanceGold] <= 0)
 				return -1;  // Can't afford it
@@ -2162,6 +2162,17 @@ class Chinbreak {
 
 			if (local.terrain !== TOWN) return 0;
 
+			function pickQuestMob(act) {
+				let maxlev = act + qrng.irand(act);
+				let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
+				let options = [];
+				MOBS.forEach((mob,index) => {
+					if (mob && minlev <= mob.hitdice && mob.hitdice <= maxlev)
+						options.push(index);
+				});
+				return qrng.pick(options);
+			}
+
 			if (state[Act] == 9) {
 				if (state[ActProgress] < 3) {
 					// Bring the totem from origin to location
@@ -2177,7 +2188,7 @@ class Chinbreak {
 				} else {
 					// Exterminate the ___
 					state[QuestLocation] = Emkell_Peak;
-					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma], qrng);
+					state[QuestMob] = pickQuestMob(state[Act]);
 					state[QuestObject] = 0;
 					state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
 				}
@@ -2203,23 +2214,22 @@ class Chinbreak {
 				let questTypes = [_ => {
 					// Exterminate the ___
 					state[QuestLocation] = qloc;
-					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma], qrng);
+					state[QuestMob] = pickQuestMob(state[Act]);
 					state[QuestObject] = 0;
 					state[QuestQty] = 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2);  // TODO use charisma here (instead?)
 				}, _ => {
 					// Bring me N trophies
 					state[QuestLocation] = qloc;
 					state[QuestObject] = Trophies;
-					state[QuestMob] = randomMobNearLevel(state[Act], state[Charisma], qrng);
+					state[QuestMob] = pickQuestMob(state[Act]);
 					let qty = 1 + state[Act] + qrng.d(2) - qrng.d(2);
 					state[QuestQty] = qty;
 				}, _ => {
-					// Bring me N of SOMETHING generally
-					let value = state[Level] * 100 * Math.pow(GR, -state[Charisma]) * (0.5 * qrng.rand());
+					// Bring me N of some item
 					state[QuestLocation] = qloc;
-					state[QuestObject] = qrng.rand(2) ? Ammunition : Food;  // something you can forage for
+					state[QuestObject] = qrng.pick([Ammunition, Rations, Gold, Trophies, Rations]);
 					state[QuestMob] = 0;
-					let qty = Math.max(1, Math.round(value / DATABASE[state[QuestObject]].value));
+					let qty = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));
 					state[QuestQty] = qty;
 				}];
 				qrng.pick(questTypes)();
@@ -2610,12 +2620,12 @@ div.header {
 		</div>
 		<div id=inventory class=listview>
 			<div class=header>Inventory</div>
-			<div>Gold</div><div id=i0></div>
+			<div>Gold</div><div><span id=i0></span><span id=balgold></span></div>
 			<div id=trophies>Trophies</div><div id=i1></div>
 			<div>Reagents</div><div id=i2></div>
 			<div>Ammunition</div><div id=i3></div>
 			<div>Rations</div><div id=i4></div>
-			<div>Treasures</div><div id=i5></div>
+			<div>Treasures</div><div><span id=i5></span><span id=baltreasure></span></div>
 			<div>Healing Potions</div><div id=i6></div>
 			<div>Life Potions</div><div id=i7></div>
 			<div class=footer>Encumbrance<div id=encumbrance class=prog data-warning='#fb4' data-emergency='#f99'></div></div>
@@ -2868,6 +2878,8 @@ function updateGame(state) {
 	for (let i = 0; i < INVENTORY_COUNT; ++i) {
 		set('i' + i, state[INVENTORY_0 + i]);
 	}
+	set('balgold', state[BalanceGold] ? ' (' + state[BalanceGold] + ')' : '');
+	set('baltreasure', state[BalanceTreasures] ? ' (' + state[BalanceTreasures] + ')' : '');
 	setProgress('encumbrance', state[Encumbrance], state[Capacity]);
 	$id('trophies').innerText = state[TrophyMob] && state[Trophies] ?
 		MOBS[state[TrophyMob]].name + ' trophies' : 'Trophies';
@@ -2920,14 +2932,14 @@ function updateGame(state) {
 	original &&= original.name;
 	set('questgoal',
 		state[QuestObject] === Totem ? 'Deliver the totem' :
-		state[QuestObject] == Trophies ? `Bring me ${state[QuestQty]} ${MOBS[state[QuestMob]].name.toLowerCase()} trophies` :
+		state[QuestObject] == Trophies && state[QuestMob] ? `Bring me ${state[QuestQty]} ${MOBS[state[QuestMob]].name.toLowerCase()} trophies` :
 		state[QuestObject] ? `Bring me ${state[QuestQty]} ${SLOTS[state[QuestObject]].name.toLowerCase()}` :
 		state[QuestMob] ? 	 `Exterminate the ` + plural(MOBS[state[QuestMob]].name) :
 		'&nbsp;');
 	set('questdesc',
 		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
-		state[QuestObject] == Trophies ? `The ${plural(MOBS[state[QuestMob]].name.toLowerCase())} in ${questal} are too much. Bring proof of death back to me here in ${original}.` :
-		state[QuestObject] ? `We of ${original} stand in need of ${SLOTS[state[QuestObject]].name.toLowerCase()}. They say there's no shortage of them in ${questal}.` :
+		state[QuestObject] == Trophies && state[QuestMob] ? `The ${plural(MOBS[state[QuestMob]].name.toLowerCase())} in ${questal} are too much. Bring proof of death back to me here in ${original}.` :
+		state[QuestObject] ? `We of ${original} stand in need of ${SLOTS[state[QuestObject]].name.toLowerCase()}. They say there's no shortage of it in ${questal}.` :
 		state[QuestMob] ? 	 `Put an end to these ${plural(MOBS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
 		'<br>&nbsp;');
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
