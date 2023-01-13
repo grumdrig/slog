@@ -2227,7 +2227,7 @@ class Chinbreak {
 				}, _ => {
 					// Bring me N of some item
 					state[QuestLocation] = qloc;
-					state[QuestObject] = qrng.pick([Ammunition, Rations, Gold, Trophies, Rations]);
+					state[QuestObject] = qrng.pick([Ammunition, Gold, Trophies]);
 					state[QuestMob] = 0;
 					let qty = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));
 					state[QuestQty] = qty;

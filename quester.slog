@@ -42,7 +42,7 @@ while 1 {
   goto(.QuestLocation)
   if .QuestMob and .QuestObject {
     // Trophy hunting
-    while .Health > .MaxHealth / 2 and
+    while .Health > (.MaxHealth / 2 >? 4)  and
           .Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
       while .MobSpecies != .QuestMob or !.MobHealth {
         seek(MobSpecies)
