@@ -323,7 +323,93 @@ More API Minimization
 
 Not so sure about any of this.
 
-DASM
-----
 
-Make the disassembly assemblable as a check.
+
+Plot Cutscenes
+--------------
+
+Call advancePlot() until it returns 0 to advance Act. Wait this still requires
+a quest to keep track of the number.
+
+Have mobs have a minimum and maximum act where they appear.
+
+Acts can just advance when last quest is finished.
+
+Prologue
+
+(You can run around before starting the plot but there's no mobs or anything.)
+
+Parakeets twitter and squirrels chitter outside your cottage in Bompton Town.
+But doesn't it seem lately that the local wildlife has been acting odd? ...Aggressive?
+There's a rustling of underbrush and suddenly the town is under attack!
+Squirrels! Rabbits! Parakeets! ... Wild boars! Tigers! Feral gnomes!
+You flee in fear to the shore. From Sygnon Isle yonder, there's a rumble and a black cloud.
+Back in town, city hall is in flames. There are many corpses... You gather a few supplies...
+You vow you'll help the people of Bompton and put an end to whatever evil is afoot!
+
+Act I
+
+(Only wildlife type mobs are available)
+
+(The last quest is to bring some totem to Chinbreak Cliffs and drop it.)
+
+The shards of the Noonak Totem lie broken before you...but what glints among them?
+You brush the shards aside and pick up an impressive new weapon.
+Around you, as if emerging from a spell, many of the local fauna look about them adorably.
+...and then attack their still-bewitched bretheren!
+Suddenly, all battles cease as a thunderclap and then a moan issue from a nearby grove.
+A creature more horrible than you've ever seen before appears! As it glowers, you run!
+
+(Automatic weapon upgrade)
+
+Act II
+
+(QuestEnd = some woods)
+
+You hear a crashing in the woods ahead. You creep forward to investigate.
+It's the horrible beast! It scratches at something on the ground.
+The beast suddenly rears and sniffs the air, then charges away noisily.
+In its midden pile you discover a fine piece of armor.
+Donning it, you charge off the way the beast went. It must be put an end to!
+
+(Armor upgrade)
+
+Act III
+
+(Cutscene is second-to-last quest.)
+
+*Bunch of stuff about the beast coming to Bompton Town and causing havoc.*
+
+(End act with a boss battle with the beast.)
+
+*Another cutscene where the isle really starts smoking. Whatever, time to clean up the rest of these beasts.*
+
+Act IV
+
+You've slaugtered many such beasts and were starting to run low. Don't like the looks of that island, but it doesn't seem like a problem. What's that now, the fucker is erupting! At the same time the ground is splitting open all arount. Out crawl even worse beasts, leading little beast armies. They run to the far corners of the world. Shrugging, you sharpen your bandyclef.
+
+Act V
+
+You fight and kill one of these new minibosses but there's plenty more of them. Surely there's a broader solution. Maybe the queen miniboss. Let's keep track of their movements.
+
+Act VI
+
+We killed lots of minibosses in this act but now somehow or other we're  ready to take out the queen.
+
+(Another miniboss battle)
+
+It must be that Isle. We've got to find a way to get there. For some reason these totems seem to be the key. Someway or other we have to find the combo.
+
+Act VII
+
+Act VIII
+
+Act IX
+
+Move totems around, go to isle. Do a few more quests
+
+(Main boss battle)
+
+*Final cinematics*
+
+Somehow the ability back to Bompton is granted. Ideally it could go both ways.

@@ -10,8 +10,8 @@
 # Instead I'll do them manually for now at least
 node --trace-uncaught compiler.js -v -r steve.slog -- Snake_v1.js
 ./compiler.js -v -r test.slog -- Test.js
-./compiler.js -v -j quester.js -r quester.slog 1 'Sir Progressalot' -- ChinbreakIsland_v1.js
-./compiler.js -v -j leveler.js -r leveler.slog 2 'Gainer' -- ChinbreakIsland_v1.js
+./compiler.js -v -j quester.jstrat -r quester.slog 1 'Sir Progressalot' -- ChinbreakIsland_v1.js
+./compiler.js -v -j leveler.jstrat -r leveler.slog 2 'Gainer' -- ChinbreakIsland_v1.js
 
 
 # Manuals
