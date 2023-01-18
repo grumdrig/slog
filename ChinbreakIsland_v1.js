@@ -97,7 +97,7 @@ const SLOTS = [
 	{ name: 'Spellbook1',
 	  description: `Your spellbook has room for only four spells in its four
 	  chapters. This is the spell in the first chapter. Learn spells via
-	  learn() command and cast them with cast().` },
+	  copySpell() command and cast them with use().` },
 
 	{ name: 'Spellbook2',
 	  description: `Spellbook spell number 2.` },
@@ -128,8 +128,10 @@ const SLOTS = [
 	{ name: 'Mount',
 	  description: `Adventurers use mounts to improve their travel speed and carrying capacity.` },
 
-	{ name: 'Ring',
-	  description: `Rings can serve for decoration, and may also be imbued with magical powers.` },
+	{ name: 'Scroll',
+	  description: `Scrolls, at least the scrolls we're talking about here,
+	  have magic spells on them. Use em to cast the spell, or as a source for
+	  copying them into your spellbook.` },
 
 	{ name: 'Totem',
 	  description: `Totems are local to specific areas and may play a part in various quests.` },
@@ -265,13 +267,12 @@ const CALLS = {
 		description: `Train to improve stats (Strength, and so on).
 		Training speed can be affected by various environmental factors.` },
 
-	learn: { parameters: 'spellbook_slot,spell',
-		description: `Study a spell. This spell will replace any existing
-		spell in that spellbook slot; each character is limited to only
-		four spells at a time, so choose wisely.
+	copySpell: { parameters: 'spellbook_slot',
+		description: `Copy a spell from a scroll into your spellbook. This
+		spell will replace any existing spell in that spellbook slot. The
+		scroll will be destroyed in the process.
 
-		The spellbook_slot is a value from 1 to 4, and spell is one of
-		the predfined spell constants.` },
+		The spellbook_slot is a value from 1 to 4.` },
 
 	travel: { parameters: 'destination',
 		description: `Travel towards a given map location. If the destination
@@ -508,10 +509,9 @@ div#terrains {
 
 	head('Spells');
 
-	p(`Spells are cast using the <code>cast</code> function (for example,
-	<code>cast(Heal_Yeah)</code>). Each spell has an energy cost and may
-	consume physical reagents too. Spells may be learned using the
-	<code>learn</code> gameplay function.`);
+	p(`Spells are cast either by using a Scroll, or by using a SpellbookN
+	slot, which has both and Energy and Reagent cost. Spells may be copied
+	into the spellboook using the copySpell function.`);
 
 	p(`Some spells are enchantments, meaning they remain active until the
 	caster loses concentration, either by casting another spell or resting.`);
@@ -993,6 +993,11 @@ DATABASE[Mount] = {
 	count: MOUNT_NAMES.length - 1,
 	basePrice: 20,
 };
+DATABASE[Scroll] = {
+	names: SPELLS,
+	count: SPELLS.length - 1,
+	basePrice: 50,
+};
 
 
 ///////////////// Map
@@ -1410,8 +1415,10 @@ for (let slot = EQUIPMENT_0; slot < EQUIPMENT_0 + EQUIPMENT_COUNT; slot += 1) {
 			if (slot === Weapon) {
 				power = weaponPower(item);
 				maxPower /= NUM_WEAPON_TYPES;
+			} else if (slot === Scroll) {
+				power = SPELLS[item].level;
 			}
-			if (power <= 2) {
+			if (power <= 3) {
 				for (let t = 0; t < MAINLAND_TOWNS.length; ++t) {
 					sellAt(slot, item, MAINLAND_TOWNS[t]);
 				}
@@ -1898,25 +1905,29 @@ class Chinbreak {
 			let slot = arg1;
 			if (!state[slot]) return -1;
 
-			if (isSpellSlot(slot)) {
+			if (isSpellSlot(slot) || slot === Scroll) {
 				let spellType = state[slot];
 				let spell = SPELLS[spellType];
 				if (!spell) return -1;
 
-				// TODO have int and or wis help
+				if (isSpellSlot(slot)) {
+					// TODO have int and or wis help
 
-				let costs = spell.costs ?? [
-                       { slot: Energy, qty: spell.level },
-                       { slot: Reagents, qty: spell.level },
-                   ];
+					let costs = spell.costs ?? [
+	                       { slot: Energy, qty: spell.level },
+	                       { slot: Reagents, qty: spell.level },
+	                   ];
 
-				for (let { slot, qty } of costs)
-					if (state[slot] < qty) return -1;
+					for (let { slot, qty } of costs)
+						if (state[slot] < qty) return -1;
+
+					for (let { slot, qty } of costs)
+						dec(slot, qty);
+				} else {
+					state[Scroll] = 0;
+				}
 
 				passTime('Casting ' + spell.name, spell.duration ?? 10);
-
-				for (let { slot, qty } of costs)
-					dec(slot, qty);
 
 				endEnchantment();
 
@@ -2023,9 +2034,9 @@ class Chinbreak {
 					                             fsi.item == levelToBe).length === 0)
 					return -1;
 				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
-				price = Math.round(DATABASE[slot].basePrice * Math.exp(GR, levelToBe));
+				// TODO store the price in the forSale DB
+				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, levelToBe - 1));
 			} else if (isInventorySlot(slot)) {
-				// TODO generally can't buy some items
 				qty = arg2;
 				if (qty < 0) return -1;
 				levelToBe = Math.min(MAX_INT, state[slot] + qty);
@@ -2281,9 +2292,9 @@ class Chinbreak {
 			dec(TrainingPoints);
 			return state[slot];
 
-		} else  if (operation == learn) {
-			let [slot, spellType] = [arg1, arg2];
-			let spell = SPELLS[spellType];
+		} else  if (operation == copySpell) {
+			let slot = arg1;
+			let spell = SPELLS[state[Scroll]];
 			if (!spell) return -1;
 			if (local.terrain !== TOWN) return -1;
 			if (!isSpellSlot(slot)) return -1;
@@ -2306,7 +2317,8 @@ class Chinbreak {
 
 			dec(Energy, spell.level);
 
-			state[slot] = spellType;
+			state[slot] = state[Scroll];
+			state[Scroll] = 0;
 
 			return state[slot];
 
@@ -2616,7 +2628,7 @@ div.header {
 			<div>Headgear</div> <div id=e3></div>
 			<div>Footwear</div> <div id=e4></div>
 			<div>Mount</div>    <div id=e5></div>
-			<div>Ring</div>     <div id=e6></div>
+			<div>Scroll</div>   <div id=e6></div>
 			<div>Totem</div>    <div id=e7></div>
 		</div>
 		<div id=inventory class=listview>
@@ -2863,8 +2875,8 @@ function updateGame(state) {
 		let v = state[slot];
 		if (!v)
 			set('e' + i, '');
-		else if (slot === Ring)
-			set('e' + i, 'Ring of ' + SLOTS[v].name);
+		else if (slot === Scroll)
+			set('e' + i, 'Scroll of ' + SPELLS[v].name);
 		else if (slot === Totem)
 			set('e' + i, Chinbreak.MAP[v].name.split(' ')[0] + ' Totem');
 		else {

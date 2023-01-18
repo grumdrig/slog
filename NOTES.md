@@ -402,7 +402,11 @@ It must be that Isle. We've got to find a way to get there. For some reason thes
 
 Act VII
 
+Find the wise man that knows how
+
 Act VIII
+
+Do some task that gives you the knowledge
 
 Act IX
 
@@ -413,3 +417,20 @@ Move totems around, go to isle. Do a few more quests
 *Final cinematics*
 
 Somehow the ability back to Bompton is granted. Ideally it could go both ways.
+
+TODO
+----
+
+Document -j tag if I haven't already.
+
+Generate strat files from IDE
+
+Cutscene support
+
+Main quests
+
+Finish plotline
+
+Setting breakpoint should reset and run instant style
+
+I wonder how many to do lists there are in this project

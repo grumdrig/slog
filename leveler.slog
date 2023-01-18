@@ -37,7 +37,9 @@ func goodHunting(forLevel) {
   }
 }
 
-learn(Spellbook1, Heal_Yeah)
+cheat(Gold, 80)
+assert 0 < buy(Scroll, Heal_Yeah)
+copySpell(Spellbook1)
 
 while .Level < 88 {
   goto(goodHunting(.Level))
