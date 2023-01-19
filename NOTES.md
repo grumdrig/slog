@@ -421,8 +421,6 @@ Somehow the ability back to Bompton is granted. Ideally it could go both ways.
 TODO
 ----
 
-Document -j tag if I haven't already.
-
 Generate strat files from IDE
 
 Cutscene support

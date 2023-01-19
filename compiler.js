@@ -1516,9 +1516,13 @@ in place of any output file, output is piped to stdout.
 
 OPTIONS:
 	-p file, --package=file
-		Generate a Slog strategy package and write it to the named file
+		Generate a Slog strategy package in JSON format and write it to the
+		named file
 	-s, --symbols
 		Include debugging symbols in the generated strategy package file
+	-j file, --javascript=file
+		Output a Slog strategy package in the form of a javascript wrapper
+		around a JSON package.
 	-i file, --interface=file
 		Read the game interface from the named game logic file. The filename
 		should include a path
