@@ -427,6 +427,4 @@ Main quests
 
 Finish plotline
 
-Setting breakpoint should reset and run instant style
-
 I wonder how many todo lists there are in this project

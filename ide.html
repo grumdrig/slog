@@ -223,8 +223,6 @@ iframe {
 			&middot;
 			<input type=checkbox id=autoplay>
 				<label for=autoplay>Autoplay on compile</label></input>
-			&middot;
-			Goto 🎲 <input id=goto style='width:6ex'></input>
 		</div>
 		<div class="status-bar" id=debugbar>
 			<p class="status-bar-field" id=r0>PC</p>
@@ -232,7 +230,7 @@ iframe {
 			<p class="status-bar-field" id=r2>FP</p>
 			<p class="status-bar-field" id=r3>AX</p>
 			<p class="status-bar-field" id=clock>CK</p>
-			<p class="status-bar-field" id=turns>TU</p>
+			<p class="status-bar-field">🎲 <input id=turn style='width:6ex'> </input></p>
 		</div>
 	</div>
 </div>
@@ -525,7 +523,7 @@ function run() {
 
 
 function goTo() {
-	let turn = parseInt($('#goto').value);
+	let turn = parseInt($('#turn').value);
 	if (Number.isNaN(turn)) return;
 	if (turn < vm.turns) resetMachine();
 	while (vm.alive() && vm.turns != turn)
@@ -573,7 +571,7 @@ function prepIDE() {
 	$("#params").value = ideState.params || '';
 	$("#speed").value = ideState.speed || 'normal';
 
-	$('#goto').addEventListener('change', goTo);
+	$('#turn').addEventListener('change', goTo);
 }
 
 
@@ -600,7 +598,7 @@ function updateDebuggerState(vm) {
 		if (r) r.innerText = d.innerText;
 	}
 	$("#clock").innerText = '⏳ ' + vm.clock;
-	$("#turns").innerText = '🎲 ' + vm.turns;
+	$("#turn").value = vm.turns;
 
 	if (!$("#registers").children[n])
 		$('#registers').appendChild(document.createElement('hr'));
