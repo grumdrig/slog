@@ -112,6 +112,16 @@ iframe {
 	overflow: auto;
 	height: 390px;
 }
+
+button.vcr {
+	width: 30px;
+	min-width: 0;
+	padding: 0;
+}
+#params, #autoplayspeed {
+	width: 90px;
+}
+
 </style>
 
 </head>
@@ -204,25 +214,27 @@ iframe {
 			<div class=brain><div id='memory'></div></div>
 		</div>
 		<div class=nobo>
-			<button onclick="step()">Step VM</button>
-			<button onclick="bigstep()">Step Game</button>
+			<button onclick="reset()" class=vcr>⏮</button>
 			&middot;
-			<button onclick="play()">Play</button>
-			<label for=speed>Speed:</label>
-			<select id=speed>
-				<option value=instant>Instant</option>
-				<option value=turbo>Turbo</option>
+			<button onclick="step()" class=vcr>+⏳</button>
+			<button onclick="animateSteps()" class=vcr>⏵⏳</button>
+			&middot;
+			<button onclick="bigstep()" class=vcr>+🎲</button>
+			<button onclick="play()" class=vcr>⏵</button>
+			<button onclick="turbo()" class=vcr>⏵⏵</button>
+			&middot;
+			<button onclick="finish()" class=vcr>⏭</button>
+			&middot;
+			<label for=autoplayspeed>Autoplay:</label>
+			<select id=autoplayspeed>
+				<option value=nope>None</option>
+				<option value=animate>Animate</option>
 				<option value=normal selected>Normal</option>
-				<option value=animate>Animate VM</option>
+				<option value=turbo>Turbo</option>
+				<option value=instant>Instant</option>
 			</select>
 			&middot;
-			<button onclick="reset()">Reset</button>
-		</div>
-		<div style='margin:2px'>
-			<label for="params">Parameters</label><input type=text id=params></input>
-			&middot;
-			<input type=checkbox id=autoplay>
-				<label for=autoplay>Autoplay on compile</label></input>
+			<label for="params">Parameters:</label><input type=text id=params></input>
 		</div>
 		<div class="status-bar" id=debugbar>
 			<p class="status-bar-field" id=r0>PC</p>
@@ -380,8 +392,7 @@ function saveChanges() {
 	const ideState = {
 		source: $('#source').value,
 		params: $('#params').value,
-		autoplay: $('#autoplay').checked,
-		speed: $('#speed').value,
+		autoplayspeed: $('#autoplayspeed').value,
 	};
 	localStorage.setItem('slog-ide', JSON.stringify(ideState));
 }
@@ -412,9 +423,7 @@ function comp(initialLoad) {
 		    var data = new Blob([json]);
 		    $('#dlstrat').href = URL.createObjectURL(data);
 
-		    // And autoplay
-			if ($("#autoplay").checked)
-				play();
+			autoplay();
 		}
 	} catch (e) {
 		let message;
@@ -482,15 +491,17 @@ const SPEEDS = {
 	instant: 4,
 };
 
-function play() {
-	stopRunimation();
-	bringToFront($id('game-window'));
-	vm.running = true;
-	run();
+function autoplay() {
+	if (SPEEDS[$('#autoplayspeed').value]) {
+		stopRunimation();
+		bringToFront($id('game-window'));
+		vm.running = true;
+		run();
+	}
 }
 
 function run() {
-	let speed = SPEEDS[$('#speed').value];
+	let speed = SPEEDS[$('#autoplayspeed').value];
 
 	if (speed === SPEEDS.animate) {
 		let calledOut = vm.step();
@@ -521,6 +532,47 @@ function run() {
 	}
 }
 
+function animateSteps() {
+	stopRunimation();
+	bringToFront($id('game-window'));
+	vm.running = true;
+	stepAnimation();
+}
+
+function stepAnimation() {
+	let calledOut = vm.step();
+	updateDebuggerState(vm);
+	if (calledOut)
+		game.updateUI();
+	if (vm.alive())
+		window.gameplayTimer = setTimeout(stepAnimation, 100);
+}
+
+function play() {
+	stopRunimation();
+	bringToFront($id('game-window'));
+	vm.running = true;
+	game.updateUI();
+	updateDebuggerState(vm);
+	Game.playmation(vm);
+}
+
+function turbo() {
+	stopRunimation();
+	bringToFront($id('game-window'));
+	vm.running = true;
+	runTurbo();
+}
+
+function runTurbo() {
+	Game.playmation(vm, true);
+	// updateDebuggerState(vm);
+	game.updateUI();
+	if (vm.alive())
+		window.gameplayTimer = setTimeout(runTurbo, 1);
+	else
+		updateDebuggerState(vm);
+}
 
 function goTo() {
 	let turn = parseInt($('#turn').value);
@@ -546,6 +598,14 @@ function reset() {
 		game.updateUI();
 }
 
+function finish() {
+	stopRunimation();
+	while (vm.alive())
+		vm.step();
+	updateDebuggerState(vm);
+	game.updateUI();
+}
+
 function rand(m) { return Math.floor(Math.random() * m) }
 function crand(s) { return s * (Math.random() - Math.random()) }
 
@@ -567,9 +627,8 @@ function prepIDE() {
 
 	let ideState = JSON.parse(localStorage.getItem('slog-ide') ?? '{}');
 	$("#source").value = ideState.source || "// hello, world!";
-	$("#autoplay").checked = ideState.autoplay || false;
 	$("#params").value = ideState.params || '';
-	$("#speed").value = ideState.speed || 'normal';
+	$("#autoplayspeed").value = ideState.autoplayspeed || 'normal';
 
 	$('#turn').addEventListener('change', goTo);
 }
