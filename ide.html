@@ -143,6 +143,7 @@ iframe {
 				<button role="tab" aria-controls="tab-B">Assembly</button>
 				<button role="tab" aria-controls="tab-C">Disassembly</button>
 				<button role="tab" aria-controls="tab-D">Interface</button>
+				<button role="tab" aria-controls="products-tab">Products</button>
 			</menu>
 			<article role="tabpanel" id="tab-A">
 				<textarea rows=16 cols=50 id=source></textarea><br/>
@@ -157,6 +158,20 @@ iframe {
 			</article>
 			<article role="tabpanel" hidden id="tab-D">
 				<textarea readonly rows=18 cols=60 id=interface></textarea>
+			</article>
+			<article role="tabpanel" hidden id="products-tab">
+
+				<div class=field-row style="display:grid;grid-template-columns:1fr 4fr;">
+					<label for=strat-title>Title</label><div id=strat-title>&nbsp;</div>
+					<label for=strat-author style=margin-left:0>Author</label><div id=strat-author>&nbsp;</div>
+					<label for=strat-length style=margin-left:0>Length</label><div id=strat-length>&nbsp;</div>
+				</div>
+				<fieldset class=field-row style="grid-column:1/3" id=s-d-m>
+						<legend>Description</legend>
+						<div class=field-row id=strat-description>&nbsp;</div>
+				</fieldset>
+
+				<p><a id="dlstrat" download="package.strat" type='text/json'>Download Package File</a></p>
 			</article>
 		</section>
 		<div class="status-bar">
@@ -381,10 +396,26 @@ function comp(initialLoad) {
 	$("#errors").innerHTML = '&nbsp;';
 	$("#errors").classList.remove("err");
 	try {
-		let sources = [$("#source").value];
-		$("#asm").value = compile(...sources);
+		let source = $("#source").value;
+		$("#asm").value = compile(source);
 		if (assemble()) {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
+
+			// Create strat d/l link
+			let pack = {};
+			if (asm.target) pack.target = asm.target;
+			parseDocumentation(pack, source);
+			pack.binary = Array.from(asm.code);
+			// if (symbols) pack.symbols = asm.labels;
+			$('#strat-title').innerText = pack.title ?? '(untitled)';
+			$('#strat-author').innerText = pack.author ?? '(anonymous)';
+			$('#strat-length').innerText = pack.binary.length + ' bytes';
+			$('#strat-description').innerText = pack.description ?? '(no description)';
+		    var json = JSON.stringify(pack);
+		    var data = new Blob([json]);
+		    $('#dlstrat').href = URL.createObjectURL(data);
+
+		    // And autoplay
 			if ($("#autoplay").checked)
 				play();
 		}
