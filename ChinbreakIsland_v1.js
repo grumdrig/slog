@@ -1548,7 +1548,7 @@ class Prng {
 		return this.#eat(0x147e9e7) % scale;
 	}
 
-	d(pips) { return this.irand(pips) + 1 }
+	d(pips) { return pips ? this.irand(pips) + 1 : 0 }
 
 	civRoll(att, def) { return this.irand(att + def) < att }
 
@@ -2404,7 +2404,7 @@ class Chinbreak {
 			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 99) return 0;
 			if (state[Experience] < Chinbreak.xpNeededForLevel(state[Level] + 1))
-				return 0;
+				return -1;
 			inc(Level);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[Endurance]));
 			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[Wisdom]));
@@ -2991,7 +2991,7 @@ function updateGame(state) {
 function gameplay(inst, arg1, arg2) {
 	arg1 = arg1 || eval($("#arg1").value);
 	arg2 = arg2 || eval($("#arg2").value);
-	let result = Chinbreak.handleInstruction(vm.state, inst, arg1, arg2);
+	let result = game.handleInstruction(vm.state, inst, arg1, arg2);
 	$("#result").innerText = result;
 	updateDebuggerState(vm);
 	updateGame(vm.state);
