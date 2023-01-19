@@ -1636,7 +1636,9 @@ class Chinbreak {
 
 	updateUI() {
 		$('#name').innerText = this.characterName;
-		updateGame(this.state)
+		updateGame(this.state);
+		animate.progress = animate.duration = 0;
+		setTaskBar();
 	}
 
 	static generateInterface = generateInterface;
@@ -2026,7 +2028,7 @@ class Chinbreak {
 		} else if (operation === buy) {
 			let slot = arg1;
 			if (!local.forSale) return -1;  // nothing to buy here
-			let qty, levelToBe, price;
+			let qty, levelToBe, price, description;
 			if (isEquipmentSlot(slot)) {
 				qty = 1;
 				levelToBe = arg2;
@@ -2036,11 +2038,13 @@ class Chinbreak {
 				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
 				// TODO store the price in the forSale DB
 				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, levelToBe - 1));
+				description = SLOTS[slot].name.toLowerCase() + ': ' + DATABASE[slot].names[levelToBe].name;
 			} else if (isInventorySlot(slot)) {
 				qty = arg2;
 				if (qty < 0) return -1;
 				levelToBe = Math.min(MAX_INT, state[slot] + qty);
 				price = DATABASE[slot].value;
+				description = indefiniteItems(slot, qty)
 			} else {
 				return -1;
 			}
@@ -2070,7 +2074,7 @@ class Chinbreak {
 			// You may proceed with the purchase
 			inc(Gold, -price);
 			state[slot] = levelToBe;
-			passTime('Buying ' + indefiniteItems(slot, 2), 3);
+			passTime('Buying ' + description, 3);
 			return qty;
 
 		} else if (operation === sell || operation === give || operation === drop) {
@@ -3020,7 +3024,6 @@ Chinbreak.playmation = function(vm, butStop) {
 
 function animate() {
 	animate.progress += 10;
-	setTaskBar();
 	if (animate.progress >= animate.duration) {
 		if (typeof updateDebuggerState !== 'undefined') // TODO awkward as hell
 			updateDebuggerState(vm);
@@ -3028,6 +3031,7 @@ function animate() {
 		if (vm.alive())
 			window.gameplayTimer = setTimeout(_ => Chinbreak.playmation(vm), 1);
 	} else {
+		setTaskBar();
 		window.gameplayTimer = setTimeout(animate, 10);
 	}
 }
