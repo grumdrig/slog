@@ -224,7 +224,7 @@ iframe {
 			<input type=checkbox id=autoplay>
 				<label for=autoplay>Autoplay on compile</label></input>
 			&middot;
-			Breakpoint 🎲 <input id=breakpoint style='width:6ex'></input>
+			Goto 🎲 <input id=goto style='width:6ex'></input>
 		</div>
 		<div class="status-bar" id=debugbar>
 			<p class="status-bar-field" id=r0>PC</p>
@@ -384,7 +384,6 @@ function saveChanges() {
 		params: $('#params').value,
 		autoplay: $('#autoplay').checked,
 		speed: $('#speed').value,
-		breakponit: $('#breakpoint').value,
 	};
 	localStorage.setItem('slog-ide', JSON.stringify(ideState));
 }
@@ -516,27 +515,34 @@ function run() {
 			updateDebuggerState(vm);
 
 	} else if (speed === SPEEDS.instant) {
-		let breakpoint = parseInt($('#breakpoint').value);
 		while (vm.alive()) {
 			vm.step();
-			if (vm.turns == breakpoint) break;
 		}
 		updateDebuggerState(vm);
 		game.updateUI();
 	}
 }
 
-// function play() {
-// 	stopRunimation();
-// 	vm.running = true;
-// 	Game.playmation(vm);
-// }
+
+function goTo() {
+	let turn = parseInt($('#goto').value);
+	if (Number.isNaN(turn)) return;
+	if (turn < vm.turns) resetMachine();
+	while (vm.alive() && vm.turns != turn)
+		vm.step();
+	updateDebuggerState(vm);
+	game.updateUI();
+}
+
+
+function resetMachine() {
+	game = Game && new Game(asm.code, ...$('#params').value.split(/\W+/));
+	vm = new VirtualMachine(asm.code, game);
+}
 
 function reset() {
 	stopRunimation();
-	if (Game)
-		game = new Game(asm.code, ...$('#params').value.split(/\W+/));
-	vm = new VirtualMachine(asm.code, game);
+	resetMachine();
 	updateDebuggerState(vm);
 	if (game)
 		game.updateUI();
@@ -566,7 +572,8 @@ function prepIDE() {
 	$("#autoplay").checked = ideState.autoplay || false;
 	$("#params").value = ideState.params || '';
 	$("#speed").value = ideState.speed || 'normal';
-	$("#breakpoint").value = ideState.breakpoint || '';
+
+	$('#goto').addEventListener('change', goTo);
 }
 
 

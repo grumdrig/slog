@@ -421,8 +421,6 @@ Somehow the ability back to Bompton is granted. Ideally it could go both ways.
 TODO
 ----
 
-Generate strat files from IDE
-
 Cutscene support
 
 Main quests
@@ -431,4 +429,4 @@ Finish plotline
 
 Setting breakpoint should reset and run instant style
 
-I wonder how many to do lists there are in this project
+I wonder how many todo lists there are in this project
