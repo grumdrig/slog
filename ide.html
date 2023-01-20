@@ -114,12 +114,15 @@ iframe {
 }
 
 button.vcr {
-	width: 30px;
+	width: 22px;
 	min-width: 0;
+	min-height: 0;
+	height: 21px;
 	padding: 0;
 }
 #params, #autoplayspeed {
 	width: 70px;
+	height: 21px;
 }
 
 </style>
@@ -213,37 +216,40 @@ button.vcr {
 			<div class=brain><div id=registers></div></div>
 			<div class=brain><div id='memory'></div></div>
 		</div>
-		<div class=nobo>
-			<button onclick="reset()" class=vcr>⏮</button>
-			&middot;
-			<button onclick="step()" class=vcr>&#xFF0B;⏳</button>
-			<button onclick="animateSteps()" class=vcr>⏵⏳</button>
-			&middot;
-			<button onclick="goto(vm.turns - 1)" class=vcr>&#xFF0D;🎲</button>
-			<button onclick="goto(vm.turns + 1)" class=vcr>&#xFF0B;🎲</button>
-			<button onclick="play()" class=vcr>⏵</button>
-			<button onclick="turbo()" class=vcr>⏵⏵</button>
-			&middot;
-			<button onclick="finish()" class=vcr>⏭</button>
-			&middot;
-			<label for=autoplayspeed>Autoplay:</label>
-			<select id=autoplayspeed>
-				<option value=nope>None</option>
-				<option value=animate>Animate</option>
-				<option value=normal selected>Normal</option>
-				<option value=turbo>Turbo</option>
-				<option value=instant>Instant</option>
-			</select>
-			&middot;
-			<label for="params">Parameters:</label><input type=text id=params></input>
-		</div>
 		<div class="status-bar" id=debugbar>
-			<p class="status-bar-field" id=r0>PC</p>
-			<p class="status-bar-field" id=r1>SP</p>
-			<p class="status-bar-field" id=r2>FP</p>
-			<p class="status-bar-field" id=r3>AX</p>
-			<p class="status-bar-field" id=clock>CK</p>
-			<p class="status-bar-field">🎲 <input id=turn style='width:6ex'> </input></p>
+			<div class='status-bar-field'>
+				<button onclick="reset()" class=vcr>⏮</button>
+			</div>
+			<div class='status-bar-field'>
+				⏳
+				<span id=clock>0</span>
+				<button onclick="step()" class=vcr>&#xFF0B;</button>
+				<button onclick="animateSteps()" class=vcr>⏵</button>
+			</div>
+			<div class='status-bar-field'>
+				🎲
+				<input id=turn style='width:6ex'> </input>
+				<button onclick="goto(vm.turns - 1)" class=vcr>&#xFF0D;</button>
+				<button onclick="goto(vm.turns + 1)" class=vcr>&#xFF0B;</button>
+				<button onclick="play()" class=vcr>⏵</button>
+				<button onclick="turbo()" class=vcr>⏵⏵</button>
+			</div>
+			<div class='status-bar-field'>
+				<button onclick="finish()" class=vcr>⏭</button>
+			</div>
+			<div class='status-bar-field'>
+				<label for=autoplayspeed>Autorun </label>
+				<select id=autoplayspeed>
+					<option value=nope>None</option>
+					<option value=animate>Animate</option>
+					<option value=normal selected>Normal</option>
+					<option value=turbo>Turbo</option>
+					<option value=instant>Instant</option>
+				</select>
+			</div>
+			<div class='status-bar-field'>
+				<label for="params">Params </label><input type=text id=params></input>
+			</div>
 		</div>
 	</div>
 </div>
@@ -651,11 +657,8 @@ function updateDebuggerState(vm) {
 		let d = $("#registers").children[n] ||
 						$("#registers").appendChild(document.createElement('pre'));
 		d.innerText = regFmt(REGISTER_NAMES[address] || i, vm.registers[i]);
-
-		let r = $("#r" + i);
-		if (r) r.innerText = d.innerText;
 	}
-	$("#clock").innerText = '⏳ ' + vm.clock;
+	$("#clock").innerText = vm.clock;
 	$("#turn").value = vm.turns;
 
 	if (!$("#registers").children[n])
