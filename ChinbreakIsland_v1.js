@@ -188,6 +188,8 @@ const SLOTS = [
 	{ name: 'MobAggro',
 	  description: `Greater than zero if nearby creature is aggressive towards you, i.e. attacking.` },
 
+  	{ name: 'QuestType',
+  	  description: `Indicates whether this is a main or side quest.` },
 
 	{ name: 'QuestObject',
 	  description: `The item slot which is the target of the current quest, if any.` },
@@ -297,10 +299,13 @@ const CALLS = {
 	sell: { parameters: 'slot,quantity',
 		description: `Sell an inventory item of piece of equipment.` },
 
-	seekquest: {
+	seekquest: { parameters: 'main',
 		description: `While in town, ask around and listen to rumors in hopes
 		of discovering adventures that await and tasks to complete.
-		There's only one quest active at any given time.` },
+		There's only one quest active at any given time. The parameter is
+		1 for main quests (which contribute to game completion) or some
+		other value for side quests (which may be completed for lulz or
+		profit).` },
 
 	completequest: {
 		description: `Report back to the originator of the current quest to
@@ -1200,6 +1205,8 @@ MOBS.forEach((d, index) => {
 	if (d) define(d.name.replace(' ', '_'), index);
 });
 
+const Main_Boss = Mox_Klatryon;
+
 const MAP = [null,
 	{
 		name: "Watha",
@@ -1591,6 +1598,7 @@ function clearMob(state) {
 }
 
 function clearQuest(state) {
+	state[QuestType] = 0;
 	state[QuestObject] = 0;
 	state[QuestMob] = 0;
 	state[QuestLocation] = 0;
@@ -2169,7 +2177,9 @@ class Chinbreak {
 			return qty;
 
 		} else if (operation === seekquest) {
-			let qrng = new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location]);
+			const ismain = arg1;
+
+			let qrng = ismain ? new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location]) : rng;
 			let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
 			passTime('Asking around about quests', hours);
 
@@ -2188,7 +2198,7 @@ class Chinbreak {
 				return qrng.pick(options);
 			}
 
-			if (state[Act] == 9) {
+			if (ismain && state[Act] == 9) {
 				if (state[ActProgress] < 3) {
 					// Bring the totem from origin to location
 					state[QuestObject] = Totem;
@@ -2252,14 +2262,16 @@ class Chinbreak {
 				state[QuestEnd] = state[Location];
 			}
 			state[QuestProgress] = 0;
+			state[QuestType] = ismain ? 1 : 2;  // TODO define constants for godsake
 			return 1;
 
 		} else if (operation === completequest) {
-			if (!state[QuestObject] && !state[QuestMob]) return -1;
+			if (!state[QuestType]) return -1;
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			inc(Experience, 50 * state[Act]);
-			inc(ActProgress);
+			if (state[QuestType] === 1)  // i.e. is main plot quest
+				inc(ActProgress);
 			clearQuest(state);
 			if (state[Act] === 9 && state[ActProgress] === 3) {
 				passTime('Being magically transported to Sygnon Isle!', 3);
