@@ -1508,7 +1508,7 @@ function generateMap(scrambleFrom) {
 DATABASE[Ammunition] =  { value: 1/10,  weight: 1/10,  scarcity: 10,       };
 DATABASE[Trophies] =    { value: 1,     weight: 1,     scarcity: 50,       };
 DATABASE[Gold] =        { value: 1,     weight: 1/100, scarcity: 10000,    };
-DATABASE[Rations] =        { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
+DATABASE[Rations] =     { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
 DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
 DATABASE[Potions] = 	{ value: 100,   weight: 1,     scarcity: 100000,   };
 DATABASE[Treasures] =   { value: 1000,  weight: 3,     scarcity: 1000000,  };
@@ -1605,6 +1605,74 @@ function clearQuest(state) {
 	state[QuestEnd] = 0;
 	state[QuestProgress] = 0;
 	state[QuestQty] = 0;
+}
+
+const QUEST_TYPES = [ null,
+	{
+		// Exterminate the ___
+		location: (state, qrng) => pickQuestLocation(state, qrng),
+		mob: (state, qrng) => pickQuestMob(state[Act]),
+		qty: (state, qrng) => 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2),  // TODO use charisma here (instead?)
+	}, {
+		// Bring me N trophies
+		location: (state, qrng) => pickQuestLocation(state, qrng),
+		object: Trophies,
+		mob: (state, qrng) => pickQuestMob(state[Act]),
+		qty: (state, qrng) => 1 + state[Act] + qrng.d(2) - qrng.d(2),
+	}, {
+		// Bring me N of some item
+		location: (state, qrng) => pickQuestLocation(state, qrng),
+		object: (state, qrng) => qrng.pick([Ammunition, Trophies]),
+					// TODO add Gold and Rations to this list, which will need smarter AI
+		qty: (state, qrng) => Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma])),
+	}, {
+		// Bring the totem from origin to location
+		act: 9,
+		quest: [1,2,3],
+		object: Totem,
+		end: (state, qrng) => qrng.d(36),
+		location: (state, qrng) => {
+			let loc;
+			do { loc = qrng.d(36) } while (loc == state[QuestEnd]);
+			return loc
+		},
+		qty: 2,
+	}, {
+		// Fight the main boss
+		act: 9,
+		quest: 9,
+		mob: Main_Boss,
+		qty: 1,
+		location: Emkell_Peak,
+	}, {
+		// Exterminate the ___
+		act: 9,
+		location: Emkell_Peak,
+		mob: (state, qrng) => pickQuestMob(state[Act]),
+		qty: (state, qrng) => 25 + qrng.d(4) - qrng.d(4),
+	}
+];
+
+function pickQuestLocation(state, qrng) {
+	if (mapInfo(state[Location], state).offshore)
+		return Emkell_Peak;
+	let qloc = state[Location];
+	for (let dist = state[Act] + qrng.irand(2); dist > 0; dist -= 1) {
+		// Random walk to find the quest location
+		let x = longitude(qloc);
+		let y = latitude(qloc);
+		let d = 2 * qrng.irand(2) - 1;
+		let dloc;
+		if (qrng.irand(2)) {
+			if (x + d < 0 || x + d >= 6) d *= -1;
+			dloc = 1 + 6 * y + (x + d);
+		} else {
+			if (y + d < 0 || y + d >= 6) d *= -1;
+			dloc = 1 + 6 * (y + d) + x;
+		}
+		if (dloc != state[Location]) qloc = dloc;
+	}
+	return qloc;
 }
 
 
@@ -2218,24 +2286,7 @@ class Chinbreak {
 					state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
 				}
 			} else {
-				let qloc = state[Location];
-				if (local.offshore) {
-					qloc = Emkell_Peak;
-				} else for (let dist = state[Act] + qrng.irand(2); dist > 0; dist -= 1) {
-					// Random walk to find the quest location
-					let x = longitude(qloc);
-					let y = latitude(qloc);
-					let d = 2 * qrng.irand(2) - 1;
-					let dloc;
-					if (qrng.irand(2)) {
-						if (x + d < 0 || x + d >= 6) d *= -1;
-						dloc = 1 + 6 * y + (x + d);
-					} else {
-						if (y + d < 0 || y + d >= 6) d *= -1;
-						dloc = 1 + 6 * (y + d) + x;
-					}
-					if (dloc != state[Location]) qloc = dloc;
-				}
+				let qloc = pickQuestLocation(state, qrng);
 				let questTypes = [_ => {
 					// Exterminate the ___
 					state[QuestLocation] = qloc;
