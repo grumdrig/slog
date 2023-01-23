@@ -161,16 +161,19 @@ declarations and statements.
 Target
 ======
 
-The target declaration specifies the game or app environment in which the code
-expects to be embedded. It has the effect of causing definitions particular
-to that environment to be imported for use by the subsequent code. It also
-serves to indicate that that environment be loaded when the code is
+The target specification indicates the game or app environment in which the
+code expects to be embedded. It has the effect of causing definitions
+particular to that environment to be imported for use by the subsequent code.
+It also serves to indicate that that environment be loaded when the code is
 executed.
 
-The target declaration is the keyword `target` followed by an identifier. For
-example:
+The target specification is the keyword `target` followed by an identifier.
+For example:
 
 	target ChinbreakIsland_v1
+
+In this case the compiler would expect the file `ChinbreakIsland_v1.js` be
+present in order to load definitions from it.
 
 
 Variables
@@ -438,7 +441,7 @@ Grammar
 The nitty gritty. (This may not be 100% accurate and up-to-date, but it should
 be close.)
 
-	module := (constant-definition | variable-declaration | function-definition | external-definition | statement)*
+	module := (constant-definition | variable-declaration | function-definition | external-definition | target-specification statement)*
 
 	constant-definition := 'const' identifier '=' expr
 
@@ -453,6 +456,8 @@ be close.)
 	code-block := (constant-definition | variable-declaration | statement)*
 
 	macro-definition := 'macro' identifier '(' function-parameter-list? ')' function-body
+
+	target-specification := 'target' identifier
 
 	statement := while-statement | if-statement | expression-statement | return-statement | break-statement | halt-statement | assertion-statement
 
