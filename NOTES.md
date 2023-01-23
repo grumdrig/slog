@@ -189,7 +189,7 @@ climb in value as the game progresses. It's index in the state vector is
 designated `Level`, and the character's current level may be accessed in a
 program by prefixing the `.` operator to that index, i.e., by `.Level`.
 
-Similarly, to give some other examples, the character's currest strength
+Similarly, to give some other examples, the character's current strength
 rating is `.Strength`, and current location is `.Location`.
 
 The other interface with the game world from within a character program is a
@@ -414,16 +414,19 @@ Move totems around, go to isle. Do a few more quests
 
 (Main boss battle)
 
+Epilogue
+
 *Final cinematics*
 
 Somehow the ability back to Bompton is granted. Ideally it could go both ways.
+
+By only partially completing the epilogue one could continue without ending the game.
+
 
 TODO
 ----
 
 Cutscene support
-
-Main quests
 
 Finish plotline
 

@@ -1069,14 +1069,14 @@ const MOBS = [
 			Polearms, -1,
 			Ranged,   -1),
 		startState: [
-			{ slot: Agility, increment: +2 },
+			{ slot: Agility,  increment: +2 },
 			{ slot: Charisma, increment: +1 },
 			{ slot: Strength, increment: -1 },
-			{ slot: Wisdom, increment: -2 },
+			{ slot: Wisdom,   increment: -2 },
 
 			{ slot: Weapon,   value: 2},
 			{ slot: Headgear, value: 1},
-			{ slot: Rations,     value: 1 },
+			{ slot: Rations,  value: 1 },
 		],
 		description: "Likable, lithe creatures of small stature, often underestimated.",
 		occurrence: 0.2,
