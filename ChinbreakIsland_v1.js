@@ -1610,48 +1610,54 @@ function clearQuest(state) {
 const QUEST_TYPES = [ null,
 	{
 		// Exterminate the ___
-		location: (state, qrng) => pickQuestLocation(state, qrng),
-		mob: (state, qrng) => pickQuestMob(state[Act]),
-		qty: (state, qrng) => 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2),  // TODO use charisma here (instead?)
+		name: "Exterminate_Mob",
+		title: `Exterminate the $MS`,
+		description: `Put an end to these $MS. You'll find plenty of them to kill in $L.`,
+		explanation: `Execute the required quantity of a particular creature.
+		(They needn't be in the quest location, but there will be many of
+		them to be found there.)`,
 	}, {
 		// Bring me N trophies
-		location: (state, qrng) => pickQuestLocation(state, qrng),
-		object: Trophies,
-		mob: (state, qrng) => pickQuestMob(state[Act]),
-		qty: (state, qrng) => 1 + state[Act] + qrng.d(2) - qrng.d(2),
+		name: "Collect_Trophies",
+		title: `Bring me $N $M trophies`,
+		description: `The $M in $L are too much. Bring proof of death back to me here in $E.`,
+		explanation: `Return to the quest ending location a hand over a
+		certain quantity of trophies of a particular monster. They can be
+		obtained by killing said creature and looting the corpse. You must
+		have trophies from only that creature for them to count towards
+		quest completion.`,
 	}, {
 		// Bring me N of some item
-		location: (state, qrng) => pickQuestLocation(state, qrng),
-		object: (state, qrng) => qrng.pick([Ammunition, Trophies]),
-					// TODO add Gold and Rations to this list, which will need smarter AI
-		qty: (state, qrng) => Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma])),
+		name: "Collect_Item",
+		title: `Bring me $N $O`,
+		description: `We of $E stand in need of $O. They say there's no shortage in $L.`,
+		explanation: `Simply hand over a certain quantity of some item at the
+		quest ending location. They may be obtained however you like but
+		they may be foraged with greater ease than usual at the quest location.`,
 	}, {
 		// Bring the totem from origin to location
-		act: 9,
-		quest: [1,2,3],
-		object: Totem,
-		end: (state, qrng) => qrng.d(36),
-		location: (state, qrng) => {
-			let loc;
-			do { loc = qrng.d(36) } while (loc == state[QuestEnd]);
-			return loc
-		},
-		qty: 2,
+		name: "Transport_Totem",
+		title: 'Deliver the totem',
+		description: `Collect the $L Totem and deliver it to $E`,
+		explanation: `Obtain the totem paticular to the quest location
+		(by seeking for it there) and hand it over at the quest end location.`,
 	}, {
-		// Fight the main boss
-		act: 9,
-		quest: 9,
-		mob: Main_Boss,
-		qty: 1,
-		location: Emkell_Peak,
-	}, {
-		// Exterminate the ___
-		act: 9,
-		location: Emkell_Peak,
-		mob: (state, qrng) => pickQuestMob(state[Act]),
-		qty: (state, qrng) => 25 + qrng.d(4) - qrng.d(4),
+		// Cutscene
+		name: 'Cutscene',
+		// location: specified elsehow
+		// qty: likewise
+		title: 'Cutscene',
+		description: `Watch, amazed, as important events around you advance the plot.`,
+		explanation: `Simply call advancePlot() the required number of times
+		at the specified location.`,
 	}
 ];
+
+
+QUEST_TYPES.forEach((q, index) => {
+	if (q) define(q.name, index);
+});
+
 
 function pickQuestLocation(state, qrng) {
 	if (mapInfo(state[Location], state).offshore)
@@ -1673,6 +1679,82 @@ function pickQuestLocation(state, qrng) {
 		if (dloc != state[Location]) qloc = dloc;
 	}
 	return qloc;
+}
+
+const MAIN_QUEST_FLAG = 0x100;
+
+function assignQuest(state, ismain, qrng) {
+
+	function pickQuestMob(act) {
+		let maxlev = act + qrng.irand(act);
+		let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
+		let options = [];
+		MOBS.forEach((mob,index) => {
+			if (mob && minlev <= mob.hitdice && mob.hitdice <= maxlev)
+				options.push(index);
+		});
+		return qrng.pick(options);
+	}
+
+	if (ismain && state[Act] == 9) {
+		if (state[ActProgress] < 3) {
+			state[QuestType] = Transport_Totem;
+			state[QuestObject] = Totem;
+			state[QuestEnd] = qrng.d(36);
+			do { state[QuestLocation] = qrng.d(36);
+			} while (state[QuestLocation] == state[QuestEnd]);
+			state[QuestQty] = 2; // pick up, drop off
+		} else if (state[ActProgress] == state[ActDuration] - 1) {
+			state[QuestType] = Exterminate_Mob;
+			state[QuestMob] = Main_Boss;
+			state[QuestQty] = 1;
+			state[QuestLocation] = Emkell_Peak;
+		} else {
+			state[QuestType] = Exterminate_Mob;
+			state[QuestLocation] = Emkell_Peak;
+			state[QuestMob] = pickQuestMob(state[Act]);
+			state[QuestObject] = 0;
+			state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
+		}
+	} else {
+		state[QuestLocation] = pickQuestLocation(state, qrng);
+		state[QuestEnd] = state[Location];
+		const roll = qrng.d(3);
+		if (roll === 1) {
+			state[QuestType] = Exterminate_Mob;
+			state[QuestMob] = pickQuestMob(state[Act]);
+			state[QuestQty] = 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2);  // TODO use charisma here (instead?)
+		} else if (roll === 2) {
+			state[QuestType] = Collect_Trophies;
+			state[QuestObject] = Trophies;
+			state[QuestMob] = pickQuestMob(state[Act]);
+			state[QuestQty] = 1 + state[Act] + qrng.d(2) - qrng.d(2);
+		} else {
+			state[QuestType] = Collect_Item;
+			state[QuestObject] = qrng.pick([Ammunition, Trophies]);
+			// TODO add Gold and Rations to this list, which will need smarter AI
+			state[QuestQty] = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));;
+		}
+	}
+
+	if (ismain) state[QuestType] |= MAIN_QUEST_FLAG;
+}
+
+function describeQuest(state, title) {
+	if (!state[QuestType]) return '&nbsp;';
+	let result = QUEST_TYPES[state[QuestType] & 0xFF][title ? 'title' : 'description'];
+	let questal = Chinbreak.mapInfo(state[QuestLocation], state);
+	let original = Chinbreak.mapInfo(state[QuestEnd], state);
+	result = result
+		.replace('$N', state[QuestQty])
+		.replace('$MS', state[QuestMob] && plural(MOBS[state[QuestMob]].name))
+		.replace('$M', state[QuestMob] && MOBS[state[QuestMob]].name.toLowerCase())
+		.replace('$O', state[QuestObject] && SLOTS[state[QuestObject]].name.toLowerCase())
+		.replace('$L', questal && questal.name)
+		.replace('$E', original && original.name);
+	if ((state[QuestType] & MAIN_QUEST_FLAG) && title)
+		result = '👑 ' + result;
+	return result;
 }
 
 
@@ -2247,7 +2329,6 @@ class Chinbreak {
 		} else if (operation === seekquest) {
 			const ismain = arg1;
 
-			let qrng = ismain ? new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location]) : rng;
 			let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
 			passTime('Asking around about quests', hours);
 
@@ -2255,65 +2336,8 @@ class Chinbreak {
 
 			if (local.terrain !== TOWN) return 0;
 
-			function pickQuestMob(act) {
-				let maxlev = act + qrng.irand(act);
-				let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
-				let options = [];
-				MOBS.forEach((mob,index) => {
-					if (mob && minlev <= mob.hitdice && mob.hitdice <= maxlev)
-						options.push(index);
-				});
-				return qrng.pick(options);
-			}
+			assignQuest(state, ismain, ismain ? new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location]) : rng);
 
-			if (ismain && state[Act] == 9) {
-				if (state[ActProgress] < 3) {
-					// Bring the totem from origin to location
-					state[QuestObject] = Totem;
-					state[QuestEnd] = qrng.d(36);
-					do { state[QuestLocation] = qrng.d(36);
-					} while (state[QuestLocation] == state[QuestEnd]);
-					state[QuestQty] = 2; // pick up, drop off
-				} else if (state[ActProgress] == state[ActDuration] - 1) {
-					state[QuestMob] = Main_Boss;
-					state[QuestQty] = 1;
-					state[QuestLocation] = Emkell_Peak;
-				} else {
-					// Exterminate the ___
-					state[QuestLocation] = Emkell_Peak;
-					state[QuestMob] = pickQuestMob(state[Act]);
-					state[QuestObject] = 0;
-					state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
-				}
-			} else {
-				let qloc = pickQuestLocation(state, qrng);
-				let questTypes = [_ => {
-					// Exterminate the ___
-					state[QuestLocation] = qloc;
-					state[QuestMob] = pickQuestMob(state[Act]);
-					state[QuestObject] = 0;
-					state[QuestQty] = 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2);  // TODO use charisma here (instead?)
-				}, _ => {
-					// Bring me N trophies
-					state[QuestLocation] = qloc;
-					state[QuestObject] = Trophies;
-					state[QuestMob] = pickQuestMob(state[Act]);
-					let qty = 1 + state[Act] + qrng.d(2) - qrng.d(2);
-					state[QuestQty] = qty;
-				}, _ => {
-					// Bring me N of some item
-					state[QuestLocation] = qloc;
-					state[QuestObject] = qrng.pick([Ammunition, Trophies]);
-					// TODO add Gold and Rations to this list, which will need smarter AI
-					state[QuestMob] = 0;
-					let qty = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));
-					state[QuestQty] = qty;
-				}];
-				qrng.pick(questTypes)();
-				state[QuestEnd] = state[Location];
-			}
-			state[QuestProgress] = 0;
-			state[QuestType] = ismain ? 1 : 2;  // TODO define constants for godsake
 			return 1;
 
 		} else if (operation === completequest) {
@@ -2321,7 +2345,7 @@ class Chinbreak {
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			inc(Experience, 50 * state[Act]);
-			if (state[QuestType] === 1)  // i.e. is main plot quest
+			if (state[QuestType] & MAIN_QUEST_FLAG)
 				inc(ActProgress);
 			clearQuest(state);
 			if (state[Act] === 9 && state[ActProgress] === 3) {
@@ -3006,22 +3030,8 @@ function updateGame(state) {
 		$id('mobHealth').classList.remove('dead');
 
 
-	let questal = Chinbreak.mapInfo(state[QuestLocation], state);
-	questal &&= questal.name;
-	let original = Chinbreak.mapInfo(state[QuestEnd], state);
-	original &&= original.name;
-	set('questgoal',
-		state[QuestObject] === Totem ? 'Deliver the totem' :
-		state[QuestObject] == Trophies && state[QuestMob] ? `Bring me ${state[QuestQty]} ${MOBS[state[QuestMob]].name.toLowerCase()} trophies` :
-		state[QuestObject] ? `Bring me ${state[QuestQty]} ${SLOTS[state[QuestObject]].name.toLowerCase()}` :
-		state[QuestMob] ? 	 `Exterminate the ` + plural(MOBS[state[QuestMob]].name) :
-		'&nbsp;');
-	set('questdesc',
-		state[QuestObject] === Totem ? `Collect the ${questal} Totem and deliver it to ${original}` :
-		state[QuestObject] == Trophies && state[QuestMob] ? `The ${plural(MOBS[state[QuestMob]].name.toLowerCase())} in ${questal} are too much. Bring proof of death back to me here in ${original}.` :
-		state[QuestObject] ? `We of ${original} stand in need of ${SLOTS[state[QuestObject]].name.toLowerCase()}. They say there's no shortage of it in ${questal}.` :
-		state[QuestMob] ? 	 `Put an end to these ${plural(MOBS[state[QuestMob]].name)}. You'll find plenty of them to kill in ${questal}.` :
-		'<br>&nbsp;');
+	set('questgoal', describeQuest(state, true));
+	set('questdesc', describeQuest(state, false));
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
 
 	set('act', state[Act] > 9 ? 'Afterlife' : 'Act ' + toRoman(state[Act]));

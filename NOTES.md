@@ -431,3 +431,5 @@ Cutscene support
 Finish plotline
 
 I wonder how many todo lists there are in this project
+
+Get quest types into documentation
