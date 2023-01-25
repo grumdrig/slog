@@ -398,6 +398,13 @@ We killed lots of minibosses in this act but now somehow or other we're  ready t
 
 (Another miniboss battle)
 
+
+As the beast lies dying before you, you feel both triumph and a pang of regret.
+It says "Though I am slain, I believe everything happens for a reason." It coughs blood.
+You think of all the creatures you've slaugtered to bump some progress bars forward.
+You smile and nod encouragingly. "Yep, all for a purpose," you say. "Go quietly good beast."
+
+
 It must be that Isle. We've got to find a way to get there. For some reason these totems seem to be the key. Someway or other we have to find the combo.
 
 Act VII
@@ -433,3 +440,5 @@ Finish plotline
 I wonder how many todo lists there are in this project
 
 Get quest types into documentation
+
+Makeing isMainQuest a bit in QuestType seems unwise in practice

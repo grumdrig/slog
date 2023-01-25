@@ -331,11 +331,6 @@ const CALLS = {
 		increase your general effectiveness accross the board, and may
 		result in stat or other bonuses.` },
 
-	viewcinematic: {
-		description: `To complete each act, you must return to Bompton Town
-		and view the in-game cinematic to usher in the next act of the
-		plot. Or at the completion of the final Act IX, conclude the game!` },
-
 	give: { parameters: 'slot,quantity',
 		description: `Hand over in item to whomever is nearby.` },
 
@@ -408,6 +403,11 @@ function generateInterface() {
 
 	MOBS.forEach((denizen, index) =>
 		denizen && interface.push(`const ${moniker(denizen.name)} = ${index}`));
+
+	interface.push('\n// Quest Types');
+
+	QUEST_TYPES.forEach((questType, index) =>
+		questType && interface.push(`const ${moniker(questType.name)} = ${index}`));
 
 	interface.push('');
 
@@ -1648,7 +1648,7 @@ const QUEST_TYPES = [ null,
 		// qty: likewise
 		title: 'Cutscene',
 		description: `Watch, amazed, as important events around you advance the plot.`,
-		explanation: `Simply call advancePlot() the required number of times
+		explanation: `Simply call seek(QuestProgress) the required number of times
 		at the specified location.`,
 	}
 ];
@@ -1657,6 +1657,43 @@ const QUEST_TYPES = [ null,
 QUEST_TYPES.forEach((q, index) => {
 	if (q) define(q.name, index);
 });
+
+const SCRIPT = [{
+	act: 'Prologue',
+	length: 1,
+	scripts: [{
+		quest: 0,
+		location: Bompton,
+		script: `Parakeets twitter and squirrels chitter outside your cottage in Bompton Town.
+But doesn't it seem lately that the local wildlife has been acting odd? ...Aggressive?
+There's a rustling of underbrush and suddenly the town is under attack!
+Squirrels! Rabbits! Parakeets! ... Wild boars! Tigers! Feral gnomes!
+You flee in fear to the shore. From Sygnon Isle yonder, there's a rumble and a black cloud.
+You return. Town hall is in flames. There are many corpses... You gather a few supplies...
+You vow you'll help the people of Bompton and put an end to whatever evil is afoot!`
+.split('\n')}],
+}, {
+	length: 6,
+}, {
+	length: 7,
+}, {
+	length: 8,
+}, {
+	length: 7,
+}, {
+	length: 8,
+}, {
+	length: 9,
+}, {
+	length: 10,
+}, {
+	length: 10,
+}, {
+	length: 7,
+}, {
+	act: 'Epilogue',
+	length: 1,
+}];
 
 
 function pickQuestLocation(state, qrng) {
@@ -1683,57 +1720,74 @@ function pickQuestLocation(state, qrng) {
 
 const MAIN_QUEST_FLAG = 0x100;
 
+function questScript(act, quest) {
+	act = SCRIPT[act];
+	if (!act || !act.scripts) return;
+	return act.scripts.filter(s => s.quest == quest || s.quest + act.length == quest)[0];
+}
+
 function assignQuest(state, ismain, qrng) {
+	if (!SCRIPT[state[Act]]) return -1;
 
-	function pickQuestMob(act) {
-		let maxlev = act + qrng.irand(act);
-		let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
-		let options = [];
-		MOBS.forEach((mob,index) => {
-			if (mob && minlev <= mob.hitdice && mob.hitdice <= maxlev)
-				options.push(index);
-		});
-		return qrng.pick(options);
-	}
+	let script = questScript(state[Act], state[ActProgress]);
+	if (script) {
+		state[QuestType] = Cutscene;
+		state[QuestLocation] = script.location;
+		state[QuestQty] = script.script.length;
 
-	if (ismain && state[Act] == 9) {
-		if (state[ActProgress] < 3) {
-			state[QuestType] = Transport_Totem;
-			state[QuestObject] = Totem;
-			state[QuestEnd] = qrng.d(36);
-			do { state[QuestLocation] = qrng.d(36);
-			} while (state[QuestLocation] == state[QuestEnd]);
-			state[QuestQty] = 2; // pick up, drop off
-		} else if (state[ActProgress] == state[ActDuration] - 1) {
-			state[QuestType] = Exterminate_Mob;
-			state[QuestMob] = Main_Boss;
-			state[QuestQty] = 1;
-			state[QuestLocation] = Emkell_Peak;
-		} else {
-			state[QuestType] = Exterminate_Mob;
-			state[QuestLocation] = Emkell_Peak;
-			state[QuestMob] = pickQuestMob(state[Act]);
-			state[QuestObject] = 0;
-			state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
-		}
 	} else {
-		state[QuestLocation] = pickQuestLocation(state, qrng);
-		state[QuestEnd] = state[Location];
-		const roll = qrng.d(3);
-		if (roll === 1) {
-			state[QuestType] = Exterminate_Mob;
-			state[QuestMob] = pickQuestMob(state[Act]);
-			state[QuestQty] = 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2);  // TODO use charisma here (instead?)
-		} else if (roll === 2) {
-			state[QuestType] = Collect_Trophies;
-			state[QuestObject] = Trophies;
-			state[QuestMob] = pickQuestMob(state[Act]);
-			state[QuestQty] = 1 + state[Act] + qrng.d(2) - qrng.d(2);
+
+		function pickQuestMob(act) {
+			let maxlev = act + qrng.irand(act);
+			let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
+			let options = [];
+			MOBS.forEach((mob,index) => {
+				if (mob && minlev <= mob.hitdice && mob.hitdice <= maxlev)
+					options.push(index);
+			});
+			return qrng.pick(options);
+		}
+
+
+		if (ismain && state[Act] == 9) {
+			if (state[ActProgress] < 3) {
+				state[QuestType] = Transport_Totem;
+				state[QuestObject] = Totem;
+				state[QuestEnd] = qrng.d(36);
+				do { state[QuestLocation] = qrng.d(36);
+				} while (state[QuestLocation] == state[QuestEnd]);
+				state[QuestQty] = 2; // pick up, drop off
+			} else if (state[ActProgress] == state[ActDuration] - 1) {
+				state[QuestType] = Exterminate_Mob;
+				state[QuestMob] = Main_Boss;
+				state[QuestQty] = 1;
+				state[QuestLocation] = Emkell_Peak;
+			} else {
+				state[QuestType] = Exterminate_Mob;
+				state[QuestLocation] = Emkell_Peak;
+				state[QuestMob] = pickQuestMob(state[Act]);
+				state[QuestObject] = 0;
+				state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
+			}
 		} else {
-			state[QuestType] = Collect_Item;
-			state[QuestObject] = qrng.pick([Ammunition, Trophies]);
-			// TODO add Gold and Rations to this list, which will need smarter AI
-			state[QuestQty] = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));;
+			state[QuestLocation] = pickQuestLocation(state, qrng);
+			state[QuestEnd] = state[Location];
+			const roll = qrng.d(3);
+			if (roll === 1) {
+				state[QuestType] = Exterminate_Mob;
+				state[QuestMob] = pickQuestMob(state[Act]);
+				state[QuestQty] = 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2);  // TODO use charisma here (instead?)
+			} else if (roll === 2) {
+				state[QuestType] = Collect_Trophies;
+				state[QuestObject] = Trophies;
+				state[QuestMob] = pickQuestMob(state[Act]);
+				state[QuestQty] = 1 + state[Act] + qrng.d(2) - qrng.d(2);
+			} else {
+				state[QuestType] = Collect_Item;
+				state[QuestObject] = qrng.pick([Ammunition, Trophies]);
+				// TODO add Gold and Rations to this list, which will need smarter AI
+				state[QuestQty] = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));;
+			}
 		}
 	}
 
@@ -1904,10 +1958,11 @@ class Chinbreak {
 		function actUp() {
 			if (state[ActProgress] < state[ActDuration]) return false;
 
+			let act = SCRIPT[state[Act]];
+			if (!act) return false;
+
 			inc(Act);
-			//                   1  2  3  4  5  6   7   8  9
-			const ACT_LENGTHS = [6, 7, 8, 7, 8, 9, 10, 10, 7, 0]
-			state[ActDuration] = ACT_LENGTHS[state[Act] - 1];
+			state[ActDuration] = act ? act.length : 0;
 			state[ActProgress] = 0;
 			return true;
 		}
@@ -1942,7 +1997,8 @@ class Chinbreak {
 			state[Health] = state[MaxHealth] = 2 + state[Endurance];
 			state[Energy] = state[MaxEnergy] = 0 + state[Intellect];
 			state[TrainingPoints] = 10;
-			actUp();
+			state[ActDuration] = SCRIPT[state[Act]].length;
+
 			passTime('Loading', 1);
 
 			return;
@@ -2352,17 +2408,15 @@ class Chinbreak {
 				passTime('Being magically transported to Sygnon Isle!', 3);
 				state[Location] = Sygnon_Tower;
 			} else {
-				passTime('Taking care of paperwork; this quest is done!', 3);
+				passTime('Completing paperwork', 2);
 			}
-			return 1;
 
-		} else if (operation === viewcinematic) {
-			if (local.terrain !== TOWN) return -1;  // TODO should be just bompton or sygnon
 			if (actUp()) {
-				passTime('Viewing a beautifully rendered in-game cinematic sequence', 2);
 				inc(TrainingPoints);
 				inc(Treasures);
 			}
+
+			return 1;
 
 		} else  if (operation === train) {
 			let slot = arg1;
@@ -2486,6 +2540,16 @@ class Chinbreak {
 
 				passTime('Foraging for ' + indefiniteItems(target, 1), 1);
 				return qty;
+
+			} else if (target === QuestProgress) {
+				// Advance the plot in a cutscene quest
+				if ((state[QuestType] & 0xff) !== Cutscene) return -1;
+				if (state[QuestProgress] >= state[QuestQty]) return -1;
+				if (state[Location] != state[QuestLocation]) return -1;
+				let script = questScript(state[Act], state[ActProgress]);
+				passTime(script.script[state[QuestProgress]], 8);
+				inc(QuestProgress);
+				return 1;
 
 			} else {
 				return -1;
@@ -3034,7 +3098,7 @@ function updateGame(state) {
 	set('questdesc', describeQuest(state, false));
 	setProgress('questprogress', state[QuestProgress], state[QuestQty]);
 
-	set('act', state[Act] > 9 ? 'Afterlife' : 'Act ' + toRoman(state[Act]));
+	set('act', (SCRIPT[state[Act]] ?? {}).act ?? 'Act ' + toRoman(state[Act]));
 	if (state[ActDuration])
 		set('actprogress', Math.round(100 * state[ActProgress]/state[ActDuration]) + '%');
 	else

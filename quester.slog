@@ -4,7 +4,7 @@
 target ChinbreakIsland_v1
 
 macro goto(dest) {
-	while travel(dest) > 0 { }
+	while dest != .Location and travel(dest) > 0 { }
 }
 
 /* Cheat to the end
@@ -36,7 +36,11 @@ while 1 {
 
 	if !.QuestType { seekquest(1) }
 	goto(.QuestLocation)
-	if .QuestMob and .QuestObject {
+	if (.QuestType & $FF) == Cutscene {
+		while .QuestProgress < .QuestQty {
+			seek(QuestProgress)
+		}
+	} else if .QuestMob and .QuestObject {
 		// Trophy hunting
 		while .Health > (.MaxHealth / 2 >? (4 <? .MaxHealth - 1))  and
 					.Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
@@ -68,8 +72,9 @@ while 1 {
 
 	if .QuestObject { give(.QuestObject, ..QuestObject) }
 
-	completequest()
-	viewcinematic()
+	if .QuestType and .QuestProgress >= .QuestQty {
+		completequest()
+	}
 	sell(Treasures, .Treasures)
 	levelup()
 	while .Health < .MaxHealth { rest() }
