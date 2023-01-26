@@ -189,7 +189,10 @@ const SLOTS = [
 	  description: `Greater than zero if nearby creature is aggressive towards you, i.e. attacking.` },
 
   	{ name: 'QuestType',
-  	  description: `Indicates whether this is a main or side quest.` },
+  	  description: `Identifies the rules of the current quest as listed under Quest Types. Will be zero if there is no current quest.` },
+
+  	{ name: 'QuestStoryline',
+  	  description: `Indicates the storyline of the current quest (0 for the main storyline or non-zero for a side quest).` },
 
 	{ name: 'QuestObject',
 	  description: `The item slot which is the target of the current quest, if any.` },
@@ -299,11 +302,11 @@ const CALLS = {
 	sell: { parameters: 'slot,quantity',
 		description: `Sell an inventory item of piece of equipment.` },
 
-	seekquest: { parameters: 'main',
+	seekQuest: { parameters: 'storyline',
 		description: `While in town, ask around and listen to rumors in hopes
 		of discovering adventures that await and tasks to complete.
 		There's only one quest active at any given time. The parameter is
-		1 for main quests (which contribute to game completion) or some
+		0 for main quests (which contribute to game completion) or some
 		other value for side quests (which may be completed for lulz or
 		profit).` },
 
@@ -606,6 +609,21 @@ div#terrains {
 			p(`Principal occupant: ` + MOBS[tile.denizen].name);
 	} });
 
+
+	head('Quests');
+
+	p(`Quests are assigned by inquiring in towns using the seekQuest function.
+	The argument to seekQuest specifies the storyline, where 0 is the main
+	storyline, and non-zero values are side quests. Within a single game,
+	at a given point in the story, for a given storyline, in a particular
+	town, the same quest will be assigned. Hence to complete game, the
+	player must complete one of the main storyline quests assigned at one
+	of the towns in the game, at each point in the game.`);
+
+	QUEST_TYPES.forEach((qt, i) => { if (qt) {
+		subhead(`${qt.name} = ${i}`);
+		p(qt.explanation);
+	} });
 
 	return result;
 }
@@ -1599,6 +1617,7 @@ function clearMob(state) {
 
 function clearQuest(state) {
 	state[QuestType] = 0;
+	state[QuestStoryline] = 0;
 	state[QuestObject] = 0;
 	state[QuestMob] = 0;
 	state[QuestLocation] = 0;
@@ -1718,16 +1737,18 @@ function pickQuestLocation(state, qrng) {
 	return qloc;
 }
 
-const MAIN_QUEST_FLAG = 0x100;
-
 function questScript(act, quest) {
 	act = SCRIPT[act];
 	if (!act || !act.scripts) return;
 	return act.scripts.filter(s => s.quest == quest || s.quest + act.length == quest)[0];
 }
 
-function assignQuest(state, ismain, qrng) {
-	if (!SCRIPT[state[Act]]) return -1;
+function assignQuest(state, storyline) {
+	if (!SCRIPT[state[Act]]) return;
+
+	let qrng = new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location], storyline);
+
+	state[QuestStoryline] = storyline;
 
 	let script = questScript(state[Act], state[ActProgress]);
 	if (script) {
@@ -1748,8 +1769,7 @@ function assignQuest(state, ismain, qrng) {
 			return qrng.pick(options);
 		}
 
-
-		if (ismain && state[Act] == 9) {
+		if (!storyline && state[Act] == 9) {
 			if (state[ActProgress] < 3) {
 				state[QuestType] = Transport_Totem;
 				state[QuestObject] = Totem;
@@ -1790,13 +1810,11 @@ function assignQuest(state, ismain, qrng) {
 			}
 		}
 	}
-
-	if (ismain) state[QuestType] |= MAIN_QUEST_FLAG;
 }
 
 function describeQuest(state, title) {
 	if (!state[QuestType]) return '&nbsp;';
-	let result = QUEST_TYPES[state[QuestType] & 0xFF][title ? 'title' : 'description'];
+	let result = QUEST_TYPES[state[QuestType]][title ? 'title' : 'description'];
 	let questal = Chinbreak.mapInfo(state[QuestLocation], state);
 	let original = Chinbreak.mapInfo(state[QuestEnd], state);
 	result = result
@@ -1806,7 +1824,7 @@ function describeQuest(state, title) {
 		.replace('$O', state[QuestObject] && SLOTS[state[QuestObject]].name.toLowerCase())
 		.replace('$L', questal && questal.name)
 		.replace('$E', original && original.name);
-	if ((state[QuestType] & MAIN_QUEST_FLAG) && title)
+	if (state[QuestStoryline] === 0)
 		result = '👑 ' + result;
 	return result;
 }
@@ -2382,8 +2400,8 @@ class Chinbreak {
 
 			return qty;
 
-		} else if (operation === seekquest) {
-			const ismain = arg1;
+		} else if (operation === seekQuest) {
+			const storyline = arg1;
 
 			let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
 			passTime('Asking around about quests', hours);
@@ -2392,7 +2410,7 @@ class Chinbreak {
 
 			if (local.terrain !== TOWN) return 0;
 
-			assignQuest(state, ismain, ismain ? new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location]) : rng);
+			assignQuest(state, storyline);
 
 			return 1;
 
@@ -2401,7 +2419,7 @@ class Chinbreak {
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			inc(Experience, 50 * state[Act]);
-			if (state[QuestType] & MAIN_QUEST_FLAG)
+			if (state[QuestStoryline] === 0)
 				inc(ActProgress);
 			clearQuest(state);
 			if (state[Act] === 9 && state[ActProgress] === 3) {
@@ -2543,7 +2561,7 @@ class Chinbreak {
 
 			} else if (target === QuestProgress) {
 				// Advance the plot in a cutscene quest
-				if ((state[QuestType] & 0xff) !== Cutscene) return -1;
+				if (state[QuestType] !== Cutscene) return -1;
 				if (state[QuestProgress] >= state[QuestQty]) return -1;
 				if (state[Location] != state[QuestLocation]) return -1;
 				let script = questScript(state[Act], state[ActProgress]);

@@ -10,13 +10,13 @@ macro goto(dest) {
 /* Cheat to the end
 cheat(Act, 9)
 cheat(ActProgress, 2)
-seekquest(1)
+seekQuest(0)
 goto(.QuestLocation)
 while !seek(Totem) {}
 goto (.QuestEnd)
 give(Totem, 1)
 completequest()
-seekquest(1)
+seekQuest(0)
 while .QuestMob != .MobSpecies { seek(MobSpecies) }
 */
 
@@ -34,9 +34,9 @@ while 1 {
 		else                     { train(Charisma) }
 	}
 
-	if !.QuestType { seekquest(1) }
+	if !.QuestType { seekQuest(0) }
 	goto(.QuestLocation)
-	if (.QuestType & $FF) == Cutscene {
+	if .QuestType == Cutscene {
 		while .QuestProgress < .QuestQty {
 			seek(QuestProgress)
 		}

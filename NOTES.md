@@ -441,4 +441,8 @@ I wonder how many todo lists there are in this project
 
 Get quest types into documentation
 
-Makeing isMainQuest a bit in QuestType seems unwise in practice
+Have quest mob levels closely follow act, so maybe 1,2,3 as act 1 progresses,
+then 4,5,6, in act II, or whatever. Something like that.
+
+Maybe have quests invariant at a given point depending in which storyline is requested
+
