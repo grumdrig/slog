@@ -238,6 +238,7 @@ const SLOTS = [
 
 function define(symbol, value) {
 	if (!symbol) return;
+	symbol = moniker(symbol);
 	if (typeof global !== 'undefined')
 		Object.defineProperty(global, symbol, { value });
 	if (typeof window !== 'undefined')
@@ -774,7 +775,7 @@ function moniker(s) {
 	return s.replaceAll(' ', '_');
 }
 
-SPELLS.forEach((spell, index) => spell && define(moniker(spell.name), index));
+SPELLS.forEach((spell, index) => spell && define(spell.name, index));
 
 
 /////////// Weapons
@@ -1080,6 +1081,7 @@ const MOBS = [
 		name: "Dunkling",
 		aka: "Nerfling",
 		playable: true,
+		naturallyOccurring: true,
 		esteems: 2,
 		waryof: 3,
 		proficiency: amap(
@@ -1103,6 +1105,7 @@ const MOBS = [
 		name: "Hardwarf",
 		plural: "Hardwarves",
 		playable: true,
+		naturallyOccurring: true,
 		esteems: 3,
 		waryof: 1,
 		proficiency: amap(
@@ -1124,6 +1127,7 @@ const MOBS = [
 	{
 		name: "Eelman",
 		playable: true,
+		naturallyOccurring: true,
 		esteems: 1,
 		waryof: 2,
 		proficiency: amap(
@@ -1144,11 +1148,19 @@ const MOBS = [
 		occurrence: 0.1,
 	}, {
 		name: "Parakeet",
+		naturallyOccurring: true,
 		badassname: "Triplikeet",
 		domain: PLAINS,
 		hitdice: 1,
 	}, {
+		name: "Squirrel",
+		naturallyOccurring: true,
+		badassname: "Doomsquirrel",
+		domain: FOREST,
+		hitdice: 1,
+	}, {
 		name: "Pig",
+		naturallyOccurring: true,
 		bigname: "Spectral Pig",
 		badassname: "Supersow",
 		domain: HILLS,
@@ -1220,7 +1232,7 @@ const MOBS = [
 ];
 
 MOBS.forEach((d, index) => {
-	if (d) define(d.name.replace(' ', '_'), index);
+	if (d) define(d.name, index);
 });
 
 const Main_Boss = Mox_Klatryon;
@@ -1422,7 +1434,7 @@ MAP.forEach((tile,index) => {
 			if (!tile.offshore)
 				MAINLAND_TOWNS.push(index);
 		}
-		define(moniker(tile.name), index);
+		define(tile.name, index);
 	}
 });
 
@@ -1719,7 +1731,7 @@ function pickQuestLocation(state, qrng) {
 	if (mapInfo(state[Location], state).offshore)
 		return Emkell_Peak;
 	let qloc = state[Location];
-	for (let dist = state[Act] + qrng.irand(2); dist > 0; dist -= 1) {
+	for (let dist = Math.max(1, state[Act] + qrng.irand(2)); dist > 0; dist -= 1) {
 		// Random walk to find the quest location
 		let x = longitude(qloc);
 		let y = latitude(qloc);
@@ -1751,7 +1763,7 @@ function assignQuest(state, storyline) {
 	state[QuestStoryline] = storyline;
 
 	let script = questScript(state[Act], state[ActProgress]);
-	if (script) {
+	if (script && storyline === 0) {
 		state[QuestType] = Cutscene;
 		state[QuestLocation] = script.location;
 		state[QuestQty] = script.script.length;
@@ -1790,23 +1802,27 @@ function assignQuest(state, storyline) {
 				state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
 			}
 		} else {
+			state[QuestType] = qrng.pick([Exterminate_Mob, Collect_Trophies, Collect_Item]);
+			if (state[Act] < 1) state[QuestType] = Collect_Item;
+
 			state[QuestLocation] = pickQuestLocation(state, qrng);
 			state[QuestEnd] = state[Location];
-			const roll = qrng.d(3);
-			if (roll === 1) {
-				state[QuestType] = Exterminate_Mob;
-				state[QuestMob] = pickQuestMob(state[Act]);
-				state[QuestQty] = 2 + 2 * state[Act] + qrng.d(2) - qrng.d(2);  // TODO use charisma here (instead?)
-			} else if (roll === 2) {
-				state[QuestType] = Collect_Trophies;
-				state[QuestObject] = Trophies;
-				state[QuestMob] = pickQuestMob(state[Act]);
-				state[QuestQty] = 1 + state[Act] + qrng.d(2) - qrng.d(2);
-			} else {
-				state[QuestType] = Collect_Item;
+
+			if (state[QuestType] == Collect_Item) {
 				state[QuestObject] = qrng.pick([Ammunition, Trophies]);
 				// TODO add Gold and Rations to this list, which will need smarter AI
 				state[QuestQty] = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));;
+			} else {
+				state[QuestMob] = pickQuestMob(state[Act]);
+				state[QuestQty] = 1 + state[Act]
+				if (state[QuestType] == Collect_Trophies) {
+					state[QuestObject] = Trophies;
+				} else {
+					// Exterminate_Mob
+					state[QuestQty] *= 2;
+				}
+				state[QuestQty] += qrng.d(2) - qrng.d(2);
+				 // TODO use charisma to affect Qty (instead?)
 			}
 		}
 	}
@@ -2538,10 +2554,11 @@ class Chinbreak {
 				}
 				let level = MOBS[type].hitdice ?? Math.min(d(10), Math.min(d(10), d(10)));
 				level += d(2) - d(2);
-				state[MobSpecies] = type;
-				state[MobLevel] = level;
-				state[MobHealth] = state[MobMaxHealth] = 2 + level * 4;
-				state[MobAggro] = 0;
+				if (state[Act] >= 1 || MOBS[type].naturallyOccurring) {
+					state[MobSpecies] = type;
+					state[MobLevel] = level;
+					state[MobHealth] = state[MobMaxHealth] = 2 + level * 4;
+				}
 				return state[MobSpecies] ? 1 : 0;
 
 			} else if (isInventorySlot(target)) {

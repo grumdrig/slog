@@ -145,6 +145,10 @@ I think I need or it would be best to have splat syntax for at least macros
 Instead I went with the opaque thing of a negative external call code meaning
 the argument is a zero-terminated vector. However, setname should probably go.
 
+Missing language feature: continue statement
+
+Missing language feature: static local variables
+
 
 LLVM
 ----
