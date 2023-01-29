@@ -1151,61 +1151,121 @@ const MOBS = [
 	}, {
 		name: "Parakeet",
 		naturallyOccurring: true,
-		badassname: "Triplikeet",
 		domain: PLAINS,
 		hitdice: 1,
 	}, {
+		name: "Triplikeet",
+		minact: 5,
+		domain: PLAINS,
+		hitdice: 3,
+	}, {
 		name: "Squirrel",
 		naturallyOccurring: true,
-		badassname: "Doomsquirrel",
 		domain: FOREST,
 		hitdice: 1,
 	}, {
+		name: "Doomsquirrel",
+		minact: 5,
+		domain: FOREST,
+		hitdice: 2,
+	}, {
 		name: "Pig",
 		naturallyOccurring: true,
-		bigname: "Spectral Pig",
-		badassname: "Supersow",
 		domain: HILLS,
 		hitdice: 2,
 		drops: Rations,
 	}, {
+		name: "Spectral Pig",
+		minact: 5,
+		badassname: "Supersow",
+		domain: HILLS,
+		hitdice: 4,
+		drops: Rations,
+	}, {
+		name: "Supersow",
+		minact: 5,
+		domain: HILLS,
+		hitdice: 5,
+		drops: Rations,
+	}, {
 		name: "Noteti",
-		badassname: "Innoteti",
+		minact: 1,
+		maxact: 4,
 		domain: FOREST,
 		hitdice: 3,
 	}, {
+		name: "Innoteti",
+		minact: 5,
+		domain: FOREST,
+		hitdice: 5,
+	}, {
 		name: "Polycorn",
-		badassname: "Epicorn",
+		maxact: 4,
 		domain: DESERT,
 		hitdice: 4,
 	}, {
+		name: "Epicorn",
+		minact: 5,
+		domain: DESERT,
+		hitdice: 6,
+	}, {
 		name: "Zorc",
-		badassname: "Zigzorc",
+		maxact: 6,
 		domain: MOUNTAINS,
 		hitdice: 5,
 	}, {
+		name: "Zigzorc",
+		minact: 5,
+		domain: MOUNTAINS,
+		hitdice: 8,
+	}, {
 		name: "Boglard",
-		badassname: "Bognivore",
+		maxact: 4,
 		domain: MARSH,
 		hitdice: 6,
 	}, {
+		name: "Bognivore",
+		minact: 5,
+		domain: MARSH,
+		hitdice: 9,
+	}, {
 		name: "Baklakesh",
-		badassname: "Huntrakesh",
+		// no maxact
 		domain: HILLS,
-		hitdice: 7
+		hitdice: 7,
+	}, {
+		name: "Huntrakesh",
+		minact: 5,
+		domain: HILLS,
+		hitdice: 10,
 	}, {
 		name: "Plasterbear",
-		badassname: "Fasterbear",
+		maxact: 4,
 		domain: TUNDRA,
 		hitdice: 8,
 	}, {
+		name: "Fasterbear",
+		minact: 5,
+		domain: TUNDRA,
+		hitdice: 11,
+	}, {
 		name: "Saberon",
-		badassname: "Supersaber",
+		naturallyOccurring: true,
 		domain: FOREST,
 		hitdice: 9,
 	}, {
+		name: "Supersaber",
+		minact: 5,
+		domain: FOREST,
+		hitdice: 12,
+	}, {
 		name: "Komordem",
-		badassname: "Mokomordem",
+		maxact: 4,
+		domain: MOUNTAINS,
+		hitdice: 10,
+	}, {
+		name: "Mokomordem",
+		minact: 5,
 		domain: MOUNTAINS,
 		hitdice: 10,
 	}, {
@@ -1216,14 +1276,24 @@ const MOBS = [
 		description: "Indistict forms, seemingly sentient.",
 	}, {
 		name: "Icehalt",
-		badassname: "Ikkadrosshalt",
+		maxact: 4,
 		domain: TUNDRA,
 		hitdice: 11,
 	}, {
+		name: "Ikkadrosshalt",
+		minact: 5,
+		domain: TUNDRA,
+		hitdice: 13,
+	}, {
 		name: "Veilerwyrm",
-		badassname: "Veilerwyrmogon",
+		// no maxact
 		domain: DESERT,
 		hitdice: 12,
+	}, {
+		name: "Veilerwyrmogon",
+		minact: 7,
+		domain: DESERT,
+		hitdice: 15,
 	}, {
 		name: "Mox Klatryon",
 		domain: MOUNTAINS,
@@ -1234,10 +1304,12 @@ const MOBS = [
 ];
 
 MOBS.forEach((d, index) => {
-	if (d) define(d.name, index);
+	if (d) {
+		define(d.name, index);
+		d.index = index;
+	}
 });
 
-const Main_Boss = Mox_Klatryon;
 
 const MAP = [null,
 	{
@@ -1568,7 +1640,7 @@ class Prng {
 
 	// keys are integers on [0, 0x7fffffff]
 	constructor(...keys) {
-		this.seed = hash(...keys);
+		this.seed = hash(...keys, 1618033988);
 	}
 
 	#eat(key = 0xea7f00d) {
@@ -1615,7 +1687,7 @@ function damageMob(state, damage) {
 	if (state[MobHealth] <= 0) {
 		let levelDisadvantage = state[MobLevel] - state[Level];
 		state[Experience] += Math.round(10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
-		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) 
+		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject])
 			state[QuestProgress] += 1;
 		state[MobAggro] = 0;
 	}
@@ -1774,16 +1846,16 @@ function assignQuest(state, storyline) {
 
 	} else {
 
-		function pickQuestMob(act) {
-			let maxlev = act + qrng.irand(act);
-			let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
-			let options = [];
-			MOBS.forEach((mob,index) => {
-				if (mob && minlev <= mob.hitdice && mob.hitdice <= maxlev)
-					options.push(index);
-			});
-			return qrng.pick(options);
+		function pickQuestMob(act, level) {
+			let maxlev = level + qrng.irand(level);
+			let minlev = level - Math.min(qrng.irand(level), qrng.irand(level));
+			let options = MOBS.filter(mob => mob &&
+				minlev <= mob.hitdice && mob.hitdice <= maxlev &&
+				act >= (mob.minact ?? 0) && act <= (mob.maxact ?? MAX_INT));
+			return qrng.pick(options).index;
 		}
+
+		let questlevel = storyline ? Math.floor(storyline / 10) : state[Act];
 
 		if (!storyline && state[Act] == 9) {
 			if (state[ActProgress] < 3) {
@@ -1795,13 +1867,13 @@ function assignQuest(state, storyline) {
 				state[QuestQty] = 2; // pick up, drop off
 			} else if (state[ActProgress] == state[ActDuration] - 1) {
 				state[QuestType] = Exterminate_Mob;
-				state[QuestMob] = Main_Boss;
+				state[QuestMob] = Mox_Klatryon;
 				state[QuestQty] = 1;
 				state[QuestLocation] = Emkell_Peak;
 			} else {
 				state[QuestType] = Exterminate_Mob;
 				state[QuestLocation] = Emkell_Peak;
-				state[QuestMob] = pickQuestMob(state[Act]);
+				state[QuestMob] = pickQuestMob(state[Act], questlevel);
 				state[QuestObject] = 0;
 				state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
 			}
@@ -1815,10 +1887,10 @@ function assignQuest(state, storyline) {
 			if (state[QuestType] == Collect_Item) {
 				state[QuestObject] = qrng.pick([Ammunition, Trophies]);
 				// TODO add Gold and Rations to this list, which will need smarter AI
-				state[QuestQty] = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));;
+				state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
 			} else {
-				state[QuestMob] = pickQuestMob(state[Act]);
-				state[QuestQty] = 1 + state[Act]
+				state[QuestMob] = pickQuestMob(state[Act], questlevel);
+				state[QuestQty] = 1 + questlevel;
 				if (state[QuestType] == Collect_Trophies) {
 					state[QuestObject] = Trophies;
 				} else {
@@ -2065,26 +2137,29 @@ class Chinbreak {
 			}
 		}
 
-		function randomMob(rng) {
-			while (true) {
-				let mob = rng.d(MOBS.length - 1);
-				if (rng.rand() < (MOBS[mob].occurrence ?? 1)) return mob;
-			}
-		}
-
 		function randomMobNearLevel(goal, repeats, rng) {
-			let type = randomMob(rng);
-			let level = MOBS[type].hitdice;
-			for (let i = 0; i < repeats; ++i) {
-				let t = randomMob(rng);
-				let l = MOBS[t].hitdice;
+			const act = state[Act];
 
-				if (Math.abs(l - goal) < Math.abs(level - goal)) {
-					type = t;
-					level = l;
+			// In the prologue, it's all random
+			if (act == 0) return rng.pick(MOBS.filter(m => m && m.naturallyOccurring)).index;
+
+			let eligibles = MOBS.filter(m => m && act >= (m.minact ?? 0) && act <= (m.maxact ?? MAX_INT));
+
+			function randomMob() {
+				while (true) {
+					let mob = rng.pick(eligibles);
+					if (rng.rand() < (mob.occurrence ?? 1)) return mob;
 				}
 			}
-			return type;
+
+			let mob = randomMob();
+			for (let i = 0; i < repeats; ++i) {
+				let t = randomMob();
+				if (Math.abs(t.hitdice - goal) < Math.abs(mob.level - goal)) {
+					mob = t;
+				}
+			}
+			return mob.index;
 		}
 
 
@@ -2445,7 +2520,8 @@ class Chinbreak {
 			if (!state[QuestType]) return -1;
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
-			inc(Experience, 50 * state[Act]);
+			const questlevel = state[QuestStoryline] ? Math.floor(state[QuestStoryline] / 10) : state[Act];
+			inc(Experience, questlevel ? 50 * questlevel : 25);
 			if (state[QuestStoryline] === 0)
 				inc(ActProgress);
 			clearQuest(state);
