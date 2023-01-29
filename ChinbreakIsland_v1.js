@@ -1149,61 +1149,121 @@ const MOBS = [
 	}, {
 		name: "Parakeet",
 		naturallyOccurring: true,
-		badassname: "Triplikeet",
 		domain: PLAINS,
 		hitdice: 1,
 	}, {
+		name: "Triplikeet",
+		minact: 5,
+		domain: PLAINS,
+		hitdice: 3,
+	}, {
 		name: "Squirrel",
 		naturallyOccurring: true,
-		badassname: "Doomsquirrel",
 		domain: FOREST,
 		hitdice: 1,
 	}, {
+		name: "Doomsquirrel",
+		minact: 5,
+		domain: FOREST,
+		hitdice: 2,
+	}, {
 		name: "Pig",
 		naturallyOccurring: true,
-		bigname: "Spectral Pig",
-		badassname: "Supersow",
 		domain: HILLS,
 		hitdice: 2,
 		drops: Rations,
 	}, {
+		name: "Spectral Pig",
+		minact: 5,
+		badassname: "Supersow",
+		domain: HILLS,
+		hitdice: 4,
+		drops: Rations,
+	}, {
+		name: "Supersow",
+		minact: 5,
+		domain: HILLS,
+		hitdice: 5,
+		drops: Rations,
+	}, {
 		name: "Noteti",
-		badassname: "Innoteti",
+		minact: 1,
+		maxact: 4,
 		domain: FOREST,
 		hitdice: 3,
 	}, {
+		name: "Innoteti",
+		minact: 5,
+		domain: FOREST,
+		hitdice: 5,
+	}, {
 		name: "Polycorn",
-		badassname: "Epicorn",
+		maxact: 4,
 		domain: DESERT,
 		hitdice: 4,
 	}, {
+		name: "Epicorn",
+		minact: 5,
+		domain: DESERT,
+		hitdice: 6,
+	}, {
 		name: "Zorc",
-		badassname: "Zigzorc",
+		maxact: 6,
 		domain: MOUNTAINS,
 		hitdice: 5,
 	}, {
+		name: "Zigzorc",
+		minact: 5,
+		domain: MOUNTAINS,
+		hitdice: 8,
+	}, {
 		name: "Boglard",
-		badassname: "Bognivore",
+		maxact: 4,
 		domain: MARSH,
 		hitdice: 6,
 	}, {
+		name: "Bognivore",
+		minact: 5,
+		domain: MARSH,
+		hitdice: 9,
+	}, {
 		name: "Baklakesh",
-		badassname: "Huntrakesh",
+		// no maxact
 		domain: HILLS,
-		hitdice: 7
+		hitdice: 7,
+	}, {
+		name: "Huntrakesh",
+		minact: 5,
+		domain: HILLS,
+		hitdice: 10,
 	}, {
 		name: "Plasterbear",
-		badassname: "Fasterbear",
+		maxact: 4,
 		domain: TUNDRA,
 		hitdice: 8,
 	}, {
+		name: "Fasterbear",
+		minact: 5,
+		domain: TUNDRA,
+		hitdice: 11,
+	}, {
 		name: "Saberon",
-		badassname: "Supersaber",
+		naturallyOccurring: true,
 		domain: FOREST,
 		hitdice: 9,
 	}, {
+		name: "Supersaber",
+		minact: 5,
+		domain: FOREST,
+		hitdice: 12,
+	}, {
 		name: "Komordem",
-		badassname: "Mokomordem",
+		maxact: 4,
+		domain: MOUNTAINS,
+		hitdice: 10,
+	}, {
+		name: "Mokomordem",
+		minact: 5,
 		domain: MOUNTAINS,
 		hitdice: 10,
 	}, {
@@ -1214,14 +1274,24 @@ const MOBS = [
 		description: "Indistict forms, seemingly sentient.",
 	}, {
 		name: "Icehalt",
-		badassname: "Ikkadrosshalt",
+		maxact: 4,
 		domain: TUNDRA,
 		hitdice: 11,
 	}, {
+		name: "Ikkadrosshalt",
+		minact: 5,
+		domain: TUNDRA,
+		hitdice: 13,
+	}, {
 		name: "Veilerwyrm",
-		badassname: "Veilerwyrmogon",
+		// no maxact
 		domain: DESERT,
 		hitdice: 12,
+	}, {
+		name: "Veilerwyrmogon",
+		minact: 7,
+		domain: DESERT,
+		hitdice: 15,
 	}, {
 		name: "Mox Klatryon",
 		domain: MOUNTAINS,
@@ -1232,7 +1302,10 @@ const MOBS = [
 ];
 
 MOBS.forEach((d, index) => {
-	if (d) define(d.name, index);
+	if (d) {
+		define(d.name, index);
+		d.index = index;
+	}
 });
 
 const Main_Boss = Mox_Klatryon;
@@ -1773,12 +1846,8 @@ function assignQuest(state, storyline) {
 		function pickQuestMob(act) {
 			let maxlev = act + qrng.irand(act);
 			let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
-			let options = [];
-			MOBS.forEach((mob,index) => {
-				if (mob && minlev <= mob.hitdice && mob.hitdice <= maxlev)
-					options.push(index);
-			});
-			return qrng.pick(options);
+			let options = MOBS.filter(mob => mob && minlev <= mob.hitdice && mob.hitdice <= maxlev);
+			return qrng.pick(options).index;
 		}
 
 		if (!storyline && state[Act] == 9) {
@@ -2054,26 +2123,29 @@ class Chinbreak {
 			}
 		}
 
-		function randomMob(rng) {
-			while (true) {
-				let mob = rng.d(MOBS.length - 1);
-				if (rng.rand() < (MOBS[mob].occurrence ?? 1)) return mob;
-			}
-		}
-
 		function randomMobNearLevel(goal, repeats, rng) {
-			let type = randomMob(rng);
-			let level = MOBS[type].hitdice;
-			for (let i = 0; i < repeats; ++i) {
-				let t = randomMob(rng);
-				let l = MOBS[t].hitdice;
+			const act = state[Act];
 
-				if (Math.abs(l - goal) < Math.abs(level - goal)) {
-					type = t;
-					level = l;
+			// In the prologue, it's all random
+			if (act == 0) return rng.pick(MOBS.filter(m => m && m.naturallyOccurring)).index;
+
+			let eligibles = MOBS.filter(m => m && act >= (m.minact ?? 0) && act <= (m.maxact ?? MAX_INT));
+
+			function randomMob() {
+				while (true) {
+					let mob = rng.pick(eligibles);
+					if (rng.rand() < (mob.occurrence ?? 1)) return mob;
 				}
 			}
-			return type;
+
+			let mob = randomMob();
+			for (let i = 0; i < repeats; ++i) {
+				let t = randomMob();
+				if (Math.abs(t.hitdice - goal) < Math.abs(mob.level - goal)) {
+					mob = t;
+				}
+			}
+			return mob.index;
 		}
 
 
