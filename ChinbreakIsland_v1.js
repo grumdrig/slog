@@ -1308,7 +1308,6 @@ MOBS.forEach((d, index) => {
 	}
 });
 
-const Main_Boss = Mox_Klatryon;
 
 const MAP = [null,
 	{
@@ -1686,7 +1685,7 @@ function damageMob(state, damage) {
 	if (state[MobHealth] <= 0) {
 		let levelDisadvantage = state[MobLevel] - state[Level];
 		state[Experience] += Math.round(10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
-		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject]) 
+		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject])
 			state[QuestProgress] += 1;
 		state[MobAggro] = 0;
 	}
@@ -1843,12 +1842,16 @@ function assignQuest(state, storyline) {
 
 	} else {
 
-		function pickQuestMob(act) {
-			let maxlev = act + qrng.irand(act);
-			let minlev = act - Math.min(qrng.irand(act), qrng.irand(act));
-			let options = MOBS.filter(mob => mob && minlev <= mob.hitdice && mob.hitdice <= maxlev);
+		function pickQuestMob(act, level) {
+			let maxlev = level + qrng.irand(level);
+			let minlev = level - Math.min(qrng.irand(level), qrng.irand(level));
+			let options = MOBS.filter(mob => mob &&
+				minlev <= mob.hitdice && mob.hitdice <= maxlev &&
+				act >= (mob.minact ?? 0) && act <= (mob.maxact ?? MAX_INT));
 			return qrng.pick(options).index;
 		}
+
+		let questlevel = storyline ? Math.floor(storyline / 10) : state[Act];
 
 		if (!storyline && state[Act] == 9) {
 			if (state[ActProgress] < 3) {
@@ -1860,13 +1863,13 @@ function assignQuest(state, storyline) {
 				state[QuestQty] = 2; // pick up, drop off
 			} else if (state[ActProgress] == state[ActDuration] - 1) {
 				state[QuestType] = Exterminate_Mob;
-				state[QuestMob] = Main_Boss;
+				state[QuestMob] = Mox_Klatryon;
 				state[QuestQty] = 1;
 				state[QuestLocation] = Emkell_Peak;
 			} else {
 				state[QuestType] = Exterminate_Mob;
 				state[QuestLocation] = Emkell_Peak;
-				state[QuestMob] = pickQuestMob(state[Act]);
+				state[QuestMob] = pickQuestMob(state[Act], questlevel);
 				state[QuestObject] = 0;
 				state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
 			}
@@ -1880,10 +1883,10 @@ function assignQuest(state, storyline) {
 			if (state[QuestType] == Collect_Item) {
 				state[QuestObject] = qrng.pick([Ammunition, Trophies]);
 				// TODO add Gold and Rations to this list, which will need smarter AI
-				state[QuestQty] = Math.max(2, 5 + state[Act] * 3 - qrng.irand(state[Charisma]));;
+				state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
 			} else {
-				state[QuestMob] = pickQuestMob(state[Act]);
-				state[QuestQty] = 1 + state[Act]
+				state[QuestMob] = pickQuestMob(state[Act], questlevel);
+				state[QuestQty] = 1 + questlevel;
 				if (state[QuestType] == Collect_Trophies) {
 					state[QuestObject] = Trophies;
 				} else {
@@ -2506,7 +2509,8 @@ class Chinbreak {
 			if (!state[QuestType]) return -1;
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
-			inc(Experience, 50 * state[Act]);
+			const questlevel = state[QuestStoryline] ? Math.floor(state[QuestStoryline] / 10) : state[Act];
+			inc(Experience, questlevel ? 50 * questlevel : 25);
 			if (state[QuestStoryline] === 0)
 				inc(ActProgress);
 			clearQuest(state);
