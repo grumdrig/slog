@@ -1638,7 +1638,7 @@ class Prng {
 
 	// keys are integers on [0, 0x7fffffff]
 	constructor(...keys) {
-		this.seed = hash(...keys);
+		this.seed = hash(...keys, 1618033988);
 	}
 
 	#eat(key = 0xea7f00d) {
