@@ -658,7 +658,7 @@ const SPELLS = [ null, {
 
 			inc(MobAggro);
 
-			damageMob(state, rollAttack(state[Intellect]));
+			damageMob(state, rollAttack(state[Intellect], mobDefense(state[MobLevel]), state[Wisdom]));
 		},
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
@@ -1843,11 +1843,12 @@ function assignQuest(state, storyline) {
 	} else {
 
 		function pickQuestMob(act, level) {
-			let maxlev = level + qrng.irand(level);
-			let minlev = level - Math.min(qrng.irand(level), qrng.irand(level));
+			let maxlev = level;// + qrng.irand(level);
+			let minlev = level;// - Math.min(qrng.irand(level), qrng.irand(level));
 			let options = MOBS.filter(mob => mob &&
 				minlev <= mob.hitdice && mob.hitdice <= maxlev &&
 				act >= (mob.minact ?? 0) && act <= (mob.maxact ?? MAX_INT));
+			if (options.length === 0) options = MOBS.filter(mob => mob); // desperate times
 			return qrng.pick(options).index;
 		}
 
@@ -2042,6 +2043,12 @@ class Chinbreak {
 
 		function d(n) { return rng.d(n) }
 
+		function mobDefense(level) {
+			return Math.floor(Math.pow(level, GR));
+		}
+
+		function mobOffsense(level) { return mobDefense(level) }
+
 		function rollAttack(offense, defense, potency) {
 			if (rng.civRoll(offense, defense)) {
 				return rng.d(Math.max(1, potency));
@@ -2161,7 +2168,7 @@ class Chinbreak {
 		if (state[MobAggro] && state[MobHealth] > 0) {
 			// do mob attack before anything else happens
 			let info = MOBS[state[MobSpecies]];
-			let damage = rollAttack(state[MobLevel], state[Defense], state[MobLevel]);
+			let damage = rollAttack(mobOffsense(state[MobLevel]), state[Defense], state[MobLevel]);
 			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
@@ -2306,7 +2313,7 @@ class Chinbreak {
 					}
 				}
 
-				damageMob(state, rollAttack(state[Offense], state[MobLevel], state[Potency]));
+				damageMob(state, rollAttack(state[Offense], mobDefense(state[MobLevel]), state[Potency]));
 
 			} else if (slot === Footwear) {
 				if (!state[MobSpecies]) return -1;
@@ -2321,7 +2328,7 @@ class Chinbreak {
 
 				inc(MobAggro);
 
-				damageMob(state, rollAttack(state[Footwear], state[MobLevel], 1));
+				damageMob(state, rollAttack(state[Footwear], mobDefense(state[MobLevel]), 1));
 			}
 			return -1;
 
