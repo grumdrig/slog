@@ -24,6 +24,7 @@ macro minStat() .Strength <? .Agility <? .Endurance <? .Wisdom <? .Intellect <? 
 
 
 while 1 {
+	// Train
 	while .TrainingPoints > 0 {
 		const ms = minStat()
 		if ms == .Strength       { train(Strength) }
@@ -34,8 +35,11 @@ while 1 {
 		else                     { train(Charisma) }
 	}
 
+	// Always be questing
 	if !.QuestType { seekQuest(0) }
+
 	goto(.QuestLocation)
+
 	if .QuestType == Cutscene {
 		while .QuestProgress < .QuestQty {
 			seek(QuestProgress)
@@ -53,7 +57,7 @@ while 1 {
 	} else if .QuestMob {
 		// Killing
 		while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
-			while .MobSpecies != .QuestMob or !.MobHealth {
+			while .MobSpecies != .QuestMob or !.MobHealth or (.MobLevel > .Act and .Act < 9) {
 				seek(MobSpecies)
 			}
 			use(Weapon)
@@ -67,16 +71,23 @@ while 1 {
 	}
 
 	if .QuestEnd { goto(.QuestEnd) }
-	else if .Location <= 36 { goto(Bompton) }
-	else { goto(Sygnon_Tower) }
 
 	if .QuestObject { give(.QuestObject, ..QuestObject) }
 
 	if .QuestType and .QuestProgress >= .QuestQty {
 		completequest()
 	}
-	sell(Treasures, .Treasures)
+
+	if .Location <= 36 { goto(Bompton) }
+	else { goto(Sygnon_Tower) }
+
+	if .Treasures {
+		sell(Treasures, .Treasures)
+	}
+
 	levelup()
+
 	while .Health < .MaxHealth { rest() }
+
 	if .Encumbrance > .Capacity / 2 { deposit(Gold, .Gold) }
 }

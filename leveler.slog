@@ -37,10 +37,6 @@ func goodHunting(forLevel) {
   }
 }
 
-cheat(Gold, 80)
-assert 0 < buy(Scroll, Heal_Yeah)
-copySpell(Spellbook1)
-
 while .Level < 88 {
   goto(goodHunting(.Level))
   raids += 1

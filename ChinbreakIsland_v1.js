@@ -628,6 +628,21 @@ div#terrains {
 		p(qt.explanation);
 	} });
 
+	head('Leveling up');
+
+	p(`Your character's Level describes their overall ability in all aspects.
+	Characters gain levels by earning Experience, by slaying enemies and
+	completing quests. Once the character has enough Experience to
+	increase their level, calling levelup() will increment their Level and
+	bring them various level-up bonuses.`);
+
+	p(`The amount of Experience needed for each Level are:`);
+
+	for (let level = 1; level <= 20; level += 1) {
+		p(`Level ${level}: ${Chinbreak.xpNeededForLevel(level)}`);
+	}
+
+
 	return result;
 }
 
