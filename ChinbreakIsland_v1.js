@@ -292,16 +292,18 @@ const CALLS = {
 		and Weapon.` },
 
 	buy: { parameters: 'slot,qualanty',
-		description: `Buy a quantity of some inventory item
-		(Potions, etc.) from the local shopkeeper, You can get a
-		price check by passing 0 as the quantitiy.
+		description: `Buy a quantity of some inventory item(Potions, etc.)
+		from the local shopkeeper. Or, buy a piece of equipment of a
+		certain quality. This will replace any equipment already in that
+		slot, so consider selling it first.` },
 
-		<p>Or, buy a piece of equipment (EQUIPMENT_*) of a certain quality. This
-		will replace any equipment already in that slot, so consider
-		selling it first.` },
+	/* TODO: auto-sell existing equipment? */
 
 	sell: { parameters: 'slot,quantity',
 		description: `Sell an inventory item of piece of equipment.` },
+
+	priceCheck: { parameters: 'slot,quantity',
+		description: `Check the purchase price of equipment or inventory items.` },
 
 	seekQuest: { parameters: 'storyline',
 		description: `While in town, ask around and listen to rumors in hopes
@@ -311,7 +313,7 @@ const CALLS = {
 		other value for side quests (which may be completed for lulz or
 		profit).` },
 
-	completequest: {
+	completeQuest: {
 		description: `Report back to the originator of the current quest to
 		gain sundry rewards for your efforts.` },
 
@@ -329,7 +331,7 @@ const CALLS = {
 		description: `Grab some downtime to reduce fatigue and damage. Resting
 		is much more effected in town than it is out in the wilderness.` },
 
-	levelup: {
+	levelUp: {
 		description: `Level up! When you've accumulated enough experience, you
 		can take yourself to the next level by leveling up. This will
 		increase your general effectiveness accross the board, and may
@@ -633,7 +635,7 @@ div#terrains {
 	p(`Your character's Level describes their overall ability in all aspects.
 	Characters gain levels by earning Experience, by slaying enemies and
 	completing quests. Once the character has enough Experience to
-	increase their level, calling levelup() will increment their Level and
+	increase their level, calling levelUp() will increment their Level and
 	bring them various level-up bonuses.`);
 
 	p(`The amount of Experience needed for each Level are:`);
@@ -2382,7 +2384,7 @@ class Chinbreak {
 			return 
 
 
-		} else if (operation === buy) {
+		} else if (operation === buy || operation === priceCheck) {
 			let slot = arg1;
 			if (!local.forSale) return -1;  // nothing to buy here
 			let qty, levelToBe, price, description;
@@ -2420,15 +2422,15 @@ class Chinbreak {
 				price = price * (1 + 1 / (1 + state[Charisma]));
 			}
 
-			if (arg2 === 0) {
-				// It's a price check only
-				passTime('Checking prices', 1);
-				return Math.ceil(price);
-			}
-
 			price *= qty;
 
 			price = Math.ceil(price);
+
+			if (operation === priceCheck) {
+				// It's a price check only
+				passTime('Checking local prices', 1);
+				return price;
+			}
 
 			if (state[Gold] < price) return 0;  // Can't afford it
 
@@ -2543,7 +2545,7 @@ class Chinbreak {
 
 			return 1;
 
-		} else if (operation === completequest) {
+		} else if (operation === completeQuest) {
 			if (!state[QuestType]) return -1;
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
@@ -2704,7 +2706,7 @@ class Chinbreak {
 				return -1;
 			}
 
-		} else if (operation === levelup) {
+		} else if (operation === levelUp) {
 			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 99) return 0;
 			if (state[Experience] < Chinbreak.xpNeededForLevel(state[Level] + 1))
