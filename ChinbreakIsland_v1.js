@@ -359,8 +359,10 @@ const CALLS = {
 
 Object.values(CALLS).forEach((c, i) => c.operation = 65 + i);
 
+let CALL_MNEMONICS = [];
 for (let call in CALLS) {
 	define(call, CALLS[call].operation);
+	CALL_MNEMONICS[CALLS[call].operation] = call;
 }
 
 
@@ -506,7 +508,7 @@ div#terrains {
 			midhead('&nbsp;');
 		}
 
-		subhead(code(`${name} (${i})`))
+		subhead(code(`${i}. ${name}`))
 		p(description);
 
 		if (isInventorySlot(i)) {
@@ -622,7 +624,7 @@ div#terrains {
 	of the towns in the game, at each point in the game.`);
 
 	QUEST_TYPES.forEach((qt, i) => { if (qt) {
-		subhead(`${qt.name} = ${i}`);
+		subhead(`${i}. ${qt.name}`);
 		p(qt.explanation);
 	} });
 
@@ -658,7 +660,7 @@ const SPELLS = [ null, {
 
 			inc(MobAggro);
 
-			damageMob(state, rollAttack(state[Intellect], mobDefense(state[MobLevel]), state[Wisdom]));
+			return damageMob(state, rollAttack(state[Intellect], mobDefense(state[MobLevel]), state[Wisdom]));
 		},
 		description: `Hurl a ball of flaming horror at your nearby foe, causing them damage.`,
 	}, {
@@ -1678,7 +1680,7 @@ function indefiniteItems(slot, qty) {
 }
 
 function damageMob(state, damage) {
-	if (state[MobHealth] <= 0) return;
+	if (state[MobHealth] <= 0) return 0;
 
 	state[MobHealth] = Math.max(0, state[MobHealth] - damage);
 
@@ -1689,6 +1691,8 @@ function damageMob(state, damage) {
 			state[QuestProgress] += 1;
 		state[MobAggro] = 0;
 	}
+
+	return damage;
 }
 
 function clearMob(state) {
@@ -1919,12 +1923,12 @@ function describeQuest(state, title) {
 }
 
 
-let TASK = '';
-let REALTIME;  // more global cheesiness
-
 class Chinbreak {
 	state;
 	characterName;
+	task;
+	realtime;  // Elapsed real time (in userland) in seconds
+	strict = true;  // Fail on failed interface calls
 
 	static title = 'Progress Quest Slog: Chinbreak Island';
 
@@ -1933,7 +1937,7 @@ class Chinbreak {
 	constructor(code, ...args) {
 		this.state = new Int16Array(SLOTS.length);
 		this.state[Seed] = hash(0x3FB9, ...code);
-		REALTIME = 0;
+		this.realtime = 0;
 
 		this.characterName = args[1] ?? 'Test Pilot';
 
@@ -1997,7 +2001,12 @@ class Chinbreak {
 
 		let result = this._handleInstruction(state, operation, ...args);
 
-		REALTIME += realTimeSeconds(age(state) - before);
+		if (this.strict && result < 0) {
+			console.error("Instruction failed", result, operation, CALL_MNEMONICS[operation], ...args);
+			state[GameOver] = result;
+		}
+
+		this.realtime += realTimeSeconds(age(state) - before);
 
 		// Various state values are calculable from other state values
 		// but we store them in the state vector for convenience and visibility
@@ -2038,6 +2047,8 @@ class Chinbreak {
 	_handleInstruction(state, operation, ...args) {
 		let arg1 = args[0];
 		let arg2 = args[1];
+
+		const game = this;  // TODO lame
 
 		let rng = new Prng(state[Seed], 0x5EED, state[Years], state[Hours], operation, ...args);
 
@@ -2123,8 +2134,8 @@ class Chinbreak {
 		let questal = mapInfo(state[QuestLocation], state);
 
 		function passTime(task, hours, days) {
-			TASK = task;  // this global is inelegant
-			if (TASK[TASK.length - 1] !== '.') TASK += '...';
+			game.task = task;
+			if (game.task[game.task.length - 1] !== '.') game.task += '...';
 			if (days) hours += HOURS_PER_DAY * days;
 			inc(Hours, hours);
 			while (state[Hours] > HOURS_PER_YEAR) {
@@ -2313,7 +2324,7 @@ class Chinbreak {
 					}
 				}
 
-				damageMob(state, rollAttack(state[Offense], mobDefense(state[MobLevel]), state[Potency]));
+				return damageMob(state, rollAttack(state[Offense], mobDefense(state[MobLevel]), state[Potency]));
 
 			} else if (slot === Footwear) {
 				if (!state[MobSpecies]) return -1;
@@ -2328,7 +2339,7 @@ class Chinbreak {
 
 				inc(MobAggro);
 
-				damageMob(state, rollAttack(state[Footwear], mobDefense(state[MobLevel]), 1));
+				return damageMob(state, rollAttack(state[Footwear], mobDefense(state[MobLevel]), 1));
 			}
 			return -1;
 
@@ -2430,7 +2441,6 @@ class Chinbreak {
 			} else {
 				return -1;
 			}
-			if (qty <= 0) return -1;
 			if (operation === sell) {
 				let price = qty * unitValue;
 				price /= (1 + 1 / Math.max(1, state[Charisma]));
@@ -2440,6 +2450,7 @@ class Chinbreak {
 				inc(Gold, intprice);
 			}
 			if (operation === give &&
+					qty > 0 &&
 					state[QuestObject] === slot &&
 					state[Location] === state[QuestEnd] &&
 					[0,state[TrophyMob]].includes(state[QuestMob])) {
@@ -2677,7 +2688,7 @@ class Chinbreak {
 			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 99) return 0;
 			if (state[Experience] < Chinbreak.xpNeededForLevel(state[Level] + 1))
-				return -1;
+				return 0;
 			inc(Level);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[Endurance]));
 			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[Wisdom]));
@@ -3185,7 +3196,7 @@ function updateGame(state) {
 	let local = Chinbreak.mapInfo(state[Location], state) || {};
 
 	$id('gameprogress').title = readableTime(state[Hours], state[Years]);
-	$id('elapsed').innerText = readableRealTime(REALTIME);
+	$id('elapsed').innerText = readableRealTime(game.realtime);
 
 	let t = state[Hours];
 	let hour = t % HOURS_PER_DAY;
@@ -3226,23 +3237,23 @@ function updateGame(state) {
 	setBar('gameprogress', state[Act] - 1, 9);
 
 	if (state[Level] == 0) {
-		TASK = '&nbsp;';
+		game.task = '&nbsp;';
 	} else if (state[GameOver] === 401) {
-		TASK = 'Game over. Character has retired.';
+		game.task = 'Game over. Character has retired.';
 	} else if (state[GameOver] === 333) {
-		TASK = 'Game over. Simulation has crashed!';
+		game.task = 'Game over. Simulation has crashed!';
 	} else if (state[GameOver] === 100) {
-		TASK = 'Game over. Character has aged out.';
+		game.task = 'Game over. Character has aged out.';
 	} else if (state[GameOver] === 86) {
-		TASK = 'Game over. You died.';
+		game.task = 'Game over. You died.';
 	} else if (state[GameOver] === 1) {
-		TASK = 'Game complete! Victory!';
+		game.task = 'Game complete! Victory!';
 	} else if (state[GameOver]) {
-		TASK = 'Game over!';
+		game.task = 'Game over!';
 	} else if (!vm.running) {
-		TASK = 'Halted.';
+		game.task = 'Halted.';
 	}
-	$id('task').innerHTML = TASK;
+	$id('task').innerHTML = game.task;
 	setTaskBar();
 }
 
@@ -3269,7 +3280,8 @@ Chinbreak.playmation = function(vm, butStop) {
 	}
 	animate.duration = 1000 * realTimeSeconds(age(vm.state) - before);
 	animate.progress = 0;
-	$id('task').innerText = TASK;
+	$id('task').innerText = game.task ?? '';
+	// TODO refactor all this animation stuff, not with cheesy global garbage
 	setTaskBar();
 	if (!butStop)
 		window.gameplayTimer = setTimeout(animate, 10);

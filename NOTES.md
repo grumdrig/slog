@@ -296,18 +296,6 @@ Real Time
 Show elapsed real time (in progress-bar mode) in outputs
 
 
-Cinematics
-----------
-
-Should have to call watchcinematic() several times so that there can be
-transitional text.
-
-Also have that text.
-
-For that to work, would need a quest for the cinematic to keep track of its
-progress.
-
-
 Big Mobs
 --------
 
@@ -445,3 +433,5 @@ Have quest mob levels closely follow act, so maybe 1,2,3 as act 1 progresses,
 then 4,5,6, in act II, or whatever. Something like that.
 
 Test hash function
+
+Make all handleInstruction error returns unique and labelable
