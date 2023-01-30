@@ -1742,7 +1742,7 @@ const QUEST_TYPES = [ null,
 		// Bring me N trophies
 		name: "Collect_Trophies",
 		title: `Bring me $N $M trophies`,
-		description: `The $M in $L are too much. Bring proof of death back to me here in $E.`,
+		description: `The $ms in $L are too much. Bring proof of death back to me here in $E.`,
 		explanation: `Return to the quest ending location a hand over a
 		certain quantity of trophies of a particular monster. They can be
 		obtained by killing said creature and looting the corpse. You must
@@ -1928,11 +1928,12 @@ function describeQuest(state, title) {
 	result = result
 		.replace('$N', state[QuestQty])
 		.replace('$MS', state[QuestMob] && plural(MOBS[state[QuestMob]].name))
+		.replace('$ms', state[QuestMob] && plural(MOBS[state[QuestMob]].name).toLowerCase())
 		.replace('$M', state[QuestMob] && MOBS[state[QuestMob]].name.toLowerCase())
 		.replace('$O', state[QuestObject] && SLOTS[state[QuestObject]].name.toLowerCase())
 		.replace('$L', questal && questal.name)
 		.replace('$E', original && original.name);
-	if (state[QuestStoryline] === 0)
+	if (title && state[QuestStoryline] === 0)
 		result = '👑 ' + result;
 	return result;
 }
@@ -2388,11 +2389,15 @@ class Chinbreak {
 			if (isEquipmentSlot(slot)) {
 				qty = 1;
 				levelToBe = arg2;
-				if (local.forSale.filter(fsi => fsi.slot === slot &&
-					                             fsi.item == levelToBe).length === 0)
-					return -1;
+				/* TODO maybe bring back limited availability by location, but
+				I think having location just affect prices might be better
+				for now I just want it to be possible to play with a simple strat */
+				// if (local.forSale.filter(fsi => fsi.slot === slot &&
+				// 	                             fsi.item == levelToBe).length === 0)
+				// 	return -1;
 				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
 				// TODO store the price in the forSale DB
+				// TODO weapons should be priced cheaper
 				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, levelToBe - 1));
 				description = SLOTS[slot].name.toLowerCase() + ': ' + DATABASE[slot].names[levelToBe].name;
 			} else if (isInventorySlot(slot)) {
@@ -2425,7 +2430,7 @@ class Chinbreak {
 
 			price = Math.ceil(price);
 
-			if (state[Gold] < price) return -1;  // Can't afford it
+			if (state[Gold] < price) return 0;  // Can't afford it
 
 			// You may proceed with the purchase
 			inc(Gold, -price);

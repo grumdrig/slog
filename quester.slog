@@ -7,20 +7,19 @@ macro goto(dest) {
 	while dest != .Location and travel(dest) > 0 { }
 }
 
-/* Cheat to the end
-cheat(Act, 9)
-cheat(ActProgress, 2)
-seekQuest(0)
-goto(.QuestLocation)
-while !seek(Totem) {}
-goto (.QuestEnd)
-give(Totem, 1)
-completequest()
-seekQuest(0)
-while .QuestMob != .MobSpecies { seek(MobSpecies) }
-*/
-
 macro minStat() .Strength <? .Agility <? .Endurance <? .Wisdom <? .Intellect <? .Charisma
+
+func upgradeEquipment() {
+	const least = (.Weapon / 5) <? .Armor <? .Shield <? .Headgear <? .Footwear <? .Mount
+	const worst =
+		(.Weapon / 5) == least and Weapon or
+		.Armor == least and Armor or
+		.Shield == least and Shield or
+		.Headgear == least and Headgear or
+		.Footwear == least and Footwear or
+		Mount
+	return worst == Weapon and buy(Weapon, .worst + 5) or buy(worst, .worst + 1)
+}
 
 
 while 1 {
@@ -48,7 +47,7 @@ while 1 {
 		// Trophy hunting
 		while .Health > (.MaxHealth / 2 >? (4 <? .MaxHealth - 1))  and
 					.Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
-			while .MobSpecies != .QuestMob or !.MobHealth {
+			while .MobSpecies != .QuestMob or !.MobHealth or (.MobLevel > .Act and .Act < 9) {
 				seek(MobSpecies)
 			}
 			use(Weapon)
@@ -88,6 +87,8 @@ while 1 {
 	levelup()
 
 	while .Health < .MaxHealth { rest() }
+
+	while upgradeEquipment() > 0 { }
 
 	if .Encumbrance > .Capacity / 2 { deposit(Gold, .Gold) }
 }

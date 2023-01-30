@@ -49,9 +49,9 @@ while .Level < 88 {
     }
     if .Encumbrance < .Capacity and !.MobHealth { loot(Trophies) }
     if .MobHealth { seek(0) }  // run away
-    while .Health < .MaxHealth and .Reagents > 0 {
-      if use(Spellbook1) <= 0 { break }
-    }
+    // while .Health < .MaxHealth and .Reagents > 0 {
+    //   if use(Spellbook1) <= 0 { break }
+    // }
   }
   goto(18)
   levelup()
