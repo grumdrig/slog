@@ -9,7 +9,7 @@
 <script src="vm.js"></script>
 <script src="os.js"></script>
 <script src="joy.js"></script>
-<script src="leveler.jstrat"></script>
+<script src="slayer.jstrat"></script>
 <script src="quester.jstrat"></script>
 <script src="ChinbreakIsland_v1.js"></script>
 <style>
@@ -110,8 +110,8 @@ div.icon > div {
 				</div>
 
 				<div class="field-row">
-				  <input type="radio" name=strat value=leveler id=leveler>
-				  <label for="leveler">Leveler</label></input>
+				  <input type="radio" name=strat value=slayer id=slayer>
+				  <label for="slayer">Slayer</label></input>
 				</div>
 
 				<div class="field-row">
@@ -264,7 +264,7 @@ window.addEventListener('load', e => {
 	$$('input[name=strat]').forEach(r => r.addEventListener('change', changeStrat));
 
 	STRATEGIES.quester = quester;
-	STRATEGIES.leveler = leveler;
+	STRATEGIES.slayer = slayer;
 	changeStrat();
 
 	$('#straturl').addEventListener('select', e => { $('#orurl').checked = true });

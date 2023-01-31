@@ -74,7 +74,7 @@ while 1 {
 	if .QuestObject { give(.QuestObject, ..QuestObject) }
 
 	if .QuestType and .QuestProgress >= .QuestQty {
-		completequest()
+		completeQuest()
 	}
 
 	if .Location <= 36 { goto(Bompton) }
@@ -84,7 +84,7 @@ while 1 {
 		sell(Treasures, .Treasures)
 	}
 
-	levelup()
+	levelUp()
 
 	while .Health < .MaxHealth { rest() }
 
