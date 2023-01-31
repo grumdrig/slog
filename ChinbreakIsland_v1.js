@@ -266,8 +266,6 @@ function isEquipmentSlot(slot) { return EQUIPMENT_0 <= slot && slot < EQUIPMENT_
 function isInventorySlot(slot) { return INVENTORY_0 <= slot && slot < INVENTORY_0 + INVENTORY_COUNT }
 
 
-// TODO bell() commmand? CHA makes it more accurate
-
 const CALLS = {
 	train: { parameters: 'slot',
 		description: `Train to improve stats (Strength, and so on).
@@ -2188,6 +2186,29 @@ class Chinbreak {
 			return mob.index;
 		}
 
+		function salePrice(slot, qty) {
+			if (qty === 0) return 0;
+			let unitValue;
+			if (isEquipmentSlot(slot)) {
+				unitValue = (slot === Weapon) ? weaponPower(state[slot]) : state[slot];
+				unitValue = Math.round(Math.pow(GR, unitValue));
+			} else if (isInventorySlot(slot)) {
+				unitValue = DATABASE[slot].value;
+				if (slot === Trophies && state[TrophyMob]) {
+					const d = MOBS[state[TrophyMob]];
+					if (d.hitdice)
+						unitValue *= Math.pow(GR, d.hitdice);
+				}
+			} else {
+				return 0;
+			}
+			let price = qty * unitValue;
+			price /= (1 + 1 / Math.max(1, state[Charisma]));
+			let intprice = Math.floor(price);
+			let frac = price - intprice;
+			if (rng.rand() < frac) intprice += 1;  // fractional values reflected in probabilities
+			return intprice;
+		}
 
 		function inc(slot, qty=1) {
 			return state[slot] = Math.min(MAX_INT, Math.max(MIN_INT, state[slot] + qty));
@@ -2388,7 +2409,7 @@ class Chinbreak {
 		} else if (operation === buy || operation === priceCheck) {
 			let slot = arg1;
 			if (!local.forSale) return -1;  // nothing to buy here
-			let qty, levelToBe, price, description;
+			let qty, levelToBe, price, description, tradeInValue = 0;
 			if (isEquipmentSlot(slot)) {
 				qty = 1;
 				levelToBe = arg2;
@@ -2400,10 +2421,10 @@ class Chinbreak {
 				// 	return -1;
 				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
 				// TODO store the price in the forSale DB
-				// TODO weapons should be priced cheaper
 				const varieties = slot == Weapon ? NUM_WEAPON_TYPES : 1;
 				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, Math.floor((levelToBe - 1) / varieties)));
 				description = SLOTS[slot].name.toLowerCase() + ': ' + DATABASE[slot].names[levelToBe].name;
+				tradeInValue = salePrice(slot, state[slot] ? 1 : 0);
 			} else if (isInventorySlot(slot)) {
 				qty = arg2;
 				if (qty < 0) return -1;
@@ -2428,6 +2449,8 @@ class Chinbreak {
 
 			price = Math.ceil(price);
 
+			price -= tradeInValue;
+
 			if (operation === priceCheck) {
 				// It's a price check only
 				passTime('Checking local prices', 1);
@@ -2437,7 +2460,7 @@ class Chinbreak {
 			if (state[Gold] < price) return 0;  // Can't afford it
 
 			// You may proceed with the purchase
-			inc(Gold, -price);
+			dec(Gold, price);
 			state[slot] = levelToBe;
 			passTime('Buying ' + description, 3);
 			return qty;
@@ -2445,33 +2468,19 @@ class Chinbreak {
 		} else if (operation === sell || operation === give || operation === drop) {
 			if (operation === sell && local.terrain != TOWN) return -1;
 			let [slot, qty] = [arg1, arg2];
-			let unitValue, newqty;
+			let newqty;
 			if (isEquipmentSlot(slot)) {
-				qty = Math.min(qty, 1);
-				unitValue = state[slot];
-				if (!unitValue) return -1;
-				if (slot === Weapon) unitValue = weaponPower(unitValue);
-				unitValue = Math.round(Math.pow(GR, unitValue));
+				qty = Math.min(qty, 1, state[slot]);
 				newqty = 0;
 			} else if (isInventorySlot(slot)) {
 				qty = Math.min(qty, state[slot]);
 				newqty = state[slot] - qty;
-				unitValue = DATABASE[slot].value;
-				if (slot === Trophies && state[TrophyMob]) {
-					const d = MOBS[state[TrophyMob]];
-					if (d.hitdice)
-						unitValue *= Math.pow(GR, d.hitdice);
-				}
 			} else {
 				return -1;
 			}
+			let price = salePrice(slot, qty);
 			if (operation === sell) {
-				let price = qty * unitValue;
-				price /= (1 + 1 / Math.max(1, state[Charisma]));
-				let intprice = Math.floor(price);
-				let frac = price - intprice;
-				if (rng.rand() < frac) intprice += 1;  // fractional values reflected in probabilities
-				inc(Gold, intprice);
+				inc(Gold, price);
 			}
 			if (operation === give &&
 					qty > 0 &&
