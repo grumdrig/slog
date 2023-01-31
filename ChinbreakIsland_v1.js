@@ -22,7 +22,9 @@ const SLOTS = [
 	  levels mean increased abilities accross the board.` },
 	{ name: 'Experience',
 	  description: `Experience points may be earned by defeating mobs and
-	  completing quests. Earn enough and you'll be able to level up.` },
+	  completing quests.` },
+	{ name: 'ExperienceNeeded',
+	  description: `Experience points needed to be able to advance to the next level.` },
 
 	{ name: 'Years',
 	  description: `Years of in-game time elapsed since the start of the game.` },
@@ -2134,6 +2136,7 @@ class Chinbreak {
 				state[slot] = value ?? (state[slot] + increment)
 
 			state[Level] = 1;
+			state[ExperienceNeeded] = Chinbreak.xpNeededForLevel(2);
 			state[Location] = Bompton;
 			state[Health] = state[MaxHealth] = 2 + state[Endurance];
 			state[Energy] = state[MaxEnergy] = 0 + state[Intellect];
@@ -2720,9 +2723,10 @@ class Chinbreak {
 		} else if (operation === levelUp) {
 			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 99) return 0;
-			if (state[Experience] < Chinbreak.xpNeededForLevel(state[Level] + 1))
+			if (state[Experience] < state[ExperienceNeeded])
 				return 0;
 			inc(Level);
+			state[ExperienceNeeded] = Chinbreak.xpNeededForLevel(state[Level] + 1);
 			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[Endurance]));
 			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[Wisdom]));
 			inc(TrainingPoints, 2);
@@ -2740,6 +2744,7 @@ class Chinbreak {
 
 	static xpNeededForLevel(level) {
 		if (level <= 1) return 0;
+		if (level > 99) return MAX_INT;
 		return 0 + Math.floor(Math.pow(level - 1, GR)) * 200;
 	}
 
