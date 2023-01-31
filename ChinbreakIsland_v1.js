@@ -1903,7 +1903,7 @@ function assignQuest(state, storyline) {
 			state[QuestEnd] = state[Location];
 
 			if (state[QuestType] == Collect_Item) {
-				state[QuestObject] = qrng.pick([Ammunition, Trophies]);
+				state[QuestObject] = qrng.pick([Ammunition, Trophies, Gold]);
 				// TODO add Gold and Rations to this list, which will need smarter AI
 				state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
 			} else {
@@ -2000,6 +2000,7 @@ class Chinbreak {
 		for (let i = 0; i < SLOTS.length; ++i)
 			if (state[i])
 				nfo.push(SLOTS[i].name + ': ' + state[i]);
+		nfo.push('Realtime: ' + approximateRealTime(this.realtime));
 		let m = 2 + Math.max(...nfo.map(l => l.length));
 		let cols = Math.max(Math.floor(79 / m), 1);
 		let rows = Math.ceil(nfo.length / cols);
@@ -3091,6 +3092,31 @@ function readableRealTime(sec) {
 	t = (t / 365) >> 0;
 	if (!t) return result;
 	return t + 'y ' + result;
+}
+
+
+function approximateRealTime(sec) {
+	if (sec > 60) {
+		let min = sec / 60;
+		if (min > 60) {
+			let hours = min / 60;
+			if (hours > 24) {
+				let days = hours / 24;
+				if (days > 365) {
+					let years = days / 365;
+					return years.toFixed(2) + 'y';
+				} else {
+					return days.toFixed(2) + 'd';
+				}
+			} else {
+				return hours.toFixed(2) + 'h';
+			}
+		} else {
+			return min.toFixed(2) + 'm';
+		}
+	} else {
+		return sec + 's';
+	}
 }
 
 
