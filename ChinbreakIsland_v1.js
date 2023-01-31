@@ -2398,7 +2398,8 @@ class Chinbreak {
 				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
 				// TODO store the price in the forSale DB
 				// TODO weapons should be priced cheaper
-				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, levelToBe - 1));
+				const varieties = slot == Weapon ? NUM_WEAPON_TYPES : 1;
+				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, Math.floor((levelToBe - 1) / varieties)));
 				description = SLOTS[slot].name.toLowerCase() + ': ' + DATABASE[slot].names[levelToBe].name;
 			} else if (isInventorySlot(slot)) {
 				qty = arg2;
