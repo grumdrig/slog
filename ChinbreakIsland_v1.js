@@ -1788,14 +1788,15 @@ const SCRIPT = [{
 	scripts: [{
 		quest: 0,
 		location: Bompton,
-		script: `Parakeets twitter and squirrels chitter outside your cottage in Bompton Town.
-But doesn't it seem lately that the local wildlife has been acting odd? ...Aggressive?
-There's a rustling of underbrush and suddenly the town is under attack!
-Squirrels! Rabbits! Parakeets! ... Wild boars! Tigers! Feral gnomes!
-You flee in fear to the shore. From Sygnon Isle yonder, there's a rumble and a black cloud.
-You return. Town hall is in flames. There are many corpses... You gather a few supplies...
-You vow you'll help the people of Bompton and put an end to whatever evil is afoot!`
-.split('\n')}],
+		script: [
+`Parakeets twitter and squirrels chitter outside your cottage in Bompton Town.`,
+`But doesn't it seem lately that the local wildlife has been acting odd? ...Aggressive?`,
+`There's a rustling of underbrush and suddenly the town is under attack!`,
+`Squirrels! Rabbits! Parakeets! ... Wild boars! Tigers! Feral gnomes!`,
+`You flee in fear to the shore. From Sygnon Isle yonder, there's a rumble and a black cloud.`,
+`You return. Town hall is in flames. There are many corpses... You gather a few supplies...`,
+`You vow you'll help the people of Bompton and put an end to whatever evil is afoot!`,
+]}],
 }, {
 	length: 6,
 }, {
@@ -2048,6 +2049,7 @@ class Chinbreak {
 			state[Shield] +
 			state[Headgear] +
 			state[Footwear];
+		// TODO: defense is out of proportion with offense
 
 		if (state[Health] <= 0) {
 			state[GameOver] = 86;
@@ -2100,11 +2102,12 @@ class Chinbreak {
 
 		function actUp() {
 			if (state[ActProgress] < state[ActDuration]) return false;
-
-			let act = SCRIPT[state[Act]];
-			if (!act) return false;
+			if (!state[ActDuration]) return false;
 
 			inc(Act);
+
+			let act = SCRIPT[state[Act]];
+
 			state[ActDuration] = act ? act.length : 0;
 			state[ActProgress] = 0;
 			return true;
@@ -2142,6 +2145,8 @@ class Chinbreak {
 			state[Energy] = state[MaxEnergy] = 0 + state[Intellect];
 			state[TrainingPoints] = 10;
 			state[ActDuration] = SCRIPT[state[Act]].length;
+
+			assignQuest(state, 0);
 
 			passTime('Loading', 1);
 
@@ -2211,6 +2216,18 @@ class Chinbreak {
 			let frac = price - intprice;
 			if (rng.rand() < frac) intprice += 1;  // fractional values reflected in probabilities
 			return intprice;
+		}
+
+		function endQuest() {
+			if (state[QuestStoryline] === 0)
+				inc(ActProgress);
+			clearQuest(state);
+			if (actUp()) {
+				if (state[Act] > 1) {
+					inc(TrainingPoints);
+					inc(Treasures);
+				}
+			}
 		}
 
 		function inc(slot, qty=1) {
@@ -2350,7 +2367,10 @@ class Chinbreak {
 
 				let info = MOBS[state[MobSpecies]];
 
-				passTime('Engaging this ' + info.name.toLowerCase() + ' in battle!', 1);
+				passTime(state[MobAggro] ?
+					'Battling the ' + info.name.toLowerCase() + '!' :
+					'Engaging this ' + info.name.toLowerCase() + ' in battle!',
+					2);
 
 				if (info.esteemSlot)
 					dec(state[info.esteemSlot], 1);
@@ -2426,7 +2446,7 @@ class Chinbreak {
 				// TODO store the price in the forSale DB
 				const varieties = slot == Weapon ? NUM_WEAPON_TYPES : 1;
 				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, Math.floor((levelToBe - 1) / varieties)));
-				description = SLOTS[slot].name.toLowerCase() + ': ' + DATABASE[slot].names[levelToBe].name;
+				description = SLOTS[slot].name.toLowerCase() + ': ' + DATABASE[slot].names[levelToBe];
 				tradeInValue = salePrice(slot, state[slot] ? 1 : 0);
 			} else if (isInventorySlot(slot)) {
 				qty = arg2;
@@ -2565,19 +2585,12 @@ class Chinbreak {
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			const questlevel = state[QuestStoryline] ? Math.floor(state[QuestStoryline] / 10) : state[Act];
 			inc(Experience, questlevel ? 50 * questlevel : 25);
-			if (state[QuestStoryline] === 0)
-				inc(ActProgress);
-			clearQuest(state);
+			endQuest();
 			if (state[Act] === 9 && state[ActProgress] === 3) {
 				passTime('Being magically transported to Sygnon Isle!', 3);
 				state[Location] = Sygnon_Tower;
 			} else {
 				passTime('Completing paperwork', 2);
-			}
-
-			if (actUp()) {
-				inc(TrainingPoints);
-				inc(Treasures);
 			}
 
 			return 1;
@@ -2592,13 +2605,20 @@ class Chinbreak {
 			hours *= Math.pow(GR, state[slot]);
 			hours *= 10 / (10 + (state[Wisdom] + (local.trainingBoost == slot ? 1 : 0)));
 			hours = Math.min(1, Math.round(hours));
-			// TODO: special stat-learning bonuses (special as in species)
+			// TODO: species-based stat-learning bonuses
 			// TODO: DEX helps with STR and CON
 			// TODO: INT helps with CHA and WIS
 
 			passTime('Training up ' + SLOTS[slot].name.toLowerCase(), hours);
 			inc(slot);
 			dec(TrainingPoints);
+
+			if (state[Level] === 1) {
+				// In their plastic formative youth, immediate stat benefits are accrued
+				if (slot === Endurance) inc(MaxHealth);
+				if (slot === Intellect) inc(MaxEnergy);
+			}
+
 			return state[slot];
 
 		} else  if (operation == copySpell) {
@@ -2714,6 +2734,10 @@ class Chinbreak {
 				let script = questScript(state[Act], state[ActProgress]);
 				passTime(script.script[state[QuestProgress]], 8);
 				inc(QuestProgress);
+
+				if (state[QuestProgress] >= state[QuestQty])
+					endQuest();
+
 				return 1;
 
 			} else {
