@@ -1718,7 +1718,7 @@ function damageMob(state, damage) {
 	state[MobHealth] = Math.max(0, state[MobHealth] - damage);
 
 	if (state[MobHealth] <= 0) {
-		increment(state, Experience, 10 * state[MobLevel]);
+		increment(state, Experience, state[MobLevel]);
 		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject])
 			increment(state, QuestProgress);
 		state[MobAggro] = 0;
@@ -2597,7 +2597,7 @@ class Chinbreak {
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			const questlevel = state[QuestStoryline] ? Math.floor(state[QuestStoryline] / 10) : state[Act];
-			inc(Experience, questlevel ? 50 * questlevel : 25);
+			inc(Experience, questlevel ? 5 * questlevel : 3);
 			endQuest();
 			if (state[Act] === 9 && state[ActProgress] === 3) {
 				passTime('Being magically transported to Sygnon Isle!', 3);
@@ -2782,7 +2782,7 @@ class Chinbreak {
 	static xpNeededForLevel(level) {
 		if (level <= 1) return 0;
 		if (level > 80) return MAX_INT;
-		return 0 + Math.floor(Math.pow(level - 1, GR)) * 200;
+		return 0 + Math.floor(Math.pow(level - 1, GR)) * 20;
 	}
 
 }
