@@ -1932,8 +1932,7 @@ function assignQuest(state, storyline) {
 			state[QuestEnd] = state[Location];
 
 			if (state[QuestType] == Collect_Item) {
-				state[QuestObject] = qrng.pick([Ammunition, Trophies, Gold]);
-				// TODO add Gold and Rations to this list, which will need smarter AI
+				state[QuestObject] = qrng.pick([Ammunition, Trophies, Gold, Rations]);
 				state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
 			} else {
 				state[QuestMob] = pickQuestMob(state[Act], questlevel);
