@@ -287,9 +287,10 @@ const CALLS = {
 		step-by-step if more efficiency is desired.` },
 
 	use: { parameters: 'slot',
-		description: `Use the item, specified by state slot index, for its
-		intended purpose. Valid slots are Spellbook slots, Potion, Rations,
-		and Weapon.` },
+		description: `Use something, specified by state slot index, for its
+		intended purpose. Scroll and Spellbook slots cast spells. Use
+		Potions or Rations to drink or eat one. Use Weapon or Footwear to
+		attack.` },
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item(Potions, etc.)
@@ -315,9 +316,9 @@ const CALLS = {
 		gain sundry rewards for your efforts.` },
 
 	seek: { parameters: 'target_slot',
-		description: `Comb the local area for items such as Rations, or
-		Ammunition, or to hunt creatures use MobSpecies, or to find a place
-		without mobs use 0, or look for the local Totem.` },
+		description: `Comb the local area for inventory items such as Rations,
+		or Ammunition, or to hunt creatures seek MobSpecies, or to find a
+		place without mobs use 0, or look for the local Totem.` },
 
 	loot: { parameters: 'slot',
 		description: `Loot any nearby corpse for whatever goodies they may
@@ -478,6 +479,17 @@ div#xp {
 	function i(text) { return '<i>' + text + '</i>' }
 
 	head('Gameplay Functions');
+
+	p(`The gameplay functions are a strategy's way of taking action in the
+	game: the equivalent of clicking a button or pressing a key in an
+	old-school manual game.`);
+
+	p(`These generally return a positive number indicating success, and
+	perhaps how much of it, or a negative number to indicate an error,
+	i.e. that that action is not applicable to the current situation in
+	some way (like trying to sell something where there is no store). A
+	zero generally means there was no error, but the action had no effect
+	(e.g. trying to buy something but without enough money).`);
 
 	for (let call in CALLS) {
 		let { parameters, description } = CALLS[call];
@@ -2042,6 +2054,11 @@ class Chinbreak {
 			state[GameOver] = result;
 		}
 
+		if (result > 0 && age(state) === before) {
+			console.error("Something happened but didn't take time", result, operation, CALL_MNEMONICS[operation], ...args);
+			state[GameOver] = -2;
+		}
+
 		this.realtime += realTimeSeconds(age(state) - before);
 
 		// Various state values are calculable from other state values
@@ -2358,19 +2375,17 @@ class Chinbreak {
 
 				return spellType;
 
-			} else if (isInventorySlot(slot)) {
+			} else if (slot === Potions) {
 				dec(slot);
-				if (slot === Potions) {
-					state[Health] = Math.max(state[Health], state[MaxHealth]);
-					state[Energy] = Math.max(state[Energy], state[MaxEnergy]);
-					passTime('Quaffing an potion', 1);
-				} else if (slot === Rations) {
-					if (state[Energy] < state[MaxEnergy])
-						inc(Energy);
-					passTime('Taking a moment to eat something', 1);
-				} else {
-					return -1;
-				}
+				state[Health] = Math.max(state[Health], state[MaxHealth]);
+				state[Energy] = Math.max(state[Energy], state[MaxEnergy]);
+				passTime('Quaffing a potion', 1);
+
+			} else if (slot === Rations) {
+				dec(slot);
+				if (state[Energy] < state[MaxEnergy])
+					inc(Energy);
+				passTime('Taking a moment to eat something', 1);
 				return 1;
 
 			} else if (slot === Weapon) {

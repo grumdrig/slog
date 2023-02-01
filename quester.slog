@@ -85,7 +85,9 @@ while 1 {
 		sell(Treasures, .Treasures)
 	}
 
-	levelUp()
+	if .Experience >= .ExperienceNeeded {
+		levelUp()
+	}
 
 	while .Health < .MaxHealth { rest() }
 
