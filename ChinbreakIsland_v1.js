@@ -2768,15 +2768,20 @@ class Chinbreak {
 
 				return 1;
 
+			} else if (target === Experience) {
+				passTime('Aggressively trying to experience things', 24);
+				if (rng.rand() < 0.1)
+					inc(Experience);
+				return 1;
+
 			} else {
 				return -1;
 			}
 
 		} else if (operation === levelUp) {
+			if (state[Experience] < state[ExperienceNeeded]) return -1;
 			if (local.terrain != TOWN) return -1;
 			if (state[Level] >= 80) return 0;
-			if (state[Experience] < state[ExperienceNeeded])
-				return 0;
 			inc(Level);
 			state[ExperienceNeeded] = Chinbreak.xpNeededForLevel(state[Level] + 1);
 			state[Health] = inc(MaxHealth, 2 + additiveStatBonus(state[Endurance]));

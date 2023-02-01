@@ -54,7 +54,7 @@ while .Level < 88 {
 		// }
 	}
 	goto(18)
-	levelUp()
+	if .Experience >= .ExperienceNeeded { levelUp() }
 	while .Health < .MaxHealth {
 		rest()
 	}
