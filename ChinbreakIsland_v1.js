@@ -2764,8 +2764,8 @@ class Chinbreak {
 				return 0;
 			inc(Level);
 			state[ExperienceNeeded] = Chinbreak.xpNeededForLevel(state[Level] + 1);
-			state[Health] = inc(MaxHealth, 3 + additiveStatBonus(state[Endurance]));
-			state[Energy] = inc(MaxEnergy, 3 + additiveStatBonus(state[Wisdom]));
+			state[Health] = inc(MaxHealth, 2 + additiveStatBonus(state[Endurance]));
+			state[Energy] = inc(MaxEnergy, 2 + additiveStatBonus(state[Wisdom]));
 			inc(TrainingPoints, 2);
 			passTime('Leveling up', 1);
 			return 1;
@@ -2788,7 +2788,7 @@ class Chinbreak {
 }
 
 function additiveStatBonus(stat) {
-	return Math.round(Math.pow(GR, stat)) - 1;
+	return Math.round(Math.pow(stat, GR - 1)) - 1;
 }
 
 
