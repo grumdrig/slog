@@ -293,11 +293,8 @@ const CALLS = {
 
 	buy: { parameters: 'slot,qualanty',
 		description: `Buy a quantity of some inventory item(Potions, etc.)
-		from the local shopkeeper. Or, buy a piece of equipment of a
-		certain quality. This will replace any equipment already in that
-		slot, so consider selling it first.` },
-
-	/* TODO: auto-sell existing equipment? */
+		from the local shopkeeper. Or, buy or upgrade a piece of equipment
+		to a certain quality.` },
 
 	sell: { parameters: 'slot,quantity',
 		description: `Sell an inventory item of piece of equipment.` },
@@ -461,6 +458,10 @@ code {
 div#terrains {
 	display: grid;
 	grid-template-columns: 30px 100px 100px 200px;
+}
+div#xp {
+	display: grid;
+	grid-template-columns: repeat(4, 70px 100px);
 }
 </style>
 </head><body>
@@ -640,9 +641,18 @@ div#terrains {
 
 	p(`The amount of Experience needed for each Level are:`);
 
+	result += '<div id=xp>';
 	for (let level = 1; level <= 20; level += 1) {
-		p(`Level ${level}: ${Chinbreak.xpNeededForLevel(level)}`);
+		div(`Level ${level}:`);
+		div(Chinbreak.xpNeededForLevel(level));
+		div(`Level ${level + 20}:`);
+		div(Chinbreak.xpNeededForLevel(level + 20));
+		div(`Level ${level + 40}:`);
+		div(Chinbreak.xpNeededForLevel(level + 40));
+		div(`Level ${level + 60}:`);
+		div(Chinbreak.xpNeededForLevel(level + 60));
 	}
+	result += '</div>';
 
 
 	return result;
@@ -1696,16 +1706,21 @@ function indefiniteItems(slot, qty) {
 	}
 }
 
+function increment(state, slot, qty=1) {
+	return state[slot] = Math.min(MAX_INT, Math.max(MIN_INT, state[slot] + qty));
+}
+
+function decrement(state, slot, qty=1) { return increment(state, slot, -qty) }
+
 function damageMob(state, damage) {
 	if (state[MobHealth] <= 0) return 0;
 
 	state[MobHealth] = Math.max(0, state[MobHealth] - damage);
 
 	if (state[MobHealth] <= 0) {
-		let levelDisadvantage = state[MobLevel] - state[Level];
-		state[Experience] += Math.round(10 * state[MobLevel] * Math.pow(GR, levelDisadvantage));
+		increment(state, Experience, 10 * state[MobLevel]);
 		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject])
-			state[QuestProgress] += 1;
+			increment(state, QuestProgress);
 		state[MobAggro] = 0;
 	}
 
@@ -1772,8 +1787,9 @@ const QUEST_TYPES = [ null,
 		// qty: likewise
 		title: 'Cutscene',
 		description: `Watch, amazed, as important events around you advance the plot.`,
-		explanation: `Simply call seek(QuestProgress) the required number of times
-		at the specified location.`,
+		explanation: `Simply call seek(QuestProgress) the required number of
+		times at the specified location. Cutscene quests don't require
+		completQuest to be calle once completed.`,
 	}
 ];
 
@@ -1798,23 +1814,23 @@ const SCRIPT = [{
 `You vow you'll help the people of Bompton and put an end to whatever evil is afoot!`,
 ]}],
 }, {
-	length: 6,
+	length: 12,
 }, {
-	length: 7,
+	length: 14,
 }, {
-	length: 8,
+	length: 16,
 }, {
-	length: 7,
+	length: 15,
 }, {
-	length: 8,
+	length: 20,
 }, {
-	length: 9,
+	length: 25,
 }, {
-	length: 10,
+	length: 20,
 }, {
-	length: 10,
+	length: 30,
 }, {
-	length: 7,
+	length: 15,
 }, {
 	act: 'Epilogue',
 	length: 1,
@@ -2230,11 +2246,8 @@ class Chinbreak {
 			}
 		}
 
-		function inc(slot, qty=1) {
-			return state[slot] = Math.min(MAX_INT, Math.max(MIN_INT, state[slot] + qty));
-		}
-
-		function dec(slot, qty=1) { return inc(slot, -qty) }
+		function inc(slot, qty=1) { return increment(state, slot, qty) }
+		function dec(slot, qty=1) { return decrement(state, slot, qty) }
 
 		if (state[MobAggro] && state[MobHealth] > 0) {
 			// do mob attack before anything else happens
@@ -2746,7 +2759,7 @@ class Chinbreak {
 
 		} else if (operation === levelUp) {
 			if (local.terrain != TOWN) return -1;
-			if (state[Level] >= 99) return 0;
+			if (state[Level] >= 80) return 0;
 			if (state[Experience] < state[ExperienceNeeded])
 				return 0;
 			inc(Level);
@@ -2768,7 +2781,7 @@ class Chinbreak {
 
 	static xpNeededForLevel(level) {
 		if (level <= 1) return 0;
-		if (level > 99) return MAX_INT;
+		if (level > 80) return MAX_INT;
 		return 0 + Math.floor(Math.pow(level - 1, GR)) * 200;
 	}
 
