@@ -166,7 +166,7 @@ const SLOTS = [
 	  description: `Inventory item. Consuming a potion via the "use" command
 	  restores both energy and health to maximum.` },
 
-	{ name: 'Sunsparks',
+	{ name: 'Elixirs',
 	  description: `Inventory item. These restore life at the moment of death. Kind of
 	  expensive, but that is a pretty handy feature.` },
 
@@ -1633,7 +1633,7 @@ DATABASE[Rations] =     { value: 1,     weight: 1,     scarcity: 10,       forag
 DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
 DATABASE[Potions] = 	{ value: 100,   weight: 1,     scarcity: 100000,   };
 DATABASE[Treasures] =   { value: 1000,  weight: 3,     scarcity: 1000000,  };
-DATABASE[Sunsparks] =   { value: 10000, weight: 1,     scarcity: 10000000, };
+DATABASE[Elixirs] =   { value: 10000, weight: 1,     scarcity: 10000000, };
 
 
 
@@ -2243,8 +2243,8 @@ class Chinbreak {
 			dec(Health, Math.min(state[Health], damage));
 
 			if (state[Health] <= 0) {
-				if (state[Sunsparks] > 0) {
-					dec(Sunsparks);
+				if (state[Elixirs] > 0) {
+					dec(Elixirs);
 					state[Health] = 1;  // ...or should it be max health?
 				} else {
 					state[GameOver] = 86;
@@ -2984,7 +2984,7 @@ div.header {
 			<div>Rations</div><div id=i4></div>
 			<div>Treasures</div><div><span id=i5></span><span id=baltreasure></span></div>
 			<div>Healing Potions</div><div id=i6></div>
-			<div>Life Potions</div><div id=i7></div>
+			<div>Elixirs</div><div id=i7></div>
 			<div class=footer>Encumbrance<div id=encumbrance class=prog data-warning='#fb4' data-emergency='#f99'></div></div>
 		</div>
 	</div>

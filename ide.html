@@ -232,8 +232,8 @@ div#autoplaymom {
 			<div class='status-bar-field'>
 				🎲
 				<input id=turn style='width:6ex'> </input>
-				<button onclick="goto(vm.turns - 1)" class=vcr>&#xFF0D;</button>
-				<button onclick="goto(vm.turns + 1)" class=vcr>&#xFF0B;</button>
+				<button id=decturn class=vcr>&#xFF0D;</button>
+				<button id=incturn class=vcr>&#xFF0B;</button>
 				<button onclick="play()" class=vcr>⏵</button>
 				<button onclick="turbo()" class=vcr>⏵⏵</button>
 			</div>
@@ -599,6 +599,9 @@ function prepIDE() {
 	$("#turn").value = ideState.turn || 0;
 
 	$('#turn').addEventListener('change', _ => { goto(parseInt($('#turn').value)) });
+
+	$('#decturn').addEventListener('click', e => goto(vm.turns - (e.shiftKey ? 100 : 1)));
+	$('#incturn').addEventListener('click', e => goto(vm.turns + (e.shiftKey ? 100 : 1)));
 }
 
 
