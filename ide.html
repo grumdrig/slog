@@ -120,9 +120,12 @@ button.vcr {
 	height: 21px;
 	padding: 0;
 }
-#params, #autoplayspeed {
+#params {
 	width: 70px;
 	height: 21px;
+}
+div#autoplaymom {
+	margin-top: 4px;
 }
 
 </style>
@@ -238,14 +241,10 @@ button.vcr {
 				<button onclick="finish()" class=vcr>⏭</button>
 			</div>
 			<div class='status-bar-field'>
-				<label for=autoplayspeed>Autorun </label>
-				<select id=autoplayspeed>
-					<option value=nope>None</option>
-					<option value=animate>Animate</option>
-					<option value=normal selected>Normal</option>
-					<option value=turbo>Turbo</option>
-					<option value=instant>Instant</option>
-				</select>
+				<div id=autoplaymom>
+					<input id=autoplay type=checkbox>
+					<label for=autoplay>Autoplay </label></input>
+				</div>
 			</div>
 			<div class='status-bar-field'>
 				<label for="params">Params </label><input type=text id=params></input>
@@ -399,7 +398,8 @@ function saveChanges() {
 	const ideState = {
 		source: $('#source').value,
 		params: $('#params').value,
-		autoplayspeed: $('#autoplayspeed').value,
+		autoplay: $('#autoplay').checked,
+		turn: $('#turn').value,
 	};
 	localStorage.setItem('slog-ide', JSON.stringify(ideState));
 }
@@ -408,6 +408,7 @@ function saveChanges() {
 function comp(initialLoad) {
 	if (!initialLoad)
 		saveChanges();
+	let turn = parseInt($('#turn').value);
 	$("#errors").innerHTML = '&nbsp;';
 	$("#errors").classList.remove("err");
 	try {
@@ -430,7 +431,7 @@ function comp(initialLoad) {
 		    var data = new Blob([json]);
 		    $('#dlstrat').href = URL.createObjectURL(data);
 
-			autoplay();
+			autoplay(turn);
 		}
 	} catch (e) {
 		let message;
@@ -487,52 +488,13 @@ will probably need to get this into Chinbreak somehow:
 	}
 }
 
-// Game speeds
-const SPEEDS = {
-	animate: 1,
-	normal: 2,
-	turbo: 3,
-	instant: 4,
-};
+function autoplay(atTurn) {
+	stopRunimation();
+	vm.running = true;
+	goto(atTurn)
 
-function autoplay() {
-	if (SPEEDS[$('#autoplayspeed').value]) {
-		stopRunimation();
-		bringToFront($id('game-window'));
-		vm.running = true;
-		run();
-	}
-}
-
-function run() {
-	let speed = SPEEDS[$('#autoplayspeed').value];
-
-	if (speed === SPEEDS.animate) {
-		let calledOut = vm.step();
-		updateDebuggerState(vm);
-		if (calledOut)
-			game.updateUI();
-		if (vm.alive())
-			window.gameplayTimer = setTimeout(run, 100);
-
-	} else if (speed === SPEEDS.normal) {
+	if ($('#autoplay').checked) {
 		Game.playmation(vm);
-
-	} else if (speed === SPEEDS.turbo) {
-		Game.playmation(vm, true);
-		// updateDebuggerState(vm);
-		game.updateUI();
-		if (vm.alive())
-			window.gameplayTimer = setTimeout(run, 1);
-		else
-			updateDebuggerState(vm);
-
-	} else if (speed === SPEEDS.instant) {
-		while (vm.alive()) {
-			vm.step();
-		}
-		updateDebuggerState(vm);
-		game.updateUI();
 	}
 }
 
@@ -631,9 +593,10 @@ function prepIDE() {
 	prepOS();
 
 	let ideState = JSON.parse(localStorage.getItem('slog-ide') ?? '{}');
-	$("#source").value = ideState.source || "// hello, world!";
+	$("#source").value = ideState.source ?? "// hello, world!";
 	$("#params").value = ideState.params || '';
-	$("#autoplayspeed").value = ideState.autoplayspeed || 'normal';
+	$("#autoplay").checked = ideState.autoplay ?? true;
+	$("#turn").value = ideState.turn || 0;
 
 	$('#turn').addEventListener('change', _ => { goto(parseInt($('#turn').value)) });
 }

@@ -2785,8 +2785,6 @@ function additiveStatBonus(stat) {
 const CHINBREAK_WINDOW_CONTENT = `
 <style>	/* Styling for the character sheet */
 
-/*#game-window { width: 600px }*/
-
 #sheet {
 	display: grid;
 	grid-template-columns: 200px 200px 230px;
@@ -2810,7 +2808,7 @@ const CHINBREAK_WINDOW_CONTENT = `
 #col1 > #vitals { grid-template-columns: 3fr 3fr }
 #col1 > #stats { grid-template-columns: 3fr 1fr 3fr 1fr }
 #col1 > #spells { grid-template-columns: 1fr 2fr }
-#col2 > #equipment {	grid-template-columns: 1fr 1fr;	}
+#col2 > #equipment {   grid-template-columns: 2fr 3fr;	}
 #col3 > #environment { grid-template-columns: 2fr 3fr; }
 #col3 > #encounter   { grid-template-columns: 2fr 3fr; }
 #col3 > #quest { grid-template-columns: 3fr 7fr; }
