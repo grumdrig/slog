@@ -2769,7 +2769,7 @@ class Chinbreak {
 
 			} else if (target === Experience) {
 				passTime('Aggressively trying to experience things', 24);
-				if (rng.rand() < 0.1)
+				if (rng.civRoll(10, 100 + state[Experience]))
 					inc(Experience);
 				return 1;
 
