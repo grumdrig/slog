@@ -1800,8 +1800,7 @@ const QUEST_TYPES = [ null,
 		title: 'Cutscene',
 		description: `Watch, amazed, as important events around you advance the plot.`,
 		explanation: `Simply call <code>seek(QuestProgress)</code> the required number of
-		times at the specified location. Cutscene quests don't require
-		<code>completeQuest()</code> to be called once completed.`,
+		times at the specified location`,
 	}
 ];
 
@@ -2250,18 +2249,6 @@ class Chinbreak {
 			return intprice;
 		}
 
-		function endQuest() {
-			if (state[QuestStoryline] === 0)
-				inc(ActProgress);
-			clearQuest(state);
-			if (actUp()) {
-				if (state[Act] > 1) {
-					inc(TrainingPoints);
-					inc(Treasures);
-				}
-			}
-		}
-
 		function inc(slot, qty=1) { return increment(state, slot, qty) }
 		function dec(slot, qty=1) { return decrement(state, slot, qty) }
 
@@ -2612,12 +2599,25 @@ class Chinbreak {
 			if (state[QuestProgress] < state[QuestQty]) return -1;
 			const questlevel = state[QuestStoryline] ? Math.floor(state[QuestStoryline] / 10) : state[Act];
 			inc(Experience, questlevel ? 5 * questlevel : 3);
-			endQuest();
+			if (state[QuestStoryline] === 0)
+				inc(ActProgress);
+
 			if (state[Act] === 9 && state[ActProgress] === 3) {
 				passTime('Being magically transported to Sygnon Isle!', 3);
 				state[Location] = Sygnon_Tower;
+			} else if (state[QuestType] === Cutscene) {
+				passTime('Loading', 1);
 			} else {
 				passTime('Completing paperwork', 2);
+			}
+
+			clearQuest(state);
+
+			if (actUp()) {
+				if (state[Act] > 1) {
+					inc(TrainingPoints);
+					inc(Treasures);
+				}
 			}
 
 			return 1;
@@ -2761,10 +2761,6 @@ class Chinbreak {
 				let script = questScript(state[Act], state[ActProgress]);
 				passTime(script.script[state[QuestProgress]], 8);
 				inc(QuestProgress);
-
-				if (state[QuestProgress] >= state[QuestQty])
-					endQuest();
-
 				return 1;
 
 			} else if (target === Experience) {
