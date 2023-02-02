@@ -738,19 +738,15 @@ const SPELLS = [ null, {
 			if (!state[MobSpecies]) return -1;
 
 			// Lose current species mods
-			for (let { slot, increment } of (MOBS[state[Species]].startState ?? [])) {
-				if (increment) {
-					state[slot] -= increment;
-				}
+			for (let { slot, increment } of (MOBS[state[Species]].abilityMods ?? [])) {
+				state[slot] -= increment;
 			}
 
 			state[Species] = state[MobSpecies];
 
 			// Apply new species mods
-			for (let { slot, increment } of (MOBS[state[Species]].startState ?? [])) {
-				if (increment) {
-					state[slot] += increment;
-				}
+			for (let { slot, increment } of (MOBS[state[Species]].abilityMods ?? [])) {
+				state[slot] += increment;
 			}
 
 			return state[Species];
@@ -1129,12 +1125,13 @@ const MOBS = [
 			Bladed,   +1,
 			Polearms, -1,
 			Ranged,   -1),
-		startState: [
+		abilityMods: [
 			{ slot: Agility,  increment: +2 },
 			{ slot: Charisma, increment: +1 },
 			{ slot: Strength, increment: -1 },
 			{ slot: Wisdom,   increment: -2 },
-
+		],
+		startingItems: [
 			{ slot: Weapon,   value: 2},
 			{ slot: Headgear, value: 1},
 			{ slot: Rations,  value: 1 },
@@ -1152,12 +1149,13 @@ const MOBS = [
 		proficiency: amap(
 			Blunt,  +1,
 			Bladed, -1),
-		startState: [
+		abilityMods: [
 			{ slot: Endurance, increment: +2 },
 			{ slot: Strength, increment: +1 },
 			{ slot: Agility, increment: -1 },
 			{ slot: Intellect, increment: -2 },
-
+		],
+		startingItems: [
 			{ slot: Weapon, value: 1},
 			{ slot: Shield, value: 1},
 			{ slot: Gold,   value: 1 },
@@ -1175,12 +1173,13 @@ const MOBS = [
 			Polearms, +1,
 			Ranged,   +1,
 			Blunt,    -1),
-		startState: [
+		abilityMods: [
 			{ slot: Intellect, increment: +2 },
 			{ slot: Wisdom, increment: +1 },
 			{ slot: Endurance, increment: -1 },
 			{ slot: Charisma, increment: -2 },
-
+		],
+		startingItems: [
 			{ slot: Weapon,   value: 3},
 			{ slot: Footwear, value: 1},
 			{ slot: Reagents, value: 1 },
@@ -1820,8 +1819,11 @@ const SCRIPT = [{
 `But doesn't it seem lately that the local wildlife has been acting odd? ...Aggressive?`,
 `There's a rustling of underbrush and suddenly the town is under attack!`,
 `Squirrels! Rabbits! Parakeets! ... Wild boars! Tigers! Feral gnomes!`,
-`You flee in fear to the shore. From Sygnon Isle yonder, there's a rumble and a black cloud.`,
-`You return. Town hall is in flames. There are many corpses... You gather a few supplies...`,
+`You flee in fear. From Sygnon Isle yonder, there's a rumble and a black cloud.`,
+{
+	task: `Despair! Town hall is in flames. There are many corpses... You gather a few supplies...`,
+	receiveStartingItems: true
+},
 `You vow you'll help the people of Bompton and put an end to whatever evil is afoot!`,
 ]}],
 }, {
@@ -2166,8 +2168,8 @@ class Chinbreak {
 			for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
 				state[stat] = 2;
 
-			for (let { slot, increment, value } of speciesinfo.startState ?? [])
-				state[slot] = value ?? (state[slot] + increment)
+			for (let { slot, increment } of speciesinfo.abilityMods ?? [])
+				state[slot] += increment
 
 			state[Level] = 1;
 			state[ExperienceNeeded] = Chinbreak.xpNeededForLevel(2);
@@ -2759,7 +2761,17 @@ class Chinbreak {
 				if (state[QuestProgress] >= state[QuestQty]) return -1;
 				if (state[Location] != state[QuestLocation]) return -1;
 				let script = questScript(state[Act], state[ActProgress]);
-				passTime(script.script[state[QuestProgress]], 8);
+				let scene = script.script[state[QuestProgress]];
+				if (typeof scene === 'string') {
+					passTime(scene, 8);
+				} else {
+					passTime(scene.task, 8);
+					if (scene.receiveStartingItems) {
+						for (let { slot, value } of MOBS[state[Species]].startingItems ?? []) {
+							state[slot] = value;
+						}
+					}
+				}
 				inc(QuestProgress);
 				return 1;
 
