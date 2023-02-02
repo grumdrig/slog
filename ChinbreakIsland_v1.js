@@ -544,7 +544,7 @@ div#xp {
 
 	SPELLS.forEach((spell, i) => { if (spell) {
 		let {name, enchantment, description, level, costs} = spell;
-		name = moniker(name) + ' (' + i + ')';
+		name = i + '. ' + moniker(name);
 		if (enchantment) description = 'Enchantment. ' + description;
 		subhead(code(name), description);
 		p('Level ' + level);
@@ -558,7 +558,7 @@ div#xp {
 
 	subhead('Weapon Types');
 
-	WEAPON_TYPES.forEach((w,i) => { if (w) {
+	WEAPON_DB.forEach((w,i) => { if (w) {
 		p(i + '. ' + w.name + ': ' + w.description);
 	} });
 
@@ -581,7 +581,7 @@ div#xp {
 			subhead(SLOTS[t].name);
 			p('Base price: ' + DATABASE[t].basePrice);
 			DATABASE[t].names.forEach((e,i) => {
-				if (e) p(i + ': ' + e);
+				if (e) div(i + '. ' + e);
 			});
 		}
 	}
@@ -619,7 +619,7 @@ div#xp {
 
 
 	MAP.forEach((tile,i) => { if (tile && !tile.ephemeral) {
-		subhead(`${tile.name} #${i}`);
+		subhead(`${i}. ${moniker(tile.name)}`);
 		p(`Coordinates: ${latitude(i)}S x ${longitude(i)}E`);
 		p(`Terrain: ${TERRAIN_TYPES[tile.terrain].name}`);
 		p(`Mob level: ` + tile.level);
@@ -825,6 +825,8 @@ SPELLS.forEach((spell, index) => spell && define(spell.name, index));
 
 const WEAPON_DB = [null, {
 	name: 'Blunt',
+	description: 'Truncheons and such for old fashioned clobbering purposes',
+	// to hit: str  dam: str  cost: less
 	list: [
 			'Firewood Chunk',
 			'Claw Hammer',
@@ -845,6 +847,8 @@ const WEAPON_DB = [null, {
 		],
 	}, {
 		name: 'Bladed',
+		description: `Swords, etc. You really can't go wrong with swords.`,
+		// to hit: agil  dam: str  cost: more  def: +1
 		list: [
 			'Steak knife',
 			'Dirk',
@@ -864,6 +868,8 @@ const WEAPON_DB = [null, {
 			'+7 Doom Sword'],
 	}, {
 		name: 'Ranged',
+		description: 'Bows and other projectile launchers.',
+		// to hit: agil  dam: wis  ammo?
 		list:  [
 			'Bag of Rocks',
 			'Sling',
@@ -884,6 +890,8 @@ const WEAPON_DB = [null, {
 			],
 	}, {
 		name: 'Axes',
+		description: 'The clubbing power of blunt weapons combined with the slicing power of blades.',
+		// to hit: agil & str  dam: str
 		list: [
 			'Hatchet',
 			'Tomahawk',
@@ -904,6 +912,8 @@ const WEAPON_DB = [null, {
 			],
 	}, {
 		name: 'Polearms',
+		description: 'Spears and other long, pointy things.',
+		// to hit: agil  dam: agil&str
 		list: [
 			'Sharpened stick',
 			'Eelspear',
@@ -938,20 +948,8 @@ function interleaveArrays(...as) {
 const WEAPON_NAMES = [''].concat(interleaveArrays(...WEAPON_DB.filter(x=>x).map(w => w.list)));
 // Weapon types
 
-WEAPON_TYPES = [ null,
-	{ name: 'Blunt',    description: 'Truncheons and such for old fashioned clobbering purposes' },
-	// to hit: str  dam: str  cost: less
-	{ name: 'Bladed',   description: `Swords, etc. You really can't go wrong with swords.` },
-	// to hit: agil  dam: str  cost: more  def: +1
-	{ name: 'Ranged',   description: 'Bows and other projectile launchers.' },
-	// to hit: agil  dam: wis  ammo?
-	{ name: 'Polearms', description: 'Spears and other long, pointy things.' },
-	// to hit: agil  dam: agil&str
-	{ name: 'Axes',     description: 'The clubbing power of blunt weapons combined with the slicing power of blades.' },
-	// to hit: agil & str  dam: str
-];
-const NUM_WEAPON_TYPES = WEAPON_TYPES.length - 1;
-WEAPON_TYPES.forEach((w,i) => w && define(w.name, i));
+const NUM_WEAPON_TYPES = WEAPON_DB.length - 1;
+WEAPON_DB.forEach((w,i) => w && define(w.name, i));
 
 function weaponPower(n) {
 	return Math.floor((n + NUM_WEAPON_TYPES - 1) / NUM_WEAPON_TYPES);
@@ -1061,7 +1059,7 @@ DATABASE[Mount] = {
 	basePrice: 20,
 };
 DATABASE[Scroll] = {
-	names: SPELLS,
+	names: SPELLS.map(s => s ? s.name : ''),
 	count: SPELLS.length - 1,
 	basePrice: 50,
 };
@@ -1767,8 +1765,8 @@ const QUEST_TYPES = [ null,
 		title: `Exterminate the $MS`,
 		description: `Put an end to these $MS. You'll find plenty of them to kill in $L.`,
 		explanation: `Execute the required quantity of a particular creature.
-		(They needn't be in the quest location, but there will be many of
-		them to be found there.)`,
+		(They needn't be found in the quest location to satisfy the quest
+		goals, but there will be hunting there.)`,
 	}, {
 		// Bring me N trophies
 		name: "Collect_Trophies",
@@ -1801,9 +1799,9 @@ const QUEST_TYPES = [ null,
 		// qty: likewise
 		title: 'Cutscene',
 		description: `Watch, amazed, as important events around you advance the plot.`,
-		explanation: `Simply call seek(QuestProgress) the required number of
+		explanation: `Simply call <code>seek(QuestProgress)</code> the required number of
 		times at the specified location. Cutscene quests don't require
-		completQuest to be calle once completed.`,
+		<code>completeQuest()</code> to be called once completed.`,
 	}
 ];
 
