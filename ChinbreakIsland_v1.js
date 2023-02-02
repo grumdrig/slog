@@ -716,12 +716,14 @@ const SPELLS = [ null, {
 			return inc(Gold, winnings);
 		},
 		description: `Double. Your. Money.... Overnight! <sup>*</sup>Terms and conditions apply. Doubling is limited by cargo capacity.`,
+		/*
 	}, {
 		name: 'Good Luck With That',
 		level: 4,
 		description: `Increases luck.`,
 		enchantment: [],
 		// TODO an effect
+		*/
 	}, {
 		name: 'History Lessen',
 		level: 10,
@@ -1943,8 +1945,8 @@ function assignQuest(state, storyline) {
 					// Exterminate_Mob
 					state[QuestQty] *= 2;
 				}
-				state[QuestQty] += qrng.d(2) - qrng.d(2);
-				 // TODO use charisma to affect Qty (instead?)
+				if (qrng.civRoll(state[Charisma], 8)) decrement(state, QuestQty);
+				if (qrng.civRoll(8, state[Charisma])) increment(state, QuestQty);
 			}
 		}
 	}
