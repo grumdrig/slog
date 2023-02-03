@@ -42,7 +42,7 @@ while 1 {
 	// Always be questing
 	if !.QuestType { seekQuest(0) }
 
-	goto(.QuestLocation)
+	if .QuestLocation { goto(.QuestLocation) }
 
 	if .QuestType == Cutscene {
 		while .QuestProgress < .QuestQty {
@@ -64,7 +64,7 @@ while 1 {
 		}
 	} else if .QuestObject {
 		// Foraging
-		const qty = .QuestQty + (.QuestObject == Rations and 6 or 0)
+		const qty = .QuestQty + (.QuestObject == Rations and 12 or 0)
 		while .Encumbrance < .Capacity and ..QuestObject < (qty - .QuestProgress) {
 			seek(.QuestObject)
 			if .QuestObject <= Totem and ..QuestObject { break }  // can only carry 1

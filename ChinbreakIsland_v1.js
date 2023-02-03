@@ -666,6 +666,20 @@ div#xp {
 	}
 	result += '</div>';
 
+	head('Calendar');
+
+	p(`Within the game, as may feel familiar, the day is divided in to
+	${HOURS_PER_DAY} hours. Don't worry about weeks; weeks do not play a
+	part in life on Chinbreak Island.`);
+
+	p(`Simply enough, there are ${DAYS_PER_MONTH} days in each month.`);
+
+	p(`In each year, there are ${MONTHS.length} months. Their names are:`);
+	MONTHS.forEach(m => div(m));
+
+	p(`Your journey begins on the first day of ${MONTHS[0]} in the year 600.
+	The values in the Hours and Years slots of the state vector hold the
+	passage of time since that moment.`);
 
 	return result;
 }
@@ -735,7 +749,7 @@ const SPELLS = [ null, {
 		name: "Radical Sympathy",
 		level: 7,
 		effect: state => {
-			if (!state[MobSpecies]) return -1;
+			if (!state[MobSpecies]) return apiError(``);
 
 			// Lose current species mods
 			for (let { slot, increment } of (MOBS[state[Species]].abilityMods ?? [])) {
@@ -776,7 +790,7 @@ const SPELLS = [ null, {
 		level: 9,
 		enchantment: [],
 		effect: (state, spellid) => {
-			if (state[Location] > 36) return -1;
+			if (state[Location] > 36) return apiError(``);
 			state[Enchantment] = spellid + (state[Location] << 8);
 		},
 		description: `Royally scramble the island.`,
@@ -785,7 +799,7 @@ const SPELLS = [ null, {
 		level: 5,
 		enchantment: [],
 		effect: (state, spellid) => {
-			if (state[Location] > 36) return -1;
+			if (state[Location] > 36) return apiError(``);
 			state[Enchantment] = spellid + (state[Location] << 8);
 		},
 		description: `Bring a ghost town into existence where you now stand.`,
@@ -820,33 +834,35 @@ SPELLS.forEach((spell, index) => spell && define(spell.name, index));
 /////////// Weapons
 
 const WEAPON_DB = [null, {
-	name: 'Blunt',
-	description: 'Truncheons and such for old fashioned clobbering purposes',
-	// to hit: str  dam: str  cost: less
-	list: [
-			'Firewood Chunk',
-			'Claw Hammer',
-			'Club',
-			'Great Club',
-			'Mace',
-			'Maul',
-			'Spikemace',
-			'Warhammer',
-			'Morning Star',
-			'+1 Blessed Mace',
-			'+2 Bloodthirsty Club',
-			'+3 Animated Mace',
-			'+4 Gunpowder Hammer',
-			'+5 Medusa Mace',
-			'+6 Vampyric Hammer',
-			'+7 Doomsday Warmaul'
-		],
+		name: 'Blunt',
+		description: 'Truncheons and such for old fashioned clobbering purposes',
+		// to hit: str  dam: str  cost: less
+		list: [
+				'Dirtclod',
+				'Firewood Chunk',
+				'Claw Hammer',
+				'Club',
+				'Great Club',
+				'Mace',
+				'Maul',
+				'Spikemace',
+				'Warhammer',
+				'Morning Star',
+				'+1 Blessed Mace',
+				'+2 Bloodthirsty Club',
+				'+3 Animated Mace',
+				'+4 Gunpowder Hammer',
+				'+5 Medusa Mace',
+				'+6 Vampyric Hammer',
+				'+7 Doomsday Warmaul'
+			],
 	}, {
 		name: 'Bladed',
 		description: `Swords, etc. You really can't go wrong with swords.`,
 		// to hit: agil  dam: str  cost: more  def: +1
 		list: [
-			'Steak knife',
+			'Sharp Stone',
+			'Steak Knife',
 			'Dirk',
 			'Dagger',
 			'Short Sword',
@@ -867,7 +883,8 @@ const WEAPON_DB = [null, {
 		description: 'Bows and other projectile launchers.',
 		// to hit: agil  dam: wis  ammo?
 		list:  [
-			'Bag of Rocks',
+			'Pocketful of Rocks',
+			'Darts',
 			'Sling',
 			'Short Bow',
 			'Blunderbuss',
@@ -889,6 +906,7 @@ const WEAPON_DB = [null, {
 		description: 'The clubbing power of blunt weapons combined with the slicing power of blades.',
 		// to hit: agil & str  dam: str
 		list: [
+			'Toy Tomahawk',
 			'Hatchet',
 			'Tomahawk',
 			'Axe',
@@ -911,7 +929,8 @@ const WEAPON_DB = [null, {
 		description: 'Spears and other long, pointy things.',
 		// to hit: agil  dam: agil&str
 		list: [
-			'Sharpened stick',
+			'Tree Branch',
+			'Sharpened Stick',
 			'Eelspear',
 			'Spear',
 			'Pole-adze',
@@ -948,7 +967,7 @@ const NUM_WEAPON_TYPES = WEAPON_DB.length - 1;
 WEAPON_DB.forEach((w,i) => w && define(w.name, i));
 
 function weaponPower(n) {
-	return Math.floor((n + NUM_WEAPON_TYPES - 1) / NUM_WEAPON_TYPES);
+	return Math.floor((n + NUM_WEAPON_TYPES - 1) / NUM_WEAPON_TYPES) - 1;
 }
 
 function weaponType(n) { return n > 0 ? 1 + (n - 1) % NUM_WEAPON_TYPES : 0 }
@@ -1132,7 +1151,7 @@ const MOBS = [
 			{ slot: Wisdom,   increment: -2 },
 		],
 		startingItems: [
-			{ slot: Weapon,   value: 2},
+			{ slot: Weapon,   value: 7},
 			{ slot: Headgear, value: 1},
 			{ slot: Rations,  value: 1 },
 		],
@@ -1156,7 +1175,7 @@ const MOBS = [
 			{ slot: Intellect, increment: -2 },
 		],
 		startingItems: [
-			{ slot: Weapon, value: 1},
+			{ slot: Weapon, value: 6},
 			{ slot: Shield, value: 1},
 			{ slot: Gold,   value: 1 },
 		],
@@ -1180,7 +1199,7 @@ const MOBS = [
 			{ slot: Charisma, increment: -2 },
 		],
 		startingItems: [
-			{ slot: Weapon,   value: 3},
+			{ slot: Weapon,   value: 8},
 			{ slot: Footwear, value: 1},
 			{ slot: Reagents, value: 1 },
 		],
@@ -1813,6 +1832,7 @@ const SCRIPT = [{
 	length: 1,
 	scripts: [{
 		quest: 0,
+		type: Cutscene,
 		location: Bompton,
 		script: [
 `Parakeets twitter and squirrels chitter outside your cottage in Bompton Town.`,
@@ -1826,24 +1846,61 @@ const SCRIPT = [{
 },
 `You vow you'll help the people of Bompton and put an end to whatever evil is afoot!`,
 ]}],
-}, {
+}, { // act 1
 	length: 12,
-}, {
+}, { // act 2
 	length: 14,
-}, {
+}, { // act 3
 	length: 16,
-}, {
+}, { // act 4
 	length: 15,
-}, {
+}, { // act 5
 	length: 20,
-}, {
+}, { // act 6
 	length: 25,
-}, {
+}, { // act 7
 	length: 20,
-}, {
+}, { // act 8
 	length: 30,
-}, {
+}, { // act 9
 	length: 15,
+	scripts: [{
+		quest: 0,
+		type: Transport_Totem,
+	}, {
+		quest: 1,
+		type: Transport_Totem,
+	}, {
+		quest: 2,
+		type: Transport_Totem,
+	}, {
+		quest: 3,
+		type: Cutscene,
+		script: [
+`The third totem is placed and silver light eminates from everything around you, steadily increasing`,
+{
+	task: `Your surroundings lose their substance. They disintegrate and reform. The light fades.`,
+	set: [{ slot: Location, value: Sygnon_Tower }],
+},
+`Strange buildings surround you; strange beings move among them. A angry black cloud hangs overhead`,
+`You realize where you are. They totems worked! You've been transported somehow to Sygnon Isle!`,
+],
+	}, {
+		quest: -2,
+		type: Exterminate_Mob,
+		mob: Mox_Klatryon,
+		qty: 1,
+		location: Emkell_Peak,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		script: [],
+
+	}, {
+		quest: '*',  // catch-all must come last
+		type: Exterminate_Mob,
+		location: Emkell_Peak,
+	}],
 }, {
 	act: 'Epilogue',
 	length: 1,
@@ -1875,7 +1932,10 @@ function pickQuestLocation(state, qrng) {
 function questScript(act, quest) {
 	act = SCRIPT[act];
 	if (!act || !act.scripts) return;
-	return act.scripts.filter(s => s.quest == quest || s.quest + act.length == quest)[0];
+	return act.scripts.filter(s =>
+		s.quest == quest ||
+		s.quest + act.length == quest ||
+		s.quest == '*')[0];
 }
 
 function assignQuest(state, storyline) {
@@ -1885,68 +1945,64 @@ function assignQuest(state, storyline) {
 
 	state[QuestStoryline] = storyline;
 
-	let script = questScript(state[Act], state[ActProgress]);
-	if (script && storyline === 0) {
-		state[QuestType] = Cutscene;
-		state[QuestLocation] = script.location;
-		state[QuestQty] = script.script.length;
+	function pickQuestMob(act, level) {
+		let maxlev = level;// + qrng.irand(level);
+		let minlev = level;// - Math.min(qrng.irand(level), qrng.irand(level));
+		let options = MOBS.filter(mob => mob &&
+			minlev <= mob.hitdice && mob.hitdice <= maxlev &&
+			act >= (mob.minact ?? 0) && act <= (mob.maxact ?? MAX_INT));
+		if (options.length === 0) options = MOBS.filter(mob => mob); // desperate times
+		return qrng.pick(options).index;
+	}
+
+	let questlevel = storyline ? Math.floor(storyline / 10) : state[Act];
+
+	let script = (storyline === 0) && questScript(state[Act], state[ActProgress]);
+	if (script) {
+		state[QuestType] = script.type;
+		if (script.location) state[QuestLocation] = script.location;
+		if (script.qty) state[QuestQty] = script.qty;
+		if (script.mob) state[QuestMob] = script.mob;
+		if (script.end) state[QuestEnd] = script.end;
+		// if (script.object) state[QuestObject] = script.object;
+
+		if (state[QuestType] === Cutscene) {
+			state[QuestQty] = script.script.length;
+		} else if (state[QuestType] === Transport_Totem) {
+			state[QuestObject] = Totem;
+			state[QuestEnd] = qrng.d(36);
+			do { state[QuestLocation] = qrng.d(36);
+			} while (state[QuestLocation] == state[QuestEnd]);
+			state[QuestQty] = 2; // pick up, drop off
+		} else if (state[QuestType] === Exterminate_Mob) {
+			state[QuestLocation] = state[QuestLocation] || pickQuestLocation(state, qrng);
+			state[QuestMob] = state[QuestMob] || pickQuestMob(state[Act], questlevel);
+			state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
+			state[QuestEnd] = state[QuestEnd] || state[Location];
+		}
 
 	} else {
 
-		function pickQuestMob(act, level) {
-			let maxlev = level;// + qrng.irand(level);
-			let minlev = level;// - Math.min(qrng.irand(level), qrng.irand(level));
-			let options = MOBS.filter(mob => mob &&
-				minlev <= mob.hitdice && mob.hitdice <= maxlev &&
-				act >= (mob.minact ?? 0) && act <= (mob.maxact ?? MAX_INT));
-			if (options.length === 0) options = MOBS.filter(mob => mob); // desperate times
-			return qrng.pick(options).index;
-		}
+		state[QuestType] = qrng.pick([Exterminate_Mob, Collect_Trophies, Collect_Item]);
+		if (state[Act] < 1) state[QuestType] = Collect_Item;
 
-		let questlevel = storyline ? Math.floor(storyline / 10) : state[Act];
+		state[QuestLocation] = pickQuestLocation(state, qrng);
+		state[QuestEnd] = state[Location];
 
-		if (!storyline && state[Act] == 9) {
-			if (state[ActProgress] < 3) {
-				state[QuestType] = Transport_Totem;
-				state[QuestObject] = Totem;
-				state[QuestEnd] = qrng.d(36);
-				do { state[QuestLocation] = qrng.d(36);
-				} while (state[QuestLocation] == state[QuestEnd]);
-				state[QuestQty] = 2; // pick up, drop off
-			} else if (state[ActProgress] == state[ActDuration] - 1) {
-				state[QuestType] = Exterminate_Mob;
-				state[QuestMob] = Mox_Klatryon;
-				state[QuestQty] = 1;
-				state[QuestLocation] = Emkell_Peak;
-			} else {
-				state[QuestType] = Exterminate_Mob;
-				state[QuestLocation] = Emkell_Peak;
-				state[QuestMob] = pickQuestMob(state[Act], questlevel);
-				state[QuestObject] = 0;
-				state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
-			}
+		if (state[QuestType] == Collect_Item) {
+			state[QuestObject] = qrng.pick([Ammunition, Trophies, Gold, Rations]);
+			state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
 		} else {
-			state[QuestType] = qrng.pick([Exterminate_Mob, Collect_Trophies, Collect_Item]);
-			if (state[Act] < 1) state[QuestType] = Collect_Item;
-
-			state[QuestLocation] = pickQuestLocation(state, qrng);
-			state[QuestEnd] = state[Location];
-
-			if (state[QuestType] == Collect_Item) {
-				state[QuestObject] = qrng.pick([Ammunition, Trophies, Gold, Rations]);
-				state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
+			state[QuestMob] = pickQuestMob(state[Act], questlevel);
+			state[QuestQty] = 1 + questlevel;
+			if (state[QuestType] == Collect_Trophies) {
+				state[QuestObject] = Trophies;
 			} else {
-				state[QuestMob] = pickQuestMob(state[Act], questlevel);
-				state[QuestQty] = 1 + questlevel;
-				if (state[QuestType] == Collect_Trophies) {
-					state[QuestObject] = Trophies;
-				} else {
-					// Exterminate_Mob
-					state[QuestQty] *= 2;
-				}
-				if (qrng.civRoll(state[Charisma], 8)) decrement(state, QuestQty);
-				if (qrng.civRoll(8, state[Charisma])) increment(state, QuestQty);
+				// Exterminate_Mob
+				state[QuestQty] *= 2;
 			}
+			if (qrng.civRoll(state[Charisma], 8)) decrement(state, QuestQty);
+			if (qrng.civRoll(8, state[Charisma])) increment(state, QuestQty);
 		}
 	}
 }
@@ -1967,6 +2023,16 @@ function describeQuest(state, title) {
 	if (title && state[QuestStoryline] === 0)
 		result = '👑 ' + result;
 	return result;
+}
+
+
+function apiError(failure) {
+	if (!failure) {
+		console.error("API ERROR in context not yet defined");
+	} else {
+		console.error("API ERROR: " + failure);
+	}
+	return -1;
 }
 
 
@@ -2179,7 +2245,7 @@ class Chinbreak {
 			state[TrainingPoints] = 10;
 			state[ActDuration] = SCRIPT[state[Act]].length;
 
-			assignQuest(state, 0);
+			// assignQuest(state, 0);
 
 			passTime('Loading', 1);
 
@@ -2275,10 +2341,10 @@ class Chinbreak {
 			let destination = arg1;
 			if (destination === state[Location]) return 0;
 			let remote = mapInfo(destination, state);
-			if (!remote) return -1;
+			if (!remote) return apiError(`travel destination ${destination} is invalid`);
 			let goal = remote;
 			if (local.neighbors) {
-				if (!local.neighbors.includes(destination)) return -1;
+				if (!local.neighbors.includes(destination)) return apiError(`can't travel to ${destination} from here`);
 			} else {
 				// we're in the 6x6 grid
 				let [x0, y0] = [longitude(state[Location]), latitude(state[Location])];
@@ -2292,7 +2358,7 @@ class Chinbreak {
 				}
 				destination = x1 + 6 * y1 + 1;
 				remote = mapInfo(destination, state);
-				if (!remote) return -1;  // but shouldn't happen
+				if (!remote) return apiError(``);  // but shouldn't happen
 			}
 
 			let travelspeed = (state[Endurance] + state[Mount]) / 5;
@@ -2324,12 +2390,12 @@ class Chinbreak {
 
 		} else if (operation === use) {
 			let slot = arg1;
-			if (!state[slot]) return -1;
+			if (!state[slot]) return apiError(``);
 
 			if (isSpellSlot(slot) || slot === Scroll) {
 				let spellType = state[slot];
 				let spell = SPELLS[spellType];
-				if (!spell) return -1;
+				if (!spell) return apiError(``);
 
 				if (isSpellSlot(slot)) {
 					// TODO have int and or wis help
@@ -2340,7 +2406,7 @@ class Chinbreak {
 	                   ];
 
 					for (let { slot, qty } of costs)
-						if (state[slot] < qty) return -1;
+						if (state[slot] < qty) return apiError(``);
 
 					for (let { slot, qty } of costs)
 						dec(slot, qty);
@@ -2378,8 +2444,8 @@ class Chinbreak {
 
 			} else if (slot === Weapon) {
 				// Melee weapon attack
-				if (!state[MobSpecies]) return -1;
-				if (state[MobHealth] <= 0) return -1;
+				if (!state[MobSpecies]) return apiError(``);
+				if (state[MobHealth] <= 0) return apiError(``);
 
 				let info = MOBS[state[MobSpecies]];
 
@@ -2406,8 +2472,8 @@ class Chinbreak {
 				return damageMob(state, rollAttack(state[Offense], mobDefense(state[MobLevel]), state[Potency]));
 
 			} else if (slot === Footwear) {
-				if (!state[MobSpecies]) return -1;
-				if (state[MobHealth] <= 0) return -1;
+				if (!state[MobSpecies]) return apiError(``);
+				if (state[MobHealth] <= 0) return apiError(``);
 
 				let info = MOBS[state[MobSpecies]];
 
@@ -2420,10 +2486,10 @@ class Chinbreak {
 
 				return damageMob(state, rollAttack(state[Footwear], mobDefense(state[MobLevel]), 1));
 			}
-			return -1;
+			return apiError(``);
 
 		} else if (operation === loot) {
-			if (!state[MobSpecies] || state[MobHealth] > 0) return -1;
+			if (!state[MobSpecies] || state[MobHealth] > 0) return apiError(``);
 			let info = MOBS[state[MobSpecies]];
 
 			let slot = arg1;
@@ -2447,7 +2513,7 @@ class Chinbreak {
 
 		} else if (operation === buy || operation === priceCheck) {
 			let slot = arg1;
-			if (!local.forSale) return -1;  // nothing to buy here
+			if (!local.forSale) return apiError(``);  // nothing to buy here
 			let qty, levelToBe, price, description, tradeInValue = 0;
 			if (isEquipmentSlot(slot)) {
 				qty = 1;
@@ -2457,8 +2523,8 @@ class Chinbreak {
 				for now I just want it to be possible to play with a simple strat */
 				// if (local.forSale.filter(fsi => fsi.slot === slot &&
 				// 	                             fsi.item == levelToBe).length === 0)
-				// 	return -1;
-				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return -1;
+				// 	return apiError(``);
+				if (!DATABASE[slot] || !DATABASE[slot].basePrice) return apiError(``);
 				// TODO store the price in the forSale DB
 				const varieties = slot == Weapon ? NUM_WEAPON_TYPES : 1;
 				price = Math.round(DATABASE[slot].basePrice * Math.pow(GR, Math.floor((levelToBe - 1) / varieties)));
@@ -2466,12 +2532,12 @@ class Chinbreak {
 				tradeInValue = salePrice(slot, state[slot] ? 1 : 0);
 			} else if (isInventorySlot(slot)) {
 				qty = arg2;
-				if (qty < 0) return -1;
+				if (qty < 0) return apiError(``);
 				levelToBe = Math.min(MAX_INT, state[slot] + qty);
 				price = DATABASE[slot].value;
 				description = indefiniteItems(slot, qty)
 			} else {
-				return -1;
+				return apiError(``);
 			}
 
 			// TODO: consider local effect on price
@@ -2505,7 +2571,7 @@ class Chinbreak {
 			return qty;
 
 		} else if (operation === sell || operation === give || operation === drop) {
-			if (operation === sell && local.terrain != TOWN) return -1;
+			if (operation === sell && local.terrain != TOWN) return apiError(``);
 			let [slot, qty] = [arg1, arg2];
 			let newqty;
 			if (isEquipmentSlot(slot)) {
@@ -2515,7 +2581,7 @@ class Chinbreak {
 				qty = Math.min(qty, state[slot]);
 				newqty = state[slot] - qty;
 			} else {
-				return -1;
+				return apiError(``);
 			}
 			let price = salePrice(slot, qty);
 			if (operation === sell) {
@@ -2549,16 +2615,16 @@ class Chinbreak {
 			let [slot, qty] = [arg1, arg2];
 			const isDeposit = (operation === deposit);
 
-			if (qty < 0) return -1;  // nice try hacker
-			if (!local.hasBank) return -1;  // you're not at the bank
+			if (qty < 0) return apiError(``);  // nice try hacker
+			if (!local.hasBank) return apiError(``);  // you're not at the bank
 
 			if (state[Gold] + state[BalanceGold] <= 0)
-				return -1;  // Can't afford it
+				return apiError(``);  // Can't afford it
 
 			let bankSlot;
 			if (slot == Gold) bankSlot = BalanceGold;
 			else if (slot == Treasures) bankSlot = BalanceTreasures;
-			else return -1;  // Bank doesn't deal in this item
+			else return apiError(``);  // Bank doesn't deal in this item
 
 			let fromSlot = isDeposit ? slot : bankSlot;
 			let toSlot =  isDeposit ? bankSlot : slot;
@@ -2584,30 +2650,33 @@ class Chinbreak {
 		} else if (operation === seekQuest) {
 			const storyline = arg1;
 
-			let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
-			passTime('Asking around about quests', hours);
-
 			clearQuest(state);
 
-			if (local.terrain !== TOWN) return 0;
+			if (local.terrain === TOWN)
+				assignQuest(state, storyline);
 
-			assignQuest(state, storyline);
-
-			return 1;
+			if (state[QuestType] === Cutscene) {
+				passTime('Loading cutscene', 1);
+				return 1;
+			} else if (state[QuestType]) {
+				let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
+				passTime('Asking around about quests I can do', hours);
+				return hours;
+			} else {
+				passTime(`Fruitlessly looking for a quest I can take on`, 3);
+				return 0;
+			}
 
 		} else if (operation === completeQuest) {
-			if (!state[QuestType]) return -1;
-			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return -1;
-			if (state[QuestProgress] < state[QuestQty]) return -1;
+			if (!state[QuestType]) return apiError(``);
+			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return apiError(``);
+			if (state[QuestProgress] < state[QuestQty]) return apiError(``);
 			const questlevel = state[QuestStoryline] ? Math.floor(state[QuestStoryline] / 10) : state[Act];
 			inc(Experience, questlevel ? 5 * questlevel : 3);
 			if (state[QuestStoryline] === 0)
 				inc(ActProgress);
 
-			if (state[Act] === 9 && state[ActProgress] === 3) {
-				passTime('Being magically transported to Sygnon Isle!', 3);
-				state[Location] = Sygnon_Tower;
-			} else if (state[QuestType] === Cutscene) {
+			if (state[QuestType] === Cutscene) {
 				passTime('Loading', 1);
 			} else {
 				passTime('Completing paperwork', 2);
@@ -2626,9 +2695,9 @@ class Chinbreak {
 
 		} else  if (operation === train) {
 			let slot = arg1;
-			if (local.terrain !== TOWN) return -1;
-			if (!isStatSlot(slot)) return -1;
-			if (state[TrainingPoints] <= 0) return -1;
+			if (local.terrain !== TOWN) return apiError(``);
+			if (!isStatSlot(slot)) return apiError(``);
+			if (state[TrainingPoints] <= 0) return apiError(``);
 			if (state[slot] >= 99) return 0;
 			let hours = 24;
 			hours *= Math.pow(GR, state[slot]);
@@ -2653,17 +2722,17 @@ class Chinbreak {
 		} else  if (operation == copySpell) {
 			let slot = arg1;
 			let spell = SPELLS[state[Scroll]];
-			if (!spell) return -1;
-			if (local.terrain !== TOWN) return -1;
-			if (!isSpellSlot(slot)) return -1;
+			if (!spell) return apiError(``);
+			if (local.terrain !== TOWN) return apiError(``);
+			if (!isSpellSlot(slot)) return apiError(``);
 
 			// Must be nth level to use nth level spell
 			// Not sure if this is good
 			if (spell.level > state[Level])
-				return -1;
+				return apiError(``);
 
 			if (spell.level > state[Energy])
-				return -1;
+				return apiError(``);
 
 			let hours = 24;
 			hours *= Math.pow(GR, spell.level);
@@ -2706,6 +2775,11 @@ class Chinbreak {
 				passTime('Finding some alone time', 1);
 				clearMob(state);
 				return 1;
+
+			} else if (target === Weapon) {
+				passTime('Rooting around for something that could be used as a weapon', 3);
+				state[Weapon] = rng.d(NUM_WEAPON_TYPES);
+				return state[Weapon];
 
 			} else if (target === Totem) {
 				passTime('Seeking the local totem', 6);
@@ -2757,9 +2831,10 @@ class Chinbreak {
 
 			} else if (target === QuestProgress) {
 				// Advance the plot in a cutscene quest
-				if (state[QuestType] !== Cutscene) return -1;
-				if (state[QuestProgress] >= state[QuestQty]) return -1;
-				if (state[Location] != state[QuestLocation]) return -1;
+				if (state[QuestType] !== Cutscene) return apiError(`seeking progress is only valid during cutscenes`);
+				if (state[QuestProgress] >= state[QuestQty]) return apiError(`seeking progress but cutscene is already complete`);
+				if (state[QuestLocation] && state[Location] != state[QuestLocation])
+					return apiError(`seeking progress but not where you should be`);
 				let script = questScript(state[Act], state[ActProgress]);
 				let scene = script.script[state[QuestProgress]];
 				if (typeof scene === 'string') {
@@ -2770,6 +2845,9 @@ class Chinbreak {
 						for (let { slot, value } of MOBS[state[Species]].startingItems ?? []) {
 							state[slot] = value;
 						}
+					}
+					for (let { slot, value } of scene.set ?? []) {
+						state[slot] = value;
 					}
 				}
 				inc(QuestProgress);
@@ -2782,12 +2860,12 @@ class Chinbreak {
 				return 1;
 
 			} else {
-				return -1;
+				return apiError(`seeking that which may not be sought: ` + SLOTS[target] ? SLOTS[target].name : target);
 			}
 
 		} else if (operation === levelUp) {
-			if (state[Experience] < state[ExperienceNeeded]) return -1;
-			if (local.terrain != TOWN) return -1;
+			if (state[Experience] < state[ExperienceNeeded]) return apiError(``);
+			if (local.terrain != TOWN) return apiError(``);
 			if (state[Level] >= 80) return 0;
 			inc(Level);
 			state[ExperienceNeeded] = Chinbreak.xpNeededForLevel(state[Level] + 1);
@@ -3209,7 +3287,7 @@ const MONTHS = [
 	'Bargus',
 	'Hipsember',
 	'Extorber',
-	'Orbvemer',
+	'Orbvember',
 	'Dipnorther',
 ];
 
@@ -3373,6 +3451,8 @@ function updateGame(state) {
 		game.task = 'Game over. You died.';
 	} else if (state[GameOver] === 1) {
 		game.task = 'Game complete! Victory!';
+	} else if (state[GameOver] < 0) {
+		game.task = 'Game over! Error condition encountered: ' + state[GameOver];
 	} else if (state[GameOver]) {
 		game.task = 'Game over!';
 	} else if (!vm.running) {

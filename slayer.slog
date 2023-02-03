@@ -37,6 +37,8 @@ func goodHunting(forLevel) {
 	}
 }
 
+seek(Weapon)
+
 while .Level < 88 {
 	goto(goodHunting(.Level))
 	raids += 1
