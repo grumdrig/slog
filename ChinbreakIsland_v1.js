@@ -1884,7 +1884,7 @@ const SCRIPT = [{
 		type: Cutscene,
 		location: Papay_Forest,
 		script: [
-`You hear a crashing in the woods ahead. You creep forward to investigate`,
+`You hear crashing sounds in the woods ahead. You creep forward to investigate`,
 `It's the horrible beast! It scratches at something on the ground`,
 `The beast suddenly rears and sniffs the air, then charges away noisily`,
 `In its midden pile you discover a fine piece of armor`,
@@ -1917,7 +1917,11 @@ const SCRIPT = [{
 		type: Cutscene,
 		location: Bompton,
 		script: [
-`TODO *Another cutscene where the isle really starts smoking. Whatever, time to clean up the rest of these beasts.*`,
+`Still terrifying in appearance, even in death, the beast lies dead at your feet`,
+`You wonder what dark power could have unleashed such a grim unnatural creature upon your home`,
+`On the horizon, Sygnon Isle lurks darkly. Plumes of black smoke rising thence now dominate the skies above it`,
+`You tug your gaze away. "Let it burn" you think to yourself. "We've got our own problems to deal with."`,
+`"These monstrosities must be located and destroyed until Chinbreak Island is an eden once more!"`,
 		]
 	}],
 
