@@ -1873,9 +1873,11 @@ const SCRIPT = [{
 	}, {
 		quest: 2,
 		type: Transport_Totem,
+		end_key: 902,
 	}, {
 		quest: 3,
 		type: Cutscene,
+		location_key: 902,
 		script: [
 `The third totem is placed and silver light eminates from everything around you, steadily increasing`,
 {
@@ -1938,6 +1940,7 @@ function questScript(act, quest) {
 		s.quest == '*')[0];
 }
 
+
 function assignQuest(state, storyline) {
 	if (!SCRIPT[state[Act]]) return;
 
@@ -1959,18 +1962,23 @@ function assignQuest(state, storyline) {
 
 	let script = (storyline === 0) && questScript(state[Act], state[ActProgress]);
 	if (script) {
+		function keyedLocation(key) {
+			return new Prng(state[Seed], 0xC11, key).d(36);
+		}
 		state[QuestType] = script.type;
 		if (script.location) state[QuestLocation] = script.location;
+		if (script.location_key) state[QuestLocation] = keyedLocation(script.location_key);
 		if (script.qty) state[QuestQty] = script.qty;
 		if (script.mob) state[QuestMob] = script.mob;
 		if (script.end) state[QuestEnd] = script.end;
+		if (script.end_key) state[QuestEnd] = keyedLocation(script.end_key);
 		// if (script.object) state[QuestObject] = script.object;
 
 		if (state[QuestType] === Cutscene) {
 			state[QuestQty] = script.script.length;
 		} else if (state[QuestType] === Transport_Totem) {
 			state[QuestObject] = Totem;
-			state[QuestEnd] = qrng.d(36);
+			state[QuestEnd] ||= qrng.d(36);
 			do { state[QuestLocation] = qrng.d(36);
 			} while (state[QuestLocation] == state[QuestEnd]);
 			state[QuestQty] = 2; // pick up, drop off
@@ -1978,7 +1986,7 @@ function assignQuest(state, storyline) {
 			state[QuestLocation] = state[QuestLocation] || pickQuestLocation(state, qrng);
 			state[QuestMob] = state[QuestMob] || pickQuestMob(state[Act], questlevel);
 			state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
-			state[QuestEnd] = state[QuestEnd] || state[Location];
+			state[QuestEnd] ||= state[Location];
 		}
 
 	} else {
