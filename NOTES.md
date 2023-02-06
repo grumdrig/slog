@@ -259,6 +259,8 @@ Follow-on Ideas
 
 - Leaderboards
 
+- Dungeon crawl
+
 
 
 Lucas' Ideas
@@ -290,18 +292,6 @@ Geenome
 Marble Mage end boss
 
 
-Real Time
----------
-
-Show elapsed real time (in progress-bar mode) in outputs
-
-
-Big Mobs
---------
-
-Switch all mobs to the big versions with 1.5 HD as of act 4 or 5
-
-
 More API Minimization
 ---------------------
 
@@ -319,9 +309,6 @@ Not so sure about any of this.
 
 Plot Cutscenes
 --------------
-
-Call advancePlot() until it returns 0 to advance Act. Wait this still requires
-a quest to keep track of the number.
 
 Have mobs have a minimum and maximum act where they appear.
 

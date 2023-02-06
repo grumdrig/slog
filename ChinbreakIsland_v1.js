@@ -2245,7 +2245,8 @@ class Chinbreak {
 			state[TrainingPoints] = 10;
 			state[ActDuration] = SCRIPT[state[Act]].length;
 
-			// assignQuest(state, 0);
+			// Automatically assign the opening cutscene
+			assignQuest(state, 0);
 
 			passTime('Loading', 1);
 
@@ -2671,7 +2672,8 @@ class Chinbreak {
 			if (!state[QuestType]) return apiError(``);
 			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return apiError(``);
 			if (state[QuestProgress] < state[QuestQty]) return apiError(``);
-			const questlevel = state[QuestStoryline] ? Math.floor(state[QuestStoryline] / 10) : state[Act];
+			const isMain = state[QuestStoryline] == 0;
+			const questlevel = isMain ? state[Act] : Math.floor(state[QuestStoryline] / 10);
 			inc(Experience, questlevel ? 5 * questlevel : 3);
 			if (state[QuestStoryline] === 0)
 				inc(ActProgress);
@@ -2689,6 +2691,14 @@ class Chinbreak {
 					inc(TrainingPoints);
 					inc(Treasures);
 				}
+			}
+
+			// On the main plotline, if the next quest is a cutscene,
+			// automatically assign it.
+			let script = isMain && questScript(state[Act], state[ActProgress]);
+			if (script && script.type == Cutscene) {
+				assignQuest(state, 0);
+				return 2;
 			}
 
 			return 1;
