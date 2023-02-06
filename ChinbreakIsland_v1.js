@@ -306,14 +306,15 @@ const CALLS = {
 	seekQuest: { parameters: 'storyline',
 		description: `While in town, ask around and listen to rumors in hopes
 		of discovering adventures that await and tasks to complete.
-		There's only one quest active at any given time. The parameter is
+		There's at most one quest active at any given time. The parameter is
 		0 for main quests (which contribute to game completion) or some
 		other value for side quests (which may be completed for lulz or
-		profit).` },
+		profit). Passing a negative value for storyline clears any
+		assigned quest.` },
 
 	completeQuest: {
-		description: `Report back to the originator of the current quest to
-		gain sundry rewards for your efforts.` },
+		description: `Report back to the originator of the current quest
+		(at location QuestEnd) to gain sundry rewards for your efforts.` },
 
 	seek: { parameters: 'target_slot',
 		description: `Comb the local area for inventory items such as Rations,
@@ -1816,9 +1817,11 @@ const QUEST_TYPES = [ null,
 		// location: specified elsehow
 		// qty: likewise
 		title: 'Cutscene',
-		description: `Watch, amazed, as important events around you advance the plot.`,
-		explanation: `Simply call <code>seek(QuestProgress)</code> the required number of
-		times at the specified location`,
+		description: `While in $L, watch, as important events around you advance the plot.`,
+		explanation: `Call <code>seek(QuestProgress)</code> the required
+		number of times at the specified location. Cutscene quests may
+		automatically become active when the quest preceding them completes.`,
+
 	}
 ];
 
@@ -1846,23 +1849,125 @@ const SCRIPT = [{
 },
 `You vow you'll help the people of Bompton and put an end to whatever evil is afoot!`,
 ]}],
+//  TODO ? (Only wildlife type mobs are available)
+
 }, { // act 1
-	length: 12,
+	length: 13,
+	scripts: [{
+		quest: -2,
+		type: Transport_Totem,
+		end: Chinbreak_Cliff,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		location: Chinbreak_Cliff,
+		script: [
+`The shards of the totem lie broken before you...but what glints among them?`,
+{	task: `You brush the shards aside and pick up an impressive new weapon`,
+	set: [{slot: Weapon, increment: 5}], },
+`Around you, as if emerging from a spell, many of the local fauna look about them adorably`,
+`...and then attack their still-bewitched bretheren!`,
+`Suddenly, all battles cease as a thunderclap and then a moan issue from a nearby grove`,
+`A creature more horrible than any you've ever seen appears! As it glowers, you run!`,
+		]
+	}],
+
 }, { // act 2
-	length: 14,
+	length: 15,
+	scripts: [{
+		quest: -2,
+		type: Exterminate_Mob,
+		location: Papay_Forest,
+		end: Papay_Forest,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		location: Papay_Forest,
+		script: [
+`You hear a crashing in the woods ahead. You creep forward to investigate`,
+`It's the horrible beast! It scratches at something on the ground`,
+`The beast suddenly rears and sniffs the air, then charges away noisily`,
+`In its midden pile you discover a fine piece of armor`,
+{
+	task: `Donning it, you charge off the way the beast went. It must be put an end to!`,
+	set: [{ slot: Armor, increment: 1 }],
+},
+		]
+	}]
+
 }, { // act 3
-	length: 16,
+	length: 18,
+	script: [{
+		quest: -3,
+		type: Cutscene,
+		location: Bompton,
+		end: Bompton,
+		script: [
+`TODO: *Bunch of stuff about the beast coming to $L and causing havoc.*`,
+		]
+	}, {
+		quest: -2,
+		type: Exterminate_Mob,
+		mob: Innoteti,
+		qty: 1,
+		location: Bompton,
+		end: Bompton
+	}, {
+		quest: -1,
+		type: Cutscene,
+		location: Bompton,
+		script: [
+`TODO *Another cutscene where the isle really starts smoking. Whatever, time to clean up the rest of these beasts.*`,
+		]
+	}],
+
 }, { // act 4
 	length: 15,
+// TODO
+//  You've slaugtered many such beasts and were starting to run low. Don't like
+//  the looks of that island, but it doesn't seem like a problem. What's that
+//  now, the fucker is erupting! At the same time the ground is splitting open
+//  all arount. Out crawl even worse beasts, leading little beast armies. They
+//  run to the far corners of the world. Shrugging, you sharpen your bandyclef.
+
+
 }, { // act 5
 	length: 20,
+// TODO
+// You fight and kill one of these new minibosses but there's plenty more of
+// them. Surely there's a broader solution. Maybe the queen miniboss. Let's
+// keep track of their movements.
+
 }, { // act 6
 	length: 25,
+
+// We killed lots of minibosses in this act but now somehow or other we're
+// ready to take out the queen.
+
+// (Another miniboss battle)
+
+// `As the beast lies dying before you, you feel both triumph and a pang of regret.`
+// `It says "Though I am slain, I believe everything happens for a reason." It coughs blood.`
+// `You think of all the creatures you've slaugtered to bump some progress bars forward.`
+// `You smile and nod encouragingly. "Yep, all for a purpose," you say. "Go quietly good beast."`
+
+// It must be that Isle. We've got to find a way to get there. For some reason
+// these totems seem to be the key. Someway or other we have to find the
+// combo.
+
+
 }, { // act 7
 	length: 20,
+// YODO	Find the wise man that knows how
+
 }, { // act 8
 	length: 30,
+// Do some task that gives you the knowledge
+
+
 }, { // act 9
+
+
 	length: 15,
 	scripts: [{
 		quest: 0,
@@ -1882,7 +1987,10 @@ const SCRIPT = [{
 `The third totem is placed and silver light eminates from everything around you, steadily increasing`,
 {
 	task: `Your surroundings lose their substance. They disintegrate and reform. The light fades.`,
-	set: [{ slot: Location, value: Sygnon_Tower }],
+	set: [
+		{ slot: Location, value: Sygnon_Tower },
+		{ slot: QuestLocation, value: Sygnon_Tower },
+		],
 },
 `Strange buildings surround you; strange beings move among them. A angry black cloud hangs overhead`,
 `You realize where you are. They totems worked! You've been transported somehow to Sygnon Isle!`,
@@ -1906,6 +2014,12 @@ const SCRIPT = [{
 }, {
 	act: 'Epilogue',
 	length: 1,
+// *Final cinematics*
+//
+// Somehow the ability back to Bompton is granted. Ideally it could go both ways.
+//
+// By only partially completing the epilogue one could continue without ending the game.
+
 }];
 
 
@@ -1942,6 +2056,7 @@ function questScript(act, quest) {
 
 
 function assignQuest(state, storyline) {
+	if (storyline < 0) return;
 	if (!SCRIPT[state[Act]]) return;
 
 	let qrng = new Prng(state[Seed], 0x9035D, state[Act], state[ActProgress], state[Location], storyline);
@@ -2671,6 +2786,8 @@ class Chinbreak {
 				let hours = 4 + Math.round(20 * Math.pow(GR, -state[Charisma]));
 				passTime('Asking around about quests I can do', hours);
 				return hours;
+			} else if (storyline < 0) {
+				passTime(`Cancelling any pending quests`, 1);
 			} else {
 				passTime(`Fruitlessly looking for a quest I can take on`, 3);
 				return 0;
@@ -2864,8 +2981,11 @@ class Chinbreak {
 							state[slot] = value;
 						}
 					}
-					for (let { slot, value } of scene.set ?? []) {
-						state[slot] = value;
+					for (let { slot, value, increment } of scene.set ?? []) {
+						if (typeof value === 'number')
+							state[slot] = value;
+						else
+							inc(slot, increment);
 					}
 				}
 				inc(QuestProgress);
