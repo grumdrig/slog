@@ -1789,7 +1789,7 @@ const QUEST_TYPES = [ null,
 	}, {
 		// Bring me N trophies
 		name: "Collect_Trophies",
-		title: `Bring me $N $M trophies`,
+		title: `Bring me $Q $M trophies`,
 		description: `The $ms in $L are too much. Bring proof of death back to me here in $E.`,
 		explanation: `Return to the quest ending location a hand over a
 		certain quantity of trophies of a particular monster. They can be
@@ -1799,7 +1799,7 @@ const QUEST_TYPES = [ null,
 	}, {
 		// Bring me N of some item
 		name: "Collect_Item",
-		title: `Bring me $N $O`,
+		title: `Bring me $Q $O`,
 		description: `We of $E stand in need of $O. They say there's no shortage in $L.`,
 		explanation: `Simply hand over a certain quantity of some item at the
 		quest ending location. They may be obtained however you like but
@@ -1904,8 +1904,8 @@ const SCRIPT = [{
 		end: Bompton,
 		script: [
 `A aged man approaches; you seem to recognize him`,
-`It's Old Gristy, the town dumnager! "$N! $N!", he calls`,
-`"You've become a strong-handed adventurer, they say. Now we need you here at home!"`,
+`It's Old Gristy, the town dumnager! He calls your name and grips your arm`,
+`"You've become a strong-handed adventurer, they say. Now we need you here at home!" he says`,
 `"A foul beast has us besieged. He won't leave us be! Save us from him, please! Before we are destroyed!"`,
 `With this imprecation, he departs, heading back towards the dunnery. You vow to do what you can to save $L!`,
 		]
@@ -1931,13 +1931,24 @@ const SCRIPT = [{
 
 }, { // act 4
 	length: 15,
-// TODO
-//  You've slaugtered many such beasts and were starting to run low. Don't like
-//  the looks of that island, but it doesn't seem like a problem. What's that
-//  now, the fucker is erupting! At the same time the ground is splitting open
-//  all arount. Out crawl even worse beasts, leading little beast armies. They
-//  run to the far corners of the world. Shrugging, you sharpen your bandyclef.
-
+	scripts: [{
+		quest: -2,
+		type: Exterminate_Mob,
+		qty: 15,
+		location: Noonaf_Wastes,
+		end: Noonaf_Wastes,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		script: [
+`So many evil beasts have fallen before you, it's starting to feel like you're getting the upper hand`,
+`Soon, perhaps, things will go back to normal...besides that smoking mountain that still looms`,
+`But, hold on a minute, the mountain has gotten even stranger! Glowing red fragments pour from the mountaintop!`,
+`A boom like distant thunder rolls past you, then a sharp crash from deep below you and the ground shivers`,
+`Earth splits open, running in all directions. Horrible creatures pour forth!`,
+`Shrugging, you polish your $W and get to work.`,
+		]
+	}],
 
 }, { // act 5
 	length: 20,
@@ -2144,13 +2155,14 @@ function describeQuest(state, title) {
 	let questal = Chinbreak.mapInfo(state[QuestLocation], state);
 	let original = Chinbreak.mapInfo(state[QuestEnd], state);
 	result = result
-		.replace('$N', state[QuestQty])
+		.replace('$Q', state[QuestQty])
 		.replace('$MS', state[QuestMob] && plural(MOBS[state[QuestMob]].name))
 		.replace('$ms', state[QuestMob] && plural(MOBS[state[QuestMob]].name).toLowerCase())
 		.replace('$M', state[QuestMob] && MOBS[state[QuestMob]].name.toLowerCase())
 		.replace('$O', state[QuestObject] && SLOTS[state[QuestObject]].name.toLowerCase())
 		.replace('$L', questal && questal.name)
-		.replace('$E', original && original.name);
+		.replace('$E', original && original.name)
+		.replace('$W', WEAPON_NAMES[state[Weapon]] ?? 'weapon');
 	if (title && state[QuestStoryline] === 0)
 		result = '👑 ' + result;
 	return result;
