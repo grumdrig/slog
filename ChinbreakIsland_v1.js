@@ -1087,20 +1087,25 @@ const TERRAIN_TYPES = [
 	null, {
 		name: 'Tundra',
 		color: 'white',
+		glyph: '❄️',
 	}, {
 		name: 'Forest',
 		color: 'green',
+		glyph: '🌲',
 		moveCost: 3,
 	}, {
 		name: 'Town',
 		color: 'violet',
+		glyph: '🏘️',
 	}, {
 		name: 'Hills',
 		color: 'peru',
+		glyph: '🗻',
 		moveCost: 2,
 	}, {
 		name: 'Mountains',
 		color: 'sienna',
+		glyph: '⛰️',
 		moveCost: 4,
 	}, {
 		name: 'Plains',
@@ -1109,11 +1114,13 @@ const TERRAIN_TYPES = [
 	}, {
 		name: 'Marsh',
 		color: 'olive',
+		glyph: '🐊',
 		moveCost: 2.5,
 		forage: { item: Rations, rate: 0 },
 	}, {
 		name: 'Desert',
 		color: 'yellow',
+		glyph: '🌵',
 		forage: { item: Rations, rate: 0 },
 	}];
 
@@ -1630,10 +1637,10 @@ function generateMap(scrambleFrom) {
 		}
 		let tile = MAP[location];
 		result.push(`<div style="grid-column:${longitude(l)+1};grid-row:${latitude(l)+1};background-color:${TERRAIN_TYPES[tile.terrain].color}">
-			<div>#${l}</div>
-			<div>${tile.name.split(' ')[0]}<br/>
-			${TERRAIN_TYPES[tile.terrain].name}</div>
-			<div>level ${tile.level}</div>
+			<div>${TERRAIN_TYPES[tile.terrain].name}
+				<span>#${l}</span></div>
+			<div><div>${tile.name}</div></div>
+			<div>${'☠'.repeat(tile.level)}</div>
 		</div>`);
 	}
 	result.push('</div>');
@@ -1653,10 +1660,22 @@ function generateMap(scrambleFrom) {
 			font: 13px sans-serif;
 		}
 		div.themap > div > div:first-child {
-			text-align: right;
+			font-size: 10px;
+		}
+		div.themap > div > div:first-child > span {
+			float: right;
+			font-size: 12px;
 		}
 		div.themap > div > div:nth-child(2) {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			height: 26px;
+			width: 100%;
 			text-align: center;
+		}
+		div.themap > div > div:nth-child(3) {
+			/* font-size: 12px; */
 		}
 	</style>`;
 
