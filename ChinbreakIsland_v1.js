@@ -1903,7 +1903,11 @@ const SCRIPT = [{
 		location: Bompton,
 		end: Bompton,
 		script: [
-`TODO: *Bunch of stuff about the beast coming to $L and causing havoc.*`,
+`A aged man approaches; you seem to recognize him`,
+`It's Old Gristy, the town dumnager! "$N! $N!", he calls`,
+`"You've become a strong-handed adventurer, they say. Now we need you here at home!"`,
+`"A foul beast has us besieged. He won't leave us be! Save us from him, please! Before we are destroyed!"`,
+`With this imprecation, he departs, heading back towards the dunnery. You vow to do what you can to save $L!`,
 		]
 	}, {
 		quest: -2,
