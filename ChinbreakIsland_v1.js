@@ -399,7 +399,7 @@ function generateInterface() {
 	interface.push('\n// Map');
 
 	MAP.forEach((locale, index) =>
-		locale && interface.push(`const ${moniker(locale.name)} = ${index}`));
+		locale && !locale.ephemeral && interface.push(`const ${moniker(locale.name)} = ${index}`));
 
 	interface.push('\n// Spells');
 
@@ -619,7 +619,7 @@ div#xp {
 	head('Map Locations');
 
 
-	MAP.forEach((tile,i) => { if (tile && !tile.ephemeral) {
+	MAP.forEach((tile,i) => { if (tile && !tile.ephemeral && !tile.inaccessible) {
 		subhead(`${i}. ${moniker(tile.name)}`);
 		p(`Coordinates: ${latitude(i)}S x ${longitude(i)}E`);
 		p(`Terrain: ${TERRAIN_TYPES[tile.terrain].name}`);
@@ -1562,6 +1562,9 @@ const MAP = [null,
 		density: GR,
 		level: 8,
 		ephemeral: true,
+	}, {
+		name: "Moon",  // for the sake of the moon totem
+		inaccessible: true,
 	}];
 
 const MAINLAND_TOWNS = [];
@@ -1959,6 +1962,7 @@ const SCRIPT = [{
 	}, {
 		quest: -1,
 		type: Cutscene,
+		location: Noonaf_Wastes,
 		script: [
 `So many evil beasts have fallen before you, it's starting to feel like you're getting the upper hand`,
 `Soon, perhaps, things will go back to normal...besides that smoking mountain that still looms`,
@@ -1996,7 +2000,7 @@ const SCRIPT = [{
 
 }, { // act 7
 	length: 20,
-// YODO	Find the wise man that knows how
+// TODO	Find the wise man that knows how
 
 }, { // act 8
 	length: 30,
@@ -2042,7 +2046,10 @@ const SCRIPT = [{
 	}, {
 		quest: -1,
 		type: Cutscene,
-		script: [],
+		location: Emkell_Peak,
+		script: [
+			// TODO you win the game all is good all is done but the epilogue
+			],
 
 	}, {
 		quest: '*',  // catch-all must come last
@@ -2052,11 +2059,24 @@ const SCRIPT = [{
 }, {
 	act: 'Epilogue',
 	length: 1,
+	scripts: [{
+		quest: 0,
+		type: Cutscene,
+		location: Sygnon_Tower,
+		script: [
+
 // *Final cinematics*
-//
+// Some sort of letdown scene in the town, setting up the moon totem
 // Somehow the ability back to Bompton is granted. Ideally it could go both ways.
+{
+	task: `You reach out an take the Moon Totem. With it's power, you will be able to return home`,
+	set: [{ slot: Totem, value: Moon }],
+},
+// Roll credits
 //
 // By only partially completing the epilogue one could continue without ending the game.
+		],
+	}],
 
 }];
 
@@ -2506,6 +2526,12 @@ class Chinbreak {
 			let remote = mapInfo(destination, state);
 			if (!remote) return apiError(`travel destination ${destination} is invalid`);
 			let goal = remote;
+			if (state[Totem] === Moon &&
+				((destination === Sygnon_Tower && state[Location] === Bompton) ||
+				 (destination === Bompton && state[Location] === Sygnon_Tower))) {
+				passTime('Shortcutting through a moongate to ' + remote.name, 2);
+				return 2;
+			}
 			if (local.neighbors) {
 				if (!local.neighbors.includes(destination)) return apiError(`can't travel to ${destination} from here`);
 			} else {
@@ -3542,7 +3568,7 @@ function updateGame(state) {
 		else if (slot === Scroll)
 			set('e' + i, 'Scroll of ' + SPELLS[v].name);
 		else if (slot === Totem)
-			set('e' + i, Chinbreak.MAP[v].name.split(' ')[0] + ' Totem');
+			set('e' + i, v === Chinbreak.MAP[v].name.split(' ')[0] + ' Totem');
 		else {
 			const names = (Chinbreak.DATABASE[slot] ?? {}).names;
 			set('e' + i, names[v] || v);
