@@ -1975,10 +1975,37 @@ const SCRIPT = [{
 
 }, { // act 5
 	length: 20,
-// TODO
-// You fight and kill one of these new minibosses but there's plenty more of
-// them. Surely there's a broader solution. Maybe the queen miniboss. Let's
-// keep track of their movements.
+	scripts: [{
+		quest: -5,
+		type: Exterminate_Mob,
+		mob_key: 5150,
+		qty: 10,
+	}, {
+		quest: -4,
+		type: Exterminate_Mob,
+		mob_key: 5150,
+		qty: 15,
+	}, {
+		quest: -3,
+		type: Exterminate_Mob,
+		mob_key: 5150,
+		qty: 20,
+	}, {
+		quest: -2,
+		type: Exterminate_Mob,
+		mob_key: 5150,
+		location_key: 80552,
+		qty: 30,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		location_key: 80552,
+		script: [
+`Well that was a lot of killing. Does it seem to anybody else like there's more of these beasts every day?`,
+`Perhaps there's some way to get to the source of the matter. You ponder`,
+`You decide to keep closer track of where these beasts seem to be coming from. Maybe a source can be discovered`,
+			],
+	}]
 
 }, { // act 6
 	length: 25,
