@@ -2008,8 +2008,6 @@ const SCRIPT = [{
 
 
 }, { // act 9
-
-
 	length: 15,
 	scripts: [{
 		quest: 0,
@@ -2048,11 +2046,14 @@ const SCRIPT = [{
 		type: Cutscene,
 		location: Emkell_Peak,
 		script: [
-			// TODO you win the game all is good all is done but the epilogue
+`The corpse of the evil wizard lies before you, looking, in death, unsubstantial. Unimpressive.`,
+`Around you, the evil beasts of Mox Klatryon's entourage have scattered in fear`,
+`Whether the host on Chinbreak Island has dispersed to will have to be dealth with, you don't know`,
+`But you know the force that forged them has been nullified. You main quest has been fulfilled`,
 			],
 
 	}, {
-		quest: '*',  // catch-all must come last
+		quest: '*',  // NB: catch-all must come last
 		type: Exterminate_Mob,
 		location: Emkell_Peak,
 	}],
@@ -2064,17 +2065,17 @@ const SCRIPT = [{
 		type: Cutscene,
 		location: Sygnon_Tower,
 		script: [
-
-// *Final cinematics*
-// Some sort of letdown scene in the town, setting up the moon totem
-// Somehow the ability back to Bompton is granted. Ideally it could go both ways.
+`You return, exhausted, to Sygnon Tower`,
+`The unearthly townspeople, who previously barely noticed you, stare mutely at you, and move to let you pass`,
+`In the square in the middle of town, a new obelisk stands, smoke rising around it`,
+`It cradles something. The townspeople watch as you approach it`,
 {
 	task: `You reach out an take the Moon Totem. With it's power, you will be able to return home`,
 	set: [{ slot: Totem, value: Moon }],
 },
-// Roll credits
-//
-// By only partially completing the epilogue one could continue without ending the game.
+`Your thirst for adventure is behind you. You crave only peace. Accross the water, your hometown of Bompton lies waiting.`,
+`Progress Quest Slog: Chinbreak Island was brought to you by Grumdrig`,
+`Thanks for playing!`,
 		],
 	}],
 
