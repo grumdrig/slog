@@ -1,0 +1,95 @@
+<!doctype html>
+<head>
+	<meta charset='utf-8'/>
+	<title>PQ Slog</title>
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css"> -->
+<!-- <link rel="stylesheet" href="https://classless.de/classless-tiny.css"> -->
+<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">
+<style>
+	a:any-link { color: #1d74c4 }
+</style>
+
+</head>
+<body>
+
+<h1>Progress Quest Slog: Chinbreak Island</h1>
+
+<p> Welcome to PQS:CI. You can skip the rigamore and <a
+href='chinbreak.html'>play the game</a>, or read on for the rigamarole,
+including links to many moving parts.
+
+<h3>What it is</h3>
+
+<p> There are many layers to this onion.
+
+<p> <a href='chinbreak.html'>Chinbreak Island</a> is a game in the Progress
+Quest Automatic Universe&#8482;, with appearance, style and gameplay similar
+to the original <a href="http://progressquest.com/">Progress Quest</a>
+released in 2002. It's an idle/zero-player game, meaning your character does
+the thinking, clicking and hotkey-pressing for you, while you either watch or
+occupy yourself with other more important tasks.
+
+<h3>Strats</h3>
+
+<p> However, unlike the original, where your character's play style is fixed,
+here your character's actions are determined by a programmable strategy that
+it follows. A player selects a strategy at the time of character creation. It
+may be built-in to the game, or gotten from elsewhere.
+
+<p> But! However! You may also write or modify a character strategy yourself.
+
+<h3>Slog VM</h3>
+
+<p> The active strategy is followed in the game by operating a virtual machine
+within which the strategy 1) observes the state of the game and 2) gives
+instructions to the character, analogous to a human (or humanoid) player
+watching a game and clicking buttons and so on.
+
+<p> This virtual machine is called the <a href='vm.html'>Slog Virtual
+Machine</a>.
+
+<h3>Tools</h3>
+
+<p> There is an <a href='asm.html'>assembly language and an associated macro
+assembler</a> which targets the SVM, but, more practically, there is a <a
+href='language.html'>higher level language called Slog</a>, and a compliler
+for it. Those who wish to develop strategies can use these tools, or any
+other means they may devise, to produce machine code suitable for the SVM.
+
+<p> These tools are written in <a href='https://nodejs.org/'>Node.js</a> and
+can be used from the command line by checking out <a
+href='https://github.com/grumdrig/slog'>the code</a>.
+
+<h3>IDE</h3>
+
+<p> There is also <a href='ide.html'>an in-browser integrated development
+environment</a> of sorts, which can be useful for trying, tweaking and
+debugging strategies.
+
+<h3>This is Alpha</h3>
+
+<p> The compiler and virtual machine seem fairly stable, but the Chinbreak
+Island module is very much in an alpha stage of development. For example, the
+play balance is screwy, there's no save/load functionality, and there's
+probably many, many bugs.
+
+<p> If you have a suggestion or find a bug in the game, IDE, documentation,
+compiler, assembler, virtual machine, or anything else, please feel
+encouraged to <a href='https://github.com/grumdrig/slog/issues'>report it on
+github</a>.
+
+<h3>Future Directions</h3>
+
+<p> The first priority is to fix bugs and fix the play balance. After these
+things there are many follow on ideas to implement, such as
+
+<ul>
+<li>multiplayer / PvP / battle royale
+<li>leader boards
+<li>other modules, e.g. a dungeon crawler
+<li>sequels where winning characters can continue on
+<li>entirely different genres and game styles
+</ul>
+
+</body>
+</html>

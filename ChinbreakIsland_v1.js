@@ -1993,7 +1993,7 @@ const SCRIPT = [{
 	}, {
 		quest: -2,
 		type: Exterminate_Mob,
-		mob_key: 5150,
+		mob_key: 5150,  // TODO does this work?
 		location_key: 80552,
 		qty: 30,
 	}, {
@@ -2010,29 +2010,74 @@ const SCRIPT = [{
 }, { // act 6
 	length: 25,
 
-// We killed lots of minibosses in this act but now somehow or other we're
-// ready to take out the queen.
-
-// (Another miniboss battle)
-
-// `As the beast lies dying before you, you feel both triumph and a pang of regret.`
-// `It says "Though I am slain, I believe everything happens for a reason." It coughs blood.`
-// `You think of all the creatures you've slaugtered to bump some progress bars forward.`
-// `You smile and nod encouragingly. "Yep, all for a purpose," you say. "Go quietly good beast."`
-
-// It must be that Isle. We've got to find a way to get there. For some reason
-// these totems seem to be the key. Someway or other we have to find the
-// combo.
-
-
 }, { // act 7
 	length: 20,
-// TODO	Find the wise man that knows how
+	scripts: [{
+		quest: -3,
+		type: Cutscene,
+		mob_key: 7007,
+		location_key: 7020,
+		script: [
+`An especially impressive $M springs upon you. You see the glint of intellect it its eye`,
+`"Desist, groundling!" you cry. "Who sends you to this place, ravening for innocent flesh?"`,
+`"Fool!" replies the beast. "We are powered by VOLCANO, and we will consume you!"`,
+`"More specifically, the EVIL MAGE has stirred EMKELL PEAK from its millenial slumber"`,
+`"It feeds us and guides us, and this land is now ours!" With that, the beast attacks!`
+			],
+	}, {
+		quest: -2,
+		type: Exterminate_Mob,
+		mob_key: 7007,
+		location_key: 7020,
+		end_key: 7020,
+		level: 9, // TODO: does this work?
+		qty: 1,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		location_key: 7020,
+		script: [
+`As the beast lies dying before you, you feel both triumph and a pang of regret.`,
+`It says "Though I am slain, I believe everything happens for a reason." It coughs blood.`,
+`Eyeing your progress bars, which have incrementally nudged forward, you feel inclined to agree`,
+`You smile and nod encouragingly. "Yep, all for a purpose," you say. "Go quietly good beast."`,
+`"By the way," says the beast. "You don't happen to know a person named Bilph, so you? From around here, I believe."`,
+`"Visited Emkell...years ago...always mean to...visit..." And with that the beast expires.`,
+`"Visited Emkell!" you think. "If I can find this Bilph, perhaps they could tell me how to get to Sygnon Isle!"`,
+		],
+	}],
 
 }, { // act 8
 	length: 30,
-// Do some task that gives you the knowledge
-
+	scripts: [{
+		quest: -3,
+		type: Cutscene,
+		location_key: 8086,
+		script: [
+`You espy an especially quaint cottage tucked into a hillside. The mailbox is marked "Bilph"`,
+`Feeling certain that this is the home of the person mentioned at the end of Act VII, you knock`,
+`You are invited in by feeble call. Inside, a wizened personage lies abed`,
+`You explain your quest. "Help you I can," Bilph says, with inspiring Yoda-like phrasing`,
+`"But as you see I am near death. Bring me an elixir and I'll guide you in your quest"`
+			],
+	}, {
+		quest: -2,
+		type: Collect_Item,
+		item: Elixirs,
+		end_key: 8086,
+		qty: 1,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		location_key: 8086,
+		script: [
+`"Whoop-de-do!" cries Bilph, cradling the elixir lovingly. "A new chance at life indeed!"`,
+`Growing impatient, you clear your throat. "Oh yes!" says Bilph. "We had a bargain, did we not?"`,
+`"My uncle, an amateur wizard, traveled often to Sygnon Isle in his day. Once, I went with him"`,
+`Bilph details an arcane schedule of totem deliveries. "That should get you there just fine." You depart`,
+`You feel determined to follow your HUD to the volcanic depths of hell, if that's what it takes to save your land`
+			],
+	}]
 
 }, { // act 9
 	length: 15,
