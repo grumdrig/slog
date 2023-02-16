@@ -673,10 +673,10 @@ div#xp {
 	${HOURS_PER_DAY} hours. Don't worry about weeks; weeks do not play a
 	part in life on Chinbreak Island.`);
 
-	p(`Simply enough, there are ${DAYS_PER_MONTH} days in each month.`);
+	p(`Mercifully enough, there are ${DAYS_PER_MONTH} days in each month.`);
 
 	p(`In each year, there are ${MONTHS.length} months. Their names are:`);
-	MONTHS.forEach(m => div(m));
+	MONTHS.forEach((m,i) => div((i+1) + '. ' + m));
 
 	p(`Your journey begins on the first day of ${MONTHS[0]} in the year 600.
 	The values in the Hours and Years slots of the state vector hold the
@@ -1853,7 +1853,7 @@ QUEST_TYPES.forEach((q, index) => {
 const SCRIPT = [{
 	act: 'Prologue',
 	length: 1,
-	scripts: [{
+	quests: [{
 		quest: 0,
 		type: Cutscene,
 		location: Bompton,
@@ -1873,7 +1873,7 @@ const SCRIPT = [{
 
 }, { // act 1
 	length: 13,
-	scripts: [{
+	quests: [{
 		quest: -2,
 		type: Transport_Totem,
 		end: Chinbreak_Cliff,
@@ -1894,7 +1894,7 @@ const SCRIPT = [{
 
 }, { // act 2
 	length: 15,
-	scripts: [{
+	quests: [{
 		quest: -2,
 		type: Exterminate_Mob,
 		location: Papay_Forest,
@@ -1951,7 +1951,7 @@ const SCRIPT = [{
 
 }, { // act 4
 	length: 15,
-	scripts: [{
+	quests: [{
 		quest: -2,
 		type: Exterminate_Mob,
 		qty: 15,
@@ -1973,7 +1973,7 @@ const SCRIPT = [{
 
 }, { // act 5
 	length: 20,
-	scripts: [{
+	quests: [{
 		quest: -5,
 		type: Exterminate_Mob,
 		mob_key: 5150,
@@ -2000,15 +2000,15 @@ const SCRIPT = [{
 		location_key: 80552,
 		script: [
 `Well that was a lot of killing. Does it seem to anybody else like there's more of these beasts every day?`,
-`Perhaps there's some way to get to the source of the matter. You ponder`,
-`You decide to keep closer track of where these beasts seem to be coming from. Maybe a source can be discovered`,
-// TODO: this cutscene doesn't make sense to the plot
+`Perhaps there's some way to stop them at their source. You ponder for a time`,
+`You decide to keep a closer eye on these beasts, as you slaughter them, in hope of gaining some insight to their origin`,
+// TODO: this cutscene kinda sucks
 			],
 	}]
 
 }, { // act 6
 	length: 25,
-	scripts: [{
+	quests: [{
 		quest: -2,
 		type: Exterminate_Mob,
 		mob_key: 7007,
@@ -2029,7 +2029,7 @@ const SCRIPT = [{
 
 }, { // act 7
 	length: 20,
-	scripts: [{
+	quests: [{
 		quest: -3,
 		type: Cutscene,
 		mob_key: 7007,
@@ -2047,7 +2047,7 @@ const SCRIPT = [{
 		mob_key: 7007,
 		location_key: 7020,
 		end_key: 7020,
-		level: 9, // TODO: does this work?
+		level: 9,
 		qty: 1,
 	}, {
 		quest: -1,
@@ -2066,7 +2066,7 @@ const SCRIPT = [{
 
 }, { // act 8
 	length: 30,
-	scripts: [{
+	quests: [{
 		quest: -3,
 		type: Cutscene,
 		location_key: 8086,
@@ -2098,7 +2098,7 @@ const SCRIPT = [{
 
 }, { // act 9
 	length: 15,
-	scripts: [{
+	quests: [{
 		quest: 0,
 		type: Transport_Totem,
 	}, {
@@ -2149,7 +2149,7 @@ const SCRIPT = [{
 }, {
 	act: 'Epilogue',
 	length: 1,
-	scripts: [{
+	quests: [{
 		quest: 0,
 		type: Cutscene,
 		location: Sygnon_Tower,
@@ -2195,8 +2195,8 @@ function pickQuestLocation(state, qrng) {
 
 function questScript(act, quest) {
 	act = SCRIPT[act];
-	if (!act || !act.scripts) return;
-	return act.scripts.filter(s =>
+	if (!act || !act.quests) return;
+	return act.quests.filter(s =>
 		s.quest == quest ||
 		s.quest + act.length == quest ||
 		s.quest == '*')[0];
@@ -2211,14 +2211,14 @@ function assignQuest(state, storyline) {
 
 	state[QuestStoryline] = storyline;
 
-	function pickQuestMob(act, level) {
+	function pickQuestMob(act, level, rng) {
 		let maxlev = level;// + qrng.irand(level);
 		let minlev = level;// - Math.min(qrng.irand(level), qrng.irand(level));
 		let options = MOBS.filter(mob => mob &&
 			minlev <= mob.hitdice && mob.hitdice <= maxlev &&
 			act >= (mob.minact ?? 0) && act <= (mob.maxact ?? MAX_INT));
 		if (options.length === 0) options = MOBS.filter(mob => mob); // desperate times
-		return qrng.pick(options).index;
+		return (rng ?? qrng).pick(options).index;
 	}
 
 	let questlevel = storyline ? Math.floor(storyline / 10) : state[Act];
@@ -2228,11 +2228,16 @@ function assignQuest(state, storyline) {
 		function keyedLocation(key) {
 			return new Prng(state[Seed], 0xC11, key).d(36);
 		}
+		function keyedMob(key) {
+			return pickQuestMob(state[Act], questlevel, new Prng(state[Seed], 0x3403, key));
+		}
 		state[QuestType] = script.type;
 		if (script.location) state[QuestLocation] = script.location;
 		if (script.location_key) state[QuestLocation] = keyedLocation(script.location_key);
 		if (script.qty) state[QuestQty] = script.qty;
+		if (script.level) questlevel = script.level;
 		if (script.mob) state[QuestMob] = script.mob;
+		if (script.mob_key) state[QuestMob] = keyedMob(script.mob_key);
 		if (script.end) state[QuestEnd] = script.end;
 		if (script.end_key) state[QuestEnd] = keyedLocation(script.end_key);
 		// if (script.object) state[QuestObject] = script.object;
