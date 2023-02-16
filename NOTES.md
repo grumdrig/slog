@@ -322,3 +322,16 @@ Test hash function
 Make all handleInstruction error returns unique and labelable
 
 Make XP needed be incremental so we can fit in more levels?
+
+Play balance is terrible. After level 1 pretty sure all battles are very easy.
+
+Decide how new game seeds should be defined. Randomly when playing the game?
+
+Figure out whether to
+1) start off with training points, or
+2) pick starting stats in the strat, or
+3) pick starting stats in the create screen (favoring this idea)
+4) or even just start with really low stats
+
+
+

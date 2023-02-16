@@ -1836,8 +1836,6 @@ const QUEST_TYPES = [ null,
 	}, {
 		// Cutscene
 		name: 'Cutscene',
-		// location: specified elsehow
-		// qty: likewise
 		title: 'Cutscene',
 		description: `While in $L, watch, as important events around you advance the plot.`,
 		explanation: `Call <code>seek(QuestProgress)</code> the required
@@ -2004,11 +2002,30 @@ const SCRIPT = [{
 `Well that was a lot of killing. Does it seem to anybody else like there's more of these beasts every day?`,
 `Perhaps there's some way to get to the source of the matter. You ponder`,
 `You decide to keep closer track of where these beasts seem to be coming from. Maybe a source can be discovered`,
+// TODO: this cutscene doesn't make sense to the plot
 			],
 	}]
 
 }, { // act 6
 	length: 25,
+	scripts: [{
+		quest: -2,
+		type: Exterminate_Mob,
+		mob_key: 7007,
+		location_key: 6666,
+		end_key: 6666,
+	}, {
+		quest: -1,
+		type: Cutscene,
+		mob_key: 7007,
+		location_key: 6666,
+		script: [
+`Though the last $M is now dead before you, you still feel as though you're being watched. You spin around`,
+`You espy a creature gazing upon you. Though of the same base species, it you seem to detect the spark of intelligence in it eye`,
+`"Brute beast!" you call. "What cause have you to terrorize this land?"`,
+`But the thing only eyes you for a moment longer, then trundles away. Whether it understood your words, you know not`,
+			],
+	}],
 
 }, { // act 7
 	length: 20,
@@ -2018,7 +2035,7 @@ const SCRIPT = [{
 		mob_key: 7007,
 		location_key: 7020,
 		script: [
-`An especially impressive $M springs upon you. You see the glint of intellect it its eye`,
+`An especially impressive $M springs upon you. Could it be that same creature from the end of Act VI?`,
 `"Desist, groundling!" you cry. "Who sends you to this place, ravening for innocent flesh?"`,
 `"Fool!" replies the beast. "We are powered by VOLCANO, and we will consume you!"`,
 `"More specifically, the EVIL MAGE has stirred EMKELL PEAK from its millenial slumber"`,
