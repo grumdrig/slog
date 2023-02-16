@@ -1,19 +1,10 @@
+Developer Notes
+===============
 
-### Towns
-
-Different
-* prices,
-* quests
+Nothing to see here. Move along.
 
 
 ### Mobs
-
-Say 12 but with different variations that make them stronger?
-
-Naybe the buffer version have greaterlevel = ceil(lesserlevel * 1.5)
-
-Maybe just level 1, level 2, etc. But I've got here some scarier names to sub in at higher levels
-
 
 Monster brainstorm with Andy, transformed:
 
@@ -61,12 +52,7 @@ Monster brainstorm with Andy, transformed:
 
 ### Spells
 
-Maybe an equipment slot for a scroll. You can either read the scroll
-(cast(equip_scroll)) or study it to learn the spell. Spells might be
-available in some places or something. Exchange a treasure with some guy?
-Stick NPC's in each tile?
-
-List of spells from a note on my phone:
+List of some spell names from a note on my phone:
 
 * Susan’s Opening Salvo
 * Snowmound
@@ -83,7 +69,7 @@ List of spells from a note on my phone:
 
 
 
-### Charawcter race
+### Character race
 
 Maybe we should belong to one of the races.
 
@@ -166,7 +152,7 @@ Welcome to Progress Quest Slog.
 
 As a player of Progress Quest Slog, you will be granted an avatar to carry out
 your will in the game world. This avatar will experience a series of
-adventures which culminate, ideally, in saving their home, Bompton Island,
+adventures which culminate, ideally, in saving their home, Chinbreak Island,
 from the nearby evil prescence which has been making things worse on the
 island for some time.
 
@@ -177,7 +163,7 @@ from your instructions.
 
 The mental state of your avatar is represented by the Slog Virtual Machine
 (SVM), which processes its instructions, in the form of machine code, and
-acts on them, We might call these instructions a "program".
+acts on them. We might call these instructions a "program".
 
 The SVM is documented in some detail, but the player will probably not need to
 know most of that. Instead the program can be produced by compiling a
@@ -201,14 +187,14 @@ set of functions which are called when it's time for your charact to take
 some action in the game. For example, the `travel` function is used to change
 location, so this statement would move towards or into Iperko Forest:
 
-	travel(IperkoForest)
+	travel(Iperko_Forest)
 
 Likewise, to sell five potions:
 
 	sell(Potions, 5)
 
 Each such action takes some amount of time, and it would behoove the player
-not to waste any, as time available to save Bompton Island is limited.
+not to waste any, as time available to save Chinbreak Island is limited.
 
 The game takes place in nine acts, which are advanced by completing quests. In
 the final act, the quests, as they are completed, will cause the character to
@@ -312,8 +298,6 @@ TODO
 
 Finish plotline
 
-I wonder how many todo lists there are in this project
-
 Have quest mob levels closely follow act, so maybe 1,2,3 as act 1 progresses,
 then 4,5,6, in act II, or whatever. Something like that.
 
@@ -332,6 +316,3 @@ Figure out whether to
 2) pick starting stats in the strat, or
 3) pick starting stats in the create screen (favoring this idea)
 4) or even just start with really low stats
-
-
-
