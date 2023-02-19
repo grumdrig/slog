@@ -468,9 +468,18 @@ div#xp {
 </style>
 </head><body>
 <h1>Chinbreak Island Programmer's Reference</h1>
+
+TOP_NAV
 	`;
 
-	function head(h) { result += `<h2>${h}</h2>`; }
+	let anchors = [];
+
+	function head(h, anchor) {
+		anchor = anchor || h;
+		result += `<a name=${anchor}></a>`;
+		anchors.push([h, anchor]);
+		result += `<h2>${h}</h2>`;
+	}
 	function midhead(h) { result += `<h3>${h}</h3>`; }
 	function subhead(s, d) { result += `<h4>${s}</h4><p>${d ?? ''}`; }
 	function p(text) { result += '<p>' + text + '</p>' }
@@ -479,7 +488,7 @@ div#xp {
 	function code(text) { return '<code>' + text + '</code>'; }
 	function i(text) { return '<i>' + text + '</i>' }
 
-	head('Gameplay Functions');
+	head('Gameplay Functions', 'functions');
 
 	p(`The gameplay functions are a strategy's way of taking action in the
 	game: the equivalent of clicking a button or pressing a key in an
@@ -497,7 +506,7 @@ div#xp {
 		subhead(code(call + '(' + i(parameters ?? '').replace(',',', ') + ')'), description);
 	}
 
-	head('Game State Slots');
+	head('Game State Slots', 'slots');
 
 	p(`The constants listed here are indices into the game state vector. These
 	indices are passed to some of the gameplay functions above (such as
@@ -575,7 +584,7 @@ div#xp {
 
 	result += '</div>'
 
-	head('Other Equipment');
+	head('Other Equipment', 'equipment');
 
 	for (let t = EQUIPMENT_0 + 1; t < EQUIPMENT_0 + EQUIPMENT_COUNT; t += 1) {
 		if (DATABASE[t]) {
@@ -587,7 +596,7 @@ div#xp {
 		}
 	}
 
-	head('Terrain types');
+	head('Terrain types', 'terrains');
 
 	result += `<div id=terrains>`;
 	div('ID');
@@ -616,7 +625,7 @@ div#xp {
 		if (d.hitdice) p('General formidableness rating is ' + d.hitdice);
 	} });
 
-	head('Map Locations');
+	head('Map Locations', 'map');
 
 
 	MAP.forEach((tile,i) => { if (tile && !tile.ephemeral && !tile.inaccessible) {
@@ -644,7 +653,7 @@ div#xp {
 		p(qt.explanation);
 	} });
 
-	head('Leveling up');
+	head('Leveling up', 'levels');
 
 	p(`Your character's Level describes their overall ability in all aspects.
 	Characters gain levels by earning Experience, by slaying enemies and
@@ -681,6 +690,9 @@ div#xp {
 	p(`Your journey begins on the first day of ${MONTHS[0]} in the year 600.
 	The values in the Hours and Years slots of the state vector hold the
 	passage of time since that moment.`);
+
+	anchors = anchors.map(a => `<a href="#${a[1]}">${a[0]}</a>`).join(' &middot; ');
+	result = result.replace('TOP_NAV', anchors);
 
 	return result;
 }
