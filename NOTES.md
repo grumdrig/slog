@@ -316,3 +316,24 @@ Figure out whether to
 2) pick starting stats in the strat, or
 3) pick starting stats in the create screen (favoring this idea)
 4) or even just start with really low stats
+
+
+Math time
+---------
+
+Kill N mobs level L quest XP =
+	killing xp
+		N * xp(moblevel) =
+		N * moblevel ~=
+		N * questlevel ~=
+		N * L
+	+ quest xp ~=
+		5 * L
+                        0  1  2  3  4  5  6   7   8   9
+~= if N == 10: 15 * L = 0 15 30 45 60 75 90 105 120 135
+
+q/level if L = level
+
+ 0  1  2  3  4  5  6   7   8   9
+ 0  0  1  2
+

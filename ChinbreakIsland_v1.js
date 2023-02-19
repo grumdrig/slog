@@ -1771,6 +1771,7 @@ function damageMob(state, damage) {
 	state[MobHealth] = Math.max(0, state[MobHealth] - damage);
 
 	if (state[MobHealth] <= 0) {
+		// Killed 'em
 		increment(state, Experience, state[MobLevel]);
 		if (state[MobSpecies] == state[QuestMob] && !state[QuestObject])
 			increment(state, QuestProgress);
@@ -2959,7 +2960,8 @@ class Chinbreak {
 			if (state[QuestProgress] < state[QuestQty]) return apiError(``);
 			const isMain = state[QuestStoryline] == 0;
 			const questlevel = isMain ? state[Act] : Math.floor(state[QuestStoryline] / 10);
-			inc(Experience, questlevel ? 5 * questlevel : 3);
+			if (state[QuestType] !== Cutscene)
+				inc(Experience, questlevel ? 5 * questlevel : 2);
 			if (state[QuestStoryline] === 0)
 				inc(ActProgress);
 
@@ -3121,7 +3123,7 @@ class Chinbreak {
 				let qty = rng.civRoll(ability, resistance) ? 1 : 0;
 				inc(target, qty);
 
-				passTime('Foraging for ' + indefiniteItems(target, 1), 1);
+				passTime('Foraging for ' + SLOTS[target].name.toLowerCase(), 1);
 				return qty;
 
 			} else if (target === QuestProgress) {
