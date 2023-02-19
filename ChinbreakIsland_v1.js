@@ -3180,6 +3180,7 @@ class Chinbreak {
 			if (local.terrain != TOWN) return apiError(``);
 			if (state[Level] >= 80) return 0;
 			inc(Level);
+			dec(Experience, state[ExperienceNeeded]);
 			state[ExperienceNeeded] = Chinbreak.xpNeededForLevel(state[Level] + 1);
 			state[Health] = inc(MaxHealth, 2 + additiveStatBonus(state[Endurance]));
 			state[Energy] = inc(MaxEnergy, 2 + additiveStatBonus(state[Wisdom]));
@@ -3640,9 +3641,9 @@ function updateGame(state) {
 
 	set('species', Chinbreak.SPECIES_NAMES[state[Species]]);
 	set('level', state[Level]);
-	setProgress('xp', state[Experience],
-			Chinbreak.xpNeededForLevel(state[Level] + 1),
-			Chinbreak.xpNeededForLevel(state[Level]));
+	setProgress('xp', state[Experience], state[ExperienceNeeded]);
+			// Chinbreak.xpNeededForLevel(state[Level] + 1),
+			// Chinbreak.xpNeededForLevel(state[Level]));
 	setProgress('health', state[Health], state[MaxHealth]);
 	if (state[Health] == 0 && state[MaxHealth] > 0)
 		$id('health').classList.add('dead');
