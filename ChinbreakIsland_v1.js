@@ -2988,7 +2988,6 @@ class Chinbreak {
 			if (actUp()) {
 				if (state[Act] > 1) {
 					inc(TrainingPoints);
-					inc(Treasures);
 				}
 			}
 
