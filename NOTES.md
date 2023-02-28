@@ -337,3 +337,61 @@ q/level if L = level
  0  1  2  3  4  5  6   7   8   9
  0  0  1  2
 
+
+Hopper
+------
+
+Notes on redesign of how items come & go. Not sure that it's a keeper.
+
+AvailableItem
+AvailableQty
+AvailableGold / Till / Consideration / Balance / Payment
+
+To sell something:
+
+	offer(item, qty) Dropping N Xs / Offering up N Xs
+	take(Payment)    Completing the sale of N Xs
+
+To buy something
+
+	inquire(items, qty)     Asking about X
+	offer(Gold, -.Payment)  Digging around in your pocketbook // or do this automatically?
+	take(AvailableItem)     Obtaining X // or Completing purchase of X
+
+To forage
+
+	forage()  Rooting around for forageable items (clear corpse)
+	take(AvailableItem)   Picking up an X
+
+To loot
+
+	( use(Weapon) )
+	take(MobSpecies)   Taking proof of kill from the X's remains
+	  or
+	take(AvailableItem)  Looting a X from the X's corpse
+
+or maybe when you kill something the Availables update if there's something special but you can always take(Trophy) if there's a dead body
+
+
+	offer: { parameters: 'slot,qty',
+		description: `Offer a quantity of an item or piece of equipment for
+		sale. The item and it's quantity or quality will appear in the
+		AvailableItem and AvailableQty slots; the offered price will
+		appear in the Payment slot. However, if slog is Gold, then the
+		stated quantity of Gold will be removed from inventory and added
+		to Payment.`, };
+
+	inquire: { parameters: 'slot,qty',
+		description: `Request to purchase a quantity of items or quality of an
+		equipment piece. If available for purchase, the item and its
+		quantity or quality will appear in the AvailableItem and AvailableQty
+		slots. The purchase price with appear as a negative value in the
+		Payment slot.`, },
+
+	take: {  parameter: 'slot',
+		description: `Remove the indicated item and add it to inventory or
+		equipment. The slot may be 1) AvailableItem to take or purchase a
+		found or market item (in which case the value of Payment must be
+		at least zero), 2) Payment to complete a sale, or 3) MobSpecies to
+		loot a body for trophies (in which case MobHealth must be zero).`, },
+
