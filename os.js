@@ -44,12 +44,12 @@ function saveWindowState() {
 		if (selected)
 			ws[w.id].selectedTab = selected.getAttribute('aria-controls');
 	});
-	localStorage.windowState = JSON.stringify(ws);
+	localStorage.setItem('windowState-' + window.location.pathname, JSON.stringify(ws));
 }
 
 
 function loadWindowState(hwnd) {
-	let ws = JSON.parse(localStorage.windowState || '{}');
+	let ws = JSON.parse(localStorage.getItem('windowState-' + window.location.pathname) || '{}');
 	if (ws = ws[hwnd.id]) {
 		hwnd.style.left = ws.left;
 		hwnd.style.top = ws.top;
