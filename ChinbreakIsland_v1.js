@@ -2330,7 +2330,7 @@ class Chinbreak {
 	state;
 	characterName;
 	task;
-	realtime;  // Elapsed real time (in userland) in seconds
+	realtime = 0;   // Elapsed real time (in userland) in seconds
 	strict = true;  // Fail on failed interface calls
 	static initialTraining = 10;
 
@@ -2341,7 +2341,6 @@ class Chinbreak {
 	constructor(code, ...args) {
 		this.state = new Int16Array(SLOTS.length);
 		this.state[Seed] = hash(0x3FB9, ...code);
-		this.realtime = 0;
 
 		this.characterName = args[1] ?? 'Test Pilot';
 
@@ -3798,8 +3797,8 @@ function realTimeSeconds(hours) {
 
 function age(state) { return state[Years] * HOURS_PER_YEAR + state[Hours] }
 
-Chinbreak.playmation = function(vm, butStop) {
-	let before = age(vm.state);
+Chinbreak.playmation = function(vm, butStop, fromAge) {
+	let before = fromAge ?? age(vm.state);
 	while (vm.alive() && age(vm.state) == before) {
 		vm.step();
 	}
