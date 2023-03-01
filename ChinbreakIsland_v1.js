@@ -2332,6 +2332,7 @@ class Chinbreak {
 	task;
 	realtime;  // Elapsed real time (in userland) in seconds
 	strict = true;  // Fail on failed interface calls
+	static initialTraining = 10;
 
 	static title = 'Progress Quest Slog: Chinbreak Island';
 
@@ -2521,7 +2522,7 @@ class Chinbreak {
 			state[Species] = species;
 
 			// Have to add two to keep from going negative
-			let trainingPoints = 10;
+			let trainingPoints = Chinbreak.initialTraining;
 			for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1) {
 				state[stat] = 2;
 				let training = args[1 - STAT_0 + stat] ?? 0;
@@ -3025,6 +3026,7 @@ class Chinbreak {
 			inc(slot);
 			dec(TrainingPoints);
 
+			// Perhaps get rid of this now that stats can get schooled up before start
 			if (state[Level] === 1) {
 				// In their plastic formative youth, immediate stat benefits are accrued
 				if (slot === Endurance) inc(MaxHealth);

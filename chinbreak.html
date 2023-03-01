@@ -63,7 +63,7 @@ div.icon > div {
 
 div.accross {
 	display: grid;
-	grid-template-columns: 180px 1fr;
+	grid-template-columns: 200px 1fr;
 	column-gap: 8px;
 }
 
@@ -76,17 +76,21 @@ div.accross {
 
 #stats {
 	display: grid;
-	grid-template-columns: 85px 19px 30px 19px;
+	grid-template-columns: 85px 19px 30px 19px 30px;
 }
 
 #stats > legend {
-	grid-column: 1/5;
+	grid-column: 1/6;
 }
 
 #stats .s, #schooling {
 	text-align: center;
 	border: inset 1px silver;
 	margin: 0 2px;
+}
+
+#stats .sa {
+	text-align: center;
 }
 
 #schooling {
@@ -125,7 +129,7 @@ div.accross {
 						<input type=text id=namein value=Artaud></input>
 					</fieldset>
 
-					<fieldset>
+					<fieldset id=selectSpecies>
 						<legend>Species</legend>
 						<div class="field-row">
 						  <input id="Dunkling" type="radio" name=species value=1 checked>
@@ -145,14 +149,14 @@ div.accross {
 
 					<fieldset id=stats>
 						<legend>Starting Stats</legend>
-	<span>Training</span><span></span><span id=schooling>10</span><span></span>
+<div>Training</div><div></div><div id=schooling></div><div></div><div></div>
 
-	<span>Strength </span><button>&ndash;</button><span class=s>18</span><button>+</button>
-	<span>Agility  </span><button>&ndash;</button><span class=s>18</span><button>+</button>
-	<span>Endurance</span><button>&ndash;</button><span class=s>18</span><button>+</button>
-	<span>Intellect</span><button>&ndash;</button><span class=s>18</span><button>+</button>
-	<span>Wisdom   </span><button>&ndash;</button><span class=s>18</span><button>+</button>
-	<span>Charisma </span><button>&ndash;</button><span class=s>18</span><button>+</button>
+<div>Strength </div><button>&ndash;</button><div class=s></div><button>+</button><div class=sa></div>
+<div>Agility  </div><button>&ndash;</button><div class=s></div><button>+</button><div class=sa></div>
+<div>Endurance</div><button>&ndash;</button><div class=s></div><button>+</button><div class=sa></div>
+<div>Intellect</div><button>&ndash;</button><div class=s></div><button>+</button><div class=sa></div>
+<div>Wisdom   </div><button>&ndash;</button><div class=s></div><button>+</button><div class=sa></div>
+<div>Charisma </div><button>&ndash;</button><div class=s></div><button>+</button><div class=sa></div>
 					</fieldset>
 				</div>
 
@@ -305,7 +309,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
 let PACKAGE;
 let STRATEGIES = {};
 let STATS = new Array(6).fill(0);
-let SCHOOLING = 10;
+let SCHOOLING;
 
 window.addEventListener('load', e => {
 	let game = ChinbreakIsland_v1;
@@ -319,6 +323,12 @@ window.addEventListener('load', e => {
 	show('#newgame-window');
 	hide('#game-window');
 
+	$$('#selectSpecies input').forEach((e, i) => {
+		e.addEventListener('change', _ => speciesChanged(game));
+	});
+	speciesChanged(game);
+
+	SCHOOLING = game.initialTraining;
 	$('#schooling').innerText = SCHOOLING;
 	$$('#stats button').forEach((b, i) => {
 		let statindex = i >> 1;
@@ -350,6 +360,19 @@ window.addEventListener('load', e => {
 	$('#namein').focus();
 	sellable();
 });
+
+function speciesChanged(game) {
+	let mods = STATS.map(_ => '');
+	let species = $('[name=species]:checked').value;
+	game.MOBS[species].abilityMods.forEach(m => {
+		let {slot, increment} = m;
+		if (increment > 0) increment = '+' + increment;
+		mods[slot - Strength] = increment;
+	});
+	mods.forEach((mod, i) => {
+		$$('#stats div.sa')[i].innerText = mod;
+	});
+}
 
 function restat() {
 	$$('#stats button').forEach((b, i) => {
