@@ -2345,7 +2345,7 @@ class Chinbreak {
 		this.characterName = args[1] ?? 'Test Pilot';
 
 		const species = args[0] ?? 1;
-		this.handleInstruction(this.state, 0, species);  // start the game
+		this.handleInstruction(this.state, 0, species, ...args.slice(2));  // start the game
 	}
 
 	static prepareIDE() {
@@ -2521,8 +2521,14 @@ class Chinbreak {
 			state[Species] = species;
 
 			// Have to add two to keep from going negative
-			for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1)
+			let trainingPoints = 10;
+			for (let stat = STAT_0; stat < STAT_0 + STAT_COUNT; stat += 1) {
 				state[stat] = 2;
+				let training = args[1 - STAT_0 + stat] ?? 0;
+				training = Math.max(0, Math.min(trainingPoints, training));
+				trainingPoints -= training;
+				state[stat] += training;
+			}
 
 			for (let { slot, increment } of speciesinfo.abilityMods ?? [])
 				state[slot] += increment
@@ -2532,7 +2538,7 @@ class Chinbreak {
 			state[Location] = Bompton;
 			state[Health] = state[MaxHealth] = 2 + state[Endurance];
 			state[Energy] = state[MaxEnergy] = 0 + state[Intellect];
-			state[TrainingPoints] = 10;
+			state[TrainingPoints] = trainingPoints;
 			state[ActDuration] = SCRIPT[state[Act]].length;
 
 			// Automatically assign the opening cutscene
@@ -2540,7 +2546,7 @@ class Chinbreak {
 
 			passTime('Loading', 1);
 
-			return;
+			return 1;
 		}
 
 		// Game is in process

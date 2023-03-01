@@ -395,3 +395,7 @@ or maybe when you kill something the Availables update if there's something spec
 		at least zero), 2) Payment to complete a sale, or 3) MobSpecies to
 		loot a body for trophies (in which case MobHealth must be zero).`, },
 
+
+I'm starting to think this is a good idea iff there's a step where you seek
+(Merchant) or seek(Banker) first.
+

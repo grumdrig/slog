@@ -18,8 +18,11 @@
 	display: grid;
 	grid-template-columns: 40px 1fr;
 }
-#newstuff > fieldset {
+#newstuff > div {
 	grid-column: 1/3;
+}
+
+fieldset {
 	background-color: transparent;
 }
 #strat-author, #strat-title, #strat-length, #s-d-m {
@@ -58,6 +61,38 @@ div.icon > div {
 	height: 19px;
 }
 
+div.accross {
+	display: grid;
+	grid-template-columns: 180px 1fr;
+	column-gap: 8px;
+}
+
+#stats button {
+	min-width:  19px;
+	min-height: 19px;
+	padding: 0;
+	font-size: 12px;
+}
+
+#stats {
+	display: grid;
+	grid-template-columns: 85px 19px 30px 19px;
+}
+
+#stats > legend {
+	grid-column: 1/5;
+}
+
+#stats .s, #schooling {
+	text-align: center;
+	border: inset 1px silver;
+	margin: 0 2px;
+}
+
+#schooling {
+	margin-bottom: 8px;
+}
+
 </style>
 </head>
 <body>
@@ -82,68 +117,91 @@ div.icon > div {
 	</div>
 	<div class=window-body>
 		<div id=newstuff>
-			<label for=namein>Name</label><input type=text id=namein value=Artaud></input>
-			<fieldset>
-				<legend>Species</legend>
-				<div class="field-row">
-				  <input id="Dunkling" type="radio" name=species value=1 checked>
-				  <label for="Dunkling">Dunkling</label>
-				</div>
 
-				<div class="field-row">
-				  <input id="Hardwarf" type="radio" name=species value=2>
-				  <label for="Hardwarf">Hardwarf</label>
-				</div>
+			<div class=accross>
+				<div>
+					<fieldset>
+						<legend>Name</legend>
+						<input type=text id=namein value=Artaud></input>
+					</fieldset>
 
-				<div class="field-row">
-				  <input id="Eelman" type="radio" name=species value=3>
-				  <label for="Eelman">Eelman</label>
-				</div>
-			</fieldset>
+					<fieldset>
+						<legend>Species</legend>
+						<div class="field-row">
+						  <input id="Dunkling" type="radio" name=species value=1 checked>
+						  <label for="Dunkling">Dunkling</label>
+						</div>
 
-			<fieldset style="margin-top:10px" id=strat>
-				<legend>Strategy</legend>
+						<div class="field-row">
+						  <input id="Hardwarf" type="radio" name=species value=2>
+						  <label for="Hardwarf">Hardwarf</label>
+						</div>
 
-				<div class="field-row">
-				  <input type="radio" name=strat value=quester id=quester checked>
-				  <label for="quester">Quester</label></input>
-				</div>
+						<div class="field-row">
+						  <input id="Eelman" type="radio" name=species value=3>
+						  <label for="Eelman">Eelman</label>
+						</div>
+					</fieldset>
 
-				<div class="field-row">
-				  <input type="radio" name=strat value=slayer id=slayer>
-				  <label for="slayer">Slayer</label></input>
-				</div>
+					<fieldset id=stats>
+						<legend>Starting Stats</legend>
+	<span>Training</span><span></span><span id=schooling>10</span><span></span>
 
-				<div class="field-row">
-				  <input type="radio" name=strat value=uploaded id=uploaded>
-				  <label for="uploaded">Upload:&nbsp;
-					  <input type="file" name="client-file" id="file" accept=".strat" />
-				  </label></input>
+	<span>Strength </span><button>&ndash;</button><span class=s>18</span><button>+</button>
+	<span>Agility  </span><button>&ndash;</button><span class=s>18</span><button>+</button>
+	<span>Endurance</span><button>&ndash;</button><span class=s>18</span><button>+</button>
+	<span>Intellect</span><button>&ndash;</button><span class=s>18</span><button>+</button>
+	<span>Wisdom   </span><button>&ndash;</button><span class=s>18</span><button>+</button>
+	<span>Charisma </span><button>&ndash;</button><span class=s>18</span><button>+</button>
+					</fieldset>
 				</div>
 
 				<div>
-				  <input type="radio" name=strat value=orurl id=orurl>
-				  <label for="orurl">URL:&nbsp;
-					  <input type="url" id=straturl></input>&nbsp;
-					  <button id=fetchStrat>Fetch</button>
-				  </label></input>
+					<fieldset id=strat>
+						<legend>Strategy</legend>
+
+						<div class="field-row">
+						  <input type="radio" name=strat value=quester id=quester checked>
+						  <label for="quester">Quester</label></input>
+						</div>
+
+						<div class="field-row">
+						  <input type="radio" name=strat value=slayer id=slayer>
+						  <label for="slayer">Slayer</label></input>
+						</div>
+
+						<div class="field-row">
+						  <input type="radio" name=strat value=uploaded id=uploaded>
+						  <label for="uploaded">Upload:&nbsp;
+							  <input type="file" name="client-file" id="file" accept=".strat" />
+						  </label></input>
+						</div>
+
+						<div>
+						  <input type="radio" name=strat value=orurl id=orurl>
+						  <label for="orurl">URL:&nbsp;
+							  <input type="url" id=straturl></input>&nbsp;
+							  <button id=fetchStrat>Fetch</button>
+						  </label></input>
+						</div>
+
+						<br/>
+						<div>...or <a href=ide.html>program your own!</a></div>
+
+						<hr/>
+
+						<div class=field-row style="display:grid;grid-template-columns:1fr 4fr;">
+							<label for=strat-title>Title</label><div id=strat-title>&nbsp;</div>
+							<label for=strat-author style=margin-left:0>Author</label><div id=strat-author>&nbsp;</div>
+							<label for=strat-length style=margin-left:0>Length</label><div id=strat-length>&nbsp;</div>
+						</div>
+						<fieldset class=field-row style="grid-column:1/3" id=s-d-m>
+								<legend>Description</legend>
+								<div class=field-row id=strat-desc>&nbsp;</div>
+						</fieldset>
+					</fieldset>
 				</div>
-
-				<br/>
-				<div>...or <a href=ide.html>program your own!</a></div>
-
-				<hr/>
-
-				<div class=field-row style="display:grid;grid-template-columns:1fr 4fr;">
-					<label for=strat-title>Title</label><div id=strat-title>&nbsp;</div>
-					<label for=strat-author style=margin-left:0>Author</label><div id=strat-author>&nbsp;</div>
-					<label for=strat-length style=margin-left:0>Length</label><div id=strat-length>&nbsp;</div>
-				</div>
-				<fieldset class=field-row style="grid-column:1/3" id=s-d-m>
-						<legend>Description</legend>
-						<div class=field-row id=strat-desc>&nbsp;</div>
-				</fieldset>
-			</fieldset>
+			</div>
 			<div id=sold><button disabled onclick="sold()">Go!</button></div>
 		</div>
 	</div>
@@ -246,6 +304,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
 
 let PACKAGE;
 let STRATEGIES = {};
+let STATS = new Array(6).fill(0);
+let SCHOOLING = 10;
 
 window.addEventListener('load', e => {
 	let game = ChinbreakIsland_v1;
@@ -258,6 +318,22 @@ window.addEventListener('load', e => {
 
 	show('#newgame-window');
 	hide('#game-window');
+
+	$('#schooling').innerText = SCHOOLING;
+	$$('#stats button').forEach((b, i) => {
+		let statindex = i >> 1;
+		let statElement = $$('#stats .s')[statindex];
+		statElement.innerText = STATS[statindex];
+		let inc = (i & 1) * 2 - 1;
+		b.addEventListener('click', e => {
+			SCHOOLING -= inc;
+			$('#schooling').innerText = SCHOOLING;
+			STATS[statindex] += inc;
+			statElement.innerText = STATS[statindex];
+			restat();
+		});
+	});
+	restat();
 
 	$("input[type=file]").addEventListener('change', upload);
 
@@ -275,6 +351,18 @@ window.addEventListener('load', e => {
 	sellable();
 });
 
+function restat() {
+	$$('#stats button').forEach((b, i) => {
+		let statindex = i >> 1;
+		let inc = !!(i & 1);
+		if (inc) {
+			b.disabled = SCHOOLING <= 0;
+		} else {
+			b.disabled = (STATS[statindex] <= 0);
+		}
+	});
+}
+
 function changeStrat() {
 	let s = $('input[name=strat]:checked').value;
 	setStrategy(STRATEGIES[s]);
@@ -283,7 +371,6 @@ function changeStrat() {
 
 function sellable() {
 	$('#sold button').disabled = !PACKAGE || $('#namein').value.trim().length == 0;
-	console.log($('[name=species]:checked').value);
 }
 
 function upload(e) {
@@ -341,7 +428,8 @@ function sold() {
 
 	game = new ChinbreakIsland_v1(PACKAGE.binary,
 		$('[name=species]:checked').value,
-		$('#namein').value);
+		$('#namein').value,
+		...STATS);
 
 	vm = new VirtualMachine(PACKAGE.binary, game);
 	play();
