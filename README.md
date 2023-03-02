@@ -19,7 +19,8 @@ Progress Quest Slog: Chinbreak Island, and there may never be any other.
 Documentation
 -------------
 
-TODO
+Supporting documentation, and indeed the game itself, are to be found at
+http://slog.progressquest.com/.
 
 
 Install
@@ -49,16 +50,12 @@ Alternatively, there are command line tools:
 Pass '--help' to these tools for usage information.
 
 
+These, and all the code, are located at https://github.com/grumdrig/slog.
+
+
 Supporting files, and tests, are generated with the build tool Loopy. Install
 and run `loo.py` to generate everything needed.
 
 https://github.com/grumdrig/loopy
 
 Or run a few commands implied by what's listed in `Loopfile`.
-
-
-Something Else
---------------
-
-There is no neccessity to use the Slog language, or the reference compiler, as
-long as valid machine code is supplied to the VM.
