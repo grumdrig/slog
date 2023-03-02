@@ -464,11 +464,15 @@ function assemble() {
 
 }
 
+function updateGameUI() {
+	if (game) game.updateUI();
+}
+
 function step() {
 	stopRunimation();
 	vm.step();
 	updateDebuggerState(vm);
-	game.updateUI();
+	updateGameUI();
 }
 
 function bigstep() {
@@ -509,7 +513,7 @@ function stepAnimation() {
 	let calledOut = vm.step();
 	updateDebuggerState(vm);
 	if (calledOut)
-		game.updateUI();
+		updateGameUI();
 	if (vm.alive())
 		window.gameplayTimer = setTimeout(stepAnimation, 100);
 }
@@ -518,7 +522,7 @@ function play() {
 	stopRunimation();
 	bringToFront($id('game-window'));
 	vm.running = true;
-	game.updateUI();
+	updateGameUI();
 	updateDebuggerState(vm);
 	Game.playmation(vm);
 }
@@ -533,7 +537,7 @@ function turbo() {
 function runTurbo() {
 	Game.playmation(vm, true);
 	// updateDebuggerState(vm);
-	game.updateUI();
+	updateGameUI();
 	if (vm.alive())
 		window.gameplayTimer = setTimeout(runTurbo, 1);
 	else
@@ -548,7 +552,7 @@ function goto(turn) {
 	while (vm.alive() && vm.turns != turn)
 		vm.step();
 	updateDebuggerState(vm);
-	game.updateUI();
+	updateGameUI();
 }
 
 
@@ -562,7 +566,7 @@ function reset() {
 	resetMachine();
 	updateDebuggerState(vm);
 	if (game)
-		game.updateUI();
+		updateGameUI();
 }
 
 function finish() {
@@ -570,7 +574,7 @@ function finish() {
 	while (vm.alive())
 		vm.step();
 	updateDebuggerState(vm);
-	game.updateUI();
+	updateGameUI();
 }
 
 function rand(m) { return Math.floor(Math.random() * m) }

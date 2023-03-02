@@ -13,14 +13,15 @@ type is signed 16-bit integers (or vectors of them). Memory size is limited
 as determined by the embedding game.
 
 Currently the game implmented for use with Slog (and it's raison d'etre) is
-Progress Quest Slog: Chinbreak Island, and there may never be any other.
+Progress Quest Slog: Chinbreak Island, located, along with supporting
+documentation, at http://slog.progressquest.com/.
 
 
 Documentation
 -------------
 
 Supporting documentation, and indeed the game itself, are to be found at
-http://slog.progressquest.com/.
+.
 
 
 Install
