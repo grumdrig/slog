@@ -61,6 +61,7 @@ while 1 {
 		while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
 			seekVictim()
 			use(Weapon)
+			if !.MobHealth and .Encumbrance < .Capacity { loot(Trophies) }
 		}
 	} else if .QuestObject {
 		// Foraging
@@ -84,6 +85,10 @@ while 1 {
 
 	if .Treasures {
 		sell(Treasures, .Treasures)
+	}
+
+	if .Trophies {
+		sell(Trophies, .Trophies)
 	}
 
 	if .Experience >= .ExperienceNeeded {
