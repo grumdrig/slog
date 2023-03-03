@@ -449,6 +449,20 @@ th {
 code {
 	color: #282;
 }
+#invitems {
+	display: grid;
+	grid-template-columns: 100px repeat(3, 70px);
+}
+#invitems div:nth-child(4n + 2),
+#invitems div:nth-child(4n + 3),
+#invitems div:nth-child(4n + 4) {
+	text-align: right;
+}
+
+#invitems div:nth-child(-n + 4) {
+	font-weight: bold;
+}
+
 #weaps {
 	display: grid;
 	grid-template-columns: 50px repeat(${NUM_WEAPON_TYPES}, 175px);
@@ -474,16 +488,17 @@ TOP_NAV
 
 	let anchors = [];
 
+	function emit(html) { result += html }
 	function head(h, anchor) {
-		anchor = anchor || h;
-		result += `<a name=${anchor}></a>`;
+		anchor = anchor || h.split(' ').slice(-1)[0];
+		emit(`<a name=${anchor}></a>\n`);
 		anchors.push([h, anchor]);
-		result += `<h2>${h}</h2>`;
+		emit(`<h2>${h}</h2>\n`);
 	}
-	function midhead(h) { result += `<h3>${h}</h3>`; }
-	function subhead(s, d) { result += `<h4>${s}</h4><p>${d ?? ''}`; }
-	function p(text) { result += '<p>' + text + '</p>' }
-	function div(text, and) { result += `<div ${and ?? ''}>${text}</div>` }
+	function midhead(h) {	emit(`<h3>${h}</h3>\n`); }
+	function subhead(s, d) {	emit(`<h4>${s}</h4>\n<p>${d ?? ''}</p>\n`); }
+	function p(text) {	emit('<p>' + text + '</p>\n') }
+	function div(text, and) {	emit(`<div ${and ?? ''}>${text}</div>\n`) }
 
 	function code(text) { return '<code>' + text + '</code>'; }
 	function i(text) { return '<i>' + text + '</i>' }
@@ -535,12 +550,6 @@ TOP_NAV
 
 		subhead(code(`${i}. ${name}`))
 		p(description);
-
-		if (isInventorySlot(i)) {
-			p(`Value: $` + DATABASE[i].value);
-			p(`Weight: ${DATABASE[i].weight}#`);
-		}
-
 	} });
 
 	head('Spells');
@@ -562,6 +571,24 @@ TOP_NAV
 			p('Cost: ' + costs.map(({slot, qty}) => qty + ' ' + SLOTS[slot].name).join(', '));
 	} });
 
+	head('Inventory Items', 'iitems');
+
+	p(`Each of the inventory items slots hold the quantitiy held of that item.
+	Held inventory contributes to Encumbrance (which is limited by
+	Capacity) according to it's weight. It can be bought or sold as
+	determined by its value. It may be foraged for according to it's
+	natural scarcity.`);
+
+	emit('<div id=invitems><div>Item</div><div>Value</div><div>Weight</div><div>Scarcity</div>');
+	for (let i = INVENTORY_0; i < INVENTORY_0 + INVENTORY_COUNT; i += 1) {
+		div(SLOTS[i].name);
+		div(DATABASE[i].value);
+		div(DATABASE[i].weight);
+		div(DATABASE[i].scarcity);
+	}
+	emit('</div>');
+
+
 	head('Weapons');
 
 	p(`The base price of weapons is ${DATABASE[Weapon].basePrice}.`);
@@ -572,7 +599,7 @@ TOP_NAV
 		p(i + '. ' + w.name + ': ' + w.description);
 	} });
 
-	result += '<div id=weaps><div class=head>Power</div>';
+	emit('<div id=weaps><div class=head>Power</div>');
 	for (let w of weaponTypeNames)
 		if (w) div(w, 'class=head');
 	WEAPON_NAMES.forEach((w,i) => { if (w) {
@@ -582,7 +609,7 @@ TOP_NAV
 		div(i + '. ' + w);
 	} });
 
-	result += '</div>'
+	emit('</div>');
 
 	head('Other Equipment', 'equipment');
 
@@ -598,7 +625,7 @@ TOP_NAV
 
 	head('Terrain types', 'terrains');
 
-	result += `<div id=terrains>`;
+	emit(`<div id=terrains>`);
 	div('ID');
 	div('Terrain');
 	div('Move cost');
@@ -609,7 +636,7 @@ TOP_NAV
 		div(t.moveCost ?? 1);
 		div(t.forage ? SLOTS[t.forage.item].name + ': ' + t.forage.rate : '');
 	} });
-	result += `</div>`;
+	emit(`</div>`);
 
 	head('Denizens');
 
@@ -663,7 +690,7 @@ TOP_NAV
 
 	p(`The amount of Experience needed for each Level are:`);
 
-	result += '<div id=xp>';
+	emit('<div id=xp>');
 	for (let level = 1; level <= 20; level += 1) {
 		div(`Level ${level}:`);
 		div(Chinbreak.xpNeededForLevel(level));
@@ -674,7 +701,7 @@ TOP_NAV
 		div(`Level ${level + 60}:`);
 		div(Chinbreak.xpNeededForLevel(level + 60));
 	}
-	result += '</div>';
+	emit('</div>');
 
 	head('Calendar');
 
@@ -1708,7 +1735,7 @@ DATABASE[Rations] =     { value: 1,     weight: 1,     scarcity: 10,       forag
 DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
 DATABASE[Potions] = 	{ value: 100,   weight: 1,     scarcity: 100000,   };
 DATABASE[Treasures] =   { value: 1000,  weight: 3,     scarcity: 1000000,  };
-DATABASE[Elixirs] =   { value: 10000, weight: 1,     scarcity: 10000000, };
+DATABASE[Elixirs] =     { value: 10000, weight: 1,     scarcity: 10000000, };
 
 
 
