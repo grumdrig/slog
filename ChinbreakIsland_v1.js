@@ -3001,7 +3001,7 @@ class Chinbreak {
 				passTime('Asking around about quests I can do', hours);
 				return hours;
 			} else if (storyline < 0) {
-				passTime(`Cancelling any pending quests`, 1);
+				passTime(`Clearing my calendar`, 1);
 			} else {
 				passTime(`Fruitlessly looking for a quest I can take on`, 3);
 				return 0;

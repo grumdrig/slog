@@ -1,17 +1,19 @@
 target ChinbreakIsland_v1
 
-/// Title: Let's Go Hunting
+/// Title: Slayer Freebird
 /// Author: Grumdrig
-/// Description: Greedily slay beasts at all costs.
+/// Description: Greedily slay beasts at all costs. Not a game-winning strategy (and needing some improvement).
 
 
 macro initialize(stat, count) {
 	var count = count
-	while count {
+	while count and .TrainingPoints {
 		train(stat)
 		count -= 1
 	}
 }
+
+seekQuest(-1)
 
 initialize(Strength, 4)
 initialize(Agility, 1)

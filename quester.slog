@@ -1,6 +1,7 @@
-/// Title: Let's Get Questing
+/// Title: Plotline Chester
 /// Author: Grumdrig
-/// Description: Complete quests until you can't no more.
+/// Description: Follow the main plotline as expediently as possible in an attempt to win the game.
+
 target ChinbreakIsland_v1
 
 macro goto(dest) {
