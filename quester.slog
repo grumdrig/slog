@@ -22,7 +22,7 @@ func upgradeEquipment() {
 }
 
 func seekVictim() {
-	while .MobSpecies != .QuestMob or !.MobHealth or (.MobLevel > .Act and .Act < 9) {
+	while .MobSpecies != .QuestMob or !.MobHealth or (.MobLevel > .Act and .Act <= 1) {
 		seek(MobSpecies)
 	}
 }
@@ -99,5 +99,5 @@ while 1 {
 
 	while upgradeEquipment() > 0 { }
 
-	if .Encumbrance > .Capacity / 2 { deposit(Gold, .Gold) }
+	if .Encumbrance > .Capacity / 2 and .Location == Bompton { deposit(Gold, .Gold) }
 }

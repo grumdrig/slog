@@ -399,3 +399,26 @@ or maybe when you kill something the Availables update if there's something spec
 I'm starting to think this is a good idea iff there's a step where you seek
 (Merchant) or seek(Banker) first.
 
+
+Item Collection best practices
+------------------------------
+
+Assigned as normal Collect_Item quest:
+
+- Gold: kill weak mobs, collect trophies, sell them
+- Trophies: kill weak mobs, collect trophies
+- Ammunition: forage
+- Rations: forage but do not eat them all
+
+Assigned by game script:
+
+- Elixirs: buy? there should perhaps be a better way
+
+Why not assigned by quests?
+
+-  Reagents: forage? buy?
+
+Not assigned by quests
+
+- Treasures: buy?
+- Potions: buy?

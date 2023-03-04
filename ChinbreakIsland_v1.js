@@ -1728,14 +1728,14 @@ function generateMap(scrambleFrom) {
 
 
 
-DATABASE[Ammunition] =  { value: 1/10,  weight: 1/10,  scarcity: 10,       };
-DATABASE[Trophies] =    { value: 1,     weight: 1,     scarcity: 50,       };
-DATABASE[Gold] =        { value: 1,     weight: 1/100, scarcity: 10000,    };
-DATABASE[Rations] =     { value: 1,     weight: 1,     scarcity: 10,       forageStat: Offense };
-DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      };
-DATABASE[Potions] = 	{ value: 100,   weight: 1,     scarcity: 100000,   };
-DATABASE[Treasures] =   { value: 1000,  weight: 3,     scarcity: 1000000,  };
-DATABASE[Elixirs] =     { value: 10000, weight: 1,     scarcity: 10000000, };
+DATABASE[Ammunition] =  { value: 1/10,  weight: 1/10,  scarcity: 10,       qscarcity:      7 };
+DATABASE[Trophies] =    { value: 1,     weight: 1,     scarcity: 50,       qscarcity:     20 };
+DATABASE[Gold] =        { value: 1,     weight: 1/100, scarcity: 10000     };
+DATABASE[Rations] =     { value: 1,     weight: 1,     scarcity: 10,       qscarcity:      5, forageStat: Offense };
+DATABASE[Reagents] =    { value: 10,    weight: 1/10,  scarcity: 100,      qscarcity:     30 };
+DATABASE[Potions] = 	{ value: 100,   weight: 1,     scarcity: 100000,   qscarcity:  10000 };
+DATABASE[Treasures] =   { value: 1000,  weight: 3,     scarcity: 1000000,  qscarcity: 100000 };
+DATABASE[Elixirs] =     { value: 10000, weight: 1,     scarcity: 10000000, qscarcity: 100000 };
 
 
 
@@ -2120,7 +2120,7 @@ const SCRIPT = [{
 	}, {
 		quest: -2,
 		type: Collect_Item,
-		item: Elixirs,
+		object: Elixirs,
 		end_key: 8086,
 		qty: 1,
 	}, {
@@ -2280,7 +2280,7 @@ function assignQuest(state, storyline) {
 		if (script.mob_key) state[QuestMob] = keyedMob(script.mob_key);
 		if (script.end) state[QuestEnd] = script.end;
 		if (script.end_key) state[QuestEnd] = keyedLocation(script.end_key);
-		// if (script.object) state[QuestObject] = script.object;
+		if (script.object) state[QuestObject] = script.object;
 
 		if (state[QuestType] === Cutscene) {
 			state[QuestQty] = script.script.length;
@@ -2293,7 +2293,7 @@ function assignQuest(state, storyline) {
 		} else if (state[QuestType] === Exterminate_Mob) {
 			state[QuestLocation] = state[QuestLocation] || pickQuestLocation(state, qrng);
 			state[QuestMob] = state[QuestMob] || pickQuestMob(state[Act], questlevel);
-			state[QuestQty] = 25 + qrng.d(4) - qrng.d(4);
+			state[QuestQty] = state[QuestQty] ?? (25 + qrng.d(4) - qrng.d(4));
 			state[QuestEnd] ||= state[Location];
 		}
 
@@ -2305,10 +2305,7 @@ function assignQuest(state, storyline) {
 		state[QuestLocation] = pickQuestLocation(state, qrng);
 		state[QuestEnd] = state[Location];
 
-		if (state[QuestType] == Collect_Item) {
-			state[QuestObject] = qrng.pick([Ammunition, Trophies, Gold, Rations]);
-			state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
-		} else {
+		if (state[QuestType] != Collect_Item) {
 			state[QuestMob] = pickQuestMob(state[Act], questlevel);
 			state[QuestQty] = 1 + questlevel;
 			if (state[QuestType] == Collect_Trophies) {
@@ -2321,6 +2318,17 @@ function assignQuest(state, storyline) {
 			if (qrng.civRoll(8, state[Charisma])) increment(state, QuestQty);
 		}
 	}
+
+	if (state[QuestType] == Collect_Item && !state[QuestObject]) {
+		state[QuestObject] = qrng.pick([Ammunition, Trophies, Gold, Rations, Reagents]);
+	}
+	if (state[QuestType] == Collect_Item && !state[QuestQty]) {
+		state[QuestQty] = Math.max(2, 5 + questlevel * 3 - qrng.irand(state[Charisma]));;
+	}
+	if (state[QuestType] != Cutscene && !state[QuestLocation]) {
+		state[QuestLocation] = pickQuestLocation(state, qrng);
+	}
+
 }
 
 function describeQuest(state, title) {
@@ -2345,7 +2353,7 @@ function describeQuest(state, title) {
 
 function apiError(failure) {
 	if (!failure) {
-		console.error("API ERROR in context not yet defined");
+		console.error("API ERROR in context which is not yet defined");
 	} else {
 		console.error("API ERROR: " + failure);
 	}
@@ -2471,7 +2479,7 @@ class Chinbreak {
 			state[GameOver] = 86;
 		} else if (state[Years] >= 100) {
 			state[GameOver] = 100;
-		} else if (state[Act] > 9) {
+		} else if (state[Act] > 10) {
 			state[GameOver] = 1;
 		}
 
@@ -2945,16 +2953,16 @@ class Chinbreak {
 			let [slot, qty] = [arg1, arg2];
 			const isDeposit = (operation === deposit);
 
-			if (qty < 0) return apiError(``);  // nice try hacker
-			if (!local.hasBank) return apiError(``);  // you're not at the bank
+			if (qty < 0) return apiError(`nice try hacker`);
+			if (!local.hasBank) return apiError(`not at the bank`);
 
 			if (state[Gold] + state[BalanceGold] <= 0)
-				return apiError(``);  // Can't afford it
+				return apiError(`can't afford transaction`);
 
 			let bankSlot;
 			if (slot == Gold) bankSlot = BalanceGold;
 			else if (slot == Treasures) bankSlot = BalanceTreasures;
-			else return apiError(``);  // Bank doesn't deal in this item
+			else return apiError(`bank doesn't deal in that`);
 
 			let fromSlot = isDeposit ? slot : bankSlot;
 			let toSlot =  isDeposit ? bankSlot : slot;
@@ -3158,10 +3166,8 @@ class Chinbreak {
 
 			} else if (isInventorySlot(target)) {
 				let resistance = DATABASE[target].scarcity ?? Number.NaN;
-				if (state[Location] === state[QuestLocation] &&
-						target === state[QuestObject]) {
-					resistance >>= 1;
-				}
+				if (state[Location] === state[QuestLocation] && target === state[QuestObject])
+					resistance = DATABASE[target].qscarcity ?? DATABASE[target].scarcity ?? Number.NaN;
 
 				let ability = state[DATABASE[target].forageStat ?? Intellect];
 
