@@ -9,6 +9,7 @@
 <script src="vm.js"></script>
 <script src="os.js"></script>
 <script src="joy.js"></script>
+<script src="dwarfname.js"></script>
 <script src="slayer.jstrat"></script>
 <script src="quester.jstrat"></script>
 <script src="ChinbreakIsland_v1.js"></script>
@@ -322,6 +323,8 @@ window.addEventListener('load', e => {
 
 	show('#newgame-window');
 	hide('#game-window');
+
+	$('#namein').value = generateName();
 
 	$$('#selectSpecies input').forEach((e, i) => {
 		e.addEventListener('change', _ => speciesChanged(game));
