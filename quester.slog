@@ -41,7 +41,21 @@ while 1 {
 	}
 
 	// Always be questing
-	if !.QuestType { seekQuest(0) }
+	if !.QuestType {
+		if 0 and !.Elixirs and .Act == 5 and .ActProgress == .ActDuration - 2 {
+			// If enabled, attempt the side quest to find an elixir in Act V
+			// so as to avoid the long search in Act VIII. But at present, we're not
+			// strong enough to complete that quest.
+			var q = 80
+			goto(Cholar)
+			while .QuestLocation != Ritoli_Marsh {
+				q += 1
+				seekQuest(q)
+			}
+		} else {
+			seekQuest(0)
+		}
+	}
 
 	if .QuestLocation { goto(.QuestLocation) }
 
