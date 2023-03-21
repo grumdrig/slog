@@ -1667,8 +1667,34 @@ function mapInfo(location, state) {
 }
 
 
-function generateMap(scrambleFrom) {
+function generateMap(scrambleFrom, standalone) {
+
 	let result = [];
+
+	if (standalone) {
+		result.push(`<!doctype html><html>
+			<head>
+				<meta charset='utf-8'/>
+				<title>Chinbreak Island Map</title>
+				<style>
+				h2 {
+					text-align: center;
+					font-style: italic;
+					padding: 14px;
+				}
+				body {
+					background-color: lightblue;
+					margin: 14px;
+					padding: 14px;
+					border: solid 1px blue;
+				}
+				html { background-color: white }
+				</style>
+			</head>
+			<body>
+			<h2>Chinbreak Island</h2>`)
+	}
+
 	let cols = 9;
 	result.push(`<div class=themap style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:4px">`);
 	for (let l = 1; l <= 38; ++l) {
@@ -3922,7 +3948,7 @@ if (typeof module !== 'undefined' && !module.parent) {
 		console.log(ChinbreakIsland_v1.generateInterface());
 	}
 	if (flags['generate-map']) {
-		console.log(generateMap());
+		console.log(ChinbreakIsland_v1.generateMap(false, true));
 	}
 	if (flags['generate-documentation']) {
 		console.log(`<link rel=stylesheet href="node_modules/xp.css/dist/XP.css">`);

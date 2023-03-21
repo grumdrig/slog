@@ -20,3 +20,4 @@ node_modules/marked/bin/marked.js -i vm.md -o @vm.html
 node_modules/marked/bin/marked.js -i assembler_manual.md -o @asm.html
 node_modules/marked/bin/marked.js -i language.md -o @language.html
 node ChinbreakIsland_v1.js --generate-documentation > @chinbreak-doc.html
+node ChinbreakIsland_v1.js --generate-map > @map.html
