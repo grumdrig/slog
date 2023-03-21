@@ -2393,6 +2393,8 @@ class Chinbreak {
 	task;
 	realtime = 0;   // Elapsed real time (in userland) in seconds
 	strict = true;  // Fail on failed interface calls
+	cheater;        // Will get set if cheat() command is used
+	elixirQuestDone;  // Will get set if the special side-quest is done
 	static initialTraining = 10;
 
 	static title = 'Progress Quest Slog: Chinbreak Island';
@@ -2567,6 +2569,8 @@ class Chinbreak {
 			// TODO: Remove this some time
 			let [slot, value] = [arg1, arg2];
 			state[slot] = value;
+			passTime('Cheating', 1);
+			this.cheater = true;
 			return value;
 		}
 
@@ -3034,15 +3038,23 @@ class Chinbreak {
 			}
 
 		} else if (operation === completeQuest) {
-			if (!state[QuestType]) return apiError(``);
-			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return apiError(``);
-			if (state[QuestProgress] < state[QuestQty]) return apiError(``);
+			if (!state[QuestType]) return apiError(`no quest to complete`);
+			if (state[QuestEnd] && (state[QuestEnd] != state[Location])) return apiError(`not at quest end location`);
+			if (state[QuestProgress] < state[QuestQty]) return apiError(`quest incomplete`);
 			const isMain = state[QuestStoryline] == 0;
 			const questlevel = isMain ? state[Act] : Math.floor(state[QuestStoryline] / 10);
 			if (state[QuestType] !== Cutscene)
 				inc(Experience, questlevel ? 5 * questlevel : 2);
 			if (state[QuestStoryline] === 0)
 				inc(ActProgress);
+
+			if (state[QuestStoryline] > 80 &&
+				!this.elixirQuestDone &&
+				state[QuestLocation] === Ritoli_Marsh &&
+				state[Act] == 5)  {
+				this.elixirQuestDone = true;
+				inc(Elixirs);
+			}
 
 			if (state[QuestType] === Cutscene) {
 				passTime('Loading', 1);
@@ -3129,13 +3141,16 @@ class Chinbreak {
 			endEnchantment();
 
 			passTime('Resting up', 0, 1);
-			let hp = d(state[Endurance]);
+			// Health gained is the maximum of a random amount up to endurance
+			// or a percentage of health equal to 5 + endurance
+			let hp = Math.max(d(state[Endurance]), Math.round(state[MaxHealth] * (state[Endurance] + 5)/100));
 			if (local.terrain !== TOWN)
 				hp = Math.round(hp * rng.rand() * rng.rand());
 			hp = Math.min(hp, state[MaxHealth] - state[Health]);
 			inc(Health, hp);
 
-			let mp = d(state[Wisdom]);
+			// Likewise for Energy, using Wisdom
+			let mp = Math.max(d(state[Wisdom]), Math.round(state[MaxEnergy] * (state[Wisdom] + 5)/100));
 			if (local.terrain !== TOWN)
 				mp = Math.round(mp * rng.rand() * rng.rand());
 			mp = Math.min(mp, state[MaxEnergy] - state[Energy]);
@@ -3743,7 +3758,7 @@ function updateGame(state) {
 		else if (slot === Scroll)
 			set('e' + i, 'Scroll of ' + SPELLS[v].name);
 		else if (slot === Totem)
-			set('e' + i, v === Chinbreak.MAP[v].name.split(' ')[0] + ' Totem');
+			set('e' + i, Chinbreak.MAP[v].name.split(' ')[0] + ' Totem');
 		else {
 			const names = (Chinbreak.DATABASE[slot] ?? {}).names;
 			set('e' + i, names[v] || v);
