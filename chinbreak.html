@@ -98,6 +98,12 @@ div.accross {
 	margin-bottom: 8px;
 }
 
+article {
+	min-height: 280px;
+	width: 800px;
+}
+
+
 </style>
 </head>
 <body>
@@ -212,16 +218,66 @@ div.accross {
 	</div>
 </div>
 
-<div class=window hidden id=map-window>
+
+<div class=window hidden id=docs-window>
 	<div class="title-bar">
-		<div class="title-bar-text">Map</div>
+		<div class="title-bar-text">Documentation</div>
 		<div class="title-bar-controls">
 			<button aria-label="Close" class=close></button>
 		</div>
 	</div>
+	<div class="window-body" id="sources">
+		<section class="tabs" style="max-width: 1000px;max-height: 480px">
+			<menu role="tablist" aria-label="Documentation Tabs">
+				<button role="tab" aria-selected="true" aria-controls="tab-about">About</button>
+				<button role="tab" aria-controls="tab-backstory">Backstory</button>
+				<button role="tab" aria-controls="tab-map">Political Map</button>
+				<button role="tab" aria-controls="tab-geomap">Geographic Map</button>
+			</menu>
+			<article role="tabpanel" id="tab-about">
+				<div>
+					<h4>Progress Quest Slog: Chinbreak Island </h4>
+					<p>This game plays itself, so you don't have to, as controlled by
+						a strategy you select, or create.</p>
+					<p>Use "New Game" to start a new game, or <a href=./>read more about it all</a>.
+					</p>&nbsp;<p>
+					<p style='font-style: italic'>by Grumdrig &middot; version 1.alpha</p>
 
-	<div class="window-body">
-		<img src=chinbreak_map.png width=800px></img>
+				</div>
+			</article>
+			<article role="tabpanel" hidden id="tab-backstory">
+				<div>
+<p>Life on Chinbreak Island had been generally peaceful for as long as anyone there could
+remember, with Hardwarf and Eff, Dunkling and Human, living in relative
+harmony. But in the year 526, dangerous monsters of all different sorts began
+to appear around the island, causing no head of mayhem to travellers and
+homesteaders alike.
+
+<p>Some supposed that this alarming change could be related to the goings on
+observed at nearby Sygnon Isle, where odd plumes, eerie noises, and flashes
+of light were all noted by those who dwelled on the coast opposite, along
+with noxious odors carried on winds from that direction.  The fact is that
+such speculation was correct. An evil presence had taken up residence high on
+Mt Emkell on Sygnon Isle, and was practicing such magics as to cook up
+trouble on Chinbreak.
+
+<p>Unfortunately, time was very limited for the Chinbreakers. As the evil one's
+power grew, so did the suffering of the once happy people.
+
+<p>But one hero, little more than a child, would prove to be the only hope for
+the dwellers on Chinbreak. Would this person be able to build their power,
+training and studying, fighting and upgrading, enough to defeat this threat?
+That's up to you to prove!
+
+</div>
+			</article>
+			<article role="tabpanel" hidden id="tab-map">
+				<div id='worldmap'></div>
+			</article>
+			<article role="tabpanel" hidden id="tab-geomap">
+				<img src=chinbreak_map.png width=680px></img>
+			</article>
+		</section>
 	</div>
 </div>
 
@@ -237,9 +293,9 @@ div.accross {
 	<div>New Game</div>
 </div>
 
-<div class=icon data-for=map-window>
-	<img src=map.png>
-	<div>Map</div>
+<div class=icon data-for=docs-window>
+	<img src=docs.png>
+	<div>Documentation</div>
 </div>
 
 <script>
@@ -364,6 +420,9 @@ window.addEventListener('load', e => {
 	$('#namein').addEventListener('input', sellable);
 	$('#namein').focus();
 	sellable();
+
+	$("#worldmap").innerHTML = game.generateMap();
+
 });
 
 function speciesChanged(game) {
