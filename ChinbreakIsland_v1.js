@@ -8,6 +8,11 @@ const GR = 0.5 + Math.sqrt(5) / 2;
 const MIN_INT = -0x8000;
 const MAX_INT =  0x7FFF;
 
+const HOURS_PER_DAY = 24;
+const DAYS_PER_MONTH = 30;
+const MONTHS_PER_YEAR = 12;
+const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
+
 const SLOTS = [
 	{ name: 'GameOver',
 	  description: `The game sets this value when it comes to an end. If it
@@ -29,9 +34,10 @@ const SLOTS = [
 	{ name: 'Years',
 	  description: `Years of in-game time elapsed since the start of the game.` },
 	{ name: 'Hours',
-	  description: `Hours of the current year which have gone by. There are 24
-	  hours in a day, 32 days in a month, 12 months in a year. Therefore,
-	  there are 9216 hours in a year.` },
+	  description: `Hours of the current year which have gone by.
+	  There are ${HOURS_PER_DAY} hours in a day, ${DAYS_PER_MONTH} days in a month,
+	  ${MONTHS_PER_YEAR} months in a year.
+	  Therefore, there are ${HOURS_PER_YEAR} hours in a year.` },
 
 	{ name: 'MaxHealth',
 	  description: `Maximum hit points, i.e. the amount of damage you can sustain
@@ -367,12 +373,6 @@ for (let call in CALLS) {
 }
 
 
-const HOURS_PER_DAY = 24;
-const DAYS_PER_MONTH = 30;
-const MONTHS_PER_YEAR = 12;
-const HOURS_PER_YEAR = HOURS_PER_DAY * DAYS_PER_MONTH * MONTHS_PER_YEAR;
-
-
 function generateInterface() {
 	let interface = [];
 
@@ -545,7 +545,7 @@ TOP_NAV
 			midhead('Stats');
 			p(`Character stats are a general rating of their excellence in each area of development.`);
 		} else if (i === Location) {
-			midhead('&nbsp;');
+			midhead('Environment &amp; Other');
 		}
 
 		subhead(code(`${i}. ${name}`))
