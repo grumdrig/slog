@@ -100,7 +100,8 @@ instruction. There are three cases:
 
 
 Valid instructions and their operations are described in the following
-sections.
+sections. Some instructions have slightly different behavior depending on the
+mode of their operand, as will be explained in those cases.
 
 
 Instructions
@@ -118,7 +119,7 @@ pop the value `x`:
 	x = MEMORY[SP++]
 
 "Pushing" a value on the stack refers to growing the stack by placing the
- valueat its top. So in pseudocode, to push `x`:
+ value at its top. So in pseudocode, to push `x`:
 
 	MEMORY[--SP] = x
 
@@ -141,7 +142,7 @@ pop the value `x`:
 
 
 "Storing" is just the opposite of fetching -- a value in placed into main
- memory or a register (but not the state vector).
+ memory or a register (but not the read-only state vector).
 
 
 Control Flow Instructions
@@ -330,7 +331,7 @@ For operations with inherently integer results:
 
 [^1]: For unary operations that in general give non-integer results, the
 greatest integer less than the result is stored on the top of the stack, and
-the fractional part is stored in AX, scaled by MAX_INT = 32767.
+the fractional part is stored in AX, scaled up by MAX_INT = 32767:
 
 	MEMORY[SP] = floor(unaryOp(MEMORY[SP]))
 	AX = frac(unaryOp(MEMORY[SP])) * MAX_INT
@@ -372,7 +373,7 @@ may not fit in AX.
 gets the integral part of that, so actually `floor(arctan(top/operand))`.
 
 [^5]: Similar to unary operations with non-integer results, this is the
-fractional part of the result scaled by MAX_INT, i.e. 32767.
+fractional part of the result scaled up by MAX_INT, i.e. 32767.
 
 [^6]: Logical operations treat zero as "false" and non-zero as "true". Nonzero
 results are carried through, so, for example, for `or` we get:

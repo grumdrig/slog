@@ -54,3 +54,10 @@ function generateName() {
 	}
 	return result[0].toUpperCase() + result.slice(1);
 }
+
+
+if (typeof require !== 'undefined' &&
+    typeof module !== 'undefined' &&
+    require.main === module) {
+	console.log(generateName());
+}

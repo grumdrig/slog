@@ -10,7 +10,7 @@ Syntax
 ------
 
 Identifiers consist of one or more identifier characters, which are
-alphanumerals plus the underscore character and the dollar sign. However the
+alphanumerals plus the underscore character and the dollar sign. However, the
 first character may not be a numeral.
 
 Decimal numeric literals are an optional `+` or `-` sign, followed by one or
@@ -107,7 +107,7 @@ the code is expanded. Macros must be defined before they are used.
 
 Macros are defined by the `.macro` directive, with optional parameters,
 followed by arbitrary assembly code (perhaps including other macro
-expansions), until a `.end` directive is reached.
+expansions), until an`.end` directive is reached.
 
 The macro may then be used in code, much like an instruction.
 
@@ -161,7 +161,7 @@ Case is not significant, so, for example, `.DATA` may be used in place of
 ### `.target` *name*
 
 Name the target in which the assembled strategy is meant to execute. This
-information may be used by other tools to run the strategy in it's target
+information may be used by other tools to run the strategy in its target
 embedding.
 
 
@@ -211,7 +211,7 @@ is implemented as a `push` instruction.
 
 ### .jump and .branch
 
-The `.jump` and `.branch` directives simplify using the `jmp` and `branch`
+The `.jump` and `.branch` directives simplify using the `jmp` and `br`
 instruction, which have different semantics depending on whether immediate
 mode is used. So
 

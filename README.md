@@ -17,13 +17,6 @@ Progress Quest Slog: Chinbreak Island, located, along with supporting
 documentation, at http://slog.progressquest.com/.
 
 
-Documentation
--------------
-
-Supporting documentation, and indeed the game itself, are to be found at
-.
-
-
 Install
 -------
 
@@ -35,8 +28,8 @@ We use XP.css styling. You need to:
 IDE
 ---
 
-Strategies can develped and tested in the primitive web-based IDE, which will
-be somewhere like http://slog.progressquest.com/ide.html
+Strategies can develped and tested in the primitive web-based IDE, which is at
+http://slog.progressquest.com/ide.html
 
 
 Command-line Tools
