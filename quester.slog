@@ -4,6 +4,12 @@
 
 target ChinbreakIsland_v1
 
+export "bool : Complete the side quest in Act V to gain an elixir"
+var Attempt_elixir_side_quest = 0
+
+export "range 1 to 99:Percentage of max health at which to continue to battle"
+var Safety_margin = 50
+
 macro goto(dest) {
 	while dest != .Location and travel(dest) > 0 { }
 }
@@ -42,10 +48,10 @@ while 1 {
 
 	// Always be questing
 	if !.QuestType {
-		if 0 and !.Elixirs and .Act == 5 and .ActProgress == .ActDuration - 2 {
-			// If enabled, attempt the side quest to find an elixir in Act V
-			// so as to avoid the long search in Act VIII. But at present, we're not
-			// strong enough to complete that quest.
+		if Attempt_elixir_side_quest and !.Elixirs and .Act == 5 and .ActProgress == .ActDuration - 2 {
+			// Attempt the side quest to find an elixir in Act V so as to
+			// avoid the long search in Act VIII. TODO: Need to level up some
+			// to be strong enough to complete that quest.
 			var q = 80
 			goto(Cholar)
 			while .QuestLocation != Ritoli_Marsh {
@@ -65,15 +71,17 @@ while 1 {
 		}
 	} else if .QuestMob and .QuestObject {
 		// Trophy hunting
-		while .Health > (.MaxHealth / 2 >? (4 <? .MaxHealth - 1))  and
-					.Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
+		while .Health * 100 >= .MaxHealth * Safety_margin and
+				.Health >= (4 <? .MaxHealth - 1)  and
+				.Encumbrance < .Capacity and ..QuestObject < (.QuestQty - .QuestProgress) {
 			seekVictim()
 			use(Weapon)
 			if !.MobHealth { loot(Trophies) }
 		}
 	} else if .QuestMob {
 		// Killing
-		while .Health > .MaxHealth / 2 and .QuestProgress < .QuestQty {
+		while .Health * 100 >= .MaxHealth * Safety_margin and
+				.QuestProgress < .QuestQty {
 			seekVictim()
 			use(Weapon)
 			if !.MobHealth and .Encumbrance < .Capacity { loot(Trophies) }

@@ -83,7 +83,7 @@ class Source {
 						lexeme.value = lexeme.value * 256 + lexeme.text.charCodeAt(2);
 					}
 
-				} else if (lexeme.text = take(/^".+?"/)) {
+				} else if (lexeme.text = take(/^(["`]).+?\1/)) {
 					// String
 					lexeme.string = true;
 
@@ -265,6 +265,7 @@ class Module {
 	macros = [];
 	functions = [];
 	statements = [];
+	exports = [];
 
 	static parse(source) {
 		let result = new Module();
@@ -275,9 +276,10 @@ class Module {
 				result.target = source.next().text;
 			} else if (item = ConstantDefinition.tryParse(source)) {
 				result.constants.push(item);
-			} else if (item = VariableDeclaration.tryParse(source)) {
+			} else if (item = VariableDeclaration.tryParse(source, true)) {
 				result.variables.push(item);
 				result.statements.push(new Initialization(item));
+				if (item.isExported) result.exports.push(item);
 			} else if (item = MacroDefinition.tryParse(source)) {
 				result.macros.push(item);
 			} else if (item = FunctionDefinition.tryParse(source)) {
@@ -322,6 +324,10 @@ class Module {
 
 		for (let d of this.functions) d.generate(context);
 
+		context.exports = {};
+		for (let {name,description} of this.exports)
+			context.exports[name] = description;
+
 		return context;
 	}
 }
@@ -346,10 +352,22 @@ class ConstantDefinition {
 
 class VariableDeclaration {
 	name;
+	isExported;
+	description;
 
-	static tryParse(source) {
-		if (!source.tryConsume('var')) return false;
-		let result = new VariableDeclaration();
+	static tryParse(source, exportable) {
+		let result;
+		if (exportable && source.tryConsume('export')) {
+			result = new VariableDeclaration();
+			result.isExported = true;
+			if (source.isString())
+				result.description = source.next().text.slice(1, -1);
+			source.consume('var');
+		} else if (source.tryConsume('var')) {
+			result = new VariableDeclaration();
+		} else {
+			return false;
+		}
 		result.name = source.consumeIdentifier();
 		if (source.tryConsume('[')) {
 			result.count = Expression.parse(source);
@@ -399,9 +417,9 @@ class VariableDeclaration {
 			let globalContext = context;
 			while (globalContext.parent) globalContext = globalContext.parent;
 			if (globalContext == context) {
-				// no need for an alias
-				globalContext.allocations.push({ label: this.name, count, initializer });
-				context.declareStaticVariable(this.name, { static: true });
+				let label = this.name;
+				globalContext.allocations.push({ label, count, initializer });
+				context.declareStaticVariable(label, { static: true });
 			} else {
 				let label = context.uniqueLabel(this.name);
 				globalContext.allocations.push({ label, count, initializer });
@@ -1479,26 +1497,35 @@ class IndexExpression {
 
 function compile(...texts) {
 	let source = new Source(...texts);
-	// console.log(source);
 
 	let m = Module.parse(source);
-	// console.log(m);
-
-	let c = m.generate();
-
-	return c.code.join('\n');
+	let { code, exports } = m.generate();
+	code = code.join('\n');
+	return { code, exports };
 }
 
 
-function parseDocumentation(destination, text) {
-	m = text.match(/^\/\/\/ Title:\s+(.+?)\s*$/m);
-	if (m) destination.title = m[1];
+function parseDocumentation(destination, text, tag) {
+	for (let tag of ['Title', 'Author', 'Description']) {
+		let m = text.match(new RegExp(`^\\/\\/\\/ ${tag}:\\s+(.+?)\\s*$`, "m"));
+		if (m) destination[tag.toLowerCase()] = m[1];
+	}
+	/*
+	//let ps = [...text.matchAll(/^\/\/\/ Parameter:\s*(.+?)\s*(?:,\s*(.+?)\s*(?:,\s*(.+?)\s*)?)?$/gm)]; with default value
+	let ps = [...text.matchAll(/^\/\/\/ Parameter:\s*(.+?)\s*(?:,\s*(.+?)\s*)?$/gm)];
+	if (ps.length) {
+		destination.parameters = Object.fromEntries(ps.map(p => {
+			let [_, name, desc] = p;
+			console.log(JSON.stringify(name), JSON.stringify(desc));
+			return [name, desc]
+		}));
+	}
+	*/
+}
 
-	m = text.match(/^\/\/\/ Author:\s+(.+?)\s*$/m);
-	if (m) destination.author = m[1];
 
-	m = text.match(/^\/\/\/ Description:\s+(.+?)\s*$/m);
-	if (m) destination.description = m[1];
+function changeExt(filename, ext) {
+	return filename.replace(/\.[^\.]*$/, "") + "." + ext;
 }
 
 
@@ -1516,27 +1543,43 @@ in place of any output file, output is piped to stdout.
 
 OPTIONS:
 	-p file, --package=file
-		Generate a Slog strategy package in JSON format and write it to the
-		named file
+		Generate a Slog strategy package in JSON format and write it
+		to the named file
+
+	-j file, --javascript=file
+		Output a Slog strategy package in the form of a javascript
+		wrapper around a JSON package.
+
 	-s, --symbols
 		Include debugging symbols in the generated strategy package file
-	-j file, --javascript=file
-		Output a Slog strategy package in the form of a javascript wrapper
-		around a JSON package.
+
 	-i file, --interface=file
-		Read the game interface from the named game logic file. The filename
-		should include a path
+		Read the game interface from the named game logic file. The
+		filename should include a path
+
 	-b file, --binary=file
 		Write binary machine code suitable for the Slog VM to named file
+
 	-a file, --assembly=file
 		Write intermediate assemby language to named file
+
 	-d file, --disassembly=file
 		Generate binary output, then disassemble it to named file
+
+	-P, -J, -B, -A, -D
+		Identical to their lowercase equivalent with output filename derived
+		from FILENAME with the extension changed to,
+		respectively, .strat, .jstrat, .bin, .asm, or .dasm
+
+	-o NAME:VALUE, --option=NAME:VALUE
+		Set option NAME exported by strategy to VALUE before prior to running
+
 	-r, --run
-		Run the compiled strategy in it's embedded application. If there are
-		PARAMETERS on the command line, they are passed to the virtual
-		machine initializer, which passes them to the embedded application
-		initialization.
+		Run the compiled strategy in it's embedded application. If
+		there are PARAMETERS on the command line, they are
+		passed to the virtual machine initializer, which
+		passes them to the embedded application initialization.
+
 	--help
 		This, that you're reading
 
@@ -1590,6 +1633,11 @@ if (typeof module !== 'undefined' && !module.parent) {
 					type: 'string',
 					short: 't',
 				},
+				option: {
+					type: 'string',
+					short: 'o',
+					multiple: true,
+				},
 				run: {
 					type: 'boolean',
 					short: 'r',
@@ -1599,6 +1647,11 @@ if (typeof module !== 'undefined' && !module.parent) {
 					short: 'v',
 					multiple: true,
 				},
+				A: { type: "boolean" },
+				B: { type: "boolean" },
+				D: { type: "boolean" },
+				J: { type: "boolean" },
+				P: { type: "boolean" },
 				help: {
 					type: 'boolean',
 				},
@@ -1611,13 +1664,23 @@ if (typeof module !== 'undefined' && !module.parent) {
 		console.error(e);
 		usage();
 	}
-	const { assembly, binary, disassembly, package, javascript, symbols, run, help } = flags || {};
+
+	let { assembly, binary, disassembly, package, javascript, symbols, run, help } = flags || {};
 	const verbosity = (flags.verbose || []).length;
 
 	if (help) usage();
 	if (!args) { console.error('Filename expected'); usage(); }
 
-	let sources = [readFileSync(args.shift(), 'utf8')];
+	const FILENAME = args.shift();
+
+	// TODO: complain if already assigned
+	if (flags.A) assembly = changeExt(FILENAME, 'asm');
+	if (flags.B) binary = changeExt(FILENAME, 'bin');
+	if (flags.D) disassembly = changeExt(FILENAME, 'dasm');
+	if (flags.J) javascript = changeExt(FILENAME, 'jstrat');
+	if (flags.P) package = changeExt(FILENAME, 'strat');
+
+	let sources = [readFileSync(FILENAME, 'utf8')];
 
 	if (flags.target) {
 		console.log(flags.target);
@@ -1625,32 +1688,19 @@ if (typeof module !== 'undefined' && !module.parent) {
 		sources.unshift(interface);
 	}
 
-	let asm;
-		asm = compile(...sources);
-/*	try {
-		asm = compile(...interfaces.concat(sources));
-	} catch (e) {
-		if (e instanceof ParseError) {
-			console.error('Parse Error: ' + e.message);
-		} else if (e instanceof SemanticError) {
-			console.error('Semantic Error: ' + e.message);
-		} else {
-			console.error('Compilation Error: ' + e);
-		}
-		process.exit(-1);
-	}*/
+	let asm = compile(...sources);
 
 	if (assembly) {
 		if (assembly === '-')
-			console.log(asm);
+			console.log(asm.code);
 		else
-			writeFileSync(assembly, asm, 'utf8');
+			writeFileSync(assembly, asm.code, 'utf8');
 	}
 
 	if (binary || disassembly || package || javascript || run) {
 
 		let { Assembler } = require('./vm');
-		let assembled = Assembler.assemble(asm);
+		let assembled = Assembler.assemble(asm.code);
 
 		if (binary) {
 			writeFileSync(binary, assembled.code);
@@ -1663,9 +1713,19 @@ if (typeof module !== 'undefined' && !module.parent) {
 		let pack = {};
 
 		if (assembled.target) pack.target = assembled.target;
-		for (let source of sources) parseDocumentation(pack, source);
+
+		for (let source of sources) {
+			parseDocumentation(pack, source);
+		}
+
 		pack.binary = Array.from(assembled.code);
-		if (symbols) pack.symbols = assembled.labels;
+
+		if (symbols) {
+			pack.symbols = assembled.labels;
+		}
+
+		pack.exports = Object.fromEntries(Object.entries(asm.exports).map(([k,description]) =>
+			[k, {offset: assembled.labels[k], description}]));
 
 		if (package) {
 			writeFileSync(package, JSON.stringify(pack));
@@ -1696,6 +1756,12 @@ if (typeof module !== 'undefined' && !module.parent) {
 
 			let vm = new VirtualMachine(assembled.code, game);
 			if (verbosity > 1) vm.trace = true;
+
+			for (let [name, value] of (flags.option ?? []).map(o => o.split(':'))) {
+				let offset = pack.exports[name].offset;
+				vm.store(offset, parseInt(value));
+				// TODO handle bad inputs
+			}
 
 			vm.run();
 

@@ -318,6 +318,12 @@ Figure out whether to
 4) or even just start with really low stats
 
 
+Chinbreak gameplay improvements
+-------------------------------
+
+rest() should allow the local mob to wander away, or should allow attacks if local mob is aggro
+
+
 Math time
 ---------
 

@@ -103,7 +103,6 @@ article {
 	width: 800px;
 }
 
-
 </style>
 </head>
 <body>
@@ -210,6 +209,10 @@ article {
 								<legend>Description</legend>
 								<div class=field-row id=strat-desc>&nbsp;</div>
 						</fieldset>
+					</fieldset>
+					<fieldset>
+						<legend>Options</legend>
+						<div id=strat-options></div>
 					</fieldset>
 				</div>
 			</div>
@@ -476,11 +479,71 @@ function upload(e) {
 
 function setStrategy(package) {
 	PACKAGE = package;
+	$("#strat-options").innerHTML = '';
 	if (package) {
 		$("#strat-title").innerText = package.title || '(untitled)';
 		$("#strat-author").innerText = package.author || '(anonymous)';
 		$("#strat-desc").innerText = package.description || '(no description)';
 		$("#strat-length").innerText = (package.binary || []).length + ' bytes';
+
+		for (let v in (package.exports ?? {})) {
+			let div = $("#strat-options").appendChild(document.createElement('div'));
+			div.classList.add('field-row');
+			let label = div.appendChild(document.createElement('label'));
+			label.innerText = v.replaceAll('_', ' ');
+
+			let desc = package.exports[v].description;
+			let inputType = [];
+			if (desc) {
+				if (desc.includes(':')) {
+					[inputType, desc] = desc.split(':');
+					inputType = inputType.trim().match(/\S+/g);
+				}
+				label.title = desc.trim();
+			}
+
+			let input = div.appendChild(document.createElement('input'));
+			input.title = label.title;
+			input.value = package.binary[package.exports[v].offset];
+			input.id = 'option-' + v;
+			label.setAttribute('for', input.id);
+
+			if (inputType[0] === 'bool') {
+				input = div.insertBefore(input, label);
+				input.type = 'checkbox';
+				input.checked = !!package.binary[package.exports[v].offset];
+
+			} else if (inputType[0] === 'range') {
+				inputType.shift();  // get rid of "range"
+				let low = parseInt(inputType.shift()) ?? 0;
+				if (inputType[0] === 'to') inputType.shift();
+				let high = parseInt(inputType.shift()) ?? 100;
+				input.type = 'range';
+				input.style.width = '100px';
+				label.innerText += ':';
+
+				let output = div.insertBefore(document.createElement('label'), input);
+				output.innerText = input.value;
+				input.addEventListener('input', _ => output.innerText = input.value);
+				output.style.marginRight = '10px';
+
+				input.min = low;
+				input.max = high;
+				/*
+				// Label the min and max
+				let l = div.insertBefore(document.createElement('label'), input);
+				l.innerText = low;
+				l.setAttribute('for', input.id);
+				l = div.appendChild(document.createElement('label'));
+				l.innerText = high;
+				l.setAttribute('for', input.id);
+				*/
+			} else {
+				input.type = 'number';
+			}
+
+
+		}
 	} else {
 		$("#strat-title").innerHTML = '&nbsp;';
 		$("#strat-author").innerHTML = '&nbsp;';
@@ -510,19 +573,18 @@ let game;
 function sold() {
 	hide('#newgame-window');
 
-	// loadBinary($('#orders').value, program => {
-	// 	vm = new VirtualMachine(program, Chinbreak);
-	// 	play();
-	// });
-
-	console.log();
-
 	game = new ChinbreakIsland_v1(PACKAGE.binary,
 		$('[name=species]:checked').value,
 		$('#namein').value,
 		...STATS);
 
-	vm = new VirtualMachine(PACKAGE.binary, game);
+	let bin = PACKAGE.binary.slice();
+	for (let v in (PACKAGE.exports ?? {})) {
+		let input = $('#option-' + v);
+		bin[PACKAGE.exports[v].offset] = parseInt(input.value) ?? 0;
+	}
+
+	vm = new VirtualMachine(bin, game);
 	play();
 
 }

@@ -821,25 +821,34 @@ if (typeof exports !== 'undefined') {
 function usage() {
 	console.log(`Usage: vm.js OPTIONS
 
-Assemble and/or execute a strategy in a game environment
+Assemble and/or execute a strategy in a game environment. Can also disassemble
+machine code.
 
 OPTIONS:
 	-a file, --assembly=file
 		Read assembly language file, to be assmbled into binary form
+
 	-l file, --load=file
 		Read binary machine code from file
+
 	-o file, --output=file
 		Write binary machine code suitable for the Slog VM to named file
+
 	-d file, --disassembly=file
 		Disassemble binary machine code to named file
+
 	-L, --legal
-		Disassembly produced includes only legal assembly, not file
+		In produced disassembly, include only legal assembly, not file
 		offsets or varying numeric representations
+
 	-r, --run
-		Run assembled or loaded machine code in targe environment
+		Run assembled or loaded machine code in target environment
+
 	-v, --verbose
+
 	-q, --quiet
 		Increase or decrease verbosity of output
+
 	--help
 		This, that you're reading
 

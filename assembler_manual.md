@@ -10,8 +10,8 @@ Syntax
 ------
 
 Identifiers consist of one or more identifier characters, which are
-alphanumerals plus the underscore character and the dollar sign. However, the
-first character may not be a numeral.
+alphanumerals plus the underscore character `_` and the at sign `@`. However,
+the first character may not be a numeral.
 
 Decimal numeric literals are an optional `+` or `-` sign, followed by one or
 more numerals.

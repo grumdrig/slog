@@ -125,7 +125,12 @@ and
 
 	[104, 101, 108, 108, 111, 0]
 
-There is very little support in the language for string manipulation.
+Strings can also be delimited with the backquote character:
+
+	`also hello`
+
+There is very little support built into the language for string (or vector)
+manipulation.
 
 
 Operators
@@ -189,6 +194,22 @@ with an optional initializer.
 Absent an initialzier, variables are initialized to 0 in the global scope, but
 if declared within a function an uninitialized variable's value is
 undefined.
+
+
+Exports
+=======
+
+At the global, top-level scope, `var` declarations may be preceded by the
+`export` keyword, and optionally, a string description.
+
+	export var Aggressiveness = 2
+	export `slider 1 to 100 "How defensive to behave"` var Carefulness = 1
+	export "checkbox" var Sneaky = 0
+
+An exported global variable of this sort can be adjusted by the embedding
+target environment, such as to allow the player to set starting options for
+the strategy. The string description can be interpreted by the target to
+provide explanation and guidance to players.
 
 
 Vectors
@@ -255,7 +276,7 @@ The conditional statement executes a block of code if a condition holds (that is
 
 `if` *condition-expr* `{` *code-block* `}` [`else` `{` *code-block* `}`]
 
-if the optional *else-clause* is another if statement, the '{' '}' braces can be omitted, like so:
+if the optional else clause is another *if* statement, the '{' '}' braces can be omitted from that *code-block*, like so:
 
 	if x < 0 {
 		sign = -1
@@ -441,9 +462,11 @@ Grammar
 The nitty gritty. (This may not be 100% accurate and up-to-date, but it should
 be close.)
 
-	module := (constant-definition | variable-declaration | function-definition | external-definition | target-specification statement)*
+	module := (constant-definition | global-variable-declaration | function-definition | external-definition | target-specification statement)*
 
 	constant-definition := 'const' identifier '=' expr
+
+	global-variable-declaration := (`export` string-literal?)? variable-declaration
 
 	variable-declaration := 'var' identifier ('[' expr ']')? ('=' expr)
 
@@ -479,7 +502,7 @@ be close.)
 
 	expr := atomic-expression (postfix-operation)* (binary-operator expr)?
 
-	atomic-expression := number | indentifier | vector-literal | '(' expr ')' | prefix-expression | external-function-expression | external-index-expression
+	atomic-expression := number | indentifier | vector-literal | '(' expr ')' | prefix-expression | external-function-expression
 
 	prefix-expression := ('+' | '-' | '~' | '!' | '&' | '*' | '.') expr
 
@@ -498,3 +521,9 @@ be close.)
 	number := /[$][\da-f]+/i | /\d+/
 
 	identifier := /[a-z_]\w*/i
+
+	vector-literal := '[' number-list? ']' | string-literal
+
+	number-list := number (',' number-list)?
+
+	string-literal := /^".+?"/ | /^`.+?`/

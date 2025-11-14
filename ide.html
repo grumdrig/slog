@@ -61,6 +61,7 @@
 }
 
 .err {
+	font-size: 13px;
 	color: red;
 }
 
@@ -393,7 +394,7 @@ function comp(initialLoad) {
 	$("#errors").classList.remove("err");
 	try {
 		let source = $("#source").value;
-		$("#asm").value = compile(source);
+		$("#asm").value = compile(source).code;
 		if (assemble()) {
 			$("#errors").innerText = `Compiled length: ${asm.pc} words (memory size ${vm.memory.length})`;
 

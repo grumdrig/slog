@@ -1,5 +1,5 @@
 #!loopy -F
 
-# Compile and produce all intermediate files for all slog files
+# Compile and produce all intermediate and target files for all slog files
 
---for S in *.slog do node --trace-uncaught compiler.js -a @${S%.slog}.asm -d @${S%.slog}.dasm -b @${S%.slog}.bin -s -p @${S%.slog}.strat $S
+--for S in *.slog do node --trace-uncaught compiler.js -A -D -B -s -P -J $S

@@ -20,7 +20,8 @@ documentation, at http://slog.progressquest.com/.
 Install
 -------
 
-We use XP.css styling. You need to:
+We use XP.css styling. To properly display the webpage interface, you need
+to:
 
 	npm install xp.css
 
@@ -29,7 +30,7 @@ IDE
 ---
 
 Strategies can develped and tested in the primitive web-based IDE, which is at
-http://slog.progressquest.com/ide.html
+http://slog.progressquest.com/ide.html, but can also be run locally.
 
 
 Command-line Tools

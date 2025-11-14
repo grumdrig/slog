@@ -27,8 +27,6 @@ macro goto(dest) {
 	while travel(dest) > 0 { }
 }
 
-var raids = 0
-
 func goodHunting(forLevel) {
 	const numGrounds = 8
 	var huntingGrounds[numGrounds] = [12, 12, 17, 10, 16, 15, 33, 6]
@@ -41,14 +39,16 @@ func goodHunting(forLevel) {
 
 seek(Weapon)
 
+export "range 0 to 100:Percentage of full health at which to continue battle"
+var Safety_margin = 33
+
 while .Level < 88 {
 	goto(goodHunting(.Level))
-	raids += 1
-	while .Health >= (2 * .MaxHealth / 3) { // and .Encumbrance < .Capacity {
+	while .Health * 100 >= .MaxHealth * Safety_margin {
 		while !.MobHealth or .MobLevel > .Level {
 			seek(MobSpecies)
 		}
-		while .MobHealth and .Health >= (.MaxHealth / 3) {
+		while .MobHealth and .Health * 100 >= .MaxHealth * Safety_margin {
 			use(Weapon)
 		}
 		if .Encumbrance < .Capacity and !.MobHealth { loot(Trophies) }

@@ -10,8 +10,8 @@
 # Instead I'll do them manually for now at least
 node --trace-uncaught compiler.js -v -r steve.slog -- Snake_v1.js
 ./compiler.js -v -r test.slog -- Test.js
-./compiler.js -v -j @quester.jstrat -r quester.slog 1 'Chester' -- ChinbreakIsland_v1.js
-./compiler.js -v -j @slayer.jstrat -r slayer.slog 2 'Slayer' -- ChinbreakIsland_v1.js
+./compiler.js -v -J -r quester.slog 1 'Chester' -- ChinbreakIsland_v1.js
+./compiler.js -v -J -r slayer.slog 2 'Slayer' -- ChinbreakIsland_v1.js
 
 
 # Manuals
