@@ -512,6 +512,8 @@ function setStrategy(package) {
 				input = div.insertBefore(input, label);
 				input.type = 'checkbox';
 				input.checked = !!package.binary[package.exports[v].offset];
+				input.addEventListener('change', _ =>
+					input.value = input.checked ? 1 : 0);
 
 			} else if (inputType[0] === 'range') {
 				inputType.shift();  // get rid of "range"
