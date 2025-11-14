@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Chinbreak Island: A Progress Quest Slot module
+// Chinbreak Island: A Progress Quest Slog module
 
 const ChinbreakIsland_v1 = (_ => {
 
@@ -3215,7 +3215,7 @@ class Chinbreak {
 				let qty = rng.civRoll(ability, resistance) ? 1 : 0;
 				inc(target, qty);
 
-				passTime('Foraging for ' + SLOTS[target].name.toLowerCase(), 1);
+				passTime((target === Rations) ? 'Hunting and gathering' : 'Foraging for ' + SLOTS[target].name.toLowerCase(), 1);
 				return qty;
 
 			} else if (target === QuestProgress) {
