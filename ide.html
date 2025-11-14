@@ -373,6 +373,18 @@ div#autoplaymom {
 
 <script>
 
+
+	for (let frame of $$('#docs-window iframe')) {
+		frame.addEventListener('load', () => {
+			try {
+				const innerDoc = frame.contentDocument || frame.contentWindow.document;
+				innerDoc.addEventListener('click', e => bringToFront($('#docs-window')));
+			} catch {
+				console.warn("Can't bring docs window to front with click on iframe with file: url");
+			}
+		});
+	}
+
 let asm;
 
 function saveChanges() {
@@ -478,7 +490,7 @@ function autoplay(atTurn) {
 	vm.running = true;
 	goto(atTurn)
 
-	if ($('#autoplay').checked) {
+	if ($('#autoplay').checked && Game) {
 		Game.playmation(vm);
 	}
 }

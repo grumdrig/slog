@@ -4,6 +4,23 @@ Developer Notes
 Nothing to see here. Move along.
 
 
+TODO (here in 2025) to make game casually playable in chinbreak.html
+====================================================================
+
+- Settings dialog for wallpaper, at least
+- Save and load current game
+- General friendliness of user experience when open site and clicking icons
+- Library of strategies
+- Spruce up political map
+- Minimap in game
+
+And also todo just to make other aspects better:
+
+- Set strat options in IDE
+- Programmers guide
+
+
+
 ### Mobs
 
 Monster brainstorm with Andy, transformed:
