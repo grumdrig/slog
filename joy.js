@@ -41,15 +41,31 @@ function shaderjoy(code, canvas) {
 
 	let program = gl.createProgram();
 
+	let aPosition = new Float32Array([
+		-1, -1,
+		 1, -1,
+		-1,  1,
+		-1,  1,
+		 1, -1,
+		 1,  1]);
+	const apb = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, apb);
+	gl.bufferData(gl.ARRAY_BUFFER, aPosition, gl.STATIC_DRAW);
+
+	const vao = gl.createVertexArray();
+	gl.bindVertexArray(vao);
+	gl.bindBuffer(gl.ARRAY_BUFFER, apb);
+	gl.enableVertexAttribArray(0);
+	gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+	gl.vertexAttribDivisor(0, 0); // per-vertex
+
 	// Vertex shader
 	let vertexShader = gl.createShader(gl.VERTEX_SHADER);
 	gl.shaderSource(vertexShader, `#version 300 es
 		precision highp float;
-
+		in vec2 aPosition;
 		void main() {
-			gl_Position = vec4(1, -1, 0, 1);
-			if (gl_VertexID < 4 && gl_VertexID != 1) gl_Position.x = -1.0;
-			if (gl_VertexID > 1 && gl_VertexID != 4) gl_Position.y = 1.0;
+			gl_Position = vec4(aPosition, 0, 1);
 		}
 	`);
 	gl.compileShader(vertexShader);
