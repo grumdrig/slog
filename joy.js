@@ -13,6 +13,7 @@
 function shaderjoy(code, canvas) {
 	if (!canvas) {
 		canvas = document.body.insertBefore(document.createElement('canvas'), document.body.firstChild);
+		canvas.classList.add('joy');
 		canvas.style.position = 'fixed';
 		canvas.style.left = '0';
 		canvas.style.top = '0';
@@ -107,6 +108,8 @@ function shaderjoy(code, canvas) {
 	let T0, T1 = 0, FRAME = 0;
 
 	function tick(clock) {
+		if (!canvas.parentNode) return;
+
 		gl.viewport(0, 0, canvas.width, canvas.height);
 		if (T0 === undefined) T1 = T0 = clock;
 		if (clock - T1 >= 1000/24) {
