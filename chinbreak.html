@@ -106,6 +106,14 @@ article {
 .picker {
 	display: grid;
 	grid-template-columns: repeat(8, auto);
+	gap: 0;
+}
+
+.field-row:has(> .picker) {
+	layout: flex;
+}
+.field-row:has(> .picker) > label {
+	flex-grow: 1;
 }
 
 .picker > div {
@@ -114,6 +122,8 @@ article {
 
 .picker > div.picked {
 	border-color: black;
+	width: 22px;
+	height: 22px;
 }
 
 .picker > div > label {
@@ -294,6 +304,30 @@ article {
 					<div><label for=win16 id=cff00ff title=Fushcia></label></div>
 					<div><label for=win16 id=c00ffff title=Aqua></label></div>
 					<div><label for=win16 id=cffffff title=White></label></div>
+				</div>
+			</div>
+
+			<div class=field-row>
+				<input type=radio name=wallpaper value=ega id=ega>
+				<label for=ega>EGA</label>
+				<div class=picker>
+					<div><label for=ega id=e000000 title=black></label></div>
+					<div><label for=ega id=e0000AA title=blue></label></div>
+					<div><label for=ega id=e00AA00 title=green></label></div>
+					<div><label for=ega id=e00AAAA title=cyan></label></div>
+					<div class=picked>
+					     <label for=ega id=eAA0000 title=red></label></div>
+					<div><label for=ega id=eAA00AA title=magenta></label></div>
+					<div><label for=ega id=eAA5500 title="yellow / brown"></label></div>
+					<div><label for=ega id=eAAAAAA title="white / light gray"></label></div>
+					<div><label for=ega id=e555555 title="dark gray / bright black"></label></div>
+					<div><label for=ega id=e5555FF title="bright blue"></label></div>
+					<div><label for=ega id=e55FF55 title="bright green"></label></div>
+					<div><label for=ega id=e55FFFF title="bright cyan"></label></div>
+					<div><label for=ega id=eFF5555 title="bright red"></label></div>
+					<div><label for=ega id=eFF55FF title="bright magenta"></label></div>
+					<div><label for=ega id=eFFFF55 title="bright yellow"></label></div>
+					<div><label for=ega id=eFFFFFF title="bright white"></label></div>
 				</div>
 			</div>
 
@@ -678,11 +712,11 @@ function fetchUrlStrat() {
 }
 
 function changeSwatch(picker, color) {
-	for (let ega of picker.$$('div')) {
-		if (ega.firstElementChild.id.substr(1) === color.substr(1))
-			ega.classList.add('picked');
+	for (let swatch of picker.$$('div')) {
+		if (swatch.firstElementChild.id.substr(1) === color.substr(1))
+			swatch.classList.add('picked');
 		else
-			ega.classList.remove('picked');
+			swatch.classList.remove('picked');
 	}
 	picker.parentNode.$('input').checked = true;
 	changeWallpaper();
@@ -690,18 +724,9 @@ function changeSwatch(picker, color) {
 
 function changeWallpaper() {
 	let s = $('input[name=wallpaper]:checked').value;
-	// for (let radio of $$('input[name=wallpaper]')) {
-	// 	radio.checked = (s == radio.value);
-	// }
-	if (s === 'win16')
+	if (s === 'win16' || s === 'ega')
 		s = $(`:has(> #${s}) .picker .picked label`).color
 
-	// for (let ega of $$('#win16 > div')) {
-	// 	if (ega.firstElementChild.id.substr(1) === s.substr(1))
-	// 		ega.classList.add('picked');
-	// 	else
-	// 		ega.classList.remove('picked');
-	// }
 	for (let can of $$('canvas.joy')) can.remove();
 	if (s[0] === '#') {
 		document.body.style.backgroundColor = s;
