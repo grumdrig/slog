@@ -13,6 +13,8 @@
 function shaderjoy(code, canvas) {
 	if (!canvas) {
 		canvas = document.body.insertBefore(document.createElement('canvas'), document.body.firstChild);
+		canvas.width = 640;
+		canvas.height = 480;
 		canvas.classList.add('joy');
 		canvas.style.position = 'fixed';
 		canvas.style.left = '0';

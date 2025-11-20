@@ -110,7 +110,7 @@ article {
 }
 
 .field-row:has(> .picker) {
-	layout: flex;
+	display: flex;
 }
 .field-row:has(> .picker) > label {
 	flex-grow: 1;
@@ -272,16 +272,14 @@ article {
 			<legend>Wallpaper</legend>
 
 			<div class="field-row">
-			  <input type="radio" name=wallpaper value=candy id=candy checked>
-			  <label for="candy">Candy</label></input>
+			  <input type="radio" name=wallpaper value=candy id=candy>
+			  <label for="candy">Candy Clouds</label></input>
 			</div>
 
-			<!--
 			<div class="field-row">
 			  <input type="radio" name=wallpaper value=bliss id=bliss>
-			  <label for="bliss">Bliss</label></input>
+			  <label for="bliss">Rolling Bliss</label></input>
 			</div>
-			-->
 
 			<div class=field-row>
 				<input type=radio name=wallpaper value=win16 id=win16>
@@ -295,15 +293,15 @@ article {
 					<div><label for=win16 id=c800080 title=Purple></label></div>
 					<div class=picked>
 						 <label for=win16 id=c008080 title=Teal></label></div>
-					<div><label for=win16 id=cc0c0c0 title=Silver></label></div>
+					<div><label for=win16 id=cC0C0C0 title=Silver></label></div>
 					<div><label for=win16 id=c808080 title=Gray></label></div>
-					<div><label for=win16 id=cff0000 title=Red></label></div>
-					<div><label for=win16 id=c00ff00 title=Lime></label></div>
-					<div><label for=win16 id=cffff00 title=Yellow></label></div>
-					<div><label for=win16 id=c0000ff title=Blue></label></div>
-					<div><label for=win16 id=cff00ff title=Fushcia></label></div>
-					<div><label for=win16 id=c00ffff title=Aqua></label></div>
-					<div><label for=win16 id=cffffff title=White></label></div>
+					<div><label for=win16 id=cFF0000 title=Red></label></div>
+					<div><label for=win16 id=c00FF00 title=Lime></label></div>
+					<div><label for=win16 id=cFFFF00 title=Yellow></label></div>
+					<div><label for=win16 id=c0000FF title=Blue></label></div>
+					<div><label for=win16 id=cFF00FF title=Fushcia></label></div>
+					<div><label for=win16 id=c00FFFF title=Aqua></label></div>
+					<div><label for=win16 id=cFFFFFF title=White></label></div>
 				</div>
 			</div>
 
@@ -332,8 +330,8 @@ article {
 			</div>
 
 			<div class="field-row">
-			  <input type="radio" name=wallpaper value="#3b8f91" id=teal>
-			  <label for="teal">Teal Classic</label></input>
+			  <input type="radio" name=wallpaper value="#3b8f91" id=teal checked>
+			  <label for="teal">Classic Teal</label></input>
 			</div>
 
 
@@ -430,17 +428,10 @@ That's up to you to prove!
 
 let vm;
 
+let WALLPAPER = localStorage.wallpaper ?? 'teal';
 
-//hide("#chooser");
-
-const teal_glsl = `
-void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
-	fragColor = vec4(0x3b, 0x8f, 0x91, 1);
-}
-`
-
-
-const candy_glsl = window.candy = `
+const SHADERS = {
+	candy: `
 
 vec3 rand(vec3 xyz) {
 	return fract(vec3(sin(dot(xyz, vec3(43.238, 27.874, 57.982))),
@@ -496,8 +487,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
 	fragColor.a = 1.0;
 }
 
-
-`;
+`};
 
 let PACKAGE;
 let STRATEGIES = {};
@@ -508,8 +498,6 @@ window.addEventListener('load', e => {
 	let game = ChinbreakIsland_v1;
 	$("#game-window .title-bar-text").innerHTML = game.title;
 	$("#game-window .window-body").innerHTML = game.windowContent;
-
-	shaderjoy(candy_glsl);
 
 	prepOS();
 
@@ -557,8 +545,12 @@ window.addEventListener('load', e => {
 
 	$("#worldmap").innerHTML = game.generateMap();
 
+	($('#' + WALLPAPER) ?? $('#teal')).checked = true;
 	$$('input[name=wallpaper]').forEach(r => r.addEventListener('change', changeWallpaper));
-
+	for (let palette of ['win16', 'ega']) {
+		changeSwatch(document.getElementById(palette).parentNode.$('.picker'),
+			localStorage[palette] ?? '', true);
+	}
 	for (let picker of $$('.picker')) {
 		for (let swatch of picker.$$('label')) {
 			let c = swatch.color = '#' + swatch.id.substr(1);
@@ -566,6 +558,8 @@ window.addEventListener('load', e => {
 			swatch.addEventListener('click', e => changeSwatch(picker, c));
 		}
 	}
+
+	changeWallpaper();
 
 });
 
@@ -711,27 +705,35 @@ function fetchUrlStrat() {
 			})
 }
 
-function changeSwatch(picker, color) {
+function changeSwatch(picker, color, initOnly) {
 	for (let swatch of picker.$$('div')) {
-		if (swatch.firstElementChild.id.substr(1) === color.substr(1))
+		if (swatch.firstElementChild.id.substr(1) === color.substr(1)) {
+			localStorage[picker.parentNode.$('input').id] = color;
 			swatch.classList.add('picked');
-		else
+		} else {
 			swatch.classList.remove('picked');
+		}
 	}
+	if (initOnly) return;
 	picker.parentNode.$('input').checked = true;
 	changeWallpaper();
 }
 
 function changeWallpaper() {
-	let s = $('input[name=wallpaper]:checked').value;
+	localStorage.wallpaper = WALLPAPER = $('input[name=wallpaper]:checked').id;
+	let s = document.getElementById(WALLPAPER).value;
 	if (s === 'win16' || s === 'ega')
 		s = $(`:has(> #${s}) .picker .picked label`).color
 
 	for (let can of $$('canvas.joy')) can.remove();
 	if (s[0] === '#') {
 		document.body.style.backgroundColor = s;
+	} else if (SHADERS[s]) {
+		shaderjoy(SHADERS[s]);
 	} else {
-		shaderjoy(window[s]);
+		fetch(s + '.glsl')
+			.then(res => res.text())
+			.then(glsl => shaderjoy(SHADERS[s] = glsl));
 	}
 }
 
