@@ -7,7 +7,8 @@ Nothing to see here. Move along.
 TODO (here in 2025) to make game casually playable in chinbreak.html
 ====================================================================
 
-- Settings dialog for wallpaper, at least
+√ Player strat options
+√ Settings dialog for wallpaper, at least
 - Save and load current game
 - General friendliness of user experience when open site and clicking icons
 - Library of strategies

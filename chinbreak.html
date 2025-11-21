@@ -637,20 +637,16 @@ function setStrategy(package) {
 				label.title = desc.trim();
 			}
 
-			let input = div.appendChild(document.createElement('input'));
-			input.title = label.title;
-			input.value = package.binary[package.exports[v].offset];
-			input.id = 'option-' + v;
-			label.setAttribute('for', input.id);
-
-			if (inputType[0] === 'bool') {
-				input = div.insertBefore(input, label);
+			let input;
+			if (inputType[0] === 'checkbox') {
+				input = div.insertBefore(document.createElement('input'), label);
 				input.type = 'checkbox';
 				input.checked = !!package.binary[package.exports[v].offset];
 				input.addEventListener('change', _ =>
 					input.value = input.checked ? 1 : 0);
 
 			} else if (inputType[0] === 'range') {
+				input = div.appendChild(document.createElement('input'));
 				inputType.shift();  // get rid of "range"
 				let low = parseInt(inputType.shift()) ?? 0;
 				if (inputType[0] === 'to') inputType.shift();
@@ -666,19 +662,26 @@ function setStrategy(package) {
 
 				input.min = low;
 				input.max = high;
-				/*
-				// Label the min and max
-				let l = div.insertBefore(document.createElement('label'), input);
-				l.innerText = low;
-				l.setAttribute('for', input.id);
-				l = div.appendChild(document.createElement('label'));
-				l.innerText = high;
-				l.setAttribute('for', input.id);
-				*/
+
+			} else if (inputType[0] === 'select') {
+				input = div.appendChild(document.createElement('select'));
+				inputType.shift();  // get ride of "select"
+				let choice, n = 0;
+				while (choice = inputType.shift()) {
+					let option = input.appendChild(document.createElement('option'));
+					option.innerText = choice.replaceAll('_', ' ');
+					option.value = n++;
+				}
+
 			} else {
+				input = div.appendChild(document.createElement('input'));
 				input.type = 'number';
 			}
 
+			input.title = label.title;
+			input.value = package.binary[package.exports[v].offset];
+			input.id = 'option-' + v;
+			label.setAttribute('for', input.id);
 
 		}
 	} else {

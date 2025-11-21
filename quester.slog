@@ -4,7 +4,7 @@
 
 target ChinbreakIsland_v1
 
-export "bool : Complete the side quest in Act V to gain an elixir"
+export "checkbox : Complete the side quest in Act V to gain an elixir"
 var Attempt_elixir_side_quest = 0
 
 export "range 1 to 99:Percentage of max health at which to continue to battle"

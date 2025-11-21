@@ -1903,7 +1903,7 @@ const QUEST_TYPES = [ null,
 		// Cutscene
 		name: 'Cutscene',
 		title: 'Cutscene',
-		description: `While in $L, watch, as important events around you advance the plot.`,
+		description: `While in $L, watch as important events around you advance the plot.`,
 		explanation: `Call <code>seek(QuestProgress)</code> the required
 		number of times at the specified location. Cutscene quests may
 		automatically become active when the quest preceding them completes.`,

@@ -2,6 +2,7 @@ Strategy Author's Guide
 =======================
 
 
+
 Documentation strings
 ---------------------
 
@@ -10,7 +11,7 @@ players who may wish to use your strategy. They consist of a line comment beginn
 
 The valid tags are:
 
-- Title: A short name for your strategy
+- Title: A short (one-line) name for your strategy
 
 - Author: Use this to take credit for your work
 
@@ -34,19 +35,24 @@ describes the input. In the case of the Chinbreak Island game, it can take
 the form of a variable type and verbal description, separated by a colon. For
 example:
 
-	export "bool : Shoot first, ask questions later"
+	export "checkbox : Shoot first, ask questions later"
 	var Haphazard_behavior
 
-Since, in this case, the type is given as `bool`, the variable is presented as
-a checkbox and the variable will by initialized by a 0 if unchecked, and a 1
-if checked.
+Since, in this case, the type is given as `checkbox`, the variable is
+presented as a checkbox.
 
-Other valid export types are:
+The valid export types are:
 
-`enum opt1 opt2 ...`
-: Presents a set of options to select from. The variable takes on the value of the 0-based index of the selected option.
+`checkbox`
+: Presents a checkbox; the variable will be set to 0 if unchecked, and a 1 if
+  checked.
 
-`range min to max`
+`select *opt1* *opt2* ...`
+: Presents a drop-down list to select from. The variable takes on the value of
+  the 0-based index of the selected option. Underscores in the options will
+  be converted to spaces for display
+
+`range *min* to *max*`
 : Presents a slider ranging from `min` to `max`
 
 If no type is given, a (numeric) text box is presented to the user. The
@@ -56,7 +62,7 @@ player hovers the mouse over the setting.
 
 Further examples:
 
-	export "enum Bunny Horse Dragon : Favorite animal to do battle with"
+	export "select Bunny_rabbit Horse Dragon : Favorite animal to do battle with"
 	var Favorite_opponent
 
 	export "range 0 to 100"
@@ -64,3 +70,4 @@ Further examples:
 
 	export var Random_number_seed = 400
 
+In

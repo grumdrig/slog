@@ -222,33 +222,33 @@ div#autoplaymom {
 		</div>
 		<div class="status-bar" id=debugbar>
 			<div class='status-bar-field'>
-				<button onclick="reset()" class=vcr>⏮</button>
+				<button onclick="reset()" class=vcr title=Reset>⏮</button>
 			</div>
 			<div class='status-bar-field'>
 				⏳
-				<span id=clock>0</span>
-				<button onclick="step()" class=vcr>&#xFF0B;</button>
-				<button onclick="animateSteps()" class=vcr>⏵</button>
+				<span id=clock title="Machine clock">0</span>
+				<button onclick="step()" title="Step machine" class=vcr>&#xFF0B;</button>
+				<button onclick="animateSteps()" title="Animate machine steps" class=vcr>⏵</button>
 			</div>
 			<div class='status-bar-field'>
 				🎲
-				<input id=turn style='width:6ex'> </input>
-				<button id=decturn class=vcr>&#xFF0D;</button>
-				<button id=incturn class=vcr>&#xFF0B;</button>
-				<button onclick="play()" class=vcr>⏵</button>
-				<button onclick="turbo()" class=vcr>⏵⏵</button>
+				<input id=turn title="Game turn" style='width:6ex'> </input>
+				<button id=decturn title="Go back 1 turn" class=vcr>&#xFF0D;</button>
+				<button id=incturn title="Go forward 1 turn" class=vcr>&#xFF0B;</button>
+				<button onclick="play()" title="Run game" class=vcr>⏵</button>
+				<button onclick="turbo()" title="Fast forward game" class=vcr>⏵⏵</button>
 			</div>
 			<div class='status-bar-field'>
-				<button onclick="finish()" class=vcr>⏭</button>
+				<button onclick="finish()" title="Jump to game end" class=vcr>⏭</button>
 			</div>
 			<div class='status-bar-field'>
 				<div id=autoplaymom>
 					<input id=autoplay type=checkbox>
-					<label for=autoplay>Autoplay </label></input>
+					<label for=autoplay title="Run game after compile">Autoplay </label></input>
 				</div>
 			</div>
 			<div class='status-bar-field'>
-				<label for="params">Params </label><input type=text id=params></input>
+				<label for="params">Params</label><input type=text id=params></input>
 			</div>
 		</div>
 	</div>
